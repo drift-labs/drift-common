@@ -1,0 +1,32 @@
+{
+	"name": "@drift-labs/react",
+	"version": "1.0.0",
+	"description": "Common building blocks for connecting to the Drift program from React",
+	"main": "lib/index.js",
+	"repository": "https://github.com/drift-labs/drift-common",
+	"author": "Drift Labs",
+	"license": "MIT",
+	"scripts": {
+		"lint": "eslint './**/*.{ts,tsx}' --quiet",
+		"build": "yarn clean && npx tsc",
+		"clean": "rm -rf lib"
+	},
+	"directories": {
+		"lib": "lib"
+	},
+	"devDependencies": {
+		"@drift-labs/sdk": "^2.32.1-beta.12",
+		"@solana/spl-token": "^0.3.8",
+		"@solana/web3.js": "^1.77.3",
+		"@types/react": "^18.2.14",
+		"react": "^18.2.0",
+		"eslint": "^8.43.0",
+		"typescript": "^5.1.6"
+	},
+	"peerDependencies": {
+		"@drift-labs/sdk": "^2.32.1-beta.12",
+		"@solana/spl-token": "^0.3.8",
+		"@solana/web3.js": "^1.77.3",
+		"react": "^18.2.0"
+	}
+}

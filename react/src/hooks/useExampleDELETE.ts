@@ -1,0 +1,3 @@
+const useExample = () => {};
+
+export { useExample };

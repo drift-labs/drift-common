@@ -1,0 +1,11 @@
+.idea
+*.env.mainnet
+*.env.devnet
+.DS_Store
+node_modules
+**/.env.local
+scratchpad.ts
+.env
+**/*.tsbuildinfo
+lib
+**/*.log
