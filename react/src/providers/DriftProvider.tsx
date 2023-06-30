@@ -1,7 +1,9 @@
 import React, { PropsWithChildren } from 'react';
 
-// import useIdlePollingRateSwitcher from '../hooks/useIdlePollingRateSwitcher';
 // import useInitializeConnection from '../hooks/useInitializeConnection';
+// import useIdlePollingRateSwitcher from '../hooks/useIdlePollingRateSwitcher';
+import { DriftStoreState, useDriftStore } from '../stores/useDriftStore';
+
 // import useSolBalance from '../hooks/useSolBalance';
 // import useEventsRecords from '../hooks/useEventRecords';
 // import useSyncMSolMetrics from '../hooks/useSyncMSolMetrics';
@@ -15,6 +17,8 @@ import React, { PropsWithChildren } from 'react';
 // import { useWalletAutoConnect } from '../hooks/useWalletAutoConnect';
 
 const DriftProvider = (props: PropsWithChildren) => {
+	const env = useDriftStore((s: DriftStoreState) => s.env);
+
 	// useInitializeConnection();
 	// useIdlePollingRateSwitcher();
 	// useSyncWalletToStore();
@@ -30,6 +34,7 @@ const DriftProvider = (props: PropsWithChildren) => {
 	// useEventsRecords();
 
 	console.log('hello from drift-common');
+	console.log(env);
 
 	return <>{props.children}</>;
 };
