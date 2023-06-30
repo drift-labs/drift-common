@@ -131,18 +131,7 @@ const defaultState = {
 	},
 };
 
-let _useDriftStore: UseBoundStore<StoreApi<DriftStoreState>>;
-
-const useDriftStore = (...args: any[]) => {
-	if (!_useDriftStore) {
-		throw new Error(
-			'Drift store has not been initialized. Call the initializeDriftStore function before using the hook.'
-		);
-	} else {
-		// @ts-ignore
-		return _useDriftStore(...args);
-	}
-};
+let useDriftStore: UseBoundStore<StoreApi<DriftStoreState>>;
 
 const initializeDriftStore = (Env: {
 	driftEnv: DriftEnv;
@@ -152,8 +141,8 @@ const initializeDriftStore = (Env: {
 	// nextEnv?: string;
 	isDev?: boolean;
 }) => {
-	if (!_useDriftStore) {
-		_useDriftStore = create<DriftStoreState>()((set, get) => {
+	if (!useDriftStore) {
+		useDriftStore = create<DriftStoreState>()((set, get) => {
 			const setProducerFn = (fn: (s: DriftStoreState) => void) =>
 				set(produce(fn));
 			return {
