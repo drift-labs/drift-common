@@ -1,0 +1,35 @@
+{
+	"name": "@drift/common",
+	"version": "1.0.0",
+	"description": "Common functions for Drift",
+	"main": "lib/index.js",
+	"license": "MIT",
+	"private": true,
+	"dependencies": {
+		"@drift-labs/sdk": "file:../protocol/sdk",
+		"@jest/globals": "^29.3.1",
+		"@slack/web-api": "^6.4.0",
+		"@solana/spl-token": "^0.3.8",
+		"@solana/web3.js": "1.66.2",
+		"cerializr": "^3.1.4",
+		"localstorage-memory": "^1.0.3"
+	},
+	"scripts": {
+		"build": "yarn clean && tsc",
+		"clean": "rm -rf lib",
+		"test": "jest",
+		"test:ci": "node node_modules/.bin/jest --silent --forceExit",
+		"test:debug": "node --inspect-brk --inspect=2234 node_modules/.bin/jest --runInBand"
+	},
+	"directories": {
+		"lib": "lib"
+	},
+	"engines": {
+		"node": ">=14 <19"
+	},
+	"devDependencies": {
+		"jest": "^29.3.1",
+		"ts-jest": "^29.0.3",
+		"typescript": "^4.9.4"
+	}
+}
