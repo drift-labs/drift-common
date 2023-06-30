@@ -1,0 +1,53 @@
+{
+  "include": [
+    "src/index.ts",
+    "src/types.ts",
+    "src/icons"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "compilerOptions": {
+    "target": "es5", 
+    "esModuleInterop": true, 
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "jsx": "react", 
+    "module": "ESNext",  
+    "declaration": true,
+    "declarationDir": "types",
+    "sourceMap": true,
+    "outDir": "dist",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+  }
+    
+  // "compilerOptions": {
+  //   // "module": "commonjs",
+  //   // "module": "ESNext",  
+  //   "esModuleInterop": true,
+  //   "jsx": "react",
+  //   "allowJs": true,
+  //   "moduleResolution": "node",
+  //   "outDir": "dist",
+
+  //   /////////////
+
+  //   // Default
+  //   "declaration": true,
+  //   "declarationDir": "types",
+  //   "sourceMap": true,
+  //   "allowSyntheticDefaultImports": true,
+  //   "emitDeclarationOnly": false,
+
+  //   ////////
+  //   "target": "es5", 
+  //   "forceConsistentCasingInFileNames": true,
+  //   "skipLibCheck": true,
+
+  //   /// #####
+  //   "strict": true, 
+  // }
+}
+

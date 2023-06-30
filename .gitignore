@@ -9,3 +9,4 @@ scratchpad.ts
 **/*.tsbuildinfo
 lib
 **/*.log
+icons/dist
