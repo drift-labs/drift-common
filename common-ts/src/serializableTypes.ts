@@ -40,6 +40,7 @@ import {
 	SpotBalanceType,
 	SpotBankruptcyRecord,
 	StakeAction,
+	SwapRecord,
 	TEN,
 } from '@drift-labs/sdk';
 import {
@@ -1521,6 +1522,53 @@ export class UISerializableLPRecord extends SerializableLPRecord {
 	pnl: BigNum;
 }
 
+// Swap Record
+export type SwapRecordEvent = Event<SwapRecord>;
+
+export class SerializableSwapRecord implements SwapRecordEvent {
+	@autoserializeAs(Number) id: number;
+	@autoserializeAs(String) txSig: string;
+	@autoserializeAs(Number) slot: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) amountOut: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) amountIn: BN;
+	@autoserializeAs(Number) outMarketIndex: number;
+	@autoserializeAs(Number) inMarketIndex: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) outOraclePrice: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) inOraclePrice: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) fee: BN;
+}
+
+@inheritSerialization(SerializableSwapRecord)
+export class UISerializableSwapRecord extends SerializableSwapRecord {
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) amountOut: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) amountIn: BigNum;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	outOraclePrice: BigNum;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	inOraclePrice: BigNum;
+	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns) fee: BigNum;
+
+	static onDeserialized(_data: JsonObject, instance: UISerializableSwapRecord) {
+		assert(Config.initialized, 'Common Config Not Initialised');
+		try {
+			const outPrecision =
+				Config.spotMarkets[instance.outMarketIndex].precisionExp;
+			const inPrecision =
+				Config.spotMarkets[instance.inMarketIndex].precisionExp;
+
+			instance.amountIn.precision = inPrecision;
+			instance.amountOut.precision = outPrecision;
+			instance.inOraclePrice.precision = inPrecision;
+			instance.outOraclePrice.precision = outPrecision;
+			instance.fee.precision = outPrecision;
+		} catch (e) {
+			console.error('Error in swap serializer', e);
+		}
+	}
+}
+
 // Serializer
 export const Serializer = {
 	Serialize: {
@@ -1578,6 +1626,8 @@ export const Serializer = {
 			Serialize(cls, UISerializableAllTimePnlData),
 		LPRecord: (cls: any) => Serialize(cls, SerializableLPRecord),
 		UILPRecord: (cls: any) => Serialize(cls, UISerializableLPRecord),
+		SwapRecord: (cls: any) => Serialize(cls, SerializableSwapRecord),
+		UISwapRecord: (cls: any) => Serialize(cls, UISerializableSwapRecord),
 	},
 	Deserialize: {
 		Order: (cls: Record<string, unknown>) =>
@@ -1680,6 +1730,10 @@ export const Serializer = {
 			Deserialize(cls as JsonObject, SerializableLPRecord) as Event<LPRecord>,
 		UILPRecord: (cls: Record<string, unknown>) =>
 			Deserialize(cls as JsonObject, UISerializableLPRecord),
+		SwapRecord: (cls: Record<string, unknown>) =>
+			Deserialize(cls as JsonObject, SerializableSwapRecord) as SwapRecordEvent,
+		UISwapRecord: (cls: Record<string, unknown>) =>
+			Deserialize(cls as JsonObject, UISerializableSwapRecord),
 	},
 	setDeserializeFromSnakeCase: () => {
 		SetDeserializeKeyTransform(SnakeCase);

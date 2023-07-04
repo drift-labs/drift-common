@@ -50,6 +50,7 @@ export const EnvironmentConstants = {
 	historyServerUrl: {
 		dev: 'https://master.api.drift.trade',
 		mainnet: 'https://mainnet-beta.api.drift.trade',
+		staging: 'https://staging.api.drift.trade',
 	},
 	dlobServerUrl: {
 		dev: 'https://master.dlob.drift.trade',

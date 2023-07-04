@@ -186,6 +186,8 @@ export type MarketDetails24H = {
 	avgFunding?: number;
 	avgLongFunding?: number;
 	avgShortFunding?: number;
+	marketCap: number;
+	dailyVolumeIncreaseZScore: number;
 };
 
 export type BankBalanceUI = SpotPosition & {

@@ -41,6 +41,7 @@ export { default as Google } from './components/Google';
 export { default as Heart } from './components/Heart';
 export { default as Hide } from './components/Hide';
 export { default as History } from './components/History';
+export { default as Hot } from './components/Hot';
 export { default as Info } from './components/Info';
 export { default as LP } from './components/LP';
 export { default as Layout } from './components/Layout';

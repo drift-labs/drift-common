@@ -837,6 +837,60 @@ export const getTieredSortScore = (aScores: number[], bScores: number[]) => {
 	return 0;
 };
 
+const normalizeBaseAssetSymbol = (symbol: string) => {
+	return symbol.replace(/^1M/, '');
+};
+
+/**
+ * Returns the number of standard deviations between a target value and the history of values to compare it to.
+ * @param target
+ * @param previousValues
+ * @returns
+ */
+const calculateZScore = (target: number, previousValues: number[]): number => {
+	const meanValue = calculateMean(previousValues);
+	const standardDeviationValue = calculateStandardDeviation(
+		previousValues,
+		meanValue
+	);
+
+	const zScore = (target - meanValue) / standardDeviationValue;
+	return zScore;
+};
+
+const calculateMean = (numbers: number[]): number => {
+	const sum = numbers.reduce((total, num) => total + num, 0);
+	return sum / numbers.length;
+};
+
+const calculateStandardDeviation = (
+	numbers: number[],
+	mean: number
+): number => {
+	const squaredDifferences = numbers.map((num) => Math.pow(num - mean, 2));
+	const sumSquaredDifferences = squaredDifferences.reduce(
+		(total, diff) => total + diff,
+		0
+	);
+	const variance = sumSquaredDifferences / numbers.length;
+	return Math.sqrt(variance);
+};
+
+const glueArray = <T>(size: number, elements: T[]): T[][] => {
+	const gluedElements: T[][] = [];
+
+	elements.forEach((element, index) => {
+		const gluedIndex = Math.floor(index / size);
+		if (gluedElements[gluedIndex]) {
+			gluedElements[gluedIndex].push(element);
+		} else {
+			gluedElements[gluedIndex] = [element];
+		}
+	});
+
+	return gluedElements;
+};
+
 export const COMMON_UTILS = {
 	getIfVaultBalance: getIfVaultBalance,
 	getIfStakingVaultApr: getIfStakingVaultApr,
@@ -850,4 +904,8 @@ export const COMMON_UTILS = {
 	toSnakeCase,
 	toCamelCase,
 	getTieredSortScore,
+	normalizeBaseAssetSymbol,
+	calculateZScore,
+	glueArray,
+	calculateMean,
 };
