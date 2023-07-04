@@ -6,9 +6,7 @@ import path from 'path';
 /**
  * Download SVG data from given array of objects containing url
  */
-export const downloadSVGsData = async <T>(
-	data: ({ url: string } & T)[]
-) => {
+export const downloadSVGsData = async <T>(data: ({ url: string } & T)[]) => {
 	return Promise.all(
 		data.map(async (dataItem) => {
 			const downloadedSvg = await axios.get<string>(dataItem.url);

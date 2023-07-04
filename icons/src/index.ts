@@ -1,5 +1,5 @@
 // All icon components
-export * from "./icons/index";
+export * from './icons/index';
 
 // Types
-export * from "./types";
+export * from './types';
