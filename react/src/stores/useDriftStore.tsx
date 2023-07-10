@@ -18,7 +18,7 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { RpcEndpoint } from '@drift/common';
 
 // @ts-ignore
-import type { Wallet } from '@solana/wallet-adapter-react';
+import type { WalletContextState } from '@solana/wallet-adapter-react';
 
 // any relevant user data we can keep up to date here
 export type UserData = {
@@ -63,7 +63,7 @@ const DEFAULT_SPOT_MARKET_DATA = {
 export interface DriftStoreState {
 	authority: PublicKey | null | undefined;
 	authorityString: string;
-	currentlyConnectedWallet: Wallet | null;
+	currentlyConnectedWalletContext: WalletContextState | null;
 	currentSolBalance: {
 		value: BigNum;
 		loaded: boolean;
@@ -92,7 +92,7 @@ export interface DriftStoreState {
 	bulkAccountLoader: BulkAccountLoader | undefined;
 	spotMarketData: SpotMarketData;
 	emulationMode: boolean;
-	isGeoBlocked: boolean | undefined;
+	isGeoblocked: boolean | undefined;
 	set: (x: (s: DriftStoreState) => void) => void;
 	get: () => DriftStoreState;
 	clearUserData: () => void;
@@ -107,7 +107,7 @@ const defaultState = {
 	authority: undefined,
 	authorityString: '',
 	currentSolBalance: DEFAULT_SOL_BALANCE,
-	currentlyConnectedWallet: null,
+	currentlyConnectedWalletContext: null,
 	currentUserAccount: DEFAULT_USER_DATA,
 	userAccounts: [],
 	userAccountNotInitialized: undefined,
@@ -121,7 +121,7 @@ const defaultState = {
 		isSubscribed: false,
 	},
 	bulkAccountLoader: undefined,
-	isGeoBlocked: undefined,
+	isGeoblocked: undefined,
 	spotMarketData: DEFAULT_SPOT_MARKET_DATA,
 	emulationMode: false,
 	eventRecords: {
@@ -156,7 +156,7 @@ const initializeDriftStore = (Env: {
 						s.authority = undefined;
 						s.authorityString = '';
 						s.currentSolBalance = DEFAULT_SOL_BALANCE;
-						s.currentlyConnectedWallet = null;
+						s.currentlyConnectedWalletContext = null;
 						s.currentUserAccount = DEFAULT_USER_DATA;
 						s.userAccounts = [];
 						s.userAccountNotInitialized = undefined;
