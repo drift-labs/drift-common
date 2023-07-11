@@ -1,32 +1,23 @@
-import { WalletContextState } from '@solana/wallet-adapter-react';
-import { Context, useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import { BASE_PRECISION_EXP, BigNum } from '@drift-labs/sdk';
 import { useCommonDriftStore } from '../stores';
 import { useCommonDriftActions } from './useCommonDriftActions';
+import { useWalletContext } from './useWalletContext';
 
 /**
  * Keeps the authority and connected state of `WalletContext` from `@solana/wallet-adapter-react` updated in the app store when the wallet connects, disconnects, or changes.
  *
  * Also sets SOL balance in the store to 0 on disconnect.
  */
-const useSyncWalletToStore = (walletContext: Context<WalletContextState>) => {
-	const walletContextState = useContext(walletContext);
+const useSyncWalletToStore = () => {
 	const actions = useCommonDriftActions();
 	const set = useCommonDriftStore((s) => s.set);
-	const currentConnectedWalletContext = useCommonDriftStore(
-		(s) => s.currentlyConnectedWalletContext
-	);
+	const walletContextState = useWalletContext();
 
 	useEffect(() => {
-		set((s) => {
-			s.currentlyConnectedWalletContext = walletContextState;
-		});
-	}, [walletContext]);
-
-	useEffect(() => {
-		currentConnectedWalletContext?.wallet?.adapter?.on('connect', () => {
+		walletContextState?.wallet?.adapter?.on('connect', () => {
 			const authority =
-				currentConnectedWalletContext?.wallet?.adapter?.publicKey;
+				walletContextState?.wallet?.adapter?.publicKey;
 
 			set((s) => {
 				s.currentSolBalance = {
@@ -37,15 +28,15 @@ const useSyncWalletToStore = (walletContext: Context<WalletContextState>) => {
 				s.authorityString = authority?.toString() || '';
 			});
 
-			if (authority && currentConnectedWalletContext.wallet?.adapter) {
+			if (authority && walletContextState.wallet?.adapter) {
 				actions.handleWalletConnect(
 					authority,
-					currentConnectedWalletContext.wallet?.adapter
+					walletContextState.wallet?.adapter
 				);
 			}
 		});
 
-		currentConnectedWalletContext?.wallet?.adapter?.on('disconnect', () => {
+		walletContextState?.wallet?.adapter?.on('disconnect', () => {
 			set((s) => {
 				s.currentSolBalance = {
 					value: new BigNum(0, BASE_PRECISION_EXP),
@@ -60,10 +51,10 @@ const useSyncWalletToStore = (walletContext: Context<WalletContextState>) => {
 
 		return () => {
 			console.log('adapter changed, firing off');
-			currentConnectedWalletContext?.wallet?.adapter.off('connect');
-			currentConnectedWalletContext?.wallet?.adapter.off('disconnect');
+			walletContextState?.wallet?.adapter.off('connect');
+			walletContextState?.wallet?.adapter.off('disconnect');
 		};
-	}, [currentConnectedWalletContext?.wallet?.adapter]);
+	}, [walletContextState?.wallet?.adapter]);
 
 	// useEffect(() => {
 	// 	set((s) => {

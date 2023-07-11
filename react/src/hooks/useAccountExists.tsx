@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import useDriftClientIsReady from './useDriftClientIsReady';
 import { singletonHook } from 'react-singleton-hook';
 import { useCommonDriftStore } from '../stores';
+import { useWalletContext } from './useWalletContext';
 
 /**
  * Checks if the current user has a Drift account.
@@ -9,9 +10,7 @@ import { useCommonDriftStore } from '../stores';
 export const useAccountExists = () => {
 	const driftClientIsReady = useDriftClientIsReady();
 	const driftClient = useCommonDriftStore((s) => s.driftClient.client);
-	const walletState = useCommonDriftStore(
-		(s) => s.currentlyConnectedWalletContext
-	);
+	const walletState = useWalletContext();
 	const [userAccountNotInitialized, accountId] = useCommonDriftStore((s) => [
 		s.userAccountNotInitialized,
 		s.currentUserAccount?.accountId,

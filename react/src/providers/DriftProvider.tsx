@@ -1,4 +1,4 @@
-import React, { Context, useEffect } from 'react';
+import React, { Context, useContext, useEffect } from 'react';
 import useInitializeConnection from '../hooks/useInitializeConnection';
 // import useIdlePollingRateSwitcher from '../hooks/useIdlePollingRateSwitcher';
 // import useSolBalance from '../hooks/useSolBalance';
@@ -17,11 +17,19 @@ import { useCommonDriftStore } from '../stores';
 
 interface AppSetupProps {
 	children: React.ReactNode;
-	walletContext: Context<WalletContextState>;
+	walletContext: Context<WalletContextState | null>;
 }
 
 const DriftProvider = (props: AppSetupProps) => {
 	const get = useCommonDriftStore((s) => s.get);
+	const set = useCommonDriftStore((s) => s.set);
+	const walletContextState = useContext(props.walletContext);
+
+	useEffect(() => {
+		set((s) => {
+			s.currentlyConnectedWalletContext = walletContextState;
+		});
+	}, [walletContextState]);
 
 	useEffect(() => {
 		// @ts-ignore
