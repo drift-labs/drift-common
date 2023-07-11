@@ -1,19 +1,10 @@
 import { useEffect } from 'react';
-// import useSavedSettings from './useSavedSettings';
-import { useCommonDriftStore } from '../stores/useDriftStore';
+import { useCommonDriftStore } from '../stores/useCommonDriftStore';
 import { useDriftActions } from './useDriftActions';
-import { EnvironmentConstants } from '@drift/common';
 
 const useInitializeConnection = () => {
-	// todo get this to work:
-	const Env = useCommonDriftStore((s) => s.env);
+	const [Env, currentRpc] = useCommonDriftStore((s) => [s.env, s.currentRpc]);
 	const actions = useDriftActions();
-	// const [savedSettings] = useSavedSettings();
-
-	// TODO probably get actual saved settings working, for now just select first one to test if this works at all
-	const savedSettings = {
-		rpc: EnvironmentConstants.rpcs.mainnet[0],
-	};
 
 	const initConnection = async () => {
 		const rpcToUse = Env.rpcOverride
@@ -22,11 +13,15 @@ const useInitializeConnection = () => {
 					value: Env.rpcOverride,
 					allowAdditionalConnection: false,
 			  }
-			: savedSettings.rpc;
+			: currentRpc;
 
 		if (Env.isDev) {
 			console.log(`using driftEnv ${Env.driftEnv}`);
-			console.log(`using rpc ${rpcToUse.value}`);
+			console.log(`using rpc ${currentRpc?.value}`);
+		}
+
+		if (!rpcToUse) {
+			return;
 		}
 
 		actions.updateConnection({
@@ -37,7 +32,7 @@ const useInitializeConnection = () => {
 
 	useEffect(() => {
 		initConnection();
-	}, [savedSettings]);
+	}, [currentRpc, Env.driftEnv, Env.rpcOverride]);
 };
 
 export default useInitializeConnection;

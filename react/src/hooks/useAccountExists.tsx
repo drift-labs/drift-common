@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import useDriftClientIsReady from './useDriftClientIsReady';
-// import { singletonHook } from 'react-singleton-hook';
+import { singletonHook } from 'react-singleton-hook';
 import { useCommonDriftStore } from '../stores';
 
 /**
@@ -9,7 +9,9 @@ import { useCommonDriftStore } from '../stores';
 export const useAccountExists = () => {
 	const driftClientIsReady = useDriftClientIsReady();
 	const driftClient = useCommonDriftStore((s) => s.driftClient.client);
-	const walletState = useCommonDriftStore((s) => s.currentlyConnectedWalletContext);
+	const walletState = useCommonDriftStore(
+		(s) => s.currentlyConnectedWalletContext
+	);
 	const [userAccountNotInitialized, accountId] = useCommonDriftStore((s) => [
 		s.userAccountNotInitialized,
 		s.currentUserAccount?.accountId,
@@ -43,5 +45,4 @@ export const useAccountExists = () => {
 	return accountExists;
 };
 
-// TODO: make this a singleton hook?
-// export default singletonHook(false, useAccountExists);
+export default singletonHook(false, useAccountExists);

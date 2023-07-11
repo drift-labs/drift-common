@@ -1,6 +1,9 @@
 import React, { PropsWithChildren } from 'react';
 
-import { CommonDriftStore, useCommonDriftStore } from '../stores/useDriftStore';
+import {
+	CommonDriftStore,
+	useCommonDriftStore,
+} from '../stores/useCommonDriftStore';
 import { ActionsProvider } from '../hooks/useDriftActions';
 
 import useInitializeConnection from '../hooks/useInitializeConnection';

@@ -1,4 +1,4 @@
-import { CommonDriftStore } from '../stores/useDriftStore';
+import { CommonDriftStore } from '../stores/useCommonDriftStore';
 import {
 	BulkAccountLoader,
 	DriftClient,

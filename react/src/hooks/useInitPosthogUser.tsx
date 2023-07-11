@@ -6,7 +6,9 @@ import { useCommonDriftStore } from '../stores';
  * Initializes the PostHog user with the current wallet public key.
  */
 const useInitPostHogUser = () => {
-	const walletContext = useCommonDriftStore((s) => s.currentlyConnectedWalletContext);
+	const walletContext = useCommonDriftStore(
+		(s) => s.currentlyConnectedWalletContext
+	);
 	const publicKey = walletContext?.publicKey;
 
 	useEffect(() => {

@@ -1,1 +1,1 @@
-export * from './useDriftStore';
+export * from './useCommonDriftStore';
