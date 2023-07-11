@@ -1,4 +1,4 @@
-import { DriftStoreState } from '../stores/useDriftStore';
+import { CommonDriftStore } from '../stores/useDriftStore';
 import {
 	BulkAccountLoader,
 	DriftClient,
@@ -30,8 +30,8 @@ const POLLING_FREQUENCY_MS = 1000;
 const DEFAULT_COMMITMENT_LEVEL: Commitment = 'confirmed';
 
 const createDriftActions = (
-	get: StoreApi<DriftStoreState>['getState'],
-	set: (x: (s: DriftStoreState) => void) => void
+	get: StoreApi<CommonDriftStore>['getState'],
+	set: (x: (s: CommonDriftStore) => void) => void
 ) => {
 	const subscribeToDriftClientData = async () => {
 		try {

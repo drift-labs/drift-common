@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useDriftStore } from '../stores';
+import { useCommonDriftStore } from '../stores';
 import useDevSwitchIsOn from './useDevSwitchIsOn';
 import useIsMainnet from './useIsMainnet';
 
@@ -60,7 +60,7 @@ export const checkIfCountryIsBlocked = async () => {
  * Dev mode, `process.env.NEXT_PUBLIC_ONLY_GEOBLOCK_MAINNET === true` and `process.env.NEXT_PUBLIC_IGNORE_GEOBLOCK === true` will override the geoblock.
  */
 const useGeolocation = () => {
-	const setStore = useDriftStore((s) => s.set);
+	const setStore = useCommonDriftStore((s) => s.set);
 	const devswitchIsOn = useDevSwitchIsOn();
 	const isMainnet = useIsMainnet();
 

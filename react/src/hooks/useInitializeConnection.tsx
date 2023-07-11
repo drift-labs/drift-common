@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 // import useSavedSettings from './useSavedSettings';
-import { useDriftStore } from '../stores/useDriftStore';
+import { useCommonDriftStore } from '../stores/useDriftStore';
 import { useDriftActions } from './useDriftActions';
 import { EnvironmentConstants } from '@drift/common';
 
 const useInitializeConnection = () => {
 	// todo get this to work:
-	const Env = useDriftStore((s) => s.env);
+	const Env = useCommonDriftStore((s) => s.env);
 	const actions = useDriftActions();
 	// const [savedSettings] = useSavedSettings();
 

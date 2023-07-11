@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import createDriftActions from '../actions/driftActions';
-import { useDriftStore } from '../stores';
+import { useCommonDriftStore } from '../stores';
 
 /**
  * Returns the common Drift actions object.
  */
 function useCommonDriftActions(): ReturnType<typeof createDriftActions> {
-	const [getStore, setStore] = useDriftStore((s) => [s.get, s.set]);
+	const [getStore, setStore] = useCommonDriftStore((s) => [s.get, s.set]);
 
 	const getActions = useCallback(() => {
 		return createDriftActions(getStore, setStore);

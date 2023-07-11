@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from 'react';
 
-import { DriftStoreState, useDriftStore } from '../stores/useDriftStore';
+import { CommonDriftStore, useCommonDriftStore } from '../stores/useDriftStore';
 import { ActionsProvider } from '../hooks/useDriftActions';
 
 import useInitializeConnection from '../hooks/useInitializeConnection';
@@ -18,7 +18,7 @@ import useInitializeConnection from '../hooks/useInitializeConnection';
 // import { useWalletAutoConnect } from '../hooks/useWalletAutoConnect';
 
 const AppSetup = (props: PropsWithChildren) => {
-	const env = useDriftStore((s: DriftStoreState) => s.env);
+	const env = useCommonDriftStore((s: CommonDriftStore) => s.env);
 
 	useInitializeConnection();
 	// useIdlePollingRateSwitcher();

@@ -60,7 +60,7 @@ const DEFAULT_SPOT_MARKET_DATA = {
 	percentOfCapUsed: 0,
 };
 
-export interface DriftStoreState {
+export interface CommonDriftStore {
 	authority: PublicKey | null | undefined;
 	authorityString: string;
 	currentlyConnectedWalletContext: WalletContextState | null;
@@ -93,8 +93,8 @@ export interface DriftStoreState {
 	spotMarketData: SpotMarketData;
 	emulationMode: boolean;
 	isGeoblocked: boolean | undefined;
-	set: (x: (s: DriftStoreState) => void) => void;
-	get: () => DriftStoreState;
+	set: (x: (s: CommonDriftStore) => void) => void;
+	get: () => CommonDriftStore;
 	clearUserData: () => void;
 	eventRecords: {
 		mostRecentTx: string | undefined;
@@ -131,7 +131,7 @@ const defaultState = {
 	},
 };
 
-let useDriftStore: UseBoundStore<StoreApi<DriftStoreState>>;
+let useCommonDriftStore: UseBoundStore<StoreApi<CommonDriftStore>>;
 
 const initializeDriftStore = (Env: {
 	driftEnv: DriftEnv;
@@ -141,9 +141,9 @@ const initializeDriftStore = (Env: {
 	// nextEnv?: string;
 	isDev?: boolean;
 }) => {
-	if (!useDriftStore) {
-		useDriftStore = create<DriftStoreState>()((set, get) => {
-			const setProducerFn = (fn: (s: DriftStoreState) => void) =>
+	if (!useCommonDriftStore) {
+		useCommonDriftStore = create<CommonDriftStore>()((set, get) => {
+			const setProducerFn = (fn: (s: CommonDriftStore) => void) =>
 				set(produce(fn));
 			return {
 				...defaultState,
@@ -173,4 +173,4 @@ const initializeDriftStore = (Env: {
 	}
 };
 
-export { initializeDriftStore, useDriftStore };
+export { initializeDriftStore, useCommonDriftStore };

@@ -1,12 +1,12 @@
 import posthog from 'posthog-js';
 import { useEffect } from 'react';
-import { useDriftStore } from '../stores';
+import { useCommonDriftStore } from '../stores';
 
 /**
  * Initializes the PostHog user with the current wallet public key.
  */
 const useInitPostHogUser = () => {
-	const walletContext = useDriftStore((s) => s.currentlyConnectedWalletContext);
+	const walletContext = useCommonDriftStore((s) => s.currentlyConnectedWalletContext);
 	const publicKey = walletContext?.publicKey;
 
 	useEffect(() => {

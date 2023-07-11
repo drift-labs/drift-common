@@ -1,10 +1,10 @@
-import { useDriftStore } from '../stores';
+import { useCommonDriftStore } from '../stores';
 
 /**
  * Checks if the drift client is subscribed and ready to use.
  */
 const useDriftClientIsReady = () => {
-	const driftClientIsReady = useDriftStore((s) => {
+	const driftClientIsReady = useCommonDriftStore((s) => {
 		return (
 			s.driftClient.client &&
 			s.driftClient.client.isSubscribed &&

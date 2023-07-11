@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useIdle } from 'react-use';
 import useDriftClientIsReady from './useDriftClientIsReady';
 import { PollingDriftClientAccountSubscriber } from '@drift-labs/sdk';
-import { useDriftStore } from '../stores';
+import { useCommonDriftStore } from '../stores';
 
 const IDLE_1_MIN_POLLING_RATE = 10000;
 const IDLE_10_MIN_POLLING_RATE = 60000;
@@ -14,9 +14,9 @@ const useIdlePollingRateSwitcher = () => {
 	const idle1Minute = useIdle(60e3);
 	const idle10Minutes = useIdle(600e3);
 	const wasIdle = useRef(false);
-	const driftClient = useDriftStore((s) => s.driftClient.client);
+	const driftClient = useCommonDriftStore((s) => s.driftClient.client);
 	const driftClientIsReady = useDriftClientIsReady();
-	const env = useDriftStore((s) => s.env);
+	const env = useCommonDriftStore((s) => s.env);
 
 	const BASE_POLLING_RATE = env.basePollingRateMs;
 

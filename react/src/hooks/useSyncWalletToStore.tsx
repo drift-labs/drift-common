@@ -1,7 +1,7 @@
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { useEffect } from 'react';
 import { BASE_PRECISION_EXP, BigNum } from '@drift-labs/sdk';
-import { useDriftStore } from '../stores';
+import { useCommonDriftStore } from '../stores';
 import useCommonDriftActions from './useCommonDriftActions';
 
 /**
@@ -11,7 +11,7 @@ import useCommonDriftActions from './useCommonDriftActions';
  */
 const useSyncWalletToStore = (walletContext: WalletContextState) => {
 	const actions = useCommonDriftActions();
-	const set = useDriftStore((s) => s.set);
+	const set = useCommonDriftStore((s) => s.set);
 
 	const handleWalletDisconnect = actions.handleWalletDisconnect;
 

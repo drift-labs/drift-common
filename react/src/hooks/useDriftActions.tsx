@@ -4,13 +4,13 @@ import React, {
 	useContext,
 	useMemo,
 } from 'react';
-import { useDriftStore } from '../stores/useDriftStore';
+import { useCommonDriftStore } from '../stores/useDriftStore';
 import createDriftActions from '../actions/driftActions';
 
 const ActionsContext = createContext({});
 
 export const ActionsProvider = (props: PropsWithChildren) => {
-	const [getAppStore, setAppStore] = useDriftStore((s) => [s.get, s.set]);
+	const [getAppStore, setAppStore] = useCommonDriftStore((s) => [s.get, s.set]);
 
 	const actions = useMemo(
 		() => createDriftActions(getAppStore, setAppStore),
