@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { useCommonDriftStore } from '../stores/useCommonDriftStore';
-import { useDriftActions } from './useDriftActions';
+import { useCommonDriftActions } from './useCommonDriftActions';
+import { useCurrentRpc } from './useCurrentRpc';
 
 const useInitializeConnection = () => {
-	const [Env, currentRpc] = useCommonDriftStore((s) => [s.env, s.currentRpc]);
-	const actions = useDriftActions();
+	const Env = useCommonDriftStore((s) => s.env);
+	const actions = useCommonDriftActions();
+	const [currentRpc] = useCurrentRpc();
 
 	const initConnection = async () => {
 		const rpcToUse = Env.rpcOverride
@@ -17,7 +19,7 @@ const useInitializeConnection = () => {
 
 		if (Env.isDev) {
 			console.log(`using driftEnv ${Env.driftEnv}`);
-			console.log(`using rpc ${currentRpc?.value}`);
+			console.log(`using rpc ${currentRpc.value}`);
 		}
 
 		if (!rpcToUse) {

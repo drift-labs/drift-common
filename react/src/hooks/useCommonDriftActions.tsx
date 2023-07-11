@@ -5,7 +5,7 @@ import { useCommonDriftStore } from '../stores';
 /**
  * Returns the common Drift actions object.
  */
-function useCommonDriftActions(): ReturnType<typeof createDriftActions> {
+export function useCommonDriftActions(): ReturnType<typeof createDriftActions> {
 	const [getStore, setStore] = useCommonDriftStore((s) => [s.get, s.set]);
 
 	const getActions = useCallback(() => {
@@ -20,5 +20,3 @@ function useCommonDriftActions(): ReturnType<typeof createDriftActions> {
 
 	return actions;
 }
-
-export default useCommonDriftActions;

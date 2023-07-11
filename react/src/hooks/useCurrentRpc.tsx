@@ -10,7 +10,7 @@ const DEFAULT_MAINNET_RPC =
 	MAINNET_RPCS.find((rpc) => rpc.label.toLowerCase().match('helius')) ||
 	MAINNET_RPCS[0];
 
-const useCurrentRpc = () => {
+const _useCurrentRpc = () => {
 	const Env = useCommonDriftStore((s) => s.env);
 
 	const rpcToUse =
@@ -27,10 +27,10 @@ const useCurrentRpc = () => {
 	];
 };
 
-export default singletonHook(
+export const useCurrentRpc = singletonHook(
 	[DEFAULT_MAINNET_RPC, () => {}] as [
 		RpcEndpoint,
 		(savedRpc: RpcEndpoint) => void
 	],
-	useCurrentRpc
+	_useCurrentRpc
 );

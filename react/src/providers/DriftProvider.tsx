@@ -1,17 +1,12 @@
-import React, { PropsWithChildren } from 'react';
-
-import {
-	CommonDriftStore,
-	useCommonDriftStore,
-} from '../stores/useCommonDriftStore';
-import { ActionsProvider } from '../hooks/useDriftActions';
-
+import React, { Context, useEffect } from 'react';
 import useInitializeConnection from '../hooks/useInitializeConnection';
 // import useIdlePollingRateSwitcher from '../hooks/useIdlePollingRateSwitcher';
 // import useSolBalance from '../hooks/useSolBalance';
 // import useEventsRecords from '../hooks/useEventRecords';
 // import useSyncMSolMetrics from '../hooks/useSyncMSolMetrics';
 // import useSyncWalletToStore from '../hooks/useSyncWalletToStore';
+import { WalletContextState } from '@solana/wallet-adapter-react';
+import { useCommonDriftStore } from '../stores';
 // import useCurrentUserData from '../hooks/useCurrentUserData';
 // import useSpotMarketData from '../hooks/useSpotMarketData';
 // import useEmulation from '../hooks/useEmulation';
@@ -20,12 +15,22 @@ import useInitializeConnection from '../hooks/useInitializeConnection';
 // import useInitPostHogUser from '../hooks/useInitPosthogUser';
 // import { useWalletAutoConnect } from '../hooks/useWalletAutoConnect';
 
-const AppSetup = (props: PropsWithChildren) => {
-	const env = useCommonDriftStore((s: CommonDriftStore) => s.env);
+interface AppSetupProps {
+	children: React.ReactNode;
+	walletContext: Context<WalletContextState>;
+}
+
+const DriftProvider = (props: AppSetupProps) => {
+	const get = useCommonDriftStore((s) => s.get);
+
+	useEffect(() => {
+		// @ts-ignore
+		window.drift_dev = { getStore: get };
+	}, []);
 
 	useInitializeConnection();
 	// useIdlePollingRateSwitcher();
-	// useSyncWalletToStore();
+	// useSyncWalletToStore(props.walletContext);
 	// useSolBalance();
 	// useSyncMSolMetrics();
 	// useCurrentUserData();
@@ -37,20 +42,7 @@ const AppSetup = (props: PropsWithChildren) => {
 	// useWalletAutoConnect();
 	// useEventsRecords();
 
-	console.log('hello from drift-common');
-	console.log(env);
-
 	return <>{props.children}</>;
-};
-
-const DriftProvider = (props: PropsWithChildren) => {
-	// AppSetup needs to go inside of ActionsProvider to make sure actions are defined within those hooks
-	// We can move or rename it if we want
-	return (
-		<ActionsProvider>
-			<AppSetup>{props.children}</AppSetup>
-		</ActionsProvider>
-	);
 };
 
 export { DriftProvider };
