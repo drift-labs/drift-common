@@ -16,8 +16,7 @@ const useSyncWalletToStore = () => {
 
 	useEffect(() => {
 		walletContextState?.wallet?.adapter?.on('connect', () => {
-			const authority =
-				walletContextState?.wallet?.adapter?.publicKey;
+			const authority = walletContextState?.wallet?.adapter?.publicKey;
 
 			set((s) => {
 				s.currentSolBalance = {
