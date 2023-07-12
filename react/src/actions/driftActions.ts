@@ -11,11 +11,7 @@ import {
 	getMarketsAndOraclesForSubscription,
 	initialize,
 } from '@drift-labs/sdk';
-import {
-	COMMON_UI_UTILS,
-	EnvironmentConstants,
-	RpcEndpoint,
-} from '@drift/common';
+import { EnvironmentConstants, RpcEndpoint } from '@drift/common';
 import { Commitment, Connection, Keypair } from '@solana/web3.js';
 import { StoreApi } from 'zustand';
 
@@ -200,15 +196,10 @@ const createDriftActions = (
 	const handleWalletDisconnect = async () => {
 		const state = get();
 
-		const driftClient = state.driftClient.client;
+		const driftClient = state.driftClient.client!;
 
-		if (driftClient) {
-			// Switch to a random wallet to stop
-			driftClient.updateWallet(new Wallet(new Keypair()));
-
-			COMMON_UI_UTILS.unsubscribeUsersInDriftClient(driftClient);
-		}
-
+		// Switch to a random wallet to stop
+		driftClient.updateWallet(new Wallet(new Keypair()));
 		state.clearUserData();
 	};
 

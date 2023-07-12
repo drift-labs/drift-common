@@ -85,9 +85,9 @@ acorn-jsx@^5.3.2:
   integrity sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==
 
 acorn@^8.9.0:
-  version "8.9.0"
-  resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.9.0.tgz#78a16e3b2bcc198c10822786fa6679e245db5b59"
-  integrity sha512-jaVNAFBHNLXspO543WnNNPZFRtavh3skAkITqD0/2aeMkKZTN+254PyhwxFYrk3vQ1xfY+2wbesJMs/JC8/PwQ==
+  version "8.10.0"
+  resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.10.0.tgz#8be5b3907a67221a81ab23c7889c4c5526b62ec5"
+  integrity sha512-F0SAmZ8iUtS//m8DmCTA0jlh6TDKkHQyK6xc6V4KDTyZKA9dnvX9/3sRTVQrWm79glUAZbnmmNcdYwUIHWVybw==
 
 ajv@^6.10.0, ajv@^6.12.4:
   version "6.12.6"
@@ -547,9 +547,9 @@ path-key@^3.1.0:
   integrity sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==
 
 posthog-js@^1.70.0:
-  version "1.70.0"
-  resolved "https://registry.yarnpkg.com/posthog-js/-/posthog-js-1.70.0.tgz#2b10e4d2e5c68a00bf97f36a1950429590a76a30"
-  integrity sha512-g3j9tXVC+cbD1a7yX+hI4i5/WksvxiSFTLXnsPaYECjz93LtovBtpQA2DFxZiB2gWPPnt7DNz6VokRKof/7VMw==
+  version "1.70.2"
+  resolved "https://registry.yarnpkg.com/posthog-js/-/posthog-js-1.70.2.tgz#b93ba832851a807a2867df89d0cfc359f603c1a3"
+  integrity sha512-tp3FpdndxjH4g8gGubwepDy2HdNPog4+R04N7+I/xZNRnhWhshmqsufLKE2UT0ocHI686XXDMIDzJrtWRTUXPw==
   dependencies:
     fflate "^0.4.1"
 
