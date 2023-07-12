@@ -1542,12 +1542,18 @@ export class SerializableSwapRecord implements SwapRecordEvent {
 
 @inheritSerialization(SerializableSwapRecord)
 export class UISerializableSwapRecord extends SerializableSwapRecord {
+	// @ts-ignore
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) amountOut: BigNum;
+	// @ts-ignore
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) amountIn: BigNum;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
 	outOraclePrice: BigNum;
+	// @ts-ignore
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
 	inOraclePrice: BigNum;
+	// @ts-ignore
 	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns) fee: BigNum;
 
 	static onDeserialized(_data: JsonObject, instance: UISerializableSwapRecord) {

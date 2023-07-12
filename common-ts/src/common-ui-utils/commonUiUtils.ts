@@ -64,14 +64,6 @@ const awaitAccountInitializationChainState = async (
 	throw new Error('awaitAccountInitializationFailed');
 };
 
-const unsubscribeUsersInDriftClient = async (driftClient: DriftClient) => {
-	const allUsers = await fetchUserClientsAndAccounts(driftClient);
-
-	Object.values(allUsers).map(async (acct) => {
-		await acct.user.unsubscribe();
-	});
-};
-
 /**
  * Using your own callback to do the account initialization, this method will run the initialization step, switch to the drift user, await for the account to be available on chain, subscribe to the user account, and switch to the user account using the drift client.
  *
@@ -162,6 +154,5 @@ export const COMMON_UI_UTILS = {
 	fetchUserClientsAndAccounts,
 	fetchCurrentSubaccounts,
 	initializeAndSubscribeToNewUserAccount,
-	unsubscribeUsersInDriftClient,
 	getMarketKey,
 };

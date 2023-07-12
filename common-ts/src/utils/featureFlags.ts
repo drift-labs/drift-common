@@ -1,3 +1,3 @@
 export const FEATURE_FLAGS = {
-	UI_ORACLE_CANDLES: false,
+	UI_ORACLE_CANDLES: true,
 };
