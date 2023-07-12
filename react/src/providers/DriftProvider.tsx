@@ -15,13 +15,8 @@ interface AppSetupProps {
 		idlePollingRateSwitcher?: boolean;
 		emulation?: boolean;
 	};
-	props?: {
-		syncWalletToStore?: {
-			clearDataFromStore?: () => void;
-		};
-		geoBlocking?: {
-			callback?: () => void;
-		};
+	geoBlocking?: {
+		callback?: () => void;
 	};
 }
 
@@ -46,10 +41,10 @@ const DriftProvider = (props: AppSetupProps) => {
 
 	useInitializeConnection();
 	useSolBalance();
-	useGeoBlocking(props.props?.geoBlocking?.callback);
+	useGeoBlocking(props?.geoBlocking?.callback);
 
 	// not sure why this doesn't work in drift provider, but works in app setup
-	// useSyncWalletToStore(props.props?.syncWalletToStore?.clearDataFromStore);
+	// useSyncWalletToStore(props?.syncWalletToStore?.clearDataFromStore);
 
 	return <>{props.children}</>;
 };

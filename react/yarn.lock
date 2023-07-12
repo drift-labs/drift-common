@@ -350,7 +350,7 @@
 "@drift/common@file:../common-ts":
   version "1.0.0"
   dependencies:
-    "@drift-labs/sdk" "file:../../../../Library/Caches/Yarn/v6/npm-@drift-common-1.0.0-002bbf5a-b5a6-4db0-97ba-50a2ca2eeb47-1689161477395/node_modules/@drift/protocol/sdk"
+    "@drift-labs/sdk" "file:../../../../Library/Caches/Yarn/v6/npm-@drift-common-1.0.0-e2a82c6d-a8f8-4f61-b584-b9834eba7106-1689183805302/node_modules/@drift/protocol/sdk"
     "@jest/globals" "^29.3.1"
     "@slack/web-api" "^6.4.0"
     "@solana/spl-token" "^0.3.8"
@@ -1818,11 +1818,6 @@ fb-watchman@^2.0.0:
   dependencies:
     bser "2.1.1"
 
-fflate@^0.4.1:
-  version "0.4.8"
-  resolved "https://registry.yarnpkg.com/fflate/-/fflate-0.4.8.tgz#f90b82aefbd8ac174213abb338bd7ef848f0f5ae"
-  integrity sha512-FJqqoDBR00Mdj9ppamLa/Y7vxm+PRmNWA67N846RvsoYVMKB4q3y/de5PA7gUmRMYK/8CMz2GDZQmCRN1wBcWA==
-
 file-entry-cache@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/file-entry-cache/-/file-entry-cache-6.0.1.tgz#211b2dd9659cb0394b073e7323ac3c933d522027"
@@ -2742,13 +2737,6 @@ pirates@^4.0.4:
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/pirates/-/pirates-4.0.6.tgz#3018ae32ecfcff6c29ba2267cbf21166ac1f36b9"
   integrity sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==
-
-posthog-js@^1.70.1:
-  version "1.70.2"
-  resolved "https://registry.yarnpkg.com/posthog-js/-/posthog-js-1.70.2.tgz#b93ba832851a807a2867df89d0cfc359f603c1a3"
-  integrity sha512-tp3FpdndxjH4g8gGubwepDy2HdNPog4+R04N7+I/xZNRnhWhshmqsufLKE2UT0ocHI686XXDMIDzJrtWRTUXPw==
-  dependencies:
-    fflate "^0.4.1"
 
 prelude-ls@^1.2.1:
   version "1.2.1"
