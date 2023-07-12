@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useCommonDriftStore } from '../stores';
 import useDevSwitchIsOn from './useDevSwitchIsOn';
 import useIsMainnet from './useIsMainnet';
+import { useWalletContext } from './useWalletContext';
 
 const LOCATION_BLACKLIST = [
 	{ code: 'AG', name: 'Antigua and Barbuda' },
@@ -55,24 +56,26 @@ export const checkIfCountryIsBlocked = async () => {
 };
 
 /**
- * Checks and sets the geoblock status of the user in the store.
+ * Checks and sets the geo-block status of the user in the store.
  *
  * Dev mode, `process.env.NEXT_PUBLIC_ONLY_GEOBLOCK_MAINNET === true` and `process.env.NEXT_PUBLIC_IGNORE_GEOBLOCK === true` will override the geoblock.
+ *
+ * You may provide a `callback` to be called when the user is confirmed to be geo-blocked.
  */
-const useGeolocation = () => {
+export const useGeoBlocking = (callback?: () => void) => {
 	const setStore = useCommonDriftStore((s) => s.set);
-	const devswitchIsOn = useDevSwitchIsOn();
+	const isGeoBlocked = useCommonDriftStore((s) => s.isGeoblocked);
+	const { devSwitchIsOn } = useDevSwitchIsOn();
 	const isMainnet = useIsMainnet();
+	const walletContext = useWalletContext();
 
 	const onlyGeoBlockMainnet =
 		process.env.NEXT_PUBLIC_ONLY_GEOBLOCK_MAINNET === 'true';
 
 	const ignoreGeoBlock =
-		process.env.NEXT_PUBLIC_IGNORE_GEOBLOCK === 'true' || devswitchIsOn;
+		process.env.NEXT_PUBLIC_IGNORE_GEOBLOCK === 'true' || devSwitchIsOn;
 
 	useEffect(() => {
-		if (devswitchIsOn === undefined) return;
-
 		if ((onlyGeoBlockMainnet && !isMainnet) || ignoreGeoBlock) {
 			setStore((s) => {
 				s.isGeoblocked = false;
@@ -89,7 +92,12 @@ const useGeolocation = () => {
 		});
 	}, [onlyGeoBlockMainnet, ignoreGeoBlock, isMainnet]);
 
+	useEffect(() => {
+		if (isGeoBlocked && walletContext?.connected) {
+			callback && callback();
+			walletContext?.disconnect();
+		}
+	}, [isGeoBlocked, walletContext?.connected]);
+
 	return;
 };
-
-export default useGeolocation;

@@ -21,7 +21,7 @@ const useDevSwitchIsOn = singletonHook(
 			setDevSwitchIsOn(devSwitchIsOn);
 		};
 
-		return { devSwitchIsOn, toggleDevSwitch };
+		return { devSwitchIsOn: !!devSwitchIsOn, toggleDevSwitch };
 	}
 );
 
