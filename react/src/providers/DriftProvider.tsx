@@ -2,7 +2,7 @@ import React, { Context, useContext, useEffect } from 'react';
 import useInitializeConnection from '../hooks/useInitializeConnection';
 import useIdlePollingRateSwitcher from '../hooks/useIdlePollingRateSwitcher';
 import { useSolBalance } from '../hooks/useSolBalance';
-import { useSyncWalletToStore } from '../hooks/useSyncWalletToStore';
+// import { useSyncWalletToStore } from '../hooks/useSyncWalletToStore';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { useCommonDriftStore } from '../stores';
 import { useGeoBlocking } from '../hooks/useGeoBlocking';
@@ -45,9 +45,11 @@ const DriftProvider = (props: AppSetupProps) => {
 	!props.disable?.emulation && useEmulation();
 
 	useInitializeConnection();
-	useSyncWalletToStore(props.props?.syncWalletToStore?.clearDataFromStore);
 	useSolBalance();
 	useGeoBlocking(props.props?.geoBlocking?.callback);
+
+	// not sure why this doesn't work in drift provider, but works in app setup
+	// useSyncWalletToStore(props.props?.syncWalletToStore?.clearDataFromStore);
 
 	return <>{props.children}</>;
 };
