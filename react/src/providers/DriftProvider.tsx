@@ -17,6 +17,9 @@ interface AppSetupProps {
 		emulation?: boolean;
 	};
 	props?: {
+		syncWalletToStore?: {
+			clearDataFromStore?: () => void;
+		};
 		geoBlocking?: {
 			callback?: () => void;
 		};
@@ -41,7 +44,7 @@ const DriftProvider = (props: AppSetupProps) => {
 
 	useInitializeConnection();
 	!props.disable?.idlePollingRateSwitcher && useIdlePollingRateSwitcher();
-	useSyncWalletToStore();
+	useSyncWalletToStore(props.props?.syncWalletToStore?.clearDataFromStore);
 	useSolBalance();
 	useGeoBlocking(props.props?.geoBlocking?.callback);
 	useInitPostHogUser();
