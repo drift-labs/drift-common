@@ -6,7 +6,6 @@ import { useSyncWalletToStore } from '../hooks/useSyncWalletToStore';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { useCommonDriftStore } from '../stores';
 import { useGeoBlocking } from '../hooks/useGeoBlocking';
-import { useInitPostHogUser } from '../hooks/useInitPosthogUser';
 import { useEmulation } from '../hooks/useEmulation';
 
 interface AppSetupProps {
@@ -42,13 +41,13 @@ const DriftProvider = (props: AppSetupProps) => {
 		window.drift_dev = { getStore: get };
 	}, []);
 
-	useInitializeConnection();
 	!props.disable?.idlePollingRateSwitcher && useIdlePollingRateSwitcher();
+	!props.disable?.emulation && useEmulation();
+
+	useInitializeConnection();
 	useSyncWalletToStore(props.props?.syncWalletToStore?.clearDataFromStore);
 	useSolBalance();
 	useGeoBlocking(props.props?.geoBlocking?.callback);
-	useInitPostHogUser();
-	!props.disable?.emulation && useEmulation();
 
 	return <>{props.children}</>;
 };

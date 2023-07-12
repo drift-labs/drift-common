@@ -206,8 +206,6 @@ const createDriftActions = (
 			// Switch to a random wallet to stop
 			driftClient.updateWallet(new Wallet(new Keypair()));
 
-			// TODO need to move COMMON_UI_UTILS here\?
-			// @ts-ignore
 			COMMON_UI_UTILS.unsubscribeUsersInDriftClient(driftClient);
 		}
 
