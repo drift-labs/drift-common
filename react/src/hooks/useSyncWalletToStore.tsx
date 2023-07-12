@@ -9,7 +9,7 @@ import { useWalletContext } from './useWalletContext';
  *
  * Also sets SOL balance in the store to 0 on disconnect.
  */
-const useSyncWalletToStore = () => {
+export const useSyncWalletToStore = () => {
 	const actions = useCommonDriftActions();
 	const set = useCommonDriftStore((s) => s.set);
 	const walletContextState = useWalletContext();
@@ -63,5 +63,3 @@ const useSyncWalletToStore = () => {
 	// 	});
 	// }, [walletContext?.wallet?.adapter?.publicKey]);
 };
-
-export default useSyncWalletToStore;

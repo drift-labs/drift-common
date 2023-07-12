@@ -1,10 +1,10 @@
 import React, { Context, useContext, useEffect } from 'react';
 import useInitializeConnection from '../hooks/useInitializeConnection';
 // import useIdlePollingRateSwitcher from '../hooks/useIdlePollingRateSwitcher';
-// import useSolBalance from '../hooks/useSolBalance';
+import { useSolBalance } from '../hooks/useSolBalance';
 // import useEventsRecords from '../hooks/useEventRecords';
 // import useSyncMSolMetrics from '../hooks/useSyncMSolMetrics';
-// import useSyncWalletToStore from '../hooks/useSyncWalletToStore';
+import { useSyncWalletToStore } from '../hooks/useSyncWalletToStore';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { useCommonDriftStore } from '../stores';
 // import useCurrentUserData from '../hooks/useCurrentUserData';
@@ -38,8 +38,8 @@ const DriftProvider = (props: AppSetupProps) => {
 
 	useInitializeConnection();
 	// useIdlePollingRateSwitcher();
-	// useSyncWalletToStore(props.walletContext);
-	// useSolBalance();
+	useSyncWalletToStore();
+	useSolBalance();
 	// useSyncMSolMetrics();
 	// useCurrentUserData();
 	// useSpotMarketData();
