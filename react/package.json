@@ -15,7 +15,6 @@
 		"lib": "lib"
 	},
 	"devDependencies": {
-		"@drift-labs/sdk": "^2.32.1-beta.12",
 		"@solana/spl-token": "^0.3.8",
 		"@solana/web3.js": "^1.77.3",
 		"@types/react": "^18.2.14",
@@ -30,6 +29,7 @@
 		"react": "^18.2.0"
 	},
 	"dependencies": {
+		"@drift/common": "file:../common-ts",
 		"@solana/wallet-adapter-react": "^0.15.32",
 		"immer": "^10.0.2",
 		"react-singleton-hook": "^4.0.1",

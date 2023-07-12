@@ -3,7 +3,6 @@ import { produce } from 'immer';
 import {
 	BigNum,
 	BulkAccountLoader,
-	DepositRecord,
 	DriftClient,
 	DriftEnv,
 	QUOTE_PRECISION_EXP,
@@ -11,14 +10,11 @@ import {
 	User,
 	UserAccount,
 	initialize,
-	Event,
-	SwapRecord,
 } from '@drift-labs/sdk';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { RpcEndpoint } from '@drift/common';
 
 // @ts-ignore
-import type { Wallet } from '@solana/wallet-adapter-react';
+import type { WalletContextState } from '@solana/wallet-adapter-react';
 
 // any relevant user data we can keep up to date here
 export type UserData = {
@@ -27,14 +23,6 @@ export type UserData = {
 	spotPositions: SpotPosition[];
 	leverage: number;
 	accountId: number | undefined;
-};
-
-const DEFAULT_USER_DATA: UserData = {
-	user: undefined,
-	userAccount: undefined,
-	spotPositions: [],
-	leverage: 0,
-	accountId: undefined,
 };
 
 const DEFAULT_SOL_BALANCE = {
@@ -50,30 +38,14 @@ export type SpotMarketData = {
 	solBorrowCapacityRemaining: BigNum;
 	percentOfCapUsed: number;
 };
-
-const DEFAULT_SPOT_MARKET_DATA = {
-	tvl: BigNum.zero(),
-	deposits: BigNum.zero(),
-	borrows: BigNum.zero(),
-	currentPrice: BigNum.zero(),
-	solBorrowCapacityRemaining: BigNum.zero(),
-	percentOfCapUsed: 0,
-};
-
-export interface DriftStoreState {
+export interface CommonDriftStore {
 	authority: PublicKey | null | undefined;
 	authorityString: string;
-	currentlyConnectedWallet: Wallet | null;
+	currentlyConnectedWalletContext: WalletContextState | null;
 	currentSolBalance: {
 		value: BigNum;
 		loaded: boolean;
 	};
-	currentUserAccount: UserData;
-	userAccounts: UserAccount[];
-	userAccountNotInitialized: boolean | undefined;
-	subscribedToSubaccounts: boolean | undefined;
-	sdkConfig: ReturnType<typeof initialize> | undefined;
-	currentRpc: RpcEndpoint | undefined;
 	connection: Connection | undefined;
 	env: {
 		driftEnv: DriftEnv;
@@ -83,55 +55,45 @@ export interface DriftStoreState {
 		// nextEnv?: string;
 		isDev?: boolean;
 	};
-	driftEnv: DriftEnv;
+	sdkConfig: ReturnType<typeof initialize> | undefined;
 	driftClient: {
 		client?: DriftClient;
 		updateSignaler: any;
 		isSubscribed: boolean;
 	};
-	bulkAccountLoader: BulkAccountLoader | undefined;
-	spotMarketData: SpotMarketData;
+	subscribedToSubaccounts: boolean | undefined;
+	isGeoBlocked: boolean;
 	emulationMode: boolean;
-	isGeoBlocked: boolean | undefined;
-	set: (x: (s: DriftStoreState) => void) => void;
-	get: () => DriftStoreState;
+	bulkAccountLoader: BulkAccountLoader | undefined;
+	userAccounts: UserAccount[];
+	userAccountNotInitialized: boolean | undefined;
+	set: (x: (s: CommonDriftStore) => void) => void;
+	get: () => CommonDriftStore;
 	clearUserData: () => void;
-	eventRecords: {
-		mostRecentTx: string | undefined;
-		depositRecords: Event<DepositRecord>[];
-		swapRecords: Event<SwapRecord>[];
-	};
 }
 
 const defaultState = {
 	authority: undefined,
 	authorityString: '',
+	currentlyConnectedWalletContext: null,
 	currentSolBalance: DEFAULT_SOL_BALANCE,
-	currentlyConnectedWallet: null,
-	currentUserAccount: DEFAULT_USER_DATA,
-	userAccounts: [],
-	userAccountNotInitialized: undefined,
-	subscribedToSubaccounts: undefined,
-	sdkConfig: undefined,
-	currentRpc: undefined,
 	connection: undefined,
+	// env
+	sdkConfig: undefined,
 	driftClient: {
 		client: undefined,
 		updateSignaler: {},
 		isSubscribed: false,
 	},
-	bulkAccountLoader: undefined,
-	isGeoBlocked: undefined,
-	spotMarketData: DEFAULT_SPOT_MARKET_DATA,
+	subscribedToSubaccounts: undefined,
+	isGeoBlocked: false,
 	emulationMode: false,
-	eventRecords: {
-		mostRecentTx: undefined,
-		depositRecords: [],
-		swapRecords: [],
-	},
+	bulkAccountLoader: undefined,
+	userAccounts: [],
+	userAccountNotInitialized: undefined,
 };
 
-let useDriftStore: UseBoundStore<StoreApi<DriftStoreState>>;
+let useCommonDriftStore: UseBoundStore<StoreApi<CommonDriftStore>>;
 
 const initializeDriftStore = (Env: {
 	driftEnv: DriftEnv;
@@ -141,13 +103,12 @@ const initializeDriftStore = (Env: {
 	// nextEnv?: string;
 	isDev?: boolean;
 }) => {
-	if (!useDriftStore) {
-		useDriftStore = create<DriftStoreState>()((set, get) => {
-			const setProducerFn = (fn: (s: DriftStoreState) => void) =>
+	if (!useCommonDriftStore) {
+		useCommonDriftStore = create<CommonDriftStore>()((set, get) => {
+			const setProducerFn = (fn: (s: CommonDriftStore) => void) =>
 				set(produce(fn));
 			return {
 				...defaultState,
-				driftEnv: Env.driftEnv,
 				env: Env,
 				set: setProducerFn,
 				get: () => get(),
@@ -156,16 +117,9 @@ const initializeDriftStore = (Env: {
 						s.authority = undefined;
 						s.authorityString = '';
 						s.currentSolBalance = DEFAULT_SOL_BALANCE;
-						s.currentlyConnectedWallet = null;
-						s.currentUserAccount = DEFAULT_USER_DATA;
+						s.currentlyConnectedWalletContext = null;
 						s.userAccounts = [];
 						s.userAccountNotInitialized = undefined;
-						s.subscribedToSubaccounts = undefined;
-						s.eventRecords = {
-							depositRecords: [],
-							swapRecords: [],
-							mostRecentTx: undefined,
-						};
 					});
 				},
 			};
@@ -173,4 +127,4 @@ const initializeDriftStore = (Env: {
 	}
 };
 
-export { initializeDriftStore, useDriftStore };
+export { initializeDriftStore, useCommonDriftStore };

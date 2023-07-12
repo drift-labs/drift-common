@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"target": "ES2019",
+		"declaration": true,
+		"module": "commonjs",
+		"esModuleInterop": true,
+		"preserveConstEnums": true,
+		"sourceMap": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+		"baseUrl": ".",
+		"paths": {
+			"@drift-labs/sdk": ["../protocol/sdk"]
+		},
+		"outDir": "./lib"
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules"]
+}

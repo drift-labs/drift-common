@@ -1,4 +1,4 @@
-import { DriftStoreState } from '../stores/useDriftStore';
+import { CommonDriftStore } from '../stores/useCommonDriftStore';
 import {
 	BulkAccountLoader,
 	DriftClient,
@@ -11,11 +11,7 @@ import {
 	getMarketsAndOraclesForSubscription,
 	initialize,
 } from '@drift-labs/sdk';
-import {
-	COMMON_UI_UTILS,
-	EnvironmentConstants,
-	RpcEndpoint,
-} from '@drift/common';
+import { EnvironmentConstants, RpcEndpoint } from '@drift/common';
 import { Commitment, Connection, Keypair } from '@solana/web3.js';
 import { StoreApi } from 'zustand';
 
@@ -30,8 +26,8 @@ const POLLING_FREQUENCY_MS = 1000;
 const DEFAULT_COMMITMENT_LEVEL: Commitment = 'confirmed';
 
 const createDriftActions = (
-	get: StoreApi<DriftStoreState>['getState'],
-	set: (x: (s: DriftStoreState) => void) => void
+	get: StoreApi<CommonDriftStore>['getState'],
+	set: (x: (s: CommonDriftStore) => void) => void
 ) => {
 	const subscribeToDriftClientData = async () => {
 		try {
@@ -158,8 +154,8 @@ const createDriftActions = (
 			s.bulkAccountLoader = accountLoader;
 			s.connection = newConnection;
 			s.driftClient.client = newDriftClient;
-			s.driftEnv = driftEnvToUse;
-			s.currentRpc = newRpc;
+			s.env.driftEnv = driftEnvToUse;
+			// s.currentRpc = newRpc;
 			s.sdkConfig = sdkConfig;
 		});
 
@@ -200,17 +196,10 @@ const createDriftActions = (
 	const handleWalletDisconnect = async () => {
 		const state = get();
 
-		const driftClient = state.driftClient.client;
+		const driftClient = state.driftClient.client!;
 
-		if (driftClient) {
-			// Switch to a random wallet to stop
-			driftClient.updateWallet(new Wallet(new Keypair()));
-
-			// TODO need to move COMMON_UI_UTILS here\?
-			// @ts-ignore
-			COMMON_UI_UTILS.unsubscribeUsersInDriftClient(driftClient);
-		}
-
+		// Switch to a random wallet to stop
+		driftClient.updateWallet(new Wallet(new Keypair()));
 		state.clearUserData();
 	};
 
