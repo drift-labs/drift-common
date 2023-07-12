@@ -336,7 +336,7 @@
     buffer-layout "^1.2.0"
 
 "@drift-labs/sdk@file:../protocol/sdk":
-  version "2.33.1-beta.5"
+  version "2.34.1-beta.0"
   dependencies:
     "@coral-xyz/anchor" "0.26.0"
     "@ellipsis-labs/phoenix-sdk" "^1.4.2"
@@ -350,7 +350,7 @@
 "@drift/common@file:../common-ts":
   version "1.0.0"
   dependencies:
-    "@drift-labs/sdk" "file:../../../../Library/Caches/Yarn/v6/npm-@drift-common-1.0.0-1f08a7f4-d155-4946-be4b-a70bb92516c6-1689011124501/node_modules/@drift/protocol/sdk"
+    "@drift-labs/sdk" "file:../../../../Library/Caches/Yarn/v6/npm-@drift-common-1.0.0-310ee36c-ee76-4887-9a93-e7a88a226234-1689132706309/node_modules/@drift/protocol/sdk"
     "@jest/globals" "^29.3.1"
     "@slack/web-api" "^6.4.0"
     "@solana/spl-token" "^0.3.8"
@@ -1399,9 +1399,9 @@ camelcase@^6.2.1, camelcase@^6.3.0:
   integrity sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==
 
 caniuse-lite@^1.0.30001503:
-  version "1.0.30001514"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001514.tgz#e2a7e184a23affc9367b7c8d734e7ec4628c1309"
-  integrity sha512-ENcIpYBmwAAOm/V2cXgM7rZUrKKaqisZl4ZAI520FIkqGXUxJjmaIssbRW5HVVR5tyV6ygTLIm15aU8LUmQSaQ==
+  version "1.0.30001515"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001515.tgz#418aefeed9d024cd3129bfae0ccc782d4cb8f12b"
+  integrity sha512-eEFDwUOZbE24sb+Ecsx3+OvNETqjWIdabMy52oOkIgcUtAsQifjUG9q4U9dgTHJM2mfk4uEPxc0+xuFdJ629QA==
 
 cerializr@^3.1.4:
   version "3.1.4"
@@ -1598,9 +1598,9 @@ dotenv@10.0.0:
   integrity sha512-rlBi9d8jpv9Sf1klPjNfFAuWDjKLwTIJJ/VxtoTwIR6hnZxcEOQCZg2oIL3MWBYw5GpUDKOEnND7LXTbIpQ03Q==
 
 electron-to-chromium@^1.4.431:
-  version "1.4.454"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.454.tgz#774dc7cb5e58576d0125939ec34a4182f3ccc87d"
-  integrity sha512-pmf1rbAStw8UEQ0sr2cdJtWl48ZMuPD9Sto8HVQOq9vx9j2WgDEN6lYoaqFvqEHYOmGA9oRGn7LqWI9ta0YugQ==
+  version "1.4.457"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.457.tgz#3fdc7b4f97d628ac6b51e8b4b385befb362fe343"
+  integrity sha512-/g3UyNDmDd6ebeWapmAoiyy+Sy2HyJ+/X8KyvNeHfKRFfHaA2W8oF5fxD5F3tjBDcjpwo0iek6YNgxNXDBoEtA==
 
 error-stack-parser@^2.0.6:
   version "2.1.4"
@@ -2744,9 +2744,9 @@ pirates@^4.0.4:
   integrity sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==
 
 posthog-js@^1.70.1:
-  version "1.70.1"
-  resolved "https://registry.yarnpkg.com/posthog-js/-/posthog-js-1.70.1.tgz#65a720baea6723d96502b767a8c1d8b323be4f4d"
-  integrity sha512-UAnUOVBA60HapPmVHuV+8L6B10kKnH9WugNym/RZjAfOg8iCGCHxoUtD+80DqU/sO35YdFbgGK25e2BofEIaRg==
+  version "1.70.2"
+  resolved "https://registry.yarnpkg.com/posthog-js/-/posthog-js-1.70.2.tgz#b93ba832851a807a2867df89d0cfc359f603c1a3"
+  integrity sha512-tp3FpdndxjH4g8gGubwepDy2HdNPog4+R04N7+I/xZNRnhWhshmqsufLKE2UT0ocHI686XXDMIDzJrtWRTUXPw==
   dependencies:
     fflate "^0.4.1"
 
@@ -2896,9 +2896,9 @@ screenfull@^5.1.0:
   integrity sha512-9BakfsO2aUQN2K9Fdbj87RJIEZ82Q9IGim7FqM5OsebfoFC6ZHXgDq/KvniuLTPdeM8wY2o6Dj3WQ7KeQCj3cA==
 
 semver@^6.3.0:
-  version "6.3.0"
-  resolved "https://registry.yarnpkg.com/semver/-/semver-6.3.0.tgz#ee0a64c8af5e8ceea67687b133761e1becbd1d3d"
-  integrity sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==
+  version "6.3.1"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-6.3.1.tgz#556d2ef8689146e46dcea4bfdd095f3434dffcb4"
+  integrity sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==
 
 semver@^7.3.7, semver@^7.5.3:
   version "7.5.4"
