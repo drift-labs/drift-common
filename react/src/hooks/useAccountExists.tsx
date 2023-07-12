@@ -11,10 +11,9 @@ export const useAccountExists = () => {
 	const driftClientIsReady = useDriftClientIsReady();
 	const driftClient = useCommonDriftStore((s) => s.driftClient.client);
 	const walletState = useWalletContext();
-	const [userAccountNotInitialized, accountId] = useCommonDriftStore((s) => [
-		s.userAccountNotInitialized,
-		s.currentUserAccount?.accountId,
-	]);
+	const userAccountNotInitialized = useCommonDriftStore(
+		(s) => s.userAccountNotInitialized
+	);
 	const [accountExists, setAccountExists] = useState<boolean>();
 
 	const getAndSetUserExists = async () => {
@@ -39,7 +38,7 @@ export const useAccountExists = () => {
 	useEffect(() => {
 		if (!walletState?.connected || !driftClientIsReady) return;
 		getAndSetUserExists();
-	}, [walletState, driftClientIsReady, accountId, userAccountNotInitialized]);
+	}, [walletState, driftClientIsReady, userAccountNotInitialized]);
 
 	return accountExists;
 };

@@ -49,8 +49,9 @@ export const checkIfCountryIsBlocked = async () => {
 
 	const country_code = await result.text();
 
-	const countryIsBlocked =
-		LOCATION_BLACKLIST.find((country) => country.code === country_code) && true;
+	const countryIsBlocked = !!LOCATION_BLACKLIST.find(
+		(country) => country.code === country_code
+	);
 
 	return countryIsBlocked;
 };
@@ -64,7 +65,7 @@ export const checkIfCountryIsBlocked = async () => {
  */
 export const useGeoBlocking = (callback?: () => void) => {
 	const setStore = useCommonDriftStore((s) => s.set);
-	const isGeoBlocked = useCommonDriftStore((s) => s.isGeoblocked);
+	const isGeoBlocked = useCommonDriftStore((s) => s.isGeoBlocked);
 	const { devSwitchIsOn } = useDevSwitchIsOn();
 	const isMainnet = useIsMainnet();
 	const walletContext = useWalletContext();
@@ -78,7 +79,7 @@ export const useGeoBlocking = (callback?: () => void) => {
 	useEffect(() => {
 		if ((onlyGeoBlockMainnet && !isMainnet) || ignoreGeoBlock) {
 			setStore((s) => {
-				s.isGeoblocked = false;
+				s.isGeoBlocked = false;
 			});
 			return;
 		}
@@ -86,7 +87,7 @@ export const useGeoBlocking = (callback?: () => void) => {
 		checkIfCountryIsBlocked().then((countryIsBlocked) => {
 			if (countryIsBlocked) {
 				setStore((s) => {
-					s.isGeoblocked = countryIsBlocked;
+					s.isGeoBlocked = countryIsBlocked;
 				});
 			}
 		});

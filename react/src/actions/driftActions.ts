@@ -158,8 +158,8 @@ const createDriftActions = (
 			s.bulkAccountLoader = accountLoader;
 			s.connection = newConnection;
 			s.driftClient.client = newDriftClient;
-			s.driftEnv = driftEnvToUse;
-			s.currentRpc = newRpc;
+			s.env.driftEnv = driftEnvToUse;
+			// s.currentRpc = newRpc;
 			s.sdkConfig = sdkConfig;
 		});
 

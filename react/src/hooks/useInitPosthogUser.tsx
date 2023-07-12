@@ -5,7 +5,7 @@ import { useWalletContext } from './useWalletContext';
 /**
  * Initializes the PostHog user with the current wallet public key.
  */
-const useInitPostHogUser = () => {
+export const useInitPostHogUser = () => {
 	const walletContext = useWalletContext();
 	const publicKey = walletContext?.publicKey;
 
@@ -21,5 +21,3 @@ const useInitPostHogUser = () => {
 		}
 	}, [publicKey, posthog]);
 };
-
-export default useInitPostHogUser;

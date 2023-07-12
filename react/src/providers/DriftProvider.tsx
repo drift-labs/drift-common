@@ -6,16 +6,15 @@ import { useSyncWalletToStore } from '../hooks/useSyncWalletToStore';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { useCommonDriftStore } from '../stores';
 import { useGeoBlocking } from '../hooks/useGeoBlocking';
-// import useSpotMarketData from '../hooks/useSpotMarketData';
-// import useEmulation from '../hooks/useEmulation';
-// import useInitPostHogUser from '../hooks/useInitPosthogUser';
-// import { useWalletAutoConnect } from '../hooks/useWalletAutoConnect';
+import { useInitPostHogUser } from '../hooks/useInitPosthogUser';
+import { useEmulation } from '../hooks/useEmulation';
 
 interface AppSetupProps {
 	children: React.ReactNode;
 	walletContext: Context<WalletContextState | null>;
 	disable?: {
 		idlePollingRateSwitcher?: boolean;
+		emulation?: boolean;
 	};
 	props?: {
 		geoBlocking?: {
@@ -44,12 +43,9 @@ const DriftProvider = (props: AppSetupProps) => {
 	!props.disable?.idlePollingRateSwitcher && useIdlePollingRateSwitcher();
 	useSyncWalletToStore();
 	useSolBalance();
-	// useSpotMarketData();
 	useGeoBlocking(props.props?.geoBlocking?.callback);
-	// useEmulation();
-	// useInitPostHogUser();
-	// useWalletAutoConnect();
-	// useEventsRecords();
+	useInitPostHogUser();
+	!props.disable?.emulation && useEmulation();
 
 	return <>{props.children}</>;
 };
