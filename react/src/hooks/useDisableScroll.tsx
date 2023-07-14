@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 /**
  * Disables overflow on the document body while an element is being rendered
  */
-const useDisableScroll = () => {
+export const useDisableScroll = () => {
 	useEffect(() => {
 		document.body.style.overflow = 'hidden';
 
@@ -12,5 +12,3 @@ const useDisableScroll = () => {
 		};
 	});
 };
-
-export default useDisableScroll;
