@@ -15,6 +15,7 @@
 	},
 	"dependencies": {
 		"eslint": "^8.44.0",
+		"posthog-js": "1.72.1",
 		"prettier": "^2.8.8"
 	}
 }

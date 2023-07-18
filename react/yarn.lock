@@ -347,7 +347,7 @@
 "@drift/common@file:../common-ts":
   version "1.0.0"
   dependencies:
-    "@drift-labs/sdk" "file:../../../../../../Library/Caches/Yarn/v6/npm-@drift-common-1.0.0-4aa26220-91fd-4263-9be0-cd1a46d96add-1689699410480/node_modules/@drift/protocol/sdk"
+    "@drift-labs/sdk" "file:../../../../../../Library/Caches/Yarn/v6/npm-@drift-common-1.0.0-ad562695-e80a-4e6d-8ab1-2b4bb9354f0a-1689708969734/node_modules/@drift/protocol/sdk"
     "@jest/globals" "^29.3.1"
     "@slack/web-api" "^6.4.0"
     "@solana/spl-token" "^0.3.8"
