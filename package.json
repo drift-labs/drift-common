@@ -1,21 +1,21 @@
 {
-  "author": "@drift-labs",
-  "license": "MIT",
-  "devDependencies": {
-    "husky": "^8.0.3",
-    "typescript": "^5.1.6"
-  },
-  "scripts": {
-    "lint": "eslint './**/*.{ts,tsx}'",
-    "lint:fix": "yarn lint --fix",
-    "prepare": "husky install",
-    "prettify": "prettier --check './**/*.{ts,tsx}'",
-    "prettify:write": "prettier --write './**/*.{ts,tsx}'",
-    "typecheck": "tsc --project common-ts --noEmit"
-  },
-  "dependencies": {
-    "eslint": "^8.44.0",
-    "posthog-js": "^1.70.0",
-    "prettier": "^2.8.8"
-  }
+	"author": "@drift-labs",
+	"license": "MIT",
+	"devDependencies": {
+		"husky": "^8.0.3",
+		"typescript": "^5.1.6"
+	},
+	"scripts": {
+		"lint": "eslint './**/*.{ts,tsx}'",
+		"lint:fix": "yarn lint --fix",
+		"prepare": "husky install",
+		"prettify": "prettier --check './**/*.{ts,tsx}'",
+		"prettify:write": "prettier --write './**/*.{ts,tsx}'",
+		"typecheck": "tsc --project common-ts --noEmit"
+	},
+	"dependencies": {
+		"eslint": "^8.44.0",
+		"posthog-js": "1.72.1",
+		"prettier": "^2.8.8"
+	}
 }
