@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useIdle } from 'react-use';
-import useDriftClientIsReady from './useDriftClientIsReady';
+import { useDriftClientIsReady } from './useDriftClientIsReady';
 import { PollingDriftClientAccountSubscriber } from '@drift-labs/sdk';
 import { useCommonDriftStore } from '../stores';
 

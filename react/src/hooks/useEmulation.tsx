@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { useEffect, useRef } from 'react';
-import useDriftClientIsReady from './useDriftClientIsReady';
+import { useDriftClientIsReady } from './useDriftClientIsReady';
 import { useCommonDriftStore } from '../stores';
 import { useCommonDriftActions } from './useCommonDriftActions';
 
