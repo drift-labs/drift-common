@@ -3,7 +3,7 @@ import { useCommonDriftStore } from '../stores';
 /**
  * Checks if the drift client is subscribed and ready to use.
  */
-const useDriftClientIsReady = () => {
+export const useDriftClientIsReady = () => {
 	const driftClientIsReady = useCommonDriftStore((s) => {
 		return (
 			s.driftClient.client &&
@@ -14,5 +14,3 @@ const useDriftClientIsReady = () => {
 
 	return driftClientIsReady;
 };
-
-export default useDriftClientIsReady;
