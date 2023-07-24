@@ -6,3 +6,4 @@ export * from './useSolBalance';
 export * from './useEmulation';
 export * from './useDisableScroll';
 export * from './useDriftClientIsReady';
+export * from './useRpcLatencies';
