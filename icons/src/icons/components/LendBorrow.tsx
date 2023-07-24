@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const Stats = (allProps: IconProps) => {
+const LendBorrow = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
@@ -18,7 +18,7 @@ const Stats = (allProps: IconProps) => {
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
-						d="M7.917 1.917c.368 0 .666.335.666.75v10.666c0 .414-.298.75-.666.75-.369 0-.667-.336-.667-.75V2.667c0-.415.298-.75.667-.75zm4.25 3c.368 0 .666.335.666.75v7.666c0 .414-.298.75-.666.75-.368 0-.667-.336-.667-.75V5.666c0-.414.299-.75.667-.75zM4.333 8.334c0-.415-.298-.75-.666-.75-.369 0-.667.335-.667.75v5c0 .414.298.75.667.75.368 0 .666-.336.666-.75v-5z"
+						d="M5.923 3.45A2.001 2.001 0 013.45 5.923 4.982 4.982 0 003 8c0 .632.117 1.237.331 1.794a2 2 0 012.308 2.615 5.001 5.001 0 006.962-2.448 2 2 0 010-3.921 5.001 5.001 0 00-6.678-2.59zM2.585 5.413A5.976 5.976 0 002 8c0 .793.154 1.55.434 2.244a2 2 0 102.647 2.999 6.002 6.002 0 008.621-3.37 2 2 0 000-3.746 6.003 6.003 0 00-8.289-3.542 2 2 0 00-2.828 2.828zM12 8a1 1 0 112 0 1 1 0 01-2 0zm-8.25 2.75a1 1 0 100 2 1 1 0 000-2zM3 4a1 1 0 112 0 1 1 0 01-2 0z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
@@ -27,4 +27,4 @@ const Stats = (allProps: IconProps) => {
 		/>
 	);
 };
-export default Stats;
+export default LendBorrow;

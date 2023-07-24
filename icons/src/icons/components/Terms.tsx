@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const Stats = (allProps: IconProps) => {
+const Terms = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
@@ -16,9 +16,11 @@ const Stats = (allProps: IconProps) => {
 					{...props}
 				>
 					<path
-						fillRule="evenodd"
-						clipRule="evenodd"
-						d="M7.917 1.917c.368 0 .666.335.666.75v10.666c0 .414-.298.75-.666.75-.369 0-.667-.336-.667-.75V2.667c0-.415.298-.75.667-.75zm4.25 3c.368 0 .666.335.666.75v7.666c0 .414-.298.75-.666.75-.368 0-.667-.336-.667-.75V5.666c0-.414.299-.75.667-.75zM4.333 8.334c0-.415-.298-.75-.666-.75-.369 0-.667.335-.667.75v5c0 .414.298.75.667.75.368 0 .666-.336.666-.75v-5z"
+						d="M8 1L2 3v6a6 6 0 1012 0V3L8 1zm4.875 8a4.875 4.875 0 01-9.75 0V3.844L8 2.125l4.875 1.719V9z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
+					/>
+					<path
+						d="M5.912 7.423a.56.56 0 00-.96.398.561.561 0 00.165.398l2.055 2.054a.532.532 0 00.751 0l3.493-3.492a.532.532 0 000-.751l-.044-.044a.53.53 0 00-.752 0L7.547 9.058 5.912 7.423z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
@@ -27,4 +29,4 @@ const Stats = (allProps: IconProps) => {
 		/>
 	);
 };
-export default Stats;
+export default Terms;
