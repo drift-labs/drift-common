@@ -4,8 +4,8 @@ module.exports = {
 	typescript: true,
 	icon: true,
 	svgProps: {
-		width: 'inherit',
-		height: 'inherit',
+		// width: '',
+		// height: '',
 	},
 	replaceAttrValues: {
 		'#6683A7': '{allProps.color ? allProps.color : "currentColor"}',
@@ -18,6 +18,6 @@ module.exports = {
 		// Format the result using Prettier
 		'@svgr/plugin-prettier',
 	],
-	svgoConfig: {},
+	dimensions: false,
 	template: componentTemplate,
 };
