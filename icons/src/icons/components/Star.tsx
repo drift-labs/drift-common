@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const Deposit = (allProps: IconProps) => {
+const Star = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
@@ -14,11 +14,8 @@ const Deposit = (allProps: IconProps) => {
 					{...props}
 				>
 					<path
-						d="M8 10V2m0 8L5.333 7.333M8 10l2.667-2.667m-9.334 4l.414 1.657A1.333 1.333 0 003.041 14h9.918a1.333 1.333 0 001.294-1.01l.414-1.657"
-						stroke={allProps.color ? allProps.color : 'currentColor'}
-						strokeWidth={1.2}
-						strokeLinecap="round"
-						strokeLinejoin="round"
+						d="M7.601 2.14a.444.444 0 01.798 0l1.661 3.367 3.716.543c.364.053.51.501.246.758l-2.689 2.619.635 3.699a.444.444 0 01-.645.468L8 11.847l-3.323 1.747a.444.444 0 01-.645-.468l.635-3.7-2.689-2.618a.444.444 0 01.246-.758l3.716-.543L7.601 2.14z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
 			}
@@ -26,4 +23,4 @@ const Deposit = (allProps: IconProps) => {
 		/>
 	);
 };
-export default Deposit;
+export default Star;

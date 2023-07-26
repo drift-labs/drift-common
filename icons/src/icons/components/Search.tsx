@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const Alert = (allProps: IconProps) => {
+const Search = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
@@ -14,9 +14,9 @@ const Alert = (allProps: IconProps) => {
 					{...props}
 				>
 					<path
-						d="M8.003 3.146c-3.107 0-3.551 2.664-3.551 4.883 0 2.22-1.332 3.552-1.332 3.552h9.766s-1.331-1.332-1.331-3.552c0-2.22-.444-4.883-3.552-4.883zm0 0v-.533m1.776 8.968s0 1.776-1.776 1.776-1.776-1.776-1.776-1.776H9.78z"
+						d="M7.333 12.667A5.333 5.333 0 107.333 2a5.333 5.333 0 000 10.667zM14 14l-2.9-2.9"
 						stroke={allProps.color ? allProps.color : 'currentColor'}
-						strokeWidth={1.25}
+						strokeWidth={1.333}
 						strokeLinecap="round"
 						strokeLinejoin="round"
 					/>
@@ -26,4 +26,4 @@ const Alert = (allProps: IconProps) => {
 		/>
 	);
 };
-export default Alert;
+export default Search;
