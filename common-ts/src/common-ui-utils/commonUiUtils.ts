@@ -1,11 +1,13 @@
 import {
 	DriftClient,
+	IWallet,
 	MarketType,
 	PublicKey,
 	User,
 	UserAccount,
 } from '@drift-labs/sdk';
 import { ENUM_UTILS, sleep } from '../utils';
+import { Keypair } from '@solana/web3.js';
 
 // When creating an account, try 5 times over 5 seconds to wait for the new account to hit the blockchain.
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
@@ -147,6 +149,29 @@ const initializeAndSubscribeToNewUserAccount = async (
 const getMarketKey = (marketIndex: number, marketType: MarketType) =>
 	`${ENUM_UTILS.toStr(marketType)}_${marketIndex}`;
 
+const createThrowawayIWallet = (walletPubKey?: PublicKey) => {
+	const newKeypair = walletPubKey
+		? new Keypair({
+				publicKey: walletPubKey.toBytes(),
+				secretKey: new Keypair().publicKey.toBytes(),
+		  })
+		: new Keypair();
+
+	const newWallet: IWallet = {
+		publicKey: newKeypair.publicKey,
+		//@ts-ignore
+		signTransaction: () => {
+			return Promise.resolve();
+		},
+		//@ts-ignore
+		signAllTransactions: () => {
+			return Promise.resolve();
+		},
+	};
+
+	return newWallet;
+};
+
 // --- Export The Utils
 
 export const COMMON_UI_UTILS = {
@@ -155,4 +180,5 @@ export const COMMON_UI_UTILS = {
 	fetchCurrentSubaccounts,
 	initializeAndSubscribeToNewUserAccount,
 	getMarketKey,
+	createThrowawayIWallet,
 };
