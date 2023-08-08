@@ -1,4 +1,6 @@
+import { useContext } from 'react';
 import { useCommonDriftStore } from '../stores';
+import { DriftWalletContext } from '../providers';
 
 export const useWalletContext = () => {
 	const walletContextState = useCommonDriftStore(
@@ -6,4 +8,10 @@ export const useWalletContext = () => {
 	);
 
 	return walletContextState;
+};
+
+export const useWallet = () => {
+	const driftWalletContext = useContext(DriftWalletContext);
+
+	return driftWalletContext;
 };
