@@ -345,7 +345,7 @@ export class UISerializableOrderRecord extends SerializableOrderRecord {
 export class SerializableOrderActionRecord implements Event<OrderActionRecord> {
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) slot: number;
-	@autoserializeAs(Number) txSigIndex: number;
+	//@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns) action: OrderAction;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
@@ -511,7 +511,7 @@ export type DepositRecordEvent = Event<DepositRecord>;
 export class SerializableDepositRecord implements DepositRecordEvent {
 	@autoserializeAs(Number) id: number;
 	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
+	//@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) depositRecordId: BN;
@@ -594,7 +594,7 @@ export type SettlePnlRecordEvent = Event<SettlePnlRecord>;
 export class SerializableSettlePnlRecord implements SettlePnlRecordEvent {
 	@autoserializeAs(Number) id: number;
 	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
+	//@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
 	user: PublicKey;
@@ -700,7 +700,7 @@ export class SerializableFundingPaymentRecord
 {
 	@autoserializeAs(Number) id: number;
 	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
+	//@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
@@ -952,7 +952,7 @@ export class UISerializableSpotBankruptcyRecord extends SerializableSpotBankrupt
 export class SerializableLiquidationRecord implements LiquidationRecordEvent {
 	@autoserializeAs(Number) liquidationId: number;
 	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
+	//@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
@@ -1533,7 +1533,7 @@ export type SwapRecordEvent = Event<SwapRecord>;
 export class SerializableSwapRecord implements SwapRecordEvent {
 	@autoserializeAs(Number) id: number;
 	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
+	//@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
