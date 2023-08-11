@@ -1296,6 +1296,9 @@ export class SerializableAccountSnapshot implements AccountSnapshot {
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	cumulativeReferralVolume: BN;
 	@autoserializeAs(Number) cumulativeReferralCount: number;
+
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	cumulativeSettledPerpPnl: BN;
 }
 
 export class UISerializableAccountSnapshot implements UIAccountSnapshot {
@@ -1325,6 +1328,9 @@ export class UISerializableAccountSnapshot implements UIAccountSnapshot {
 	@autoserializeUsing(ReferralVolumeBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	cumulativeReferralVolume: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	//@ts-ignore
+	cumulativeSettledPerpPnl: BigNum;
 
 	@autoserializeAs(Number) cumulativeReferralCount: number;
 }
