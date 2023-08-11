@@ -7,6 +7,7 @@ import { WalletContextState } from '@solana/wallet-adapter-react';
 import { useCommonDriftStore } from '../stores';
 import { useGeoBlocking } from '../hooks/useGeoBlocking';
 import { useEmulation } from '../hooks/useEmulation';
+import { DriftClientConfig } from '@drift-labs/sdk';
 
 interface AppSetupProps {
 	children: React.ReactNode;
@@ -19,6 +20,7 @@ interface AppSetupProps {
 	geoBlocking?: {
 		callback?: () => void;
 	};
+	additionalDriftClientConfig?: Partial<DriftClientConfig>;
 }
 
 const DriftProvider = (props: AppSetupProps) => {
@@ -41,7 +43,7 @@ const DriftProvider = (props: AppSetupProps) => {
 	!props.disable?.emulation && useEmulation();
 	!props.disable?.geoblocking && useGeoBlocking(props?.geoBlocking?.callback);
 
-	useInitializeConnection();
+	useInitializeConnection(props?.additionalDriftClientConfig);
 	useSolBalance();
 
 	// not sure why this doesn't work in drift provider, but works in app setup
