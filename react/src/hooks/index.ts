@@ -7,3 +7,4 @@ export * from './useEmulation';
 export * from './useDisableScroll';
 export * from './useDriftClientIsReady';
 export * from './useRpcLatencies';
+export * from './useDevSwitchIsOn';

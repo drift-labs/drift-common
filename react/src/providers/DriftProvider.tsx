@@ -7,18 +7,21 @@ import { useGeoBlocking } from '../hooks/useGeoBlocking';
 import { useCommonDriftStore } from '../stores';
 import DriftWalletProvider from './DriftWalletProvider';
 import { DRIFT_WALLET_PROVIDERS } from '../constants/wallets';
+import { DriftClientConfig } from '@drift-labs/sdk';
 
 interface AppSetupProps {
 	children: React.ReactNode;
 	disable?: {
 		idlePollingRateSwitcher?: boolean;
 		emulation?: boolean;
+		geoblocking?: boolean;
 	};
 	geoBlocking?: {
 		callback?: () => void;
 	};
 	autoconnectionDelay?: number;
 	disableAutoconnect?: boolean;
+	additionalDriftClientConfig?: Partial<DriftClientConfig>;
 }
 
 const DriftProviderInner = (props: PropsWithChildren<any>) => {
@@ -31,10 +34,10 @@ const DriftProviderInner = (props: PropsWithChildren<any>) => {
 
 	!props.disable?.idlePollingRateSwitcher && useIdlePollingRateSwitcher();
 	!props.disable?.emulation && useEmulation();
+	!props.disable?.geoblocking && useGeoBlocking(props?.geoBlocking?.callback);
 
-	useInitializeConnection();
+	useInitializeConnection(props?.additionalDriftClientConfig);
 	useSolBalance();
-	useGeoBlocking(props?.geoBlocking?.callback);
 
 	// not sure why this doesn't work in drift provider, but works in app setup
 	// useSyncWalletToStore(props?.syncWalletToStore?.clearDataFromStore);

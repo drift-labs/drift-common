@@ -68,11 +68,11 @@ const createDriftActions = (
 	const updateConnection = async ({
 		newRpc,
 		newDriftEnv,
+		additionalDriftClientConfig = {},
 	}: {
 		newRpc: RpcEndpoint;
 		newDriftEnv?: DriftEnv;
-		// initializing = false,
-		// isRecoveryAttempt = false
+		additionalDriftClientConfig?: Partial<DriftClientConfig>;
 	}) => {
 		const storeState = get();
 		const Env = storeState.env;
@@ -131,6 +131,7 @@ const createDriftActions = (
 			// dont waste rpc calls loading users for this made up wallet
 			skipLoadUsers: true,
 			txVersion: 0,
+			...additionalDriftClientConfig,
 		};
 
 		const newDriftClient = new DriftClient(driftClientConfig);

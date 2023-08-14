@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useCommonDriftStore } from '../stores';
-import useDevSwitchIsOn from './useDevSwitchIsOn';
+import { useDevSwitchIsOn } from './useDevSwitchIsOn';
 import useIsMainnet from './useIsMainnet';
 import { useWalletContext } from './useWalletContext';
 

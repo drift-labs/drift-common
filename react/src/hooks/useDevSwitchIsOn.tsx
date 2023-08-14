@@ -4,7 +4,7 @@ import { useLocalStorage } from 'react-use';
 /**
  * Returns the dev switch state and a function to toggle it.
  */
-const useDevSwitchIsOn = singletonHook(
+export const useDevSwitchIsOn = singletonHook(
 	{ devSwitchIsOn: false, toggleDevSwitch: () => {} },
 	() => {
 		const [devSwitchIsOn, setDevSwitchIsOn] = useLocalStorage<boolean>(
@@ -24,5 +24,3 @@ const useDevSwitchIsOn = singletonHook(
 		return { devSwitchIsOn: !!devSwitchIsOn, toggleDevSwitch };
 	}
 );
-
-export default useDevSwitchIsOn;
