@@ -30,7 +30,9 @@
 	},
 	"dependencies": {
 		"@drift/common": "file:../common-ts",
+		"@solana/wallet-adapter-base": "^0.9.23",
 		"@solana/wallet-adapter-react": "^0.15.32",
+		"@solana/wallet-adapter-wallets": "^0.19.20",
 		"immer": "^10.0.2",
 		"react-singleton-hook": "^4.0.1",
 		"react-use": "^17.4.0",
