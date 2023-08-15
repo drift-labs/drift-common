@@ -206,3 +206,9 @@ export type AuctionParams = {
 	auctionEndPrice: BN;
 	auctionDuration: number;
 };
+
+export type MarketMakerRewardRecord = {
+	ts: number;
+	amount: number;
+	symbol: string;
+};
