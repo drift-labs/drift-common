@@ -12,7 +12,8 @@
 		"@solana/spl-token": "^0.3.8",
 		"@solana/web3.js": "1.66.2",
 		"cerializr": "^3.1.4",
-		"localstorage-memory": "^1.0.3"
+		"localstorage-memory": "^1.0.3",
+		"bcryptjs-react": "^2.4.6"
 	},
 	"scripts": {
 		"build": "yarn clean && tsc",
