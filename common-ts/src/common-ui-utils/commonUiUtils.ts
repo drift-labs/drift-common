@@ -176,10 +176,11 @@ const createThrowawayIWallet = (walletPubKey?: PublicKey) => {
 };
 
 const getSignatureVerificationMessageForSettings = (
-	authority: PublicKey
+	authority: PublicKey,
+	signTs: number
 ): Uint8Array => {
 	return new TextEncoder().encode(
-		`Verify you are the owner of this wallet to update trade settings: \n${authority.toBase58()}\n\nThis signature will be valid for the next 30 minutes.`
+		`Verify you are the owner of this wallet to update trade settings: \n${authority.toBase58()}\n\nThis signature will be valid for the next 30 minutes.\n\nTS: ${signTs.toString()}`
 	);
 };
 
