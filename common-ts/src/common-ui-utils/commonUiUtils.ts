@@ -8,6 +8,9 @@ import {
 } from '@drift-labs/sdk';
 import { ENUM_UTILS, sleep } from '../utils';
 import { Keypair } from '@solana/web3.js';
+import { ed25519 } from '@noble/curves/ed25519';
+import bcrypt from 'bcryptjs-react';
+import crypto from 'crypto';
 
 // When creating an account, try 5 times over 5 seconds to wait for the new account to hit the blockchain.
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
@@ -172,6 +175,37 @@ const createThrowawayIWallet = (walletPubKey?: PublicKey) => {
 	return newWallet;
 };
 
+const getSignatureVerificationMessageForSettings = (
+	authority: PublicKey,
+	signTs: number
+): Uint8Array => {
+	return new TextEncoder().encode(
+		`Verify you are the owner of this wallet to update trade settings: \n${authority.toBase58()}\n\nThis signature will be valid for the next 30 minutes.\n\nTS: ${signTs.toString()}`
+	);
+};
+
+const verifySignature = (
+	signature: Uint8Array,
+	message: Uint8Array,
+	pubKey: PublicKey
+): boolean => ed25519.verify(signature, message, pubKey.toBytes());
+
+const hashSignature = async (signature: string): Promise<string> => {
+	bcrypt.setRandomFallback((num: number) => {
+		return Array.from(crypto.randomBytes(num));
+	});
+	const hashedSignature = await bcrypt.hash(signature, bcrypt.genSaltSync(10));
+	return hashedSignature;
+};
+
+const compareSignatures = async (
+	original: string,
+	hashed: string
+): Promise<boolean> => {
+	const signaturesMatch = await bcrypt.compare(original, hashed);
+	return signaturesMatch;
+};
+
 // --- Export The Utils
 
 export const COMMON_UI_UTILS = {
@@ -181,4 +215,8 @@ export const COMMON_UI_UTILS = {
 	initializeAndSubscribeToNewUserAccount,
 	getMarketKey,
 	createThrowawayIWallet,
+	getSignatureVerificationMessageForSettings,
+	verifySignature,
+	hashSignature,
+	compareSignatures,
 };
