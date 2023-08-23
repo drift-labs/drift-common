@@ -341,7 +341,7 @@
     buffer-layout "^1.2.0"
 
 "@drift-labs/sdk@file:../protocol/sdk":
-  version "2.37.1-beta.7"
+  version "2.37.1-beta.11"
   dependencies:
     "@coral-xyz/anchor" "0.26.0"
     "@ellipsis-labs/phoenix-sdk" "^1.4.2"
@@ -693,6 +693,11 @@
   version "1.7.1"
   resolved "https://registry.yarnpkg.com/@noble/ed25519/-/ed25519-1.7.1.tgz#6899660f6fbb97798a6fbd227227c4589a454724"
   integrity sha512-Rk4SkJFaXZiznFyC/t77Q0NKS4FL7TLJJsVG2V2oiEq3kJVeTdxysEe/yRWSpnWMe808XRDJ+VFh5pt/FN5plw==
+
+"@noble/ed25519@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@noble/ed25519/-/ed25519-2.0.0.tgz#5964c8190a4b4b804985717ca566113b93379e43"
+  integrity sha512-/extjhkwFupyopDrt80OMWKdLgP429qLZj+z6sYJz90rF2Iz0gjZh2ArMKPImUl13Kx+0EXI2hN9T/KJV0/Zng==
 
 "@noble/hashes@^1.1.2":
   version "1.1.3"
