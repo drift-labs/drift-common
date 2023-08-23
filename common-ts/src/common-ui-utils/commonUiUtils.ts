@@ -10,7 +10,7 @@ import { ENUM_UTILS, sleep } from '../utils';
 import { Keypair } from '@solana/web3.js';
 import bcrypt from 'bcryptjs-react';
 import crypto from 'crypto';
-import * as ed from '@noble/ed25519';
+import { verify } from '@noble/ed25519';
 
 // When creating an account, try 5 times over 5 seconds to wait for the new account to hit the blockchain.
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
@@ -184,11 +184,11 @@ const getSignatureVerificationMessageForSettings = (
 	);
 };
 
-const verifySignature = async (
+const verifySignature = (
 	signature: Uint8Array,
 	message: Uint8Array,
 	pubKey: PublicKey
-): Promise<boolean> => await ed.verify(signature, message, pubKey.toBytes());
+): boolean => verify(signature, message, pubKey.toBytes());
 
 const hashSignature = async (signature: string): Promise<string> => {
 	bcrypt.setRandomFallback((num: number) => {
