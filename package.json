@@ -14,6 +14,7 @@
 		"typecheck": "tsc --project common-ts --noEmit"
 	},
 	"dependencies": {
+		"@noble/ed25519": "^2.0.0",
 		"eslint": "^8.44.0",
 		"posthog-js": "1.72.1",
 		"prettier": "^2.8.8"
