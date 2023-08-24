@@ -4,4 +4,5 @@ module.exports = {
 	testEnvironment: 'node',
 	moduleFileExtensions: ['ts', 'js'],
 	testRegex: '.test.ts',
+	transform: {},
 };
