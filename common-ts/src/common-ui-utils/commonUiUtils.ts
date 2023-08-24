@@ -11,6 +11,7 @@ import { Keypair } from '@solana/web3.js';
 import bcrypt from 'bcryptjs-react';
 import crypto from 'crypto';
 import * as ed from '@noble/ed25519';
+import { sha512 } from '@noble/hashes/sha512';
 
 // When creating an account, try 5 times over 5 seconds to wait for the new account to hit the blockchain.
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
@@ -188,7 +189,10 @@ const verifySignature = (
 	signature: Uint8Array,
 	message: Uint8Array,
 	pubKey: PublicKey
-): boolean => ed.verify(signature, message, pubKey.toBytes());
+): boolean => {
+	ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
+	return ed.verify(signature, message, pubKey.toBytes());
+};
 
 const hashSignature = async (signature: string): Promise<string> => {
 	bcrypt.setRandomFallback((num: number) => {
