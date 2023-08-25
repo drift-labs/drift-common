@@ -9,9 +9,7 @@ import {
 import { ENUM_UTILS, sleep } from '../utils';
 import { Keypair } from '@solana/web3.js';
 import bcrypt from 'bcryptjs-react';
-import crypto from 'crypto';
-import * as ed from '@noble/ed25519';
-import { sha512 } from '@noble/hashes/sha512';
+import nacl, { sign } from 'tweetnacl';
 
 // When creating an account, try 5 times over 5 seconds to wait for the new account to hit the blockchain.
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
@@ -190,13 +188,12 @@ const verifySignature = (
 	message: Uint8Array,
 	pubKey: PublicKey
 ): boolean => {
-	ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
-	return ed.verify(signature, message, pubKey.toBytes());
+	return sign.detached.verify(message, signature, pubKey.toBytes());
 };
 
 const hashSignature = async (signature: string): Promise<string> => {
 	bcrypt.setRandomFallback((num: number) => {
-		return Array.from(crypto.randomBytes(num));
+		return Array.from(nacl.randomBytes(num));
 	});
 	const hashedSignature = await bcrypt.hash(signature, bcrypt.genSaltSync(10));
 	return hashedSignature;
