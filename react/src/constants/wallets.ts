@@ -1,10 +1,7 @@
 import {
-	BackpackWalletAdapter,
-	BraveWalletAdapter,
 	CloverWalletAdapter,
 	Coin98WalletAdapter,
 	CoinbaseWalletAdapter,
-	GlowWalletAdapter,
 	MathWalletAdapter,
 	PhantomWalletAdapter,
 	SolflareWalletAdapter,
@@ -19,10 +16,7 @@ import {
  */
 export const DRIFT_WALLET_PROVIDERS = [
 	new PhantomWalletAdapter(),
-	new BackpackWalletAdapter(),
 	new SolflareWalletAdapter(),
-	new GlowWalletAdapter(),
-	new BraveWalletAdapter(),
 	new CoinbaseWalletAdapter(),
 	new MathWalletAdapter(),
 	new Coin98WalletAdapter(),
