@@ -8,3 +8,4 @@ export * from './useDisableScroll';
 export * from './useDriftClientIsReady';
 export * from './useRpcLatencies';
 export * from './useDevSwitchIsOn';
+export * from './useLastAcknowledgedTerms';

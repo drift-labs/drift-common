@@ -6,7 +6,7 @@ import { useLocalStorage } from 'react-use';
  *
  * Timestamp is stored in local storage.
  */
-const useLastAcknowledgedTerms = singletonHook(
+export const useLastAcknowledgedTerms = singletonHook(
 	{ lastAcknowledgedTerms: 0, updateLastAcknowledgedTerms: () => {} },
 	() => {
 		const [lastAcknowledgedTerms, setLastAcknowledgedTerms] =
@@ -23,5 +23,3 @@ const useLastAcknowledgedTerms = singletonHook(
 		return { lastAcknowledgedTerms, updateLastAcknowledgedTerms };
 	}
 );
-
-export default useLastAcknowledgedTerms;
