@@ -17,16 +17,16 @@
 	"devDependencies": {
 		"@solana/spl-token": "^0.3.8",
 		"@solana/web3.js": "^1.77.3",
-		"@types/react": "^18.2.14",
+		"@types/react": "18.2.21",
 		"eslint": "^8.43.0",
-		"react": "^18.2.0",
+		"react": "18.2.0",
 		"typescript": "^5.1.6"
 	},
 	"peerDependencies": {
 		"@drift-labs/sdk": "^2.32.1-beta.12",
 		"@solana/spl-token": "^0.3.8",
 		"@solana/web3.js": "^1.77.3",
-		"react": "^18.2.0"
+		"react": "18.2.0"
 	},
 	"dependencies": {
 		"@drift/common": "file:../common-ts",
