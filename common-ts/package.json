@@ -22,7 +22,8 @@
 		"test": "jest",
 		"test:ci": "node node_modules/.bin/jest --silent --forceExit",
 		"test:debug": "node --inspect-brk --inspect=2234 node_modules/.bin/jest --runInBand",
-		"fetch-jup-errors": "node src/scripts/get-jup-error-codes.js"
+		"update-jup-errors": "node src/scripts/update-jup-error-codes.js",
+		"update-drift-errors": "node src/scripts/update-drift-error-codes.js"
 	},
 	"directories": {
 		"lib": "lib"
