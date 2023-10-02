@@ -20,6 +20,11 @@ export * from './utils/rpcLatency';
 export * from './utils/token';
 export * from './common-ui-utils/commonUiUtils';
 
+// External Program Errors
+import JupV4Errors from './jup-v4-error-codes.json';
+import JupV6Errors from './jup-v6-error-codes.json';
+export { JupV4Errors, JupV6Errors };
+
 export const Config: {
 	initialized: boolean;
 	spotMarkets: SpotMarketConfig[];
