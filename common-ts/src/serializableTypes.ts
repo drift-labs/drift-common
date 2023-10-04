@@ -820,6 +820,8 @@ export class UISerializableLiquidateSpotRecord extends SerializableLiquidateSpot
 		assert(Config.initialized, 'Common Config Not Initialised');
 		instance.assetTransfer.precision =
 			Config.spotMarkets[instance.assetMarketIndex].precisionExp;
+		instance.liabilityTransfer.precision =
+			Config.spotMarkets[instance.liabilityMarketIndex].precisionExp;
 	}
 }
 
