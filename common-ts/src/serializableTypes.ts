@@ -1377,8 +1377,15 @@ export class CompetitionResult {
 	requestedAuthorityResult?: CompetitionResultEntry;
 }
 
-export class SerializableInsuranceFundRecord implements InsuranceFundRecord {
+export type InsuranceFundRecordEvent = Event<InsuranceFundRecord>;
+
+export class SerializableInsuranceFundRecord
+	implements InsuranceFundRecordEvent
+{
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
+	@autoserializeAs(String) txSig: string;
+	@autoserializeAs(Number) txSigIndex: number;
+	@autoserializeAs(Number) slot: number;
 	@autoserializeAs(Number) spotMarketIndex: number;
 	@autoserializeAs(Number) perpMarketIndex: number;
 	@autoserializeAs(Number) userIfFactor: number;
@@ -1431,10 +1438,15 @@ export class UISerializableInsuranceFundRecord extends SerializableInsuranceFund
 	}
 }
 
+export type InsuranceFundStakeRecordEvent = Event<InsuranceFundStakeRecord>;
+
 export class SerializableInsuranceFundStakeRecord
-	implements InsuranceFundStakeRecord
+	implements InsuranceFundStakeRecordEvent
 {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
+	@autoserializeAs(String) txSig: string;
+	@autoserializeAs(Number) txSigIndex: number;
+	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
 	userAuthority: PublicKey;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns) action: StakeAction;
@@ -1502,8 +1514,13 @@ export class UISerializableInsuranceFundStakeRecord extends SerializableInsuranc
 	}
 }
 
-export class SerializableLPRecord implements LPRecord {
+export type LPRecordEvent = Event<LPRecord>;
+
+export class SerializableLPRecord implements LPRecordEvent {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
+	@autoserializeAs(String) txSig: string;
+	@autoserializeAs(Number) txSigIndex: number;
+	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
 	user: PublicKey;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns) action: LPAction;
@@ -1735,11 +1752,17 @@ export const Serializer = {
 		CompetitionResultEntry: (cls: Record<string, unknown>) =>
 			Deserialize(cls as JsonObject, CompetitionResultEntry),
 		InsuranceFundRecord: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableInsuranceFundRecord),
+			Deserialize(
+				cls as JsonObject,
+				SerializableInsuranceFundRecord
+			) as InsuranceFundRecordEvent,
 		UIInsuranceFundRecord: (cls: Record<string, unknown>) =>
 			Deserialize(cls as JsonObject, UISerializableInsuranceFundRecord),
 		InsuranceFundStakeRecord: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableInsuranceFundStakeRecord),
+			Deserialize(
+				cls as JsonObject,
+				SerializableInsuranceFundStakeRecord
+			) as InsuranceFundStakeRecordEvent,
 		UIInsuranceFundStakeRecord: (cls: Record<string, unknown>) =>
 			Deserialize(cls as JsonObject, UISerializableInsuranceFundStakeRecord),
 		AllTimePnlData: (cls: Record<string, unknown>) =>
@@ -1747,7 +1770,7 @@ export const Serializer = {
 		UIAllTimePnlData: (cls: Record<string, unknown>) =>
 			Deserialize(cls as JsonObject, UISerializableAllTimePnlData),
 		LPRecord: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableLPRecord) as Event<LPRecord>,
+			Deserialize(cls as JsonObject, SerializableLPRecord) as LPRecordEvent,
 		UILPRecord: (cls: Record<string, unknown>) =>
 			Deserialize(cls as JsonObject, UISerializableLPRecord),
 		SwapRecord: (cls: Record<string, unknown>) =>
