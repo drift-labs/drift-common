@@ -32,6 +32,7 @@ export { default as Disclaimers } from './components/Disclaimers';
 export { default as Discord } from './components/Discord';
 export { default as Download } from './components/Download';
 export { default as DrawAnnounce } from './components/DrawAnnounce';
+export { default as DrawGift } from './components/DrawGift';
 export { default as DrawLock } from './components/DrawLock';
 export { default as DrawPrize } from './components/DrawPrize';
 export { default as DrawTicket } from './components/DrawTicket';
