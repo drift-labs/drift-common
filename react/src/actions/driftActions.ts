@@ -296,6 +296,7 @@ const createDriftActions = (
 		updateConnection,
 		emulateAccount,
 		handleWalletDisconnect,
+		fetchAndSubscribeToUsersAndSubaccounts,
 	};
 };
 
