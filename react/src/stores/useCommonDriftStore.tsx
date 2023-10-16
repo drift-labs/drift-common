@@ -15,6 +15,7 @@ import { Connection, PublicKey } from '@solana/web3.js';
 
 // @ts-ignore
 import type { WalletContextState } from '@solana/wallet-adapter-react';
+import createDriftActions from '../actions/driftActions';
 
 // any relevant user data we can keep up to date here
 export type UserData = {
@@ -70,6 +71,7 @@ export interface CommonDriftStore {
 	set: (x: (s: CommonDriftStore) => void) => void;
 	get: () => CommonDriftStore;
 	clearUserData: () => void;
+	actions: ReturnType<typeof createDriftActions>;
 }
 
 const defaultState = {
@@ -107,6 +109,9 @@ const initializeDriftStore = (Env: {
 		useCommonDriftStore = create<CommonDriftStore>()((set, get) => {
 			const setProducerFn = (fn: (s: CommonDriftStore) => void) =>
 				set(produce(fn));
+
+			const actions = createDriftActions(get, setProducerFn);
+
 			return {
 				...defaultState,
 				env: Env,
@@ -122,6 +127,7 @@ const initializeDriftStore = (Env: {
 						s.userAccountNotInitialized = undefined;
 					});
 				},
+				actions,
 			};
 		});
 	}

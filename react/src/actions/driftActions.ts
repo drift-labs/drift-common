@@ -197,6 +197,7 @@ const createDriftActions = (
 	const handleWalletDisconnect = async () => {
 		const state = get();
 
+		//@ts-ignore
 		const driftClient = state.driftClient.client!;
 
 		// Switch to a random wallet to stop
@@ -295,6 +296,7 @@ const createDriftActions = (
 		updateConnection,
 		emulateAccount,
 		handleWalletDisconnect,
+		fetchAndSubscribeToUsersAndSubaccounts,
 	};
 };
 

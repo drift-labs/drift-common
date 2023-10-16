@@ -16,11 +16,13 @@ const Disclaimers = (allProps: IconProps) => {
 					<path
 						d="M13 6.914V13a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 013 13V3a1.5 1.5 0 011.5-1.5h3.086a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707z"
 						stroke={allProps.color ? allProps.color : 'currentColor'}
+						strokeWidth={1.2}
 						strokeLinejoin="round"
 					/>
 					<path
 						d="M8 1.75V5.5a1 1 0 001 1h3.75"
 						stroke={allProps.color ? allProps.color : 'currentColor'}
+						strokeWidth={1.2}
 						strokeLinecap="round"
 						strokeLinejoin="round"
 					/>
