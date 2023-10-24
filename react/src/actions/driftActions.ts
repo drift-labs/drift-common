@@ -197,7 +197,7 @@ const createDriftActions = (
 	const handleWalletDisconnect = async () => {
 		const state = get();
 
-		//@ts-ignore
+		// eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
 		const driftClient = state.driftClient.client!;
 
 		// Switch to a random wallet to stop

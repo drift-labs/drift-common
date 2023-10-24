@@ -26,6 +26,25 @@ const getUserKey = (userId: number, authority: PublicKey) => {
 	return `${userId}_${authority.toString()}`;
 };
 
+/**
+ * Get the authority and subAccountId from a user's account key
+ * @param key
+ * @returns
+ */
+const getIdAndAuthorityFromKey = (
+	key: string
+): { userId: number; userAuthority: PublicKey } => {
+	const splitKey = key?.split('_');
+
+	if (!splitKey || splitKey.length !== 2)
+		return { userId: undefined, userAuthority: undefined };
+
+	return {
+		userId: Number(splitKey[0]),
+		userAuthority: new PublicKey(splitKey[1]),
+	};
+};
+
 const fetchCurrentSubaccounts = (driftClient: DriftClient): UserAccount[] => {
 	return driftClient.getUsers().map((user) => user.getUserAccount());
 };
@@ -211,6 +230,7 @@ const compareSignatures = async (
 
 export const COMMON_UI_UTILS = {
 	getUserKey,
+	getIdAndAuthorityFromKey,
 	fetchUserClientsAndAccounts,
 	fetchCurrentSubaccounts,
 	initializeAndSubscribeToNewUserAccount,

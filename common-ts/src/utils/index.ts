@@ -891,6 +891,46 @@ const glueArray = <T>(size: number, elements: T[]): T[][] => {
 	return gluedElements;
 };
 
+const bnMin = (numbers: BN[]): BN => {
+	let min = numbers[0];
+	for (let i = 1; i < numbers.length; i++) {
+		if (numbers[i].lt(min)) {
+			min = numbers[i];
+		}
+	}
+	return min;
+};
+
+const bnMax = (numbers: BN[]): BN => {
+	let max = numbers[0];
+	for (let i = 1; i < numbers.length; i++) {
+		if (numbers[i].gt(max)) {
+			max = numbers[i];
+		}
+	}
+	return max;
+};
+
+const bnMedian = (numbers: BN[]): BN => {
+	const sortedNumbers = numbers.sort((a, b) => a.cmp(b));
+	const middleIndex = Math.floor(sortedNumbers.length / 2);
+	if (sortedNumbers.length % 2 === 0) {
+		return sortedNumbers[middleIndex - 1]
+			.add(sortedNumbers[middleIndex])
+			.div(new BN(2));
+	} else {
+		return sortedNumbers[middleIndex];
+	}
+};
+
+const bnMean = (numbers: BN[]): BN => {
+	let sum = new BN(0);
+	for (let i = 0; i < numbers.length; i++) {
+		sum = sum.add(numbers[i]);
+	}
+	return sum.div(new BN(numbers.length));
+};
+
 export const COMMON_UTILS = {
 	getIfVaultBalance: getIfVaultBalance,
 	getIfStakingVaultApr: getIfStakingVaultApr,
@@ -908,4 +948,12 @@ export const COMMON_UTILS = {
 	calculateZScore,
 	glueArray,
 	calculateMean,
+	MATH: {
+		BN: {
+			bnMax,
+			bnMin,
+			bnMean,
+			bnMedian,
+		},
+	},
 };
