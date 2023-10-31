@@ -1,5 +1,8 @@
-import { getAssociatedTokenAddress } from '@solana/spl-token';
-import { Connection, PublicKey } from '@solana/web3.js';
+import {
+	createAssociatedTokenAccountInstruction,
+	getAssociatedTokenAddress,
+} from '@solana/spl-token';
+import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 
 export const getTokenAddress = (
 	mintAddress: string,
@@ -37,4 +40,25 @@ export const getTokenAccount = async (
 		)[0] || tokenAccounts.value[0];
 
 	return targetAccount;
+};
+
+export const createTokenAccountIx = async (
+	owner: PublicKey,
+	mintAddress: PublicKey,
+	payer?: PublicKey
+): Promise<TransactionInstruction> => {
+	if (!payer) {
+		payer = owner;
+	}
+
+	const associatedAddress = await getAssociatedTokenAddress(mintAddress, owner);
+
+	const createAtaIx = await createAssociatedTokenAccountInstruction(
+		payer,
+		associatedAddress,
+		owner,
+		mintAddress
+	);
+
+	return createAtaIx;
 };
