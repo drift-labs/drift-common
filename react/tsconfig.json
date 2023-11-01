@@ -15,7 +15,7 @@
 		"declaration": true,
 		"paths": {
 			"@drift-labs/sdk": ["../protocol/sdk"],
-			"@drift-labs/common": ["../common-ts"]
+			"@drift/common": ["../common-ts"]
 		}
 	},
 	"include": ["src"],
