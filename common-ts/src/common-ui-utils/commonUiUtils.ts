@@ -29,8 +29,8 @@ import {
 } from '@solana/web3.js';
 import bcrypt from 'bcryptjs-react';
 import nacl, { sign } from 'tweetnacl';
-import { AuctionParams } from '@drift/common';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
+import { AuctionParams } from 'src/types';
 
 // When creating an account, try 5 times over 5 seconds to wait for the new account to hit the blockchain.
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
