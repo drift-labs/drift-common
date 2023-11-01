@@ -21,10 +21,16 @@ import {
 	isVariant,
 } from '@drift-labs/sdk';
 import { ENUM_UTILS, sleep } from '../utils';
-import { Keypair } from '@solana/web3.js';
+import {
+	AccountInfo,
+	Connection,
+	Keypair,
+	ParsedAccountData,
+} from '@solana/web3.js';
 import bcrypt from 'bcryptjs-react';
 import nacl, { sign } from 'tweetnacl';
 import { AuctionParams } from '@drift/common';
+import { getAssociatedTokenAddress } from '@solana/spl-token';
 
 // When creating an account, try 5 times over 5 seconds to wait for the new account to hit the blockchain.
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
@@ -556,26 +562,176 @@ const getQuoteValueForLpShares = (
 	return lpSharesBigNum.mul(pricePerLpShare).shiftTo(QUOTE_PRECISION_EXP);
 };
 
+const getTokenAddress = (
+	mintAddress: string,
+	userPubKey: string
+): Promise<PublicKey> => {
+	return getAssociatedTokenAddress(
+		new PublicKey(mintAddress),
+		new PublicKey(userPubKey)
+	);
+};
+
+const getBalanceFromTokenAccountResult = (account: {
+	pubkey: PublicKey;
+	account: AccountInfo<ParsedAccountData>;
+}) => {
+	return account?.account.data?.parsed?.info?.tokenAmount?.uiAmount;
+};
+
+const getTokenAccount = async (
+	connection: Connection,
+	mintAddress: string,
+	userPubKey: string
+): Promise<{
+	tokenAccount: {
+		pubkey: PublicKey;
+		account: import('@solana/web3.js').AccountInfo<
+			import('@solana/web3.js').ParsedAccountData
+		>;
+	};
+	tokenAccountWarning: boolean;
+}> => {
+	const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+		new PublicKey(userPubKey),
+		{ mint: new PublicKey(mintAddress) }
+	);
+
+	const associatedAddress = await getAssociatedTokenAddress(
+		new PublicKey(mintAddress),
+		new PublicKey(userPubKey)
+	);
+
+	const targetAccount =
+		tokenAccounts.value.filter((account) =>
+			account.pubkey.equals(associatedAddress)
+		)[0] || tokenAccounts.value[0];
+
+	const anotherBalanceExists = tokenAccounts.value.find((account) => {
+		return (
+			!!getBalanceFromTokenAccountResult(account) &&
+			!account.pubkey.equals(targetAccount.pubkey)
+		);
+	});
+
+	let tokenAccountWarning = false;
+
+	if (anotherBalanceExists) {
+		tokenAccountWarning = true;
+	}
+
+	return {
+		tokenAccount: targetAccount,
+		tokenAccountWarning,
+	};
+};
+
+const getMultipleAccounts = async (
+	connection: any,
+	keys: string[],
+	commitment: string
+) => {
+	const result = await Promise.all(
+		chunks(keys, 99).map((chunk) =>
+			getMultipleAccountsCore(connection, chunk, commitment)
+		)
+	);
+
+	const array = result
+		.map(
+			(a) =>
+				a.array
+					.map((acc) => {
+						if (!acc) {
+							return undefined;
+						}
+
+						const { data, ...rest } = acc;
+						const obj = {
+							...rest,
+							data: Buffer.from(data[0], 'base64'),
+						} as AccountInfo<Buffer>;
+						return obj;
+					})
+					.filter((_) => _) as AccountInfo<Buffer>[]
+		)
+		.flat();
+	return { keys, array };
+};
+
+const getMultipleAccountsCore = async (
+	connection: any,
+	keys: string[],
+	commitment: string
+) => {
+	const args = connection._buildArgs([keys], commitment, 'base64');
+
+	const unsafeRes = await connection._rpcRequest('getMultipleAccounts', args);
+	if (unsafeRes.error) {
+		throw new Error(
+			'failed to get info about account ' + unsafeRes.error.message
+		);
+	}
+
+	if (unsafeRes.result.value) {
+		const array = unsafeRes.result.value as AccountInfo<string[]>[];
+		return { keys, array };
+	}
+
+	// TODO: fix
+	throw new Error();
+};
+
+const userExists = async (
+	driftClient: DriftClient,
+	userId: number,
+	authority: PublicKey
+) => {
+	let userAccountExists = false;
+
+	try {
+		const user = driftClient.getUser(userId, authority);
+		userAccountExists = await user.exists();
+	} catch (e) {
+		// user account does not exist so we leave userAccountExists false
+	}
+
+	return userAccountExists;
+};
+
+function chunks<T>(array: T[], size: number): T[][] {
+	return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
+		(_, index) => array.slice(index * size, (index + 1) * size)
+	);
+}
+
 // --- Export The Utils
 
 export const COMMON_UI_UTILS = {
 	calculateAverageEntryPrice,
+	chunks,
 	compareSignatures,
 	createThrowawayIWallet,
 	deriveMarketOrderParams,
 	fetchCurrentSubaccounts,
 	fetchUserClientsAndAccounts,
+	getBalanceFromTokenAccountResult,
 	getIdAndAuthorityFromKey,
 	getLimitAuctionParams,
 	getLpSharesAmountForQuote,
 	getMarketAuctionParams,
 	getMarketKey,
 	getMarketOrderLimitPrice,
+	getMultipleAccounts,
+	getMultipleAccountsCore,
 	getPriceObject,
 	getQuoteValueForLpShares,
 	getSignatureVerificationMessageForSettings,
+	getTokenAccount,
+	getTokenAddress,
 	getUserKey,
 	hashSignature,
 	initializeAndSubscribeToNewUserAccount,
+	userExists,
 	verifySignature,
 };
