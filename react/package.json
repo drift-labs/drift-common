@@ -8,7 +8,7 @@
 	"license": "MIT",
 	"scripts": {
 		"lint": "eslint './**/*.{ts,tsx}' --quiet",
-		"build": "yarn clean && npx tsc",
+		"build": "yarn clean && tsc",
 		"clean": "rm -rf lib"
 	},
 	"directories": {
