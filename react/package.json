@@ -18,7 +18,10 @@
 		"@solana/spl-token": "^0.3.8",
 		"@solana/web3.js": "^1.77.3",
 		"@types/react": "18.2.21",
+		"encoding": "^0.1.13",
 		"eslint": "^8.43.0",
+		"lokijs": "^1.5.12",
+		"pino-pretty": "^10.2.3",
 		"react": "18.2.0",
 		"typescript": "^5.1.6"
 	},

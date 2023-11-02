@@ -32,6 +32,7 @@
 		"node": ">=14 <19"
 	},
 	"devDependencies": {
+		"encoding": "^0.1.13",
 		"jest": "^29.3.1",
 		"ts-jest": "^29.0.3",
 		"typescript": "^4.9.4"
