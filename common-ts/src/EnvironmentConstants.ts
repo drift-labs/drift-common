@@ -55,9 +55,11 @@ export const EnvironmentConstants = {
 	dlobServerHttpUrl: {
 		dev: 'https://master.dlob.drift.trade',
 		mainnet: 'https://mainnet-beta.api.drift.trade/dlob',
+		staging: 'https://staging.api.drift.trade/dlob',
 	},
 	dlobServerWsUrl: {
 		dev: 'wss://master.dlob.drift.trade/ws',
 		mainnet: 'wss://mainnet-beta.api.drift.trade/ws',
+		staging: 'wss://staging.api.drift.trade/ws',
 	},
 };
