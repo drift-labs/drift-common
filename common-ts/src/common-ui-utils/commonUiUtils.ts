@@ -278,13 +278,13 @@ const getMarketOrderLimitPrice = ({
 
 	if (slippageTolerance === 0) return entryPrice;
 
-	if (slippageTolerance == undefined) slippageTolerance = 100;
+	if (slippageTolerance == undefined) ZERO;
 
 	const numberPrecision = 1000;
 	const mantissaPrecision = PRICE_PRECISION.div(new BN(numberPrecision));
 
 	let limitPricePctDiff;
-	if (direction === PositionDirection.LONG) {
+	if (isVariant(direction, 'long')) {
 		limitPricePctDiff = 1 + slippageTolerance / 100;
 		limitPrice = entryPrice
 			.mul(new BN(limitPricePctDiff * numberPrecision))
