@@ -278,7 +278,7 @@ const getMarketOrderLimitPrice = ({
 
 	if (slippageTolerance === 0) return entryPrice;
 
-	if (slippageTolerance == undefined) ZERO;
+	if (slippageTolerance == undefined) return ZERO;
 
 	const numberPrecision = 1000;
 	const mantissaPrecision = PRICE_PRECISION.div(new BN(numberPrecision));
