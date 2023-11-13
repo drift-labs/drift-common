@@ -523,10 +523,9 @@ const getPriceObject = ({
 		oracle: oraclePrice,
 		bestOffer,
 		entry: entryPrice,
-		best:
-			direction === PositionDirection.LONG
-				? BN.min(oraclePrice, bestOffer)
-				: BN.max(oraclePrice, bestOffer),
+		best: isVariant(direction, 'long')
+			? BN.min(oraclePrice, bestOffer)
+			: BN.max(oraclePrice, bestOffer),
 	};
 };
 
