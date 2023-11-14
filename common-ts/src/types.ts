@@ -212,3 +212,26 @@ export type MarketMakerRewardRecord = {
 	amount: number;
 	symbol: string;
 };
+
+export type OpenPosition = {
+	marketIndex: number;
+	marketSymbol: string;
+	direction: 'short' | 'long';
+	notional: BN;
+	baseSize: BN;
+	entryPrice: BN;
+	exitPrice: BN;
+	liqPrice: BN;
+	pnl: BN;
+	quoteAssetNotionalAmount: BN;
+	quoteEntryAmount: BN;
+	unrealizedFundingPnl: BN;
+	lastCumulativeFundingRate: BN;
+	openOrders: number;
+	unsettledPnl: BN;
+	unsettledFundingPnl: BN;
+	totalUnrealizedPnl: BN;
+	costBasis: BN;
+	realizedPnl: BN;
+	lpShares: BN;
+};
