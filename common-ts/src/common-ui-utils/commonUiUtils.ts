@@ -372,6 +372,7 @@ const getMarketAuctionParams = ({
  * @returns
  */
 const deriveMarketOrderParams = ({
+	marketType,
 	marketIndex,
 	direction,
 	maxLeverageSelected,
@@ -391,6 +392,7 @@ const deriveMarketOrderParams = ({
 	auctionStartPriceOffsetFrom,
 	isOracleOrder,
 }: {
+	marketType: MarketType;
 	marketIndex: number;
 	direction: PositionDirection;
 	maxLeverageSelected: boolean;
@@ -429,6 +431,7 @@ const deriveMarketOrderParams = ({
 	});
 
 	let orderParams = getMarketOrderParams({
+		marketType,
 		marketIndex,
 		direction,
 		baseAssetAmount: maxLeverageSelected ? maxLeverageOrderSize : baseAmount,
