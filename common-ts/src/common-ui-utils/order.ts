@@ -4,7 +4,7 @@ import {
 	PositionDirection,
 } from '@drift-labs/sdk';
 import { UISerializableOrder, matchEnum } from '@drift/common';
-import { UI_ORDER_TYPES } from 'src/constants/orders';
+import { UI_ORDER_TYPES } from '../constants/orders';
 
 export const getOrderLabelFromOrderDetails = (
 	orderDetails: UISerializableOrder
