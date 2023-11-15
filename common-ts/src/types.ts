@@ -148,8 +148,10 @@ export type UserSnapshotRecord = {
 	spotPositionSnapshots: UserSpotPositionSnapshot[];
 };
 
-export type PnlSnapshotOrderOption =
-	| keyof Pick<RollingPnlData, 'totalPnlPct' | 'totalPnlQuote'>;
+export type PnlSnapshotOrderOption = keyof Pick<
+	RollingPnlData,
+	'totalPnlPct' | 'totalPnlQuote'
+>;
 
 export type PnlHistoryDataPoint = {
 	val: number;

@@ -1,5 +1,5 @@
 import { isVariant } from '@drift-labs/sdk';
-import { UIMarket } from '@drift/common';
+import { UIMarket } from '../types';
 
 const marketIsPerp = (market: UIMarket) => {
 	return isVariant(market?.marketType, 'perp');

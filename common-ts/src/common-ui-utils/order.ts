@@ -2,9 +2,11 @@ import {
 	OrderType,
 	OrderTriggerCondition,
 	PositionDirection,
+	BigNum,
 } from '@drift-labs/sdk';
-import { UISerializableOrder, matchEnum } from '@drift/common';
 import { UI_ORDER_TYPES } from '../constants/orders';
+import { UISerializableOrder } from '../serializableTypes';
+import { matchEnum } from '../utils';
 
 export const getOrderLabelFromOrderDetails = (
 	orderDetails: UISerializableOrder
@@ -71,6 +73,21 @@ export const getOrderLabelFromOrderDetails = (
 	return '-';
 };
 
+const getLimitPriceFromOracleOffset = (
+	order: UISerializableOrder,
+	oraclePrice: BigNum
+): BigNum => {
+	if (
+		(order.price && !order.price.eqZero()) ||
+		!order.oraclePriceOffset ||
+		order.oraclePriceOffset.eqZero()
+	) {
+		return order.price;
+	}
+	return oraclePrice.add(order.oraclePriceOffset);
+};
+
 export const ORDER_COMMON_UTILS = {
 	getOrderLabelFromOrderDetails,
+	getLimitPriceFromOracleOffset,
 };
