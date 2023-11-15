@@ -1,5 +1,5 @@
 import { OrderType } from '@drift-labs/sdk';
-import { UIOrderTypeLookup } from 'src/types';
+import { UIOrderTypeLookup } from '../types';
 
 export const UI_ORDER_TYPES: UIOrderTypeLookup = {
 	market: {
