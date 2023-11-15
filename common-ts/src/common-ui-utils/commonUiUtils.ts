@@ -33,6 +33,7 @@ import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { AuctionParams } from 'src/types';
 import { USER_COMMON_UTILS } from './user';
 import { TRADING_COMMON_UTILS } from './trading';
+import { MARKET_COMMON_UTILS } from './market';
 
 // When creating an account, try 5 times over 5 seconds to wait for the new account to hit the blockchain.
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
@@ -742,4 +743,5 @@ export const COMMON_UI_UTILS = {
 	verifySignature,
 	...USER_COMMON_UTILS,
 	...TRADING_COMMON_UTILS,
+	...MARKET_COMMON_UTILS,
 };
