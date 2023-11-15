@@ -14,7 +14,10 @@ import {
 	UISerializableAccountSnapshot,
 	UISerializableAllTimePnlData,
 	UISerializableUserSnapshotRecord,
-} from './serializableTypes';
+} from '../serializableTypes';
+import { OrderType } from '@drift-labs/sdk';
+
+export * from './MarketId';
 
 // TODO-v2 cleanup these types - most of them should have moved into serializableTypes
 // # UI ↔ History Server Data Types
@@ -237,8 +240,6 @@ export type OpenPosition = {
 	realizedPnl: BN;
 	lpShares: BN;
 };
-
-import { OrderType } from '@drift-labs/sdk';
 
 export type UIOrderType =
 	| 'market'
