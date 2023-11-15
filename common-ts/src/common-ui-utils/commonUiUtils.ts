@@ -495,7 +495,7 @@ const getLimitAuctionParams = ({
 		startPriceFromSettings.gt(ZERO)
 	) {
 		limitAuctionParams = {
-			auctionStartPrice: startPriceFromSettings.add(auctionStartPriceBuffer),
+			auctionStartPrice: startPriceFromSettings.sub(auctionStartPriceBuffer),
 			auctionEndPrice: inputPrice.val,
 			auctionDuration: duration,
 		};
@@ -506,7 +506,7 @@ const getLimitAuctionParams = ({
 		startPriceFromSettings.gt(inputPrice.val)
 	) {
 		limitAuctionParams = {
-			auctionStartPrice: startPriceFromSettings.sub(auctionStartPriceBuffer),
+			auctionStartPrice: startPriceFromSettings.add(auctionStartPriceBuffer),
 			auctionEndPrice: inputPrice.val,
 			auctionDuration: duration,
 		};
