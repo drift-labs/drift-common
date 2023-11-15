@@ -4,3 +4,5 @@
 yarn lint
 yarn prettify
 yarn typecheck
+cd common-ts && yarn run ts-test
+yarn build
