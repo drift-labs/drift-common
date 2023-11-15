@@ -713,6 +713,31 @@ function chunks<T>(array: T[], size: number): T[][] {
 	);
 }
 
+/**
+ * Trim trailing zeros from a numerical string
+ * @param str - numerical string to format
+ * @param zerosToShow - max number of zeros to show after the decimal. Similar to number.toFixed() but won't trim non-zero values. Optional, default value is 1
+ */
+const trimTrailingZeros = (str: string, zerosToShow = 1) => {
+	// Ignore strings with no decimal point
+	if (!str.includes('.')) return str;
+
+	const sides = str.split('.');
+
+	sides[1] = sides[1].replace(/0+$/, '');
+
+	if (sides[1].length < zerosToShow) {
+		const zerosToAdd = zerosToShow - sides[1].length;
+		sides[1] = `${sides[1]}${Array(zerosToAdd).fill('0').join('')}`;
+	}
+
+	if (sides[1].length === 0) {
+		return sides[0];
+	} else {
+		return sides.join('.');
+	}
+};
+
 // --- Export The Utils
 
 export const COMMON_UI_UTILS = {
@@ -742,6 +767,7 @@ export const COMMON_UI_UTILS = {
 	initializeAndSubscribeToNewUserAccount,
 	userExists,
 	verifySignature,
+	trimTrailingZeros,
 	...USER_COMMON_UTILS,
 	...TRADING_COMMON_UTILS,
 	...MARKET_COMMON_UTILS,
