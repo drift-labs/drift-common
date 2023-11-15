@@ -34,6 +34,7 @@ import { AuctionParams } from 'src/types';
 import { USER_COMMON_UTILS } from './user';
 import { TRADING_COMMON_UTILS } from './trading';
 import { MARKET_COMMON_UTILS } from './market';
+import { ORDER_COMMON_UTILS } from './order';
 
 // When creating an account, try 5 times over 5 seconds to wait for the new account to hit the blockchain.
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
@@ -744,4 +745,5 @@ export const COMMON_UI_UTILS = {
 	...USER_COMMON_UTILS,
 	...TRADING_COMMON_UTILS,
 	...MARKET_COMMON_UTILS,
+	...ORDER_COMMON_UTILS,
 };

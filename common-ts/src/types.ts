@@ -235,3 +235,25 @@ export type OpenPosition = {
 	realizedPnl: BN;
 	lpShares: BN;
 };
+
+import { OrderType } from '@drift-labs/sdk';
+
+export type UIOrderType =
+	| 'market'
+	| 'limit'
+	| 'stopMarket'
+	| 'stopLimit'
+	| 'takeProfitMarket'
+	| 'takeProfitLimit'
+	| 'oracle'
+	| 'oracleLimit';
+
+export type UIOrderTypeValue = {
+	label: string;
+	value: UIOrderType;
+	orderType: OrderType;
+};
+
+export type UIOrderTypeLookup = {
+	[key in UIOrderType]: UIOrderTypeValue;
+};
