@@ -319,7 +319,7 @@ export class UISerializableOrder extends SerializableOrder {
 		assert(Config.initialized, 'Common Config Not Initialised');
 		if (isVariant(instance.marketType, 'spot')) {
 			const precisionToUse =
-				Config.spotMarkets[instance.marketIndex].precisionExp;
+				Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 			instance.baseAssetAmount.precision = precisionToUse;
 
 			instance.baseAssetAmountFilled.precision = precisionToUse;
@@ -490,7 +490,7 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 		if (isVariant(instance.marketType, 'spot')) {
 			try {
 				const precisionToUse =
-					Config.spotMarkets[instance.marketIndex].precisionExp;
+					Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 
 				instance.baseAssetAmountFilled.precision = precisionToUse;
 				instance.takerOrderBaseAssetAmount.precision = precisionToUse;
@@ -578,12 +578,12 @@ export class UISerializableDepositRecord extends SerializableDepositRecord {
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
 		instance.amount.precision =
-			Config.spotMarkets[instance.marketIndex].precisionExp;
+			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 
 		instance.marketDepositBalance.precision =
-			Config.spotMarkets[instance.marketIndex].precisionExp;
+			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 		instance.marketWithdrawBalance.precision =
-			Config.spotMarkets[instance.marketIndex].precisionExp;
+			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 	}
 }
 
@@ -819,9 +819,9 @@ export class UISerializableLiquidateSpotRecord extends SerializableLiquidateSpot
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
 		instance.assetTransfer.precision =
-			Config.spotMarkets[instance.assetMarketIndex].precisionExp;
+			Config.spotMarketsLookup[instance.assetMarketIndex].precisionExp;
 		instance.liabilityTransfer.precision =
-			Config.spotMarkets[instance.liabilityMarketIndex].precisionExp;
+			Config.spotMarketsLookup[instance.liabilityMarketIndex].precisionExp;
 	}
 }
 
@@ -857,7 +857,7 @@ export class UISerializableLiquidateBorrowForPerpPnlRecord extends SerializableL
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
 		instance.liabilityTransfer.precision =
-			Config.spotMarkets[instance.liabilityMarketIndex].precisionExp;
+			Config.spotMarketsLookup[instance.liabilityMarketIndex].precisionExp;
 	}
 }
 
@@ -893,7 +893,7 @@ export class UISerializableLiquidatePerpPnlForDepositRecord extends Serializable
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
 		instance.assetTransfer.precision =
-			Config.spotMarkets[instance.assetMarketIndex].precisionExp;
+			Config.spotMarketsLookup[instance.assetMarketIndex].precisionExp;
 	}
 }
 
@@ -947,7 +947,7 @@ export class UISerializableSpotBankruptcyRecord extends SerializableSpotBankrupt
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
 		instance.ifPayment.precision =
-			Config.spotMarkets[instance.marketIndex].precisionExp;
+			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 	}
 }
 
@@ -1427,7 +1427,7 @@ export class UISerializableInsuranceFundRecord extends SerializableInsuranceFund
 		assert(Config.initialized, 'Common Config Not Initialised');
 		try {
 			const precisionToUse =
-				Config.spotMarkets[instance.spotMarketIndex].precisionExp;
+				Config.spotMarketsLookup[instance.spotMarketIndex].precisionExp;
 
 			instance.vaultAmountBefore.precision = precisionToUse;
 			instance.insuranceVaultAmountBefore.precision = precisionToUse;
@@ -1504,7 +1504,7 @@ export class UISerializableInsuranceFundStakeRecord extends SerializableInsuranc
 		assert(Config.initialized, 'Common Config Not Initialised');
 		try {
 			const precisionToUse =
-				Config.spotMarkets[instance.marketIndex].precisionExp;
+				Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 
 			instance.amount.precision = precisionToUse;
 			instance.insuranceVaultAmountBefore.precision = precisionToUse;
@@ -1591,9 +1591,9 @@ export class UISerializableSwapRecord extends SerializableSwapRecord {
 		assert(Config.initialized, 'Common Config Not Initialised');
 		try {
 			const outPrecision =
-				Config.spotMarkets[instance.outMarketIndex].precisionExp;
+				Config.spotMarketsLookup[instance.outMarketIndex].precisionExp;
 			const inPrecision =
-				Config.spotMarkets[instance.inMarketIndex].precisionExp;
+				Config.spotMarketsLookup[instance.inMarketIndex].precisionExp;
 
 			instance.amountIn.precision = inPrecision;
 			instance.amountOut.precision = outPrecision;
