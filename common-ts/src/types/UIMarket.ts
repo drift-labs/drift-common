@@ -8,7 +8,7 @@ import { MarketId } from './MarketId';
 import { Config } from '../Config';
 import invariant from 'tiny-invariant';
 import { USDC_SPOT_MARKET_INDEX } from 'src/constants';
-import { ENUM_UTILS } from 'src/utils';
+import { ENUM_UTILS } from '../utils';
 
 export class UIMarket {
 	readonly market: SpotMarketConfig | PerpMarketConfig;
