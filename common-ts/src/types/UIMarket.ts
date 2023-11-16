@@ -7,7 +7,7 @@ import {
 import { MarketId } from './MarketId';
 import { Config } from '../Config';
 import invariant from 'tiny-invariant';
-import { USDC_SPOT_MARKET_INDEX } from 'src/constants';
+import { USDC_SPOT_MARKET_INDEX } from '../constants';
 import { ENUM_UTILS } from '../utils';
 
 export class UIMarket {
