@@ -30,4 +30,11 @@ export class MarketId {
 	key() {
 		return `${ENUM_UTILS.toStr(this.marketType)}_${this.marketIndex}`;
 	}
+
+	equals(other: MarketId) {
+		return (
+			this.marketType === other.marketType &&
+			this.marketIndex === other.marketIndex
+		);
+	}
 }

@@ -1,11 +1,14 @@
 import {
 	MarketType,
+	OracleSource,
 	PerpMarketConfig,
 	SpotMarketConfig,
 } from '@drift-labs/sdk';
 import { MarketId } from './MarketId';
 import { Config } from '../Config';
 import invariant from 'tiny-invariant';
+import { USDC_SPOT_MARKET_INDEX } from 'src/constants';
+import { ENUM_UTILS } from 'src/utils';
 
 export class UIMarket {
 	readonly market: SpotMarketConfig | PerpMarketConfig;
@@ -58,6 +61,21 @@ export class UIMarket {
 
 	get symbol() {
 		return this.market.symbol;
+	}
+
+	get isUsdcMarket() {
+		return this.isSpot && this.marketIndex === USDC_SPOT_MARKET_INDEX;
+	}
+
+	get isStableCoinMarket() {
+		return (
+			this.isSpot &&
+			ENUM_UTILS.match(this.market.oracleSource, OracleSource.PYTH_STABLE_COIN)
+		);
+	}
+
+	equals(other: UIMarket) {
+		return this.marketId.equals(other.marketId);
 	}
 
 	baseAssetSymbol(removePrefix = false) {
