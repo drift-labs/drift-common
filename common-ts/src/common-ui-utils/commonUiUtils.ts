@@ -31,6 +31,10 @@ import bcrypt from 'bcryptjs-react';
 import nacl, { sign } from 'tweetnacl';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { AuctionParams } from 'src/types';
+import { USER_COMMON_UTILS } from './user';
+import { TRADING_COMMON_UTILS } from './trading';
+import { MARKET_COMMON_UTILS } from './market';
+import { ORDER_COMMON_UTILS } from './order';
 
 // When creating an account, try 5 times over 5 seconds to wait for the new account to hit the blockchain.
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
@@ -278,7 +282,7 @@ const getMarketOrderLimitPrice = ({
 
 	if (slippageTolerance === 0) return entryPrice;
 
-	if (slippageTolerance == undefined) return ZERO;
+	if (slippageTolerance == undefined) slippageTolerance = 100;
 
 	const numberPrecision = 1000;
 	const mantissaPrecision = PRICE_PRECISION.div(new BN(numberPrecision));
@@ -372,6 +376,7 @@ const getMarketAuctionParams = ({
  * @returns
  */
 const deriveMarketOrderParams = ({
+	marketType,
 	marketIndex,
 	direction,
 	maxLeverageSelected,
@@ -391,6 +396,7 @@ const deriveMarketOrderParams = ({
 	auctionStartPriceOffsetFrom,
 	isOracleOrder,
 }: {
+	marketType: MarketType;
 	marketIndex: number;
 	direction: PositionDirection;
 	maxLeverageSelected: boolean;
@@ -429,6 +435,7 @@ const deriveMarketOrderParams = ({
 	});
 
 	let orderParams = getMarketOrderParams({
+		marketType,
 		marketIndex,
 		direction,
 		baseAssetAmount: maxLeverageSelected ? maxLeverageOrderSize : baseAmount,
@@ -488,7 +495,7 @@ const getLimitAuctionParams = ({
 		startPriceFromSettings.gt(ZERO)
 	) {
 		limitAuctionParams = {
-			auctionStartPrice: startPriceFromSettings.add(auctionStartPriceBuffer),
+			auctionStartPrice: startPriceFromSettings.sub(auctionStartPriceBuffer),
 			auctionEndPrice: inputPrice.val,
 			auctionDuration: duration,
 		};
@@ -499,7 +506,7 @@ const getLimitAuctionParams = ({
 		startPriceFromSettings.gt(inputPrice.val)
 	) {
 		limitAuctionParams = {
-			auctionStartPrice: startPriceFromSettings.sub(auctionStartPriceBuffer),
+			auctionStartPrice: startPriceFromSettings.add(auctionStartPriceBuffer),
 			auctionEndPrice: inputPrice.val,
 			auctionDuration: duration,
 		};
@@ -523,10 +530,9 @@ const getPriceObject = ({
 		oracle: oraclePrice,
 		bestOffer,
 		entry: entryPrice,
-		best:
-			direction === PositionDirection.LONG
-				? BN.min(oraclePrice, bestOffer)
-				: BN.max(oraclePrice, bestOffer),
+		best: isVariant(direction, 'long')
+			? BN.min(oraclePrice, bestOffer)
+			: BN.max(oraclePrice, bestOffer),
 	};
 };
 
@@ -707,6 +713,31 @@ function chunks<T>(array: T[], size: number): T[][] {
 	);
 }
 
+/**
+ * Trim trailing zeros from a numerical string
+ * @param str - numerical string to format
+ * @param zerosToShow - max number of zeros to show after the decimal. Similar to number.toFixed() but won't trim non-zero values. Optional, default value is 1
+ */
+const trimTrailingZeros = (str: string, zerosToShow = 1) => {
+	// Ignore strings with no decimal point
+	if (!str.includes('.')) return str;
+
+	const sides = str.split('.');
+
+	sides[1] = sides[1].replace(/0+$/, '');
+
+	if (sides[1].length < zerosToShow) {
+		const zerosToAdd = zerosToShow - sides[1].length;
+		sides[1] = `${sides[1]}${Array(zerosToAdd).fill('0').join('')}`;
+	}
+
+	if (sides[1].length === 0) {
+		return sides[0];
+	} else {
+		return sides.join('.');
+	}
+};
+
 // --- Export The Utils
 
 export const COMMON_UI_UTILS = {
@@ -736,4 +767,9 @@ export const COMMON_UI_UTILS = {
 	initializeAndSubscribeToNewUserAccount,
 	userExists,
 	verifySignature,
+	trimTrailingZeros,
+	...USER_COMMON_UTILS,
+	...TRADING_COMMON_UTILS,
+	...MARKET_COMMON_UTILS,
+	...ORDER_COMMON_UTILS,
 };

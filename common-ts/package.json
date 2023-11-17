@@ -19,7 +19,7 @@
 	"scripts": {
 		"build": "yarn clean && tsc",
 		"clean": "rm -rf lib",
-		"test": "jest",
+		"test": "mocha -r ts-node/register tests/**/*.ts",
 		"test:ci": "node node_modules/.bin/jest --silent --forceExit",
 		"test:debug": "node --inspect-brk --inspect=2234 node_modules/.bin/jest --runInBand",
 		"update-jup-errors": "node src/scripts/update-jup-error-codes.js",
