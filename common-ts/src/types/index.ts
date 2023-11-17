@@ -14,7 +14,10 @@ import {
 	UISerializableAccountSnapshot,
 	UISerializableAllTimePnlData,
 	UISerializableUserSnapshotRecord,
-} from './serializableTypes';
+} from '../serializableTypes';
+import { OrderType } from '@drift-labs/sdk';
+
+export * from './MarketId';
 
 // TODO-v2 cleanup these types - most of them should have moved into serializableTypes
 // # UI ↔ History Server Data Types
@@ -148,8 +151,10 @@ export type UserSnapshotRecord = {
 	spotPositionSnapshots: UserSpotPositionSnapshot[];
 };
 
-export type PnlSnapshotOrderOption =
-	| keyof Pick<RollingPnlData, 'totalPnlPct' | 'totalPnlQuote'>;
+export type PnlSnapshotOrderOption = keyof Pick<
+	RollingPnlData,
+	'totalPnlPct' | 'totalPnlQuote'
+>;
 
 export type PnlHistoryDataPoint = {
 	val: number;
@@ -211,4 +216,47 @@ export type MarketMakerRewardRecord = {
 	ts: number;
 	amount: number;
 	symbol: string;
+};
+
+export type OpenPosition = {
+	marketIndex: number;
+	marketSymbol: string;
+	direction: 'short' | 'long';
+	notional: BN;
+	baseSize: BN;
+	entryPrice: BN;
+	exitPrice: BN;
+	liqPrice: BN;
+	pnl: BN;
+	quoteAssetNotionalAmount: BN;
+	quoteEntryAmount: BN;
+	unrealizedFundingPnl: BN;
+	lastCumulativeFundingRate: BN;
+	openOrders: number;
+	unsettledPnl: BN;
+	unsettledFundingPnl: BN;
+	totalUnrealizedPnl: BN;
+	costBasis: BN;
+	realizedPnl: BN;
+	lpShares: BN;
+};
+
+export type UIOrderType =
+	| 'market'
+	| 'limit'
+	| 'stopMarket'
+	| 'stopLimit'
+	| 'takeProfitMarket'
+	| 'takeProfitLimit'
+	| 'oracle'
+	| 'oracleLimit';
+
+export type UIOrderTypeValue = {
+	label: string;
+	value: UIOrderType;
+	orderType: OrderType;
+};
+
+export type UIOrderTypeLookup = {
+	[key in UIOrderType]: UIOrderTypeValue;
 };
