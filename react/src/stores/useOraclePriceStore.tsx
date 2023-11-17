@@ -31,7 +31,7 @@ export const useOraclePriceStore = create(
 	devtools<OraclePriceStore>((set, get) => ({
 		set: (fn) => set(produce(fn)),
 		get: () => get(),
-		getMarketPriceData: (market: MarketId) => get().symbolMap[market.key()],
+		getMarketPriceData: (market: MarketId) => get().symbolMap[market.key],
 		symbolMap: {},
 	}))
 );

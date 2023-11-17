@@ -16,7 +16,7 @@ export class UIMarket {
 
 	constructor(readonly marketIndex: number, readonly marketType: MarketType) {
 		const marketId = new MarketId(marketIndex, marketType);
-		const markets = marketId.isPerp()
+		const markets = marketId.isPerp
 			? Config.perpMarketsLookup
 			: Config.spotMarketsLookup;
 
@@ -24,7 +24,7 @@ export class UIMarket {
 
 		invariant(
 			market,
-			`Market not found for type: ${marketId.marketTypeStr()}, market index: ${marketIndex}`
+			`Market not found for type: ${marketId.marketTypeStr}, market index: ${marketIndex}`
 		);
 
 		this.marketId = marketId;
@@ -40,19 +40,19 @@ export class UIMarket {
 	}
 
 	get isSpot() {
-		return this.marketId.isSpot();
+		return this.marketId.isSpot;
 	}
 
 	get isPerp() {
-		return this.marketId.isPerp();
+		return this.marketId.isPerp;
 	}
 
 	get marketTypeStr() {
-		return this.marketId.marketTypeStr();
+		return this.marketId.marketTypeStr;
 	}
 
 	get key() {
-		return this.marketId.key();
+		return this.marketId.key;
 	}
 
 	get marketName() {
