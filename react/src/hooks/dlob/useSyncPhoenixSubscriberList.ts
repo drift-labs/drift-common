@@ -1,4 +1,5 @@
 import {
+	BulkAccountLoader,
 	MarketType,
 	PhoenixSubscriber,
 	PublicKey,
@@ -7,7 +8,8 @@ import {
 import { useEffect, useRef } from 'react';
 import { ENUM_UTILS, MarketId } from '@drift/common';
 import { MarketDlobLiquidityCategorisation, SubscriberType } from '../../types';
-import { useCommonDriftStore, useDlobStore } from '../../stores';
+import { useDlobStore } from '../../stores';
+import { Connection } from '@solana/web3.js';
 
 /**
  * Given a list of markets to track (categorised into DLOB levels), this hook will make sure that the appropriate phoenix subscribers are in the store and subscribed or unsubscribed.
@@ -20,6 +22,8 @@ export const useSyncPhoenixSubscriberList = ({
 	phoenixProgramId,
 	dlobLevelsToTrack,
 	driftClientIsReady,
+	connection,
+	bulkAccountLoader,
 }: {
 	marketsToTrack: Partial<MarketDlobLiquidityCategorisation>;
 	supportedSpotMarketConfigs: SpotMarketConfig[];
@@ -27,9 +31,9 @@ export const useSyncPhoenixSubscriberList = ({
 	subscriberType: SubscriberType;
 	dlobLevelsToTrack: (keyof MarketDlobLiquidityCategorisation)[];
 	driftClientIsReady: boolean;
+	connection: Connection;
+	bulkAccountLoader: BulkAccountLoader;
 }) => {
-	const connection = useCommonDriftStore((s) => s.connection);
-	const bulkAccountLoader = useCommonDriftStore((s) => s.bulkAccountLoader);
 	const set = useDlobStore((s) => s.set);
 	const previouslySubscribedMarkets = useRef<MarketId[]>([]);
 	const getPhoenixSubscriberFromStore = useDlobStore(

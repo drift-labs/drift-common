@@ -22,14 +22,14 @@
     "eslint": "^8.43.0",
     "lokijs": "^1.5.12",
     "pino-pretty": "^10.2.3",
-    "react": "18.2.0",
     "typescript": "^5.1.6"
   },
   "peerDependencies": {
     "@drift-labs/sdk": "^2.32.1-beta.12",
     "@solana/spl-token": "^0.3.8",
     "@solana/web3.js": "^1.77.3",
-    "react": "18.2.0"
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   },
   "dependencies": {
     "@drift/common": "file:../common-ts",
@@ -45,6 +45,7 @@
     "zustand": "^4.3.8"
   },
   "resolutions": {
-    "react": "18.2.0"
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   }
 }

@@ -12,13 +12,15 @@ import {
 	SpotMarketConfig,
 	ZERO,
 	getVammL2Generator,
+	DriftClient,
+	BulkAccountLoader,
 } from '@drift-labs/sdk';
 import { useIntervalWithInitialCallback } from '../useIntervalWithInitialCallback';
 import { useSyncPhoenixSubscriberList } from './useSyncPhoenixSubscriberList';
 import { useSyncSerumSubscriberList } from './useSyncSerumSubscriberList';
 import { DlobStore, useDlobStore, useOraclePriceStore } from '../../stores';
-import { useDriftClient } from '../useDriftClient';
 import { MarketDlobLiquidityCategorisation, SubscriberType } from '../../types';
+import { Connection } from '@solana/web3.js';
 
 const DEFAULT_L2_STATE: L2OrderBook = { asks: [], bids: [] };
 const DEFAULT_ORDERBOOK_ROWS = 20;
@@ -118,7 +120,10 @@ export const useSyncBlockchainDlob = ({
 	serumProgramId,
 	currentSlot,
 	orderSubscriber,
+	driftClient,
 	driftClientIsReady,
+	connection,
+	bulkAccountLoader,
 }: {
 	enabled: boolean;
 	tickInterval: number;
@@ -130,11 +135,13 @@ export const useSyncBlockchainDlob = ({
 	serumProgramId: PublicKey;
 	currentSlot: number;
 	orderSubscriber: OrderSubscriber;
+	driftClient: DriftClient;
 	driftClientIsReady: boolean;
+	connection: Connection;
+	bulkAccountLoader: BulkAccountLoader;
 }) => {
 	const dlobStore = useDlobStore();
 	const priceStore = useOraclePriceStore();
-	const driftClient = useDriftClient();
 
 	const getPhoenixSubscriber = useDlobStore(
 		(s) => s.getPhoenixSubscriberForMarket
@@ -153,6 +160,8 @@ export const useSyncBlockchainDlob = ({
 		dlobLevelsToTrack,
 		supportedSpotMarketConfigs,
 		driftClientIsReady,
+		connection,
+		bulkAccountLoader,
 	});
 	useSyncSerumSubscriberList({
 		marketsToTrack: enabled ? marketsToTrack : BLANK_MARKETS_TO_TRACK,
@@ -161,6 +170,8 @@ export const useSyncBlockchainDlob = ({
 		dlobLevelsToTrack,
 		supportedSpotMarketConfigs,
 		driftClientIsReady,
+		connection,
+		bulkAccountLoader,
 	});
 
 	useEffect(() => {

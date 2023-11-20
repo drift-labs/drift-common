@@ -55,7 +55,7 @@ const DEFAULT_BACKGROUND_L2: DlobL2State = [];
 const BACKGROUND_L2_POLLING_KEY = Symbol('BACKGROUND_L2_POLLING_KEY');
 
 const BULK_DLOB_L2_FETCHER = (
-	dlobServerHttpUrl: string,
+	dlobServerBatchL2Url: string,
 	params: BulkL2FetchingParams
 ) => {
 	const queryParamsMap = {
@@ -86,7 +86,7 @@ const BULK_DLOB_L2_FETCHER = (
 
 	return new Promise<L2WithOracle[]>((res, rej) => {
 		PollingResponseManager.poll(BACKGROUND_L2_POLLING_KEY, () => {
-			return fetch(`${dlobServerHttpUrl}?${queryParams}`);
+			return fetch(`${dlobServerBatchL2Url}?${queryParams}`);
 		})
 			.then(async (r) => {
 				if (!r.ok || DEV_FORCE_BAD_DLOB_RESPONSES) {
@@ -117,14 +117,14 @@ const BULK_DLOB_L2_FETCHER = (
 };
 
 const getBulkDlobL2ForMarkets = async (props: {
-	dlobServerHttpUrl: string;
+	dlobServerBatchL2Url: string;
 	markets: {
 		marketId: MarketId;
 		depth: number;
 	}[];
 	groupingSize?: number;
 }): Promise<L2WithOracle[]> => {
-	const l2State = await BULK_DLOB_L2_FETCHER(props.dlobServerHttpUrl, {
+	const l2State = await BULK_DLOB_L2_FETCHER(props.dlobServerBatchL2Url, {
 		markets: props.markets.map((m) => ({
 			marketIndex: m.marketId.marketIndex,
 			marketType: m.marketId.marketTypeStr,
@@ -140,14 +140,14 @@ const getBulkDlobL2ForMarkets = async (props: {
 };
 
 const fetchBulkMarketL2Data = async (
-	dlobServerHttpUrl: string,
+	dlobServerBatchL2Url: string,
 	markets: {
 		marketId: MarketId;
 		depth: number;
 	}[]
 ): Promise<L2WithOracle[]> => {
 	const dlobL2 = await getBulkDlobL2ForMarkets({
-		dlobServerHttpUrl,
+		dlobServerBatchL2Url,
 		markets,
 	});
 
@@ -156,14 +156,14 @@ const fetchBulkMarketL2Data = async (
 
 export const useSyncBackgroundDlobWithServerPolling = ({
 	enabled,
-	dlobServerHttpUrl,
+	dlobServerBatchL2Url,
 	tickInterval = DEFAULT_TICK_INTERVAL_MS,
 	marketsToTrack,
 	driftClient,
 	driftClientIsReady,
 }: {
 	enabled: boolean;
-	dlobServerHttpUrl: string;
+	dlobServerBatchL2Url: string;
 	tickInterval: number;
 	marketsToTrack: MarketDlobLiquidityCategorisation;
 	driftClient: DriftClient;
@@ -296,7 +296,7 @@ export const useSyncBackgroundDlobWithServerPolling = ({
 					);
 
 					const backgroundL2Data = await fetchBulkMarketL2Data(
-						dlobServerHttpUrl,
+						dlobServerBatchL2Url,
 						[...deepPriceFetchingParams, ...shallowPriceFetchingParams]
 					);
 

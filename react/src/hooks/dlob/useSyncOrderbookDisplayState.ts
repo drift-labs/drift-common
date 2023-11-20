@@ -18,7 +18,7 @@ export const useSyncOrderbookDisplayState = ({
 	isDlobEnabled = true,
 	marketsToTrack,
 	tickInterval = ORDERBOOK_DISPLAY_POLLING_INTERVAL,
-	dlobServerHttpUrl,
+	dlobServerL2Url,
 	orderbookGroupingSize,
 	currentMarketId,
 	driftClient,
@@ -28,7 +28,7 @@ export const useSyncOrderbookDisplayState = ({
 	isDlobEnabled?: boolean;
 	marketsToTrack: MarketDlobLiquidityCategorisation;
 	tickInterval: number;
-	dlobServerHttpUrl: string;
+	dlobServerL2Url: string;
 	orderbookGroupingSize: GroupingSizeSelectionState;
 	currentMarketId: MarketId;
 	driftClient: DriftClient;
@@ -48,7 +48,7 @@ export const useSyncOrderbookDisplayState = ({
 		isVammEnabled,
 		marketsToTrack,
 		tickInterval,
-		dlobServerHttpUrl,
+		dlobServerL2Url,
 		orderbookGroupingSize,
 		driftClient,
 		driftClientIsReady,

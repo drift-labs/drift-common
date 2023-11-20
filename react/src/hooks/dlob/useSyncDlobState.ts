@@ -7,9 +7,13 @@ import { useSyncOrderbookDisplayState } from './useSyncOrderbookDisplayState';
 import { useSyncBackgroundDlobWithServerPolling } from './useSyncBackgroundDlobWithServerPolling';
 import { useSyncBackgroundDlobWithServerWebsocket } from './useSyncBackgroundDlobWithServerWebsocket';
 import { useEffect } from 'react';
-import { DriftClient, OrderSubscriber } from '@drift-labs/sdk';
+import {
+	BulkAccountLoader,
+	DriftClient,
+	OrderSubscriber,
+} from '@drift-labs/sdk';
 import { MarketId, UIMarket } from '@drift/common';
-import { PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import {
 	GroupingSizeSelectionState,
 	MarketDlobLiquidityCategorisation,
@@ -29,7 +33,8 @@ export const useSyncDlobState = ({
 	serumProgramId,
 	currentSlot,
 	orderSubscriber,
-	dlobServerHttpUrl,
+	dlobServerL2Url,
+	dlobServerBatchL2Url,
 	isVammEnabled,
 	isDlobEnabled,
 	orderbookDlobPollInterval,
@@ -41,6 +46,8 @@ export const useSyncDlobState = ({
 	driftClient,
 	driftClientIsReady,
 	dlobListeningSelection,
+	connection,
+	bulkAccountLoader,
 }: {
 	marketsToTrack: MarketDlobLiquidityCategorisation;
 	subscriberType: SubscriberType;
@@ -50,7 +57,8 @@ export const useSyncDlobState = ({
 	serumProgramId: PublicKey;
 	currentSlot: number;
 	orderSubscriber: OrderSubscriber;
-	dlobServerHttpUrl: string;
+	dlobServerL2Url: string;
+	dlobServerBatchL2Url: string;
 	isVammEnabled?: boolean;
 	isDlobEnabled?: boolean;
 	orderbookDlobPollInterval: number;
@@ -71,6 +79,8 @@ export const useSyncDlobState = ({
 	driftClient: DriftClient; // TODO: use common drift store if possible; currently not implemented that way because main UI has not integrated common drift store
 	driftClientIsReady: boolean;
 	dlobListeningSelection: DlobListeningSelection;
+	connection: Connection;
+	bulkAccountLoader: BulkAccountLoader;
 }) => {
 	// const dlobStore = useDlobStore();
 	// const dlobListeningSelection = dlobStore.listeningSelection;
@@ -90,12 +100,15 @@ export const useSyncDlobState = ({
 		serumProgramId,
 		currentSlot,
 		orderSubscriber,
+		driftClient,
 		driftClientIsReady,
+		connection,
+		bulkAccountLoader,
 	});
 	useSyncBackgroundDlobWithServerPolling({
 		enabled:
 			dlobListeningSelection === DlobListeningSelection.DLOB_SERVER_POLLING,
-		dlobServerHttpUrl,
+		dlobServerBatchL2Url,
 		marketsToTrack,
 		tickInterval: backgroundDlobPollInterval,
 		driftClient,
@@ -113,7 +126,7 @@ export const useSyncDlobState = ({
 		isVammEnabled,
 		isDlobEnabled,
 		marketsToTrack,
-		dlobServerHttpUrl,
+		dlobServerL2Url,
 		orderbookGroupingSize,
 		currentMarketId,
 		driftClient,

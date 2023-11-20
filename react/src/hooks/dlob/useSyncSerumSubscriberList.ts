@@ -1,4 +1,5 @@
 import {
+	BulkAccountLoader,
 	MarketType,
 	PublicKey,
 	SerumSubscriber,
@@ -6,8 +7,9 @@ import {
 } from '@drift-labs/sdk';
 import { useEffect, useRef } from 'react';
 import { ENUM_UTILS, MarketId } from '@drift/common';
-import { useCommonDriftStore, useDlobStore } from '../../stores';
+import { useDlobStore } from '../../stores';
 import { MarketDlobLiquidityCategorisation, SubscriberType } from '../../types';
+import { Connection } from '@solana/web3.js';
 
 /**
  * Given a list of markets to track (categorised into DLOB levels), this hook will ensure that the
@@ -21,6 +23,8 @@ export const useSyncSerumSubscriberList = ({
 	subscriberType,
 	dlobLevelsToTrack,
 	driftClientIsReady,
+	connection,
+	bulkAccountLoader,
 }: {
 	marketsToTrack: Partial<MarketDlobLiquidityCategorisation>;
 	supportedSpotMarketConfigs: SpotMarketConfig[];
@@ -28,9 +32,9 @@ export const useSyncSerumSubscriberList = ({
 	subscriberType: SubscriberType;
 	dlobLevelsToTrack: (keyof MarketDlobLiquidityCategorisation)[];
 	driftClientIsReady: boolean;
+	connection: Connection;
+	bulkAccountLoader: BulkAccountLoader;
 }) => {
-	const connection = useCommonDriftStore((s) => s.connection);
-	const bulkAccountLoader = useCommonDriftStore((s) => s.bulkAccountLoader);
 	const set = useDlobStore((s) => s.set);
 	const previouslySubscribedMarkets = useRef<MarketId[]>([]);
 	const getSerumSubscriberFromStore = useDlobStore(

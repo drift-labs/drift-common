@@ -74,13 +74,13 @@ const deserializeL2Orderbook = (serializedOrderbook: {
 const DLOB_L2_POLL_KEY = Symbol('DLOB_L2_POLL_KEY');
 
 const DLOB_L2_FETCHER = async (
-	dlobServerHttpUrl: string,
+	dlobServerL2Url: string,
 	params: L2FetchingParams
 ) => {
 	return new Promise<L2OrderBook>((res, rej) => {
 		PollingResponseManager.poll(DLOB_L2_POLL_KEY, () => {
 			return fetch(
-				`${dlobServerHttpUrl}?${COMMON_UI_UTILS.encodeQueryParams(params)}`
+				`${dlobServerL2Url}?${COMMON_UI_UTILS.encodeQueryParams(params)}`
 			);
 		})
 			.then(async (r) => {
@@ -101,7 +101,7 @@ const DLOB_L2_FETCHER = async (
 };
 
 const getDlobL2ForMarket = async (props: {
-	dlobServerHttpUrl: string;
+	dlobServerL2Url: string;
 	marketIndex: number;
 	marketType: MarketType;
 	depth: number;
@@ -111,7 +111,7 @@ const getDlobL2ForMarket = async (props: {
 		dlobIsEnabled: boolean;
 	};
 }): Promise<L2OrderBook> => {
-	const l2State = await DLOB_L2_FETCHER(props.dlobServerHttpUrl, {
+	const l2State = await DLOB_L2_FETCHER(props.dlobServerL2Url, {
 		marketIndex: props.marketIndex,
 		marketType: ENUM_UTILS.toStr(props.marketType),
 		depth: props.depth,
@@ -131,7 +131,7 @@ const getDlobL2ForMarket = async (props: {
 };
 
 const getOrderbookDisplayL2DataForMarket = async (
-	dlobServerHttpUrl: string,
+	dlobServerL2Url: string,
 	marketIndex: number,
 	marketType: MarketType,
 	marketTickSize: number,
@@ -145,7 +145,7 @@ const getOrderbookDisplayL2DataForMarket = async (
 		!opts?.vammIsEnabled && !opts?.dlobIsEnabled
 			? DEFAULT_L2_STATE
 			: await getDlobL2ForMarket({
-					dlobServerHttpUrl,
+					dlobServerL2Url,
 					marketIndex,
 					marketType,
 					depth: groupingSize * DEFAULT_ORDERBOOK_ROWS,
@@ -197,7 +197,7 @@ const getOrderbookDisplayL2DataForMarket = async (
  */
 export const useSyncDisplayDlobWithServerPolling = ({
 	enabled,
-	dlobServerHttpUrl,
+	dlobServerL2Url,
 	tickInterval,
 	isDlobEnabled = true,
 	isVammEnabled = true,
@@ -208,7 +208,7 @@ export const useSyncDisplayDlobWithServerPolling = ({
 }: {
 	enabled: boolean;
 	tickInterval: number;
-	dlobServerHttpUrl: string;
+	dlobServerL2Url: string;
 	isVammEnabled: boolean;
 	isDlobEnabled: boolean;
 	marketsToTrack: MarketDlobLiquidityCategorisation;
@@ -288,7 +288,7 @@ export const useSyncDisplayDlobWithServerPolling = ({
 						: perpMarketAccount?.amm.orderTickSize) ?? ZERO;
 
 				const l2Data = await getOrderbookDisplayL2DataForMarket(
-					dlobServerHttpUrl,
+					dlobServerL2Url,
 					orderbookDisplayMarket.marketIndex,
 					orderbookDisplayMarket.marketType,
 					tickSize.toNumber(),
@@ -309,7 +309,7 @@ export const useSyncDisplayDlobWithServerPolling = ({
 			}
 		})();
 	}, [
-		dlobServerHttpUrl,
+		dlobServerL2Url,
 		displayL2Ticker,
 		orderbookDisplayMarket,
 		driftClient,
