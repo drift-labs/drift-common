@@ -8,12 +8,12 @@ const calculateMark = (bestBid: BN, bestAsk: BN) => {
 
 const calculateBidAskAndMark = (l2: L2OrderBook) => {
 	const bestBid = l2.bids.reduce((previousMax, currentBid) => {
-		if (!currentBid) return currentBid.price;
+		if (!previousMax) return currentBid.price;
 		return BN.max(currentBid.price, previousMax);
 	}, undefined as BN);
 
 	const bestAsk = l2.asks.reduce((previousMin, currentBid) => {
-		if (!currentBid) return currentBid.price;
+		if (!previousMin) return currentBid.price;
 		return BN.min(currentBid.price, previousMin);
 	}, undefined as BN);
 
