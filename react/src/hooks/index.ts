@@ -10,3 +10,7 @@ export * from './useRpcLatencies';
 export * from './useDevSwitchIsOn';
 export * from './useLastAcknowledgedTerms';
 export * from './oraclePrice';
+export * from './useDriftClient';
+export * from './useIntervalWithInitialCallback';
+export * from './useValueWithUpdateInterval';
+export * from './dlob';

@@ -738,6 +738,35 @@ const trimTrailingZeros = (str: string, zerosToShow = 1) => {
 	}
 };
 
+const encodeQueryParams = (
+	params: Record<string, string | number | boolean | undefined>
+) => {
+	const queryParams = Object.entries(params)
+		.filter(([_key, param]) => param !== undefined)
+		.map(([key, param]) => {
+			return `${key}=${param}`;
+		});
+
+	const queryParamsString = `${queryParams.join('&')}`;
+
+	return queryParamsString;
+};
+
+/**
+ * Sort is by default ascending when you return a-b. This is just converting the sort to use an equivalent for BNs
+ * @param bnA
+ * @param bnB
+ * @returns
+ */
+const sortBnAsc = (bnA: BN, bnB: BN) => {
+	if (bnA.gt(bnB)) return 1;
+	if (bnA.eq(bnB)) return 0;
+	if (bnA.lt(bnB)) return -1;
+};
+
+// To do desc sort just call asc sort with the parameters switched
+const sortBnDesc = (bnA: BN, bnB: BN) => sortBnAsc(bnB, bnA);
+
 // --- Export The Utils
 
 export const COMMON_UI_UTILS = {
@@ -768,6 +797,9 @@ export const COMMON_UI_UTILS = {
 	userExists,
 	verifySignature,
 	trimTrailingZeros,
+	encodeQueryParams,
+	sortBnAsc,
+	sortBnDesc,
 	...USER_COMMON_UTILS,
 	...TRADING_COMMON_UTILS,
 	...MARKET_COMMON_UTILS,
