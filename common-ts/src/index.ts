@@ -18,6 +18,7 @@ export * from './utils/featureFlags';
 export * from './utils/WalletConnectionState';
 export * from './utils/rpcLatency';
 export * from './utils/token';
+export * from './utils/math';
 export * from './common-ui-utils/commonUiUtils';
 export * from './constants';
 

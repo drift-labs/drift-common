@@ -1,42 +1,40 @@
 import { BN, L2OrderBook, PERCENTAGE_PRECISION } from '@drift-labs/sdk';
 
-// TODO : Unit Tests
-
-const calculateMark = (bestBid: BN, bestAsk: BN) => {
-	return bestBid.add(bestAsk).divn(2);
+const calculatemarkPrice = (bestBidPrice: BN, bestAskPrice: BN) => {
+	return bestBidPrice.add(bestAskPrice).divn(2);
 };
 
-const calculateBidAskAndMark = (l2: L2OrderBook) => {
-	const bestBid = l2.bids.reduce((previousMax, currentBid) => {
+const calculateBidAskAndmarkPrice = (l2: L2OrderBook) => {
+	const bestBidPrice = l2.bids.reduce((previousMax, currentBid) => {
 		if (!previousMax) return currentBid.price;
 		return BN.max(currentBid.price, previousMax);
 	}, undefined as BN);
 
-	const bestAsk = l2.asks.reduce((previousMin, currentBid) => {
+	const bestAskPrice = l2.asks.reduce((previousMin, currentBid) => {
 		if (!previousMin) return currentBid.price;
 		return BN.min(currentBid.price, previousMin);
 	}, undefined as BN);
 
-	const mark = calculateMark(bestBid, bestAsk);
+	const markPrice = calculatemarkPrice(bestBidPrice, bestAskPrice);
 
 	return {
-		bestBid,
-		bestAsk,
-		mark,
+		bestBidPrice,
+		bestAskPrice,
+		markPrice,
 	};
 };
 
-const calculateSpreadQuote = (bestBid: BN, bestAsk: BN) => {
-	return bestBid.sub(bestAsk).abs();
+const calculateSpreadQuote = (bestBidPrice: BN, bestAskPrice: BN) => {
+	return bestBidPrice.sub(bestAskPrice).abs();
 };
 
-function calculateSpreadPct(markPrice: BN, spreadQuote: BN) {
-	return spreadQuote.mul(PERCENTAGE_PRECISION).div(markPrice);
+function calculateSpreadPct(markPricePrice: BN, spreadQuote: BN) {
+	return spreadQuote.mul(PERCENTAGE_PRECISION).div(markPricePrice);
 }
 
-const calculateSpread = (bestBid: BN, bestAsk: BN, mark: BN) => {
-	const spreadQuote = calculateSpreadQuote(bestBid, bestAsk);
-	const spreadPct = calculateSpreadPct(mark, spreadQuote);
+const calculateSpread = (bestBidPrice: BN, bestAskPrice: BN, markPrice: BN) => {
+	const spreadQuote = calculateSpreadQuote(bestBidPrice, bestAskPrice);
+	const spreadPct = calculateSpreadPct(markPrice, spreadQuote);
 
 	return {
 		spreadPct,
@@ -49,25 +47,28 @@ const calculateSpreadBidAskMark = (l2: Pick<L2OrderBook, 'bids' | 'asks'>) => {
 		return {
 			spreadQuote: undefined,
 			spreadPct: undefined,
-			mark: undefined,
-			bestBid: undefined,
-			bestAsk: undefined,
+			markPrice: undefined,
+			bestBidPrice: undefined,
+			bestAskPrice: undefined,
 		};
 	}
 
-	const { bestBid, bestAsk, mark } = calculateBidAskAndMark(l2);
-	const { spreadPct, spreadQuote } = calculateSpread(bestBid, bestAsk, mark);
+	const { bestBidPrice, bestAskPrice, markPrice } =
+		calculateBidAskAndmarkPrice(l2);
+	const { spreadPct, spreadQuote } = calculateSpread(
+		bestBidPrice,
+		bestAskPrice,
+		markPrice
+	);
 	return {
-		bestBid,
-		bestAsk,
-		mark,
+		bestBidPrice,
+		bestAskPrice,
+		markPrice,
 		spreadPct,
 		spreadQuote,
 	};
 };
 
-const COMMON_MATH = {
+export const COMMON_MATH = {
 	calculateSpreadBidAskMark,
 };
-
-export default COMMON_MATH;
