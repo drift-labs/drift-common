@@ -32,7 +32,7 @@ export const EnvironmentConstants = {
 		mainnet: [
 			{
 				label: 'Triton RPC Pool 1',
-				value: 'https://drift.rpcpool.com',
+				value: 'https://drift-drift-951a.mainnet.rpcpool.com',
 				allowAdditionalConnection: true,
 			},
 			{
@@ -42,7 +42,7 @@ export const EnvironmentConstants = {
 			},
 			{
 				label: 'Helius',
-				value: 'https://rpc-proxy.drift-labs.workers.dev/',
+				value: 'https://cold-hanni-fast-mainnet.helius-rpc.com/',
 				allowAdditionalConnection: true,
 			},
 		] as RpcEndpoint[],
