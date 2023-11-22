@@ -42,7 +42,7 @@ export const EnvironmentConstants = {
 			},
 			{
 				label: 'Helius',
-				value: 'https://rpc-proxy.drift-labs.workers.dev/',
+				value: 'https://cold-hanni-fast-mainnet.helius-rpc.com/',
 				allowAdditionalConnection: true,
 			},
 		] as RpcEndpoint[],
