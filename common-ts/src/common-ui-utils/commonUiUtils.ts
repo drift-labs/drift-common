@@ -445,20 +445,23 @@ const deriveMarketOrderParams = ({
 	});
 
 	if (isOracleOrder) {
-		const oracleAuctionParams = deriveOracleAuctionParams({
-			direction: direction,
-			oraclePrice: startPrices.oracle,
-			auctionStartPrice: auctionParams.auctionStartPrice,
-			auctionEndPrice: auctionParams.auctionEndPrice,
-			limitPrice,
-		});
+		// wont work if oralce is zero
+		if (!oraclePrice.eq(ZERO)) {
+			const oracleAuctionParams = deriveOracleAuctionParams({
+				direction: direction,
+				oraclePrice: startPrices.oracle,
+				auctionStartPrice: auctionParams.auctionStartPrice,
+				auctionEndPrice: auctionParams.auctionEndPrice,
+				limitPrice,
+			});
 
-		orderParams = {
-			...orderParams,
-			...oracleAuctionParams,
-			price: undefined,
-			orderType: OrderType.ORACLE,
-		};
+			orderParams = {
+				...orderParams,
+				...oracleAuctionParams,
+				price: undefined,
+				orderType: OrderType.ORACLE,
+			};
+		}
 	}
 
 	return orderParams;
