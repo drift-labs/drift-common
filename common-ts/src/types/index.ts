@@ -2,9 +2,7 @@ import {
 	BN,
 	BigNum,
 	MarketType,
-	PerpMarketConfig,
 	SpotBalanceType,
-	SpotMarketConfig,
 	SpotPosition,
 	TradeSide,
 } from '@drift-labs/sdk';
@@ -18,6 +16,7 @@ import {
 import { OrderType } from '@drift-labs/sdk';
 
 export * from './MarketId';
+export * from './UIMarket';
 
 // TODO-v2 cleanup these types - most of them should have moved into serializableTypes
 // # UI ↔ History Server Data Types
@@ -199,11 +198,6 @@ export type BankBalanceUI = SpotPosition & {
 	accountId: number;
 	accountName: string;
 	accountAuthority: PublicKey;
-};
-
-export type UIMarket = {
-	marketType: MarketType;
-	market: PerpMarketConfig | SpotMarketConfig;
 };
 
 export type AuctionParams = {
