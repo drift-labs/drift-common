@@ -17,29 +17,29 @@ describe('MarketId', () => {
 
 	it('should correctly identify a spot market', () => {
 		const marketId = MarketId.createSpotMarket(2);
-		expect(marketId.isSpot()).to.be.true;
-		expect(marketId.isPerp()).to.be.false;
+		expect(marketId.isSpot).to.be.true;
+		expect(marketId.isPerp).to.be.false;
 	});
 
 	it('should correctly identify a perp market', () => {
 		const marketId = MarketId.createPerpMarket(1);
-		expect(marketId.isPerp()).to.be.true;
-		expect(marketId.isSpot()).to.be.false;
+		expect(marketId.isPerp).to.be.true;
+		expect(marketId.isSpot).to.be.false;
 	});
 
 	it('should return the correct perp market string', () => {
 		const marketId = MarketId.createPerpMarket(1);
-		expect(marketId.marketTypeStr()).to.equal('perp');
+		expect(marketId.marketTypeStr).to.equal('perp');
 	});
 
 	it('should return the correct spot market string', () => {
 		const marketId = MarketId.createSpotMarket(2);
-		expect(marketId.marketTypeStr()).to.equal('spot');
+		expect(marketId.marketTypeStr).to.equal('spot');
 	});
 
 	it('should return a unique key created from its market index and market type', () => {
 		const randomIndex = Math.floor(Math.random() * 1000);
 		const marketId = MarketId.createSpotMarket(randomIndex);
-		expect(marketId.key()).to.equal(`spot_${randomIndex}`);
+		expect(marketId.key).to.equal(`spot_${randomIndex}`);
 	});
 });

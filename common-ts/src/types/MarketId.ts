@@ -12,22 +12,29 @@ export class MarketId {
 		return new MarketId(marketIndex, MarketType.SPOT);
 	}
 
-	isSpot() {
+	get isSpot() {
 		return ENUM_UTILS.match(this.marketType, MarketType.SPOT);
 	}
 
-	isPerp() {
+	get isPerp() {
 		return ENUM_UTILS.match(this.marketType, MarketType.PERP);
 	}
 
-	marketTypeStr() {
+	get marketTypeStr() {
 		return ENUM_UTILS.toStr(this.marketType);
 	}
 
 	/**
 	 * Returns a unique string that can be used as a key in a map.
 	 */
-	key() {
+	get key() {
 		return `${ENUM_UTILS.toStr(this.marketType)}_${this.marketIndex}`;
+	}
+
+	equals(other: MarketId) {
+		return (
+			this.marketType === other.marketType &&
+			this.marketIndex === other.marketIndex
+		);
 	}
 }
