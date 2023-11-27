@@ -40,6 +40,12 @@ import { ORDER_COMMON_UTILS } from './order';
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
 const ACCOUNT_INITIALIZATION_RETRY_ATTEMPTS = 5;
 
+export const EMPTY_AUCTION_PARAMS = {
+	auctionStartPrice: ZERO,
+	auctionEndPrice: ZERO,
+	auctionDuration: 0,
+};
+
 /**
  * Get a unique key for an authority's subaccount
  * @param userId
@@ -480,11 +486,7 @@ const getLimitAuctionParams = ({
 	duration: number;
 	auctionStartPriceOffset: number;
 }): AuctionParams => {
-	let limitAuctionParams = {
-		auctionStartPrice: null,
-		auctionEndPrice: null,
-		auctionDuration: null,
-	};
+	let limitAuctionParams = EMPTY_AUCTION_PARAMS;
 
 	const auctionStartPriceBuffer = inputPrice.scale(
 		Math.abs(auctionStartPriceOffset * 100),
