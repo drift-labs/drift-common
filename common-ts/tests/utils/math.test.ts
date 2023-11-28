@@ -1,5 +1,5 @@
 import { BN, L2OrderBook } from '@drift-labs/sdk';
-import COMMON_MATH from '../../src/utils/math';
+import { COMMON_MATH } from '../../src/utils/math';
 import { expect } from 'chai';
 
 // Mock data setup

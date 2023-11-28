@@ -69,8 +69,6 @@ const calculateSpreadBidAskMark = (l2: Pick<L2OrderBook, 'bids' | 'asks'>) => {
 	};
 };
 
-const COMMON_MATH = {
+export const COMMON_MATH = {
 	calculateSpreadBidAskMark,
 };
-
-export default COMMON_MATH;
