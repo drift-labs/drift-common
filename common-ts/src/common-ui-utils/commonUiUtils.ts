@@ -581,7 +581,8 @@ const getTokenAddress = (
 ): Promise<PublicKey> => {
 	return getAssociatedTokenAddress(
 		new PublicKey(mintAddress),
-		new PublicKey(userPubKey)
+		new PublicKey(userPubKey),
+		true
 	);
 };
 
@@ -612,7 +613,8 @@ const getTokenAccount = async (
 
 	const associatedAddress = await getAssociatedTokenAddress(
 		new PublicKey(mintAddress),
-		new PublicKey(userPubKey)
+		new PublicKey(userPubKey),
+		true
 	);
 
 	const targetAccount =
