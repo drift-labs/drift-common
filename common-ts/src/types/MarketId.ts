@@ -33,7 +33,7 @@ export class MarketId {
 
 	equals(other: MarketId) {
 		return (
-			this.marketType === other.marketType &&
+			ENUM_UTILS.match(this.marketType, other.marketType) &&
 			this.marketIndex === other.marketIndex
 		);
 	}
