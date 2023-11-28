@@ -1,6 +1,6 @@
 import { BN, L2OrderBook, PERCENTAGE_PRECISION } from '@drift-labs/sdk';
 
-const calculatemarkPrice = (bestBidPrice: BN, bestAskPrice: BN) => {
+const calculateMarkPrice = (bestBidPrice: BN, bestAskPrice: BN) => {
 	return bestBidPrice.add(bestAskPrice).divn(2);
 };
 
@@ -15,7 +15,7 @@ const calculateBidAskAndmarkPrice = (l2: L2OrderBook) => {
 		return BN.min(currentBid.price, previousMin);
 	}, undefined as BN);
 
-	const markPrice = calculatemarkPrice(bestBidPrice, bestAskPrice);
+	const markPrice = calculateMarkPrice(bestBidPrice, bestAskPrice);
 
 	return {
 		bestBidPrice,
@@ -69,6 +69,8 @@ const calculateSpreadBidAskMark = (l2: Pick<L2OrderBook, 'bids' | 'asks'>) => {
 	};
 };
 
-export const COMMON_MATH = {
+const COMMON_MATH = {
 	calculateSpreadBidAskMark,
 };
+
+export default COMMON_MATH;
