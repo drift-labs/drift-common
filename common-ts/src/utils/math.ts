@@ -57,7 +57,7 @@ const calculateSpreadQuote = (bestBidPrice: BN, bestAskPrice: BN) => {
 };
 
 function calculateSpreadPct(markPricePrice: BN, spreadQuote: BN) {
-	return spreadQuote.mul(PERCENTAGE_PRECISION).div(markPricePrice);
+	return spreadQuote.muln(100).mul(PERCENTAGE_PRECISION).div(markPricePrice);
 }
 
 const calculateSpread = (bestBidPrice: BN, bestAskPrice: BN, markPrice: BN) => {

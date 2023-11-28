@@ -39,7 +39,7 @@ describe('COMMON_MATH Tests', () => {
 			expect(result.bestAskPrice?.toString()).to.equal('130');
 			expect(result.markPrice?.toString()).to.equal('125');
 			expect(result.spreadQuote?.toString()).to.equal('10');
-			expect(result.spreadPct?.toString()).to.equal('80000'); // (spread / mark * percentage_precision) => (10 / 125) * 10^6 => 80_000
+			expect(result.spreadPct?.toString()).to.equal('8000000'); // ((spread / mark) * 100 * percentage_precision) => (10 / 125) * 100 * 10^6 => 0.08 * 100 * 10^6 => 8_000_000
 		});
 
 		it('should handle edge cases', () => {
