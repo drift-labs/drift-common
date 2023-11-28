@@ -70,7 +70,10 @@ const calculateSpread = (bestBidPrice: BN, bestAskPrice: BN, markPrice: BN) => {
 	};
 };
 
-const calculateSpreadBidAskMark = (l2: Pick<L2OrderBook, 'bids' | 'asks'>) => {
+const calculateSpreadBidAskMark = (
+	l2: Pick<L2OrderBook, 'bids' | 'asks'>,
+	oraclePrice?: BN
+) => {
 	if (l2.asks.length === 0 || l2.bids.length === 0) {
 		return {
 			spreadQuote: undefined,
@@ -81,8 +84,11 @@ const calculateSpreadBidAskMark = (l2: Pick<L2OrderBook, 'bids' | 'asks'>) => {
 		};
 	}
 
-	const { bestBidPrice, bestAskPrice, markPrice } =
-		calculateBidAskAndmarkPrice(l2);
+	const { bestBidPrice, bestAskPrice, markPrice } = calculateBidAskAndmarkPrice(
+		l2,
+		oraclePrice
+	);
+
 	const { spreadPct, spreadQuote } = calculateSpread(
 		bestBidPrice,
 		bestAskPrice,
