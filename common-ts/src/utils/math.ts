@@ -1,10 +1,38 @@
 import { BN, L2OrderBook, PERCENTAGE_PRECISION } from '@drift-labs/sdk';
 
-const calculateMarkPrice = (bestBidPrice: BN, bestAskPrice: BN) => {
-	return bestBidPrice.add(bestAskPrice).divn(2);
+const calculateMarkPrice = (
+	bestBidPrice?: BN,
+	bestAskPrice?: BN,
+	oraclePrice?: BN
+) => {
+	const bid = bestBidPrice;
+	const ask = bestAskPrice;
+
+	let mid: BN;
+
+	// if bid/ask cross, force it to be the one closer to oracle, if oracle is in the middle, use oracle price
+	if (bid && ask && bid.gt(ask) && oraclePrice) {
+		if (bid.gt(oraclePrice) && ask.gt(oraclePrice)) {
+			mid = BN.min(bid, ask);
+		} else if (bid.lt(oraclePrice) && ask.lt(oraclePrice)) {
+			mid = BN.max(bid, ask);
+		} else {
+			mid = oraclePrice;
+		}
+	} else {
+		if (bid && ask) {
+			mid = bid.add(ask).divn(2);
+		} else if (oraclePrice) {
+			mid = oraclePrice;
+		} else {
+			mid = undefined;
+		}
+	}
+
+	return mid;
 };
 
-const calculateBidAskAndmarkPrice = (l2: L2OrderBook) => {
+const calculateBidAskAndmarkPrice = (l2: L2OrderBook, oraclePrice?: BN) => {
 	const bestBidPrice = l2.bids.reduce((previousMax, currentBid) => {
 		if (!previousMax) return currentBid.price;
 		return BN.max(currentBid.price, previousMax);
@@ -15,7 +43,7 @@ const calculateBidAskAndmarkPrice = (l2: L2OrderBook) => {
 		return BN.min(currentBid.price, previousMin);
 	}, undefined as BN);
 
-	const markPrice = calculateMarkPrice(bestBidPrice, bestAskPrice);
+	const markPrice = calculateMarkPrice(bestBidPrice, bestAskPrice, oraclePrice);
 
 	return {
 		bestBidPrice,
