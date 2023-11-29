@@ -100,7 +100,7 @@ const awaitAccountInitializationChainState = async (
 	authority: PublicKey
 ) => {
 	const user = driftClient.getUser(userId, authority);
-	if (user && user.getUserAccountAndSlot() !== undefined) {
+	if (user && user.getUserAccountAndSlot()?.data !== undefined) {
 		return true;
 	}
 
@@ -108,7 +108,7 @@ const awaitAccountInitializationChainState = async (
 
 	while (retryCount < ACCOUNT_INITIALIZATION_RETRY_ATTEMPTS) {
 		await updateUserAccount(user);
-		if (user.getUserAccountAndSlot() !== undefined) {
+		if (user.getUserAccountAndSlot()?.data !== undefined) {
 			return true;
 		}
 		retryCount++;
@@ -202,12 +202,12 @@ async function updateUserAccount(user: User): Promise<void> {
 	const publicKey = user.userAccountPublicKey;
 	try {
 		const dataAndContext =
-			await user.driftClient.prorgram.account.user.fetchAndContext(
+			await user.driftClient.program.account.user.fetchAndContext(
 				publicKey,
 				'processed'
 			);
 		user.accountSubscriber.updateData(
-			dataAndContext.data,
+			dataAndContext.data as UserAccount,
 			dataAndContext.context.slot
 		);
 	} catch (e) {
