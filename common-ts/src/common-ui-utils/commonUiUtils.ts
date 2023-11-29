@@ -100,7 +100,7 @@ const awaitAccountInitializationChainState = async (
 	authority: PublicKey
 ) => {
 	const user = driftClient.getUser(userId, authority);
-	if (user && user.getUserAccountAndSlot() !== undefined) {
+	if (user && user.isSubscribed && user.getUserAccountAndSlot() !== undefined) {
 		return true;
 	}
 
@@ -108,9 +108,11 @@ const awaitAccountInitializationChainState = async (
 
 	while (retryCount < ACCOUNT_INITIALIZATION_RETRY_ATTEMPTS) {
 		await user.fetchAccounts();
-		if (user.getUserAccountAndSlot() !== undefined) {
+
+		if (user.isSubscribed && user.getUserAccountAndSlot() !== undefined) {
 			return true;
 		}
+
 		retryCount++;
 		await sleep(ACCOUNT_INITIALIZATION_RETRY_DELAY_MS);
 	}
