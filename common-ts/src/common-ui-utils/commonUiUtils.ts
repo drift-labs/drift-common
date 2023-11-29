@@ -107,7 +107,7 @@ const awaitAccountInitializationChainState = async (
 	let retryCount = 0;
 
 	while (retryCount < ACCOUNT_INITIALIZATION_RETRY_ATTEMPTS) {
-		await user.fetchAccounts();
+		await updateUserAccount(user);
 		if (user.getUserAccountAndSlot() !== undefined) {
 			return true;
 		}
@@ -156,7 +156,7 @@ const initializeAndSubscribeToNewUserAccount = async (
 	let result = await callbacks.initializationStep();
 
 	// Fetch account to make sure it's loaded
-	await driftClient.getUser(userIdToInit).fetchAccounts();
+	await updateUserAccount(driftClient.getUser(userIdToInit));
 
 	if (!result) {
 		return 'failed_initializationStep';
@@ -197,6 +197,23 @@ const initializeAndSubscribeToNewUserAccount = async (
 
 	return 'ok';
 };
+
+async function updateUserAccount(user: User): Promise<void> {
+	const publicKey = user.userAccountPublicKey;
+	try {
+		const dataAndContext =
+			await user.driftClient.prorgram.account.user.fetchAndContext(
+				publicKey,
+				'processed'
+			);
+		user.accountSubscriber.updateData(
+			dataAndContext.data,
+			dataAndContext.context.slot
+		);
+	} catch (e) {
+		// noop
+	}
+}
 
 const getMarketKey = (marketIndex: number, marketType: MarketType) =>
 	`${ENUM_UTILS.toStr(marketType)}_${marketIndex}`;
