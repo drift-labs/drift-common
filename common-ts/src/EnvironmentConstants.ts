@@ -1,6 +1,7 @@
 export interface RpcEndpoint {
 	label: string;
 	value: string;
+	wsValue?: string;
 	allowAdditionalConnection: boolean;
 }
 
@@ -11,43 +12,40 @@ export const EnvironmentConstants = {
 				label: 'Helius',
 				value:
 					'https://rpc-devnet.helius.xyz/?api-key=ff40c844-e15b-49d0-9d62-8534705aa48b',
+				wsValue:
+					'wss://rpc-devnet.helius.xyz/?api-key=ff40c844-e15b-49d0-9d62-8534705aa48b',
 				allowAdditionalConnection: true,
 			},
-			// {
-			// 	label: 'Solana',
-			// 	value: 'https://api.devnet.solana.com',
-			// 	allowAdditionalConnection: false,
-			// },
 			{
 				label: 'RPC Pool',
 				value: 'https://drift-drift-a827.devnet.rpcpool.com',
+				wsValue: 'wss://drift-drift-a827.devnet.rpcpool.com/whirligig',
 				allowAdditionalConnection: false,
 			},
-			// {
-			// 	label: 'Ankr',
-			// 	value: 'https://rpc.ankr.com/solana_devnet',
-			// 	allowAdditionalConnection: false,
-			// },
 		] as RpcEndpoint[],
 		mainnet: [
 			{
 				label: 'Triton RPC Pool 1',
 				value: 'https://drift-drift-951a.mainnet.rpcpool.com',
+				wsValue: 'wss://drift-drift-951a.mainnet.rpcpool.com/whirligig',
 				allowAdditionalConnection: true,
 			},
 			{
 				label: 'Triton RPC Pool 2',
 				value: 'https://drift-cranking.rpcpool.com/',
+				wsValue: 'wss://drift-cranking.rpcpool.com/whirligig',
 				allowAdditionalConnection: false,
 			},
 			{
 				label: 'Helius 1',
 				value: 'https://rpc-proxy.drift-labs.workers.dev/',
+				wsValue: 'wss://rpc-proxy.drift-labs.workers.dev/',
 				allowAdditionalConnection: true,
 			},
 			{
 				label: 'Helius 2',
 				value: 'https://cold-hanni-fast-mainnet.helius-rpc.com/',
+				wsValue: 'wss://cold-hanni-fast-mainnet.helius-rpc.com/',
 				allowAdditionalConnection: true,
 			},
 		] as RpcEndpoint[],
