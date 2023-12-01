@@ -10,10 +10,8 @@ export const EnvironmentConstants = {
 		dev: [
 			{
 				label: 'Helius',
-				value:
-					'https://rpc-devnet.helius.xyz/?api-key=ff40c844-e15b-49d0-9d62-8534705aa48b',
-				wsValue:
-					'wss://rpc-devnet.helius.xyz/?api-key=ff40c844-e15b-49d0-9d62-8534705aa48b',
+				value: 'https://detailed-sharleen-fast-devnet.helius-rpc.com/',
+				wsValue: 'wss://detailed-sharleen-fast-devnet.helius-rpc.com/',
 				allowAdditionalConnection: true,
 			},
 			{
@@ -31,19 +29,7 @@ export const EnvironmentConstants = {
 				allowAdditionalConnection: true,
 			},
 			{
-				label: 'Triton RPC Pool 2',
-				value: 'https://drift-cranking.rpcpool.com/',
-				wsValue: 'wss://drift-cranking.rpcpool.com/whirligig',
-				allowAdditionalConnection: false,
-			},
-			{
 				label: 'Helius 1',
-				value: 'https://rpc-proxy.drift-labs.workers.dev/',
-				wsValue: 'wss://rpc-proxy.drift-labs.workers.dev/',
-				allowAdditionalConnection: true,
-			},
-			{
-				label: 'Helius 2',
 				value: 'https://cold-hanni-fast-mainnet.helius-rpc.com/',
 				wsValue: 'wss://cold-hanni-fast-mainnet.helius-rpc.com/',
 				allowAdditionalConnection: true,
