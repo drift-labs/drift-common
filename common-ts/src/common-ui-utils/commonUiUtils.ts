@@ -149,14 +149,14 @@ const initializeAndSubscribeToNewUserAccount = async (
 	await driftClient.addUser(userIdToInit, authority);
 
 	const accountAlreadyExisted = await driftClient
-		.getUser(userIdToInit)
+		.getUser(userIdToInit, authority)
 		?.exists();
 
 	// Do the account initialization step
 	let result = await callbacks.initializationStep();
 
 	// Fetch account to make sure it's loaded
-	await updateUserAccount(driftClient.getUser(userIdToInit));
+	await updateUserAccount(driftClient.getUser(userIdToInit, authority));
 
 	if (!result) {
 		return 'failed_initializationStep';
