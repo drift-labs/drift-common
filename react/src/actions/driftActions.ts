@@ -46,7 +46,6 @@ const createDriftActions = (
 
 			driftClient.eventEmitter.on('update', () => {
 				set((s) => {
-					s.driftClient.client = driftClient;
 					s.driftClient.updateSignaler = {};
 				});
 			});
