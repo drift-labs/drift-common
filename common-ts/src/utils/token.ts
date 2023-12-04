@@ -10,7 +10,8 @@ export const getTokenAddress = (
 ): Promise<PublicKey> => {
 	return getAssociatedTokenAddress(
 		new PublicKey(mintAddress),
-		new PublicKey(userPubKey)
+		new PublicKey(userPubKey),
+		true
 	);
 };
 
@@ -31,7 +32,8 @@ export const getTokenAccount = async (
 
 	const associatedAddress = await getAssociatedTokenAddress(
 		new PublicKey(mintAddress),
-		new PublicKey(userPubKey)
+		new PublicKey(userPubKey),
+		true
 	);
 
 	const targetAccount =
@@ -51,7 +53,11 @@ export const createTokenAccountIx = async (
 		payer = owner;
 	}
 
-	const associatedAddress = await getAssociatedTokenAddress(mintAddress, owner);
+	const associatedAddress = await getAssociatedTokenAddress(
+		mintAddress,
+		owner,
+		true
+	);
 
 	const createAtaIx = await createAssociatedTokenAccountInstruction(
 		payer,
