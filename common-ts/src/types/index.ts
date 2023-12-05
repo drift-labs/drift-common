@@ -221,7 +221,8 @@ export type OpenPosition = {
 	entryPrice: BN;
 	exitPrice: BN;
 	liqPrice: BN;
-	pnl: BN;
+	pnlVsOracle: BN;
+	pnlVsMark: BN;
 	quoteAssetNotionalAmount: BN;
 	quoteEntryAmount: BN;
 	unrealizedFundingPnl: BN;

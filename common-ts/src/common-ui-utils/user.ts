@@ -1,7 +1,13 @@
 import {
+	BASE_PRECISION_EXP,
+	BN,
+	BigNum,
 	DriftClient,
+	PRICE_PRECISION_EXP,
 	PerpMarketConfig,
 	PerpPosition,
+	PositionDirection,
+	QUOTE_PRECISION_EXP,
 	QUOTE_SPOT_MARKET_INDEX,
 	User,
 	ZERO,
@@ -12,12 +18,14 @@ import {
 	calculatePositionPNL,
 } from '@drift-labs/sdk';
 import { OpenPosition } from 'src/types';
+import { TRADING_COMMON_UTILS } from './trading';
 
 const getOpenPositionData = (
 	driftClient: DriftClient,
 	userPositions: PerpPosition[],
 	user: User,
-	perpMarketLookup: PerpMarketConfig[]
+	perpMarketLookup: PerpMarketConfig[],
+	markPriceCallback?: (marketIndex: number) => BN
 ): OpenPosition[] => {
 	const newResult: OpenPosition[] = userPositions
 		.filter(
@@ -38,33 +46,61 @@ const getOpenPositionData = (
 				position.marketIndex
 			);
 
-			const markPrice = oraclePriceData.price;
+			// mark price fetched with a callback so we don't need extra dlob server calls. fallback to oracle
+			const markPrice = markPriceCallback
+				? markPriceCallback(position.marketIndex) ?? oraclePriceData.price
+				: oraclePriceData.price;
 
 			const [perpPositionWithLpSettle, _dustBaseAmount, _unsettledLpPnl] =
 				user.getPerpPositionWithLPSettle(position.marketIndex, position);
 
-			const [estExitPrice, pnl] = user.getPositionEstimatedExitPriceAndPnl(
-				perpPositionWithLpSettle,
-				perpPositionWithLpSettle.baseAssetAmount
-			);
+			const [estExitPrice, pnlVsOracle] =
+				user.getPositionEstimatedExitPriceAndPnl(
+					perpPositionWithLpSettle,
+					perpPositionWithLpSettle.baseAssetAmount
+				);
+
+			const entryPrice = calculateEntryPrice(perpPositionWithLpSettle);
+
+			const isShort = perpPositionWithLpSettle.baseAssetAmount.isNeg();
+
+			const pnlVsMark = TRADING_COMMON_UTILS.calculatePotentialProfit({
+				currentPositionSize: BigNum.from(
+					perpPositionWithLpSettle.baseAssetAmount.abs(),
+					BASE_PRECISION_EXP
+				),
+				currentPositionDirection: isShort
+					? PositionDirection.SHORT
+					: PositionDirection.LONG,
+				currentPositionEntryPrice: BigNum.from(entryPrice, PRICE_PRECISION_EXP),
+				tradeDirection: isShort
+					? PositionDirection.LONG
+					: PositionDirection.SHORT,
+				exitBaseSize: BigNum.from(
+					perpPositionWithLpSettle.baseAssetAmount.abs(),
+					BASE_PRECISION_EXP
+				),
+				exitPrice: BigNum.from(markPrice, PRICE_PRECISION_EXP),
+				slippageTolerance: 0,
+				takerFeeBps: 0,
+			}).estimatedProfit.shiftTo(QUOTE_PRECISION_EXP).val;
 
 			return {
 				marketIndex: perpPositionWithLpSettle.marketIndex,
 				marketSymbol: perpMarketConfig.symbol,
-				direction: perpPositionWithLpSettle.baseAssetAmount.isNeg()
-					? 'short'
-					: 'long',
+				direction: isShort ? 'short' : 'long',
 				notional: user
 					.getPerpPositionValue(position.marketIndex, oraclePriceData)
 					.abs(),
 				baseSize: perpPositionWithLpSettle.baseAssetAmount,
-				markPrice: markPrice,
-				entryPrice: calculateEntryPrice(perpPositionWithLpSettle),
+				markPrice,
+				entryPrice,
 				exitPrice: estExitPrice,
 				liqPrice: user.liquidationPrice(position.marketIndex, ZERO),
 				quoteAssetNotionalAmount: perpPositionWithLpSettle.quoteAssetAmount,
 				quoteEntryAmount: perpPositionWithLpSettle.quoteEntryAmount,
-				pnl: pnl,
+				pnlVsMark,
+				pnlVsOracle,
 				unsettledPnl: calculateClaimablePnl(
 					perpMarket,
 					usdcSpotMarket,
