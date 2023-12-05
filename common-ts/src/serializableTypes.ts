@@ -31,6 +31,7 @@ import {
 	OrderType,
 	PERCENTAGE_PRECISION_EXP,
 	PerpBankruptcyRecord,
+	PerpPosition,
 	PositionDirection,
 	PRICE_PRECISION_EXP,
 	PublicKey,
@@ -39,9 +40,11 @@ import {
 	SettlePnlRecord,
 	SpotBalanceType,
 	SpotBankruptcyRecord,
+	SpotPosition,
 	StakeAction,
 	SwapRecord,
 	TEN,
+	UserAccount,
 } from '@drift-labs/sdk';
 import {
 	autoserializeAs,
@@ -1606,6 +1609,67 @@ export class UISerializableSwapRecord extends SerializableSwapRecord {
 	}
 }
 
+export class SerializablePerpPosition {
+	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmount: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	lastCumulativeFundingRate: BN;
+	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetAmount: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteEntryAmount: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteBreakEvenAmount: BN;
+	@autoserializeAs(Number) openOrders: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) openBids: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) openAsks: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) settledPnl: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) lpShares: BN;
+	@autoserializeAs(Number) remainderBaseAssetAmount: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	lastBaseAssetAmountPerLp: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	lastQuoteAssetAmountPerLp: BN;
+	@autoserializeAs(Number) perLpBase: number;
+}
+
+export class SerializableSpotPosition {
+	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	SpotBalanceType: SpotBalanceType;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) scaledBalance: BN;
+	@autoserializeAs(Number) openOrders: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) openBids: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) openAsks: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) cumulativeDeposits: BN;
+}
+
+export class SerializableUserAccount implements UserAccount {
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) authority: PublicKey;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) delegate: PublicKey;
+	@autoserializeAsArray(Number) name: number[];
+	@autoserializeAs(Number) subAccountId: number;
+	@autoserializeAsArray(SerializableSpotPosition) spotPositions: SpotPosition[];
+	@autoserializeAsArray(SerializablePerpPosition) perpPositions: PerpPosition[];
+	@autoserializeAsArray(SerializableOrder) orders: Order[];
+	@autoserializeAs(Number) status: number;
+	@autoserializeAs(Number) nextLiquidationId: number;
+	@autoserializeAs(Number) nextOrderId: number;
+	@autoserializeAs(Number) maxMarginRatio: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) lastAddPerpLpSharesTs: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) settledPerpPnl: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) totalDeposits: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) totalWithdraws: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) totalSocialLoss: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) cumulativePerpFunding: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) cumulativeSpotFees: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) liquidationMarginFreed: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) lastActiveSlot: BN;
+	@autoserializeAs(Boolean) isMarginTradingEnabled: boolean;
+	@autoserializeAs(Boolean) idle: boolean;
+	@autoserializeAs(Number) openOrders: number;
+	@autoserializeAs(Boolean) hasOpenOrder: boolean;
+	@autoserializeAs(Number) openAuctions: number;
+	@autoserializeAs(Boolean) hasOpenAuction: boolean;
+}
+
 // Serializer
 export const Serializer = {
 	Serialize: {
@@ -1665,6 +1729,7 @@ export const Serializer = {
 		UILPRecord: (cls: any) => Serialize(cls, UISerializableLPRecord),
 		SwapRecord: (cls: any) => Serialize(cls, SerializableSwapRecord),
 		UISwapRecord: (cls: any) => Serialize(cls, UISerializableSwapRecord),
+		UserAccount: (cls: any) => Serialize(cls, SerializableUserAccount),
 	},
 	Deserialize: {
 		Order: (cls: Record<string, unknown>) =>
@@ -1777,6 +1842,8 @@ export const Serializer = {
 			Deserialize(cls as JsonObject, SerializableSwapRecord) as SwapRecordEvent,
 		UISwapRecord: (cls: Record<string, unknown>) =>
 			Deserialize(cls as JsonObject, UISerializableSwapRecord),
+		UserAccount: (cls: Record<string, unknown>) =>
+			Deserialize(cls as JsonObject, SerializableUserAccount),
 	},
 	setDeserializeFromSnakeCase: () => {
 		SetDeserializeKeyTransform(SnakeCase);
