@@ -58,8 +58,9 @@ export class TransactionErrorHandler {
 
 	public constructor(opts: TransactionHandlerOpts) {
 		this.showErrorLogs = opts?.showErrorLogs ?? true;
-		this.notifyCallback = opts?.notifyCallback;
-		this.captureExceptionCallback = opts?.captureExceptionCallback;
+		this.notifyCallback = opts?.notifyCallback ?? (() => {});
+		this.captureExceptionCallback =
+			opts?.captureExceptionCallback ?? (() => {});
 		this.isDev = opts?.isDev ?? false;
 	}
 
