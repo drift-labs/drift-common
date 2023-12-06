@@ -255,3 +255,13 @@ export type UIOrderTypeValue = {
 export type UIOrderTypeLookup = {
 	[key in UIOrderType]: UIOrderTypeValue;
 };
+
+export interface PrettyError {
+	code: number;
+	name: string;
+	msg: string;
+	toast?: {
+		message?: string;
+		description?: string;
+	};
+}
