@@ -1,12 +1,11 @@
+import { Ref } from '../utils';
 import {
-	DriftCompetitionsErrors,
-	DriftErrors,
 	JupV4Errors,
 	JupV6Errors,
-	PhantomErrors,
-	PrettyError,
-	Ref,
-} from 'src';
+	DriftCompetitionsErrors,
+	DriftErrors,
+} from '../constants/errorCodes';
+import { PrettyError } from '../types';
 
 type AnchorError = { code?: number; logs?: string[] } & Error & {
 		error: { code: number; message: string };
@@ -295,8 +294,8 @@ export class TransactionErrorHandler {
 
 				if (errorCode === undefined) return;
 
-				const phantomError = PhantomErrors[errorCode];
-
+				//const phantomError = PhantomErrors[errorCode];
+				const phantomError = undefined;
 				if (!phantomError) return;
 
 				this.notifyCallback({
