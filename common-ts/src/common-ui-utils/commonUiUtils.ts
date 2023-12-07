@@ -100,6 +100,7 @@ const awaitAccountInitializationChainState = async (
 	authority: PublicKey
 ) => {
 	const user = driftClient.getUser(userId, authority);
+
 	if (user && user.getUserAccountAndSlot()?.data !== undefined) {
 		return true;
 	}
@@ -182,7 +183,7 @@ const initializeAndSubscribeToNewUserAccount = async (
 		return 'failed_awaitAccountInitializationChainState';
 	}
 
-	driftClient.switchActiveUser(userIdToInit, authority);
+	await driftClient.switchActiveUser(userIdToInit, authority);
 
 	// Do the subscription step
 
@@ -201,6 +202,10 @@ const initializeAndSubscribeToNewUserAccount = async (
 async function updateUserAccount(user: User): Promise<void> {
 	const publicKey = user.userAccountPublicKey;
 	try {
+		if (!user.isSubscribed) {
+			await user.subscribe();
+		}
+
 		const dataAndContext =
 			await user.driftClient.program.account.user.fetchAndContext(
 				publicKey,
