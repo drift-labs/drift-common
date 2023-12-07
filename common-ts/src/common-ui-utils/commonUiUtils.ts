@@ -101,6 +101,10 @@ const awaitAccountInitializationChainState = async (
 ) => {
 	const user = driftClient.getUser(userId, authority);
 
+	if (!user.isSubscribed) {
+		await user.subscribe();
+	}
+
 	if (user && user.getUserAccountAndSlot()?.data !== undefined) {
 		return true;
 	}
@@ -202,10 +206,6 @@ const initializeAndSubscribeToNewUserAccount = async (
 async function updateUserAccount(user: User): Promise<void> {
 	const publicKey = user.userAccountPublicKey;
 	try {
-		if (!user.isSubscribed) {
-			await user.subscribe();
-		}
-
 		const dataAndContext =
 			await user.driftClient.program.account.user.fetchAndContext(
 				publicKey,
