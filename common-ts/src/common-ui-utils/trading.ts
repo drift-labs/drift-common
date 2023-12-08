@@ -4,6 +4,7 @@ import {
 	PRICE_PRECISION_EXP,
 	PositionDirection,
 	QUOTE_PRECISION_EXP,
+	ZERO,
 	isVariant,
 } from '@drift-labs/sdk';
 
@@ -12,6 +13,8 @@ const calculatePnlPctFromPosition = (
 	quoteEntryAmount: BN,
 	leverage?: number
 ): number => {
+	if (!quoteEntryAmount || quoteEntryAmount.eq(ZERO)) return 0;
+
 	return (
 		BigNum.from(pnl, QUOTE_PRECISION_EXP)
 			.shift(5)

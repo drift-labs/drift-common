@@ -52,7 +52,12 @@ const getOpenPositionData = (
 				: oraclePriceData.price;
 
 			const [perpPositionWithLpSettle, _dustBaseAmount, _unsettledLpPnl] =
-				user.getPerpPositionWithLPSettle(position.marketIndex, position);
+				user.getPerpPositionWithLPSettle(
+					position.marketIndex,
+					position,
+					false,
+					true
+				);
 
 			const [estExitPrice, pnlVsOracle] =
 				user.getPositionEstimatedExitPriceAndPnl(
