@@ -105,20 +105,19 @@ const awaitAccountInitializationChainState = async (
 		await user.subscribe();
 	}
 
-	if (user && user.getUserAccountAndSlot()?.data !== undefined) {
-		return true;
-	}
-
 	let retryCount = 0;
 
-	while (retryCount < ACCOUNT_INITIALIZATION_RETRY_ATTEMPTS) {
-		await updateUserAccount(user);
-		if (user.getUserAccountAndSlot()?.data !== undefined) {
-			return true;
+	do {
+		try {
+			await updateUserAccount(user);
+			if (user?.getUserAccountAndSlot()?.data !== undefined) {
+				return true;
+			}
+		} catch (err) {
+			retryCount++;
+			await sleep(ACCOUNT_INITIALIZATION_RETRY_DELAY_MS);
 		}
-		retryCount++;
-		await sleep(ACCOUNT_INITIALIZATION_RETRY_DELAY_MS);
-	}
+	} while (retryCount < ACCOUNT_INITIALIZATION_RETRY_ATTEMPTS);
 
 	throw new Error('awaitAccountInitializationFailed');
 };
