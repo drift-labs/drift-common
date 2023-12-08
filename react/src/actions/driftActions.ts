@@ -200,7 +200,7 @@ const createDriftActions = (
 		const driftClient = state.driftClient.client!;
 
 		// Switch to a random wallet to stop
-		driftClient.updateWallet(new Wallet(new Keypair()));
+		driftClient.updateWallet(new Wallet(new Keypair()), undefined, 0);
 		state.clearUserData();
 	};
 
@@ -216,7 +216,7 @@ const createDriftActions = (
 		if (!driftClient) return;
 
 		try {
-			driftClient.updateWallet(adapter as IWallet);
+			driftClient.updateWallet(adapter as IWallet, undefined, 0);
 			const userAccounts = await fetchAndSubscribeToUsersAndSubaccounts(
 				driftClient,
 				authority
@@ -239,9 +239,13 @@ const createDriftActions = (
 	};
 
 	const emulateAccount = async (props: { authority: PublicKey }) => {
+		console.log(`Running emulateAccount with authority : ${props.authority.toString()}`);
+
 		const state = get();
 		const driftClient = state?.driftClient?.client;
-		if (!driftClient) return;
+		if (!driftClient) {
+			throw Error('No Drift Client available to emulate account with');
+		}
 
 		const newKeypair = new Keypair({
 			publicKey: props.authority.toBytes(),
@@ -266,7 +270,7 @@ const createDriftActions = (
 			on: (_event: string, _fn: () => void) => {},
 		};
 
-		const success = await driftClient.updateWallet(newWallet as IWallet);
+		const success = await driftClient.updateWallet(newWallet as IWallet, undefined, 0);
 		if (!success) {
 			console.log('Error emulating account');
 			return;
