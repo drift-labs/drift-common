@@ -1489,7 +1489,12 @@
 		"CantPayUserInitFee": {
 			"code": 6256,
 			"name": "CantPayUserInitFee",
-			"msg": "CantPayUserInitFee"
+			"msg": "CantPayUserInitFee",
+			"toast": {
+				"message": "Not enough SOL",
+				"description": "The transaction failed because your wallet did not have enough SOL to cover the user initialization fee. You can learn more about account creation fees in the Drift Docs.",
+				"url": "https://docs.drift.trade/creating-a-subaccount"
+			}
 		}
 	},
 	"errorCodesMap": {
