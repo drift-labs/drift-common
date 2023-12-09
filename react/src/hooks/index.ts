@@ -9,4 +9,5 @@ export * from './useDriftClientIsReady';
 export * from './useRpcLatencies';
 export * from './useDevSwitchIsOn';
 export * from './useLastAcknowledgedTerms';
+export * from './useAccountCreationCost';
 export * from './oraclePrice';
