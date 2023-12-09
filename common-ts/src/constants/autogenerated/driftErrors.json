@@ -1485,6 +1485,11 @@
 			"code": 6255,
 			"name": "InvalidMarginCalculation",
 			"msg": "InvalidMarginCalculation"
+		},
+		"CantPayUserInitFee": {
+			"code": 6256,
+			"name": "CantPayUserInitFee",
+			"msg": "CantPayUserInitFee"
 		}
 	},
 	"errorCodesMap": {
@@ -1743,6 +1748,7 @@
 		"6252": "ImpossibleFill",
 		"6253": "CantUpdatePerpBidAskTwap",
 		"6254": "UserReduceOnly",
-		"6255": "InvalidMarginCalculation"
+		"6255": "InvalidMarginCalculation",
+		"6256": "CantPayUserInitFee"
 	}
 }
