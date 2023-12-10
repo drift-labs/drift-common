@@ -25,7 +25,7 @@ const SLOT_TIME_ESTIMATE_MS = 400;
  * Helper function to estimate a user stats accounts' age. This should match the `get_age_ts` method in the SDK (which is run by the smart contract) which can be found here : https://github.com/drift-labs/protocol-v2/blob/master/programs/drift/src/state/user.rs#L1454
  * @param userStatsAccount
  */
-const estimateAccountAgeSeconds = (userStatsAccount: UserStatsAccount) => {
+const oldestAccountAction = (userStatsAccount: UserStatsAccount) => {
 	// upper bound of age of the user stats account
 	const minActionTs = Math.min(
 		userStatsAccount.lastFillerVolume30DTs.toNumber(),
@@ -39,7 +39,9 @@ const estimateAccountAgeSeconds = (userStatsAccount: UserStatsAccount) => {
 const getStatsAccountIsPastDeletionCutoff = (
 	userStatsAccount: UserStatsAccount
 ) => {
-	const estimatedAgeSeconds = estimateAccountAgeSeconds(userStatsAccount);
+	const estimatedAgeSeconds =
+		Math.round(Date.now() / 1000) - oldestAccountAction(userStatsAccount);
+
 	return estimatedAgeSeconds >= ACCOUNT_AGE_DELETION_CUTOFF_SECONDS;
 };
 
