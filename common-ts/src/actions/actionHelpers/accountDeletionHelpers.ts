@@ -1,7 +1,11 @@
 import {
+	ACCOUNT_AGE_DELETION_CUTOFF_SECONDS,
 	BN,
 	DriftClient,
+	IDLE_TIME_SLOTS,
+	SLOT_TIME_ESTIMATE_MS,
 	User,
+	UserStats,
 	UserStatsAccount,
 	ZERO,
 	isVariant,
@@ -16,31 +20,12 @@ type AccountDeletionStep =
 	| 'sendTriggerAccountIdleIx'
 	| 'askToWait';
 
-// THIRTEEN DAY ACCOUNT AGE DELETION CUTOFF
-const ACCOUNT_AGE_DELETION_CUTOFF_SECONDS = 60 * 60 * 24 * 13;
-const IDLE_TIME_SLOTS = 9000;
-const SLOT_TIME_ESTIMATE_MS = 400;
-
-/**
- * Helper function to estimate a user stats accounts' age. This should match the `get_age_ts` method in the SDK (which is run by the smart contract) which can be found here : https://github.com/drift-labs/protocol-v2/blob/master/programs/drift/src/state/user.rs#L1454
- * @param userStatsAccount
- */
-const oldestAccountAction = (userStatsAccount: UserStatsAccount) => {
-	// upper bound of age of the user stats account
-	const minActionTs = Math.min(
-		userStatsAccount.lastFillerVolume30DTs.toNumber(),
-		userStatsAccount.lastMakerVolume30DTs.toNumber(),
-		userStatsAccount.lastTakerVolume30DTs.toNumber()
-	);
-
-	return minActionTs;
-};
-
 const getStatsAccountIsPastDeletionCutoff = (
 	userStatsAccount: UserStatsAccount
 ) => {
 	const estimatedAgeSeconds =
-		Math.round(Date.now() / 1000) - oldestAccountAction(userStatsAccount);
+		Math.round(Date.now() / 1000) -
+		UserStats.getOldestActionTs(userStatsAccount);
 
 	return estimatedAgeSeconds >= ACCOUNT_AGE_DELETION_CUTOFF_SECONDS;
 };
@@ -200,7 +185,7 @@ const tryDeleteUserAccount = async (
 		latestSlot
 	);
 
-	if (canBeDeleted === 'no') {
+	if (canBeDeleted === 'no' || canBeDeleted === 'no-wait-for-idle') {
 		throw new Error('Account cannot be deleted');
 	}
 
@@ -222,7 +207,16 @@ const tryDeleteUserAccount = async (
 	// Create a transaction from the instructions
 	const tx = await driftClient.buildTransaction(Ixs);
 
-	return driftClient.sendTransaction(tx);
+	const { txSig } = await driftClient.sendTransaction(tx);
+
+	const userMapKey = driftClient.getUserMapKey(
+		user.getUserAccount().subAccountId,
+		driftClient.wallet.publicKey
+	);
+	await driftClient.users.get(userMapKey)?.unsubscribe();
+	driftClient.users.delete(userMapKey);
+
+	return txSig;
 };
 
 export const getIdleWaitTimeMinutes = (user: User, currentSlot: number) => {
