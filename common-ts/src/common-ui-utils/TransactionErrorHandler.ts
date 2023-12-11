@@ -4,6 +4,7 @@ import {
 	JupV6Errors,
 	DriftCompetitionsErrors,
 	DriftErrors,
+	PhantomErrors,
 } from '../constants/errorCodes';
 import { DriftUiNewNotificationProps, PrettyError } from '../types';
 
@@ -238,6 +239,22 @@ export class TransactionErrorHandler {
 
 					return;
 				}
+
+				// # Max number of Users // TODO: temp message, will need to change after 9th Dec 2023
+				if (error?.message?.match(/0x1850/) && true) {
+					this.notifyCallback({
+						type: 'error',
+						description: `Due to a huge influx of new user account creations, we've hit maximum capacity of users on the Drift smart contract.`,
+						bottomContent:
+							'The capacity will be upgraded soon. Please try again later.',
+						id: toastId,
+						updatePrevious: true,
+					});
+
+					ERROR_HANDLED.set(true);
+
+					return;
+				}
 			})();
 
 			if (ERROR_HANDLED.get()) return;
@@ -300,8 +317,7 @@ export class TransactionErrorHandler {
 
 				if (errorCode === undefined) return;
 
-				//const phantomError = PhantomErrors[errorCode];
-				const phantomError = undefined;
+				const phantomError = PhantomErrors[errorCode];
 				if (!phantomError) return;
 
 				this.notifyCallback({
