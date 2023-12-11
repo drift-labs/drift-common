@@ -99,6 +99,7 @@ const createDriftActions = (
 			return;
 		}
 
+		const walletToUse = storeState.driftClient.client?.wallet ?? DEFAULT_WALLET;
 		const currentDriftClient = storeState.driftClient.client;
 		if (currentDriftClient) {
 			await currentDriftClient.unsubscribe();
@@ -115,7 +116,7 @@ const createDriftActions = (
 
 		const driftClientConfig: DriftClientConfig = {
 			connection: newConnection,
-			wallet: DEFAULT_WALLET,
+			wallet: walletToUse,
 			programID: new PublicKey(sdkConfig.DRIFT_PROGRAM_ID),
 			accountSubscription: {
 				type: 'polling',
@@ -147,7 +148,7 @@ const createDriftActions = (
 		newDriftClient.txSender = new RetryTxSender({
 			connection: newConnection,
 			additionalConnections,
-			wallet: DEFAULT_WALLET,
+			wallet: newDriftClient.wallet,
 		});
 
 		set((s) => {
@@ -208,7 +209,6 @@ const createDriftActions = (
 		authority: PublicKey,
 		adapter: Adapter
 	) => {
-		console.log('handleWalletConnect');
 		const state = get();
 		state.clearUserData();
 		const driftClient = state?.driftClient?.client;

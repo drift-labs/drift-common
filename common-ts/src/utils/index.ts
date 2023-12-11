@@ -863,6 +863,16 @@ const calculateMean = (numbers: number[]): number => {
 	return sum / numbers.length;
 };
 
+const calculateMedian = (numbers: number[]): number => {
+	const sortedNumbers = numbers.sort();
+	const middleIndex = Math.floor(sortedNumbers.length / 2);
+	if (sortedNumbers.length % 2 === 0) {
+		return (sortedNumbers[middleIndex - 1] + sortedNumbers[middleIndex]) / 2;
+	} else {
+		return sortedNumbers[middleIndex];
+	}
+};
+
 const calculateStandardDeviation = (
 	numbers: number[],
 	mean: number
@@ -947,8 +957,11 @@ export const COMMON_UTILS = {
 	normalizeBaseAssetSymbol,
 	calculateZScore,
 	glueArray,
-	calculateMean,
 	MATH: {
+		NUM: {
+			mean: calculateMean,
+			median: calculateMedian,
+		},
 		BN: {
 			bnMax,
 			bnMin,
