@@ -1,0 +1,126 @@
+{
+	"errorsList": {
+		"Default": {
+			"code": 6000,
+			"name": "Default",
+			"msg": "Default"
+		},
+		"DriftError": {
+			"code": 6001,
+			"name": "DriftError",
+			"msg": "DriftError"
+		},
+		"CompetitionRoundOngoing": {
+			"code": 6002,
+			"name": "CompetitionRoundOngoing",
+			"msg": "CompetitionRoundOngoing"
+		},
+		"CompetitionRoundInSettlementPhase": {
+			"code": 6003,
+			"name": "CompetitionRoundInSettlementPhase",
+			"msg": "CompetitionRoundInSettlementPhase"
+		},
+		"CompetitionStatusNotActive": {
+			"code": 6004,
+			"name": "CompetitionStatusNotActive",
+			"msg": "CompetitionStatusNotActive"
+		},
+		"CompetitionExpired": {
+			"code": 6005,
+			"name": "CompetitionExpired",
+			"msg": "CompetitionExpired"
+		},
+		"InvalidRoundSettlementDetected": {
+			"code": 6006,
+			"name": "InvalidRoundSettlementDetected",
+			"msg": "InvalidRoundSettlementDetected"
+		},
+		"CompetitionWinnerNotDetermined": {
+			"code": 6007,
+			"name": "CompetitionWinnerNotDetermined",
+			"msg": "CompetitionWinnerNotDetermined"
+		},
+		"CompetitorHasWrongRoundNumber": {
+			"code": 6008,
+			"name": "CompetitorHasWrongRoundNumber",
+			"msg": "CompetitorHasWrongRoundNumber"
+		},
+		"CompetitorNotWinner": {
+			"code": 6009,
+			"name": "CompetitorNotWinner",
+			"msg": "CompetitorNotWinner"
+		},
+		"InvalidStatusUpdateDetected": {
+			"code": 6010,
+			"name": "InvalidStatusUpdateDetected",
+			"msg": "InvalidStatusUpdateDetected"
+		},
+		"InvalidIFRebase": {
+			"code": 6011,
+			"name": "InvalidIFRebase",
+			"msg": "InvalidIFRebase"
+		},
+		"CompetitorHasAlreadyClaimedEntry": {
+			"code": 6012,
+			"name": "CompetitorHasAlreadyClaimedEntry",
+			"msg": "CompetitorHasAlreadyClaimedEntry"
+		},
+		"CompetitorNeedsToRebaseInsuranceFundStake": {
+			"code": 6013,
+			"name": "CompetitorNeedsToRebaseInsuranceFundStake",
+			"msg": "CompetitorNeedsToRebaseInsuranceFundStake"
+		},
+		"CompetitorHasNoUnclaimedWinnings": {
+			"code": 6014,
+			"name": "CompetitorHasNoUnclaimedWinnings",
+			"msg": "CompetitorHasNoUnclaimedWinnings"
+		},
+		"CompetitionRoundNumberIssue": {
+			"code": 6015,
+			"name": "CompetitionRoundNumberIssue",
+			"msg": "CompetitionRoundNumberIssue"
+		},
+		"CompetitorSnapshotIssue": {
+			"code": 6016,
+			"name": "CompetitorSnapshotIssue",
+			"msg": "CompetitorSnapshotIssue"
+		},
+		"CompetitorHasInvalidClaim": {
+			"code": 6017,
+			"name": "CompetitorHasInvalidClaim",
+			"msg": "CompetitorHasInvalidClaim"
+		},
+		"CompetitorUpdateInvalid": {
+			"code": 6018,
+			"name": "CompetitorUpdateInvalid",
+			"msg": "CompetitorUpdateInvalid"
+		},
+		"CompetitionInvariantIssue": {
+			"code": 6019,
+			"name": "CompetitionInvariantIssue",
+			"msg": "CompetitionInvariantIssue"
+		}
+	},
+	"errorCodesMap": {
+		"6000": "Default",
+		"6001": "DriftError",
+		"6002": "CompetitionRoundOngoing",
+		"6003": "CompetitionRoundInSettlementPhase",
+		"6004": "CompetitionStatusNotActive",
+		"6005": "CompetitionExpired",
+		"6006": "InvalidRoundSettlementDetected",
+		"6007": "CompetitionWinnerNotDetermined",
+		"6008": "CompetitorHasWrongRoundNumber",
+		"6009": "CompetitorNotWinner",
+		"6010": "InvalidStatusUpdateDetected",
+		"6011": "InvalidIFRebase",
+		"6012": "CompetitorHasAlreadyClaimedEntry",
+		"6013": "CompetitorNeedsToRebaseInsuranceFundStake",
+		"6014": "CompetitorHasNoUnclaimedWinnings",
+		"6015": "CompetitionRoundNumberIssue",
+		"6016": "CompetitorSnapshotIssue",
+		"6017": "CompetitorHasInvalidClaim",
+		"6018": "CompetitorUpdateInvalid",
+		"6019": "CompetitionInvariantIssue"
+	}
+}

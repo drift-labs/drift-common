@@ -5,7 +5,7 @@ import {
 	DriftCompetitionsErrors,
 	DriftErrors,
 } from '../constants/errorCodes';
-import { PrettyError } from '../types';
+import { DriftUiNewNotificationProps, PrettyError } from '../types';
 
 type AnchorError = { code?: number; logs?: string[] } & Error & {
 		error: { code: number; message: string };
@@ -44,14 +44,14 @@ const NON_DRIFT_PROGRAMS_ERROR_HANDLER_CONFIGS: NonDriftProgramErrorHandlerConfi
 
 type TransactionHandlerOpts = {
 	showErrorLogs?: boolean;
-	notifyCallback?: (props: any) => void;
+	notifyCallback?: (props: DriftUiNewNotificationProps) => void;
 	captureExceptionCallback?: (exception: Error) => void;
 	isDev?: boolean;
 };
 
 export class TransactionErrorHandler {
 	showErrorLogs: boolean;
-	notifyCallback?: (prop: any) => void;
+	notifyCallback?: (props: DriftUiNewNotificationProps) => void;
 	captureExceptionCallback?: (exception: Error) => void;
 	isDev?: boolean;
 
@@ -115,7 +115,9 @@ export class TransactionErrorHandler {
 				updatePrevious: true,
 				message: programErrorConfig.errorToastTitle,
 				description: `${programErrorConfig.errorsList[errorCode].msg}`,
-				indicateTxVersionIssue: indicateNonDriftTxVersionIssue,
+				flags: indicateNonDriftTxVersionIssue
+					? ['indicateTxVersionIssue']
+					: undefined,
 			});
 
 			ERROR_HANDLED.set(true);
@@ -268,7 +270,9 @@ export class TransactionErrorHandler {
 							id: toastId,
 							updatePrevious: true,
 							...mappedError.toast,
-							indicateTxVersionIssue,
+							flags: indicateTxVersionIssue
+								? ['indicateTxVersionIssue']
+								: undefined,
 						});
 					} else {
 						this.notifyCallback({
@@ -276,7 +280,9 @@ export class TransactionErrorHandler {
 							id: toastId,
 							updatePrevious: true,
 							description: `Error Code ${mappedError.code}: ${mappedError.msg}`,
-							indicateTxVersionIssue,
+							flags: indicateTxVersionIssue
+								? ['indicateTxVersionIssue']
+								: undefined,
 						});
 					}
 
@@ -307,7 +313,9 @@ export class TransactionErrorHandler {
 					subDescription: ``,
 					url: `https://docs.phantom.app/solana/integrating-phantom/errors`,
 					lengthMs: 10 * 1000,
-					indicateTxVersionIssue,
+					flags: indicateTxVersionIssue
+						? ['indicateTxVersionIssue']
+						: undefined,
 				});
 
 				ERROR_HANDLED.set(true);
@@ -336,7 +344,9 @@ export class TransactionErrorHandler {
 					lengthMs: 10000,
 					id: toastId,
 					updatePrevious: true,
-					indicateTxVersionIssue,
+					flags: indicateTxVersionIssue
+						? ['indicateTxVersionIssue']
+						: undefined,
 				});
 			})();
 		} catch (e) {
@@ -350,7 +360,7 @@ export class TransactionErrorHandler {
 				lengthMs: 10000,
 				id: toastId,
 				updatePrevious: true,
-				indicateTxVersionIssue,
+				flags: indicateTxVersionIssue ? ['indicateTxVersionIssue'] : undefined,
 			});
 		}
 	}
