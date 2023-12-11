@@ -28,3 +28,5 @@ export const NEW_ACCOUNT_BASE_COST =
  * Equal to 0.02
  */
 export const MIN_LEFTOVER_SOL = BigNum.fromPrint('0.02', BASE_PRECISION_EXP);
+
+export const ONE_DAY_MS = 1000 * 60 * 60 * 24;
