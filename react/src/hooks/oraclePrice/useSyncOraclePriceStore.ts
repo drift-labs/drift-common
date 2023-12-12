@@ -13,7 +13,7 @@ import {
 } from '../../stores';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useImmer } from 'use-immer';
-import { UIMarket } from '@drift/common';
+import { ENUM_UTILS, UIMarket } from '@drift/common';
 import { useInterval } from 'react-use';
 
 type OracleClient = ReturnType<typeof getOracleClient>;
@@ -50,17 +50,20 @@ export const useSyncOraclePriceStore = (
 		(oracleSource: OracleSource) => {
 			if (!arePythClientsReady) throw new Error('Pyth clients are not ready');
 
-			switch (oracleSource) {
-				case OracleSource.PYTH:
-					return pythClient;
-				case OracleSource.PYTH_1K:
-					return pyth1KClient;
-				case OracleSource.PYTH_1M:
-					return pyth1MClient;
-				case OracleSource.PYTH_STABLE_COIN:
-					return pythStableCoin;
-				default:
-					throw 'Unaccounted for oracle type in useSyncOraclePriceStore';
+			if (ENUM_UTILS.match(oracleSource, OracleSource.PYTH)) {
+				return pythClient;
+			} else if (ENUM_UTILS.match(oracleSource, OracleSource.PYTH_1K)) {
+				return pyth1KClient;
+			} else if (ENUM_UTILS.match(oracleSource, OracleSource.PYTH_1M)) {
+				return pyth1MClient;
+			} else if (
+				ENUM_UTILS.match(oracleSource, OracleSource.PYTH_STABLE_COIN)
+			) {
+				return pythStableCoin;
+			} else {
+				throw `Unaccounted for oracle type in useSyncOraclePriceStore ${JSON.stringify(
+					oracleSource
+				)}`;
 			}
 		},
 		[arePythClientsReady]
