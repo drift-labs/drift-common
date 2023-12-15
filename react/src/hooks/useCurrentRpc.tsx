@@ -1,8 +1,7 @@
 import { EnvironmentConstants, RpcEndpoint } from '@drift/common';
-// import { useLocalStorage } from '@solana/wallet-adapter-react';
+import { useLocalStorage } from '@solana/wallet-adapter-react';
 import { singletonHook } from 'react-singleton-hook';
 import { useCommonDriftStore } from '../stores';
-import { useState } from 'react';
 
 export const MAINNET_RPCS = EnvironmentConstants.rpcs.mainnet;
 export const DEVNET_RPCS = EnvironmentConstants.rpcs.dev;
@@ -18,14 +17,17 @@ const _useCurrentRpc = () => {
 		Env.driftEnv === 'mainnet-beta' ? DEFAULT_MAINNET_RPC : DEVNET_RPCS[0];
 
 	// Turning this off for now because nothing loads on SSS when you switch rpc, press save, then reload
-	// const [savedRpc, setSavedRpc] = useLocalStorage<RpcEndpoint>(
-	// 	'currentRpc',
-	// 	rpcToUse
-	// );
+	const [savedRpc, setSavedRpc] = useLocalStorage<RpcEndpoint>(
+		'currentRpc',
+		rpcToUse
+	);
 
-	const [savedRpc, setSavedRpc] = useState<RpcEndpoint>(rpcToUse);
+	const dedupedRpc =
+		savedRpc.value === DEFAULT_MAINNET_RPC.value
+			? DEFAULT_MAINNET_RPC
+			: savedRpc;
 
-	return [savedRpc, setSavedRpc] as [
+	return [dedupedRpc, setSavedRpc] as [
 		RpcEndpoint,
 		(savedRpc: RpcEndpoint) => void
 	];
