@@ -78,6 +78,40 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 			expect(result.auctionStartPrice.toString()).to.equal('100046000');
 			expect(result.auctionEndPrice.toString()).to.equal('92000000');
 		});
+
+		it('should not generate any auction params for long if limit price is lower than startPriceForSettings', () => {
+			const result = COMMON_UI_UTILS.getLimitAuctionParams({
+				direction: PositionDirection.LONG,
+				inputPrice: BigNum.from(
+					new BN(92).mul(PRICE_PRECISION),
+					PRICE_PRECISION_EXP
+				),
+				startPriceFromSettings: new BN(100).mul(PRICE_PRECISION),
+				duration: 60,
+				auctionStartPriceOffset: -0.05,
+			});
+
+			expect(result.auctionDuration).to.equal(0);
+			expect(result.auctionStartPrice.toString()).to.equal('0');
+			expect(result.auctionEndPrice.toString()).to.equal('0');
+		});
+
+		it('should not generate any auction params for short if limit price is higher than startPriceFromSettings', () => {
+			const result = COMMON_UI_UTILS.getLimitAuctionParams({
+				direction: PositionDirection.SHORT,
+				inputPrice: BigNum.from(
+					new BN(108).mul(PRICE_PRECISION),
+					PRICE_PRECISION_EXP
+				),
+				startPriceFromSettings: new BN(100).mul(PRICE_PRECISION),
+				duration: 60,
+				auctionStartPriceOffset: -0.05,
+			});
+
+			expect(result.auctionDuration).to.equal(0);
+			expect(result.auctionStartPrice.toString()).to.equal('0');
+			expect(result.auctionEndPrice.toString()).to.equal('0');
+		});
 	});
 
 	describe('deriveMarketOrderParams', () => {
