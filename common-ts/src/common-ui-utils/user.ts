@@ -51,16 +51,19 @@ const getOpenPositionData = (
 				? markPriceCallback(position.marketIndex) ?? oraclePriceData.price
 				: oraclePriceData.price;
 
-			const [perpPositionWithLpSettle, _dustBaseAmount, _unsettledLpPnl] =
-				user.getPerpPositionWithLPSettle(position.marketIndex, position, false);
+			const perpPositionWithLpSettle = user.getPerpPositionWithLPSettle(
+				position.marketIndex,
+				position,
+				false
+			)[0];
 
-			const [perpPositionWithRemainderBaseAdded, _dustBase, _unsettledLp] =
+			const perpPositionWithRemainderBaseAdded =
 				user.getPerpPositionWithLPSettle(
 					position.marketIndex,
 					position,
 					false,
 					true
-				);
+				)[0];
 
 			const [estExitPrice, pnlVsOracle] =
 				user.getPositionEstimatedExitPriceAndPnl(
