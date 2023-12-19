@@ -8,7 +8,8 @@ import {
 	PRICE_PRECISION_EXP,
 	PositionDirection,
 } from '@drift-labs/sdk';
-import { COMMON_UI_UTILS, ENUM_UTILS } from '@drift/common';
+import { COMMON_UI_UTILS } from '../../src/common-ui-utils/commonUiUtils';
+import { ENUM_UTILS } from '../../src';
 import { expect } from 'chai';
 
 describe('COMMON_UI_UTILS OrderParams Tests', () => {

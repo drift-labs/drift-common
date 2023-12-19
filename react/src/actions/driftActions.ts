@@ -38,11 +38,11 @@ const createDriftActions = (
 				return;
 			}
 
-			const subscriptionResult = await driftClient.subscribe();
+			let subscriptionResult = await driftClient.subscribe();
 
 			if (!subscriptionResult) {
 				// retry once
-				await driftClient.subscribe();
+				subscriptionResult = await driftClient.subscribe();
 			}
 
 			driftClient.eventEmitter.on('update', () => {
