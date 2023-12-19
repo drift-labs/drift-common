@@ -5,6 +5,7 @@ import {
 	DriftClientConfig,
 	DriftEnv,
 	IWallet,
+	PollingDriftClientAccountSubscriber,
 	PublicKey,
 	RetryTxSender,
 	Wallet,
@@ -101,15 +102,27 @@ const createDriftActions = (
 
 		const walletToUse = storeState.driftClient.client?.wallet ?? DEFAULT_WALLET;
 		const currentDriftClient = storeState.driftClient.client;
+
+		let accountLoader: BulkAccountLoader | undefined = undefined;
+
 		if (currentDriftClient) {
+			if (currentDriftClient.userAccountSubscriptionConfig.type === 'polling') {
+				// reuse the previous account loader object
+				accountLoader = (
+					currentDriftClient.accountSubscriber as PollingDriftClientAccountSubscriber
+				).accountLoader;
+				accountLoader.connection = newConnection;
+			}
 			await currentDriftClient.unsubscribe();
 		}
 
-		const accountLoader = new BulkAccountLoader(
-			newConnection,
-			DEFAULT_COMMITMENT_LEVEL,
-			POLLING_FREQUENCY_MS
-		);
+		if (!accountLoader) {
+			accountLoader = new BulkAccountLoader(
+				newConnection,
+				DEFAULT_COMMITMENT_LEVEL,
+				POLLING_FREQUENCY_MS
+			);
+		}
 
 		const { oracleInfos, perpMarketIndexes, spotMarketIndexes } =
 			getMarketsAndOraclesForSubscription(driftEnvToUse);
