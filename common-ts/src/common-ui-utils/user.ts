@@ -51,22 +51,36 @@ const getOpenPositionData = (
 				? markPriceCallback(position.marketIndex) ?? oraclePriceData.price
 				: oraclePriceData.price;
 
-			const [perpPositionWithLpSettle, _dustBaseAmount, _unsettledLpPnl] =
-				user.getPerpPositionWithLPSettle(position.marketIndex, position, false);
+			const perpPositionWithLpSettle = user.getPerpPositionWithLPSettle(
+				position.marketIndex,
+				position,
+				false
+			)[0];
+
+			const perpPositionWithRemainderBaseAdded =
+				user.getPerpPositionWithLPSettle(
+					position.marketIndex,
+					position,
+					false,
+					true
+				)[0];
 
 			const [estExitPrice, pnlVsOracle] =
 				user.getPositionEstimatedExitPriceAndPnl(
-					perpPositionWithLpSettle,
-					perpPositionWithLpSettle.baseAssetAmount
+					perpPositionWithRemainderBaseAdded,
+					perpPositionWithRemainderBaseAdded.baseAssetAmount
 				);
 
-			const entryPrice = calculateEntryPrice(perpPositionWithLpSettle);
+			const entryPrice = calculateEntryPrice(
+				perpPositionWithRemainderBaseAdded
+			);
 
-			const isShort = perpPositionWithLpSettle.baseAssetAmount.isNeg();
+			const isShort =
+				perpPositionWithRemainderBaseAdded.baseAssetAmount.isNeg();
 
 			const pnlVsMark = TRADING_COMMON_UTILS.calculatePotentialProfit({
 				currentPositionSize: BigNum.from(
-					perpPositionWithLpSettle.baseAssetAmount.abs(),
+					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				currentPositionDirection: isShort
@@ -77,7 +91,7 @@ const getOpenPositionData = (
 					? PositionDirection.LONG
 					: PositionDirection.SHORT,
 				exitBaseSize: BigNum.from(
-					perpPositionWithLpSettle.baseAssetAmount.abs(),
+					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				exitPrice: BigNum.from(markPrice, PRICE_PRECISION_EXP),
@@ -92,13 +106,14 @@ const getOpenPositionData = (
 				notional: user
 					.getPerpPositionValue(position.marketIndex, oraclePriceData)
 					.abs(),
-				baseSize: perpPositionWithLpSettle.baseAssetAmount,
+				baseSize: perpPositionWithRemainderBaseAdded.baseAssetAmount,
 				markPrice,
 				entryPrice,
 				exitPrice: estExitPrice,
 				liqPrice: user.liquidationPrice(position.marketIndex, ZERO),
-				quoteAssetNotionalAmount: perpPositionWithLpSettle.quoteAssetAmount,
-				quoteEntryAmount: perpPositionWithLpSettle.quoteEntryAmount,
+				quoteAssetNotionalAmount:
+					perpPositionWithRemainderBaseAdded.quoteAssetAmount,
+				quoteEntryAmount: perpPositionWithRemainderBaseAdded.quoteEntryAmount,
 				pnlVsMark,
 				pnlVsOracle,
 				unsettledPnl: calculateClaimablePnl(
@@ -123,7 +138,7 @@ const getOpenPositionData = (
 				lastCumulativeFundingRate:
 					perpPositionWithLpSettle.lastCumulativeFundingRate,
 				openOrders: perpPositionWithLpSettle.openOrders,
-				costBasis: calculateCostBasis(perpPositionWithLpSettle),
+				costBasis: calculateCostBasis(perpPositionWithRemainderBaseAdded),
 				realizedPnl: perpPositionWithLpSettle.settledPnl,
 				lpShares: perpPositionWithLpSettle.lpShares,
 			};

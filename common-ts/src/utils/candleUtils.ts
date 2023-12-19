@@ -3,16 +3,47 @@ import {
 	BigNum,
 	BN,
 	CandleResolution,
+	OrderAction,
+	OrderActionExplanation,
 	QUOTE_PRECISION_EXP,
+	WrappedEvent,
 } from '@drift-labs/sdk';
 import { UISerializableCandle } from 'src/serializableTypes';
 import {
+	ENUM_UTILS,
 	getPriceForUIOrderRecord,
 	PartialUISerializableOrderActionRecord,
 	sortUIOrderActionRecords,
 } from '.';
 import { Candle } from './Candle';
 import { CandleType } from '../types';
+
+/**
+ * Filter for trades which we want to include in candles, which may change over time.
+ * @param tradeEvent
+ */
+const filterOrderActionsForCandles = (
+	tradeEvent: Pick<
+		WrappedEvent<'OrderActionRecord'>,
+		'action' | 'actionExplanation'
+	>
+) => {
+	if (!ENUM_UTILS.match(tradeEvent.action, OrderAction.FILL)) {
+		return false;
+	}
+
+	if (
+		ENUM_UTILS.match(
+			tradeEvent.actionExplanation,
+			OrderActionExplanation.LIQUIDATION
+		)
+	) {
+		// Don't include liquidations in candle prices
+		return false;
+	}
+
+	return true;
+};
 
 const stitchCandles = (allCandles: Candle[]) => {
 	const stichedCandles: Candle[] = [];
@@ -324,4 +355,5 @@ export const CANDLE_UTILS = {
 	mergeTradesIntoCandles,
 	stitchCandles,
 	getDividingResolution,
+	filterOrderActionsForCandles,
 };
