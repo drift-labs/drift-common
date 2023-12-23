@@ -1495,6 +1495,11 @@
 				"description": "The transaction failed because your wallet did not have enough SOL to cover the user initialization fee. You can learn more about account creation fees in the Drift Docs.",
 				"url": "https://docs.drift.trade/creating-a-subaccount"
 			}
+		},
+		"CantReclaimRent": {
+			"code": 6257,
+			"name": "CantReclaimRent",
+			"msg": "CantReclaimRent"
 		}
 	},
 	"errorCodesMap": {
@@ -1754,6 +1759,7 @@
 		"6253": "CantUpdatePerpBidAskTwap",
 		"6254": "UserReduceOnly",
 		"6255": "InvalidMarginCalculation",
-		"6256": "CantPayUserInitFee"
+		"6256": "CantPayUserInitFee",
+		"6257": "CantReclaimRent"
 	}
 }
