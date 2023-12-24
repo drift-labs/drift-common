@@ -244,6 +244,7 @@ export const ACCOUNT_DELETION_HELPERS = {
 	accountHasOpenSpotPositions,
 	getAccountDeletionStepsToTake,
 	getAccountCanBeDeletedInstantly,
+	getStatsAccountIsPastDeletionCutoff,
 	tryDeleteUserAccount,
 	getIdleWaitTimeMinutes,
 };
