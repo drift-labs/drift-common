@@ -20,6 +20,16 @@ type AccountDeletionStep =
 	| 'sendTriggerAccountIdleIx'
 	| 'askToWait';
 
+const getStatsAccountDeletionWaitTime = (
+	userStatsAccount: UserStatsAccount
+) => {
+	const estimatedAgeSeconds =
+		Math.round(Date.now() / 1000) -
+		UserStats.getOldestActionTs(userStatsAccount);
+
+	return Math.max(ACCOUNT_AGE_DELETION_CUTOFF_SECONDS - estimatedAgeSeconds, 0);
+};
+
 const getStatsAccountIsPastDeletionCutoff = (
 	userStatsAccount: UserStatsAccount
 ) => {
@@ -247,4 +257,5 @@ export const ACCOUNT_DELETION_HELPERS = {
 	getStatsAccountIsPastDeletionCutoff,
 	tryDeleteUserAccount,
 	getIdleWaitTimeMinutes,
+	getStatsAccountDeletionWaitTime
 };
