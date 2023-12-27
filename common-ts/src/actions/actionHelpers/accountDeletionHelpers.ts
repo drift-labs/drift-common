@@ -257,5 +257,5 @@ export const ACCOUNT_DELETION_HELPERS = {
 	getStatsAccountIsPastDeletionCutoff,
 	tryDeleteUserAccount,
 	getIdleWaitTimeMinutes,
-	getStatsAccountDeletionWaitTime
+	getStatsAccountDeletionWaitTime,
 };
