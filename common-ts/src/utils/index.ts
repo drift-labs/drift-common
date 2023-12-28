@@ -941,6 +941,16 @@ const bnMean = (numbers: BN[]): BN => {
 	return sum.div(new BN(numbers.length));
 };
 
+const timedPromise = async <T>(promise: T) => {
+	const start = Date.now();
+	const promiseResult = await promise;
+
+	return {
+		promiseTime: Date.now() - start,
+		promiseResult,
+	};
+};
+
 export const COMMON_UTILS = {
 	getIfVaultBalance: getIfVaultBalance,
 	getIfStakingVaultApr: getIfStakingVaultApr,
@@ -957,6 +967,7 @@ export const COMMON_UTILS = {
 	normalizeBaseAssetSymbol,
 	calculateZScore,
 	glueArray,
+	timedPromise,
 	MATH: {
 		NUM: {
 			mean: calculateMean,
