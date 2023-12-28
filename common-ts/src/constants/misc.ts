@@ -22,6 +22,14 @@ export const NEW_ACCOUNT_BASE_COST =
 	NEW_ACCOUNT_BASE_RENT.add(NEW_ACCOUNT_DONATION);
 
 /**
+ * Equal to 0.002
+ */
+export const IF_STAKE_ACCOUNT_BASE_RENT = BigNum.fromPrint(
+	'0.002',
+	BASE_PRECISION_EXP
+);
+
+/**
  * Equal to 0.02
  */
 export const MIN_LEFTOVER_SOL = BigNum.fromPrint('0.02', BASE_PRECISION_EXP);
