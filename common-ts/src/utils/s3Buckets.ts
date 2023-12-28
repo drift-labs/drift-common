@@ -12,7 +12,8 @@ export type DownloadRecordType =
 	| 'liquidations'
 	| 'candles'
 	| 'settle-pnl-records'
-	| 'lp-records';
+	| 'lp-records'
+	| 'if-stake-records';
 
 const getLeaderboardFilename = (
 	orderBy: PnlSnapshotOrderOption,
