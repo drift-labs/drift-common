@@ -93,7 +93,7 @@ const useCurrentRpcLatency_ = () => {
 		return [rpcSpec];
 	}, [currentRpc]);
 
-	if (!currentRpcSpec) {
+	if (!currentRpcSpec || currentRpcSpec?.length === 0) {
 		return {
 			avg: -1,
 			lastFiveLatencies: [],
