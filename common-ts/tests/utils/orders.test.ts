@@ -92,7 +92,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				auctionStartPriceOffset: -0.05,
 			});
 
-			expect(result.auctionDuration).to.be.undefined;
+			expect(result.auctionDuration).to.be.null;
 			expect(result.auctionStartPrice?.toString()).to.be.undefined;
 			expect(result.auctionEndPrice?.toString()).to.be.undefined;
 		});
@@ -109,7 +109,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				auctionStartPriceOffset: -0.05,
 			});
 
-			expect(result.auctionDuration).to.be.undefined;
+			expect(result.auctionDuration).to.be.null;
 			expect(result.auctionStartPrice?.toString()).to.be.undefined;
 			expect(result.auctionEndPrice?.toString()).to.be.undefined;
 		});
