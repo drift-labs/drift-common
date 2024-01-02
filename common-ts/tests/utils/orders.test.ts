@@ -92,9 +92,9 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				auctionStartPriceOffset: -0.05,
 			});
 
-			expect(result.auctionDuration).to.equal(0);
-			expect(result.auctionStartPrice.toString()).to.equal('0');
-			expect(result.auctionEndPrice.toString()).to.equal('0');
+			expect(result.auctionDuration).to.be.undefined;
+			expect(result.auctionStartPrice?.toString()).to.be.undefined;
+			expect(result.auctionEndPrice?.toString()).to.be.undefined;
 		});
 
 		it('should not generate any auction params for short if limit price is higher than startPriceFromSettings', () => {
@@ -109,9 +109,9 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				auctionStartPriceOffset: -0.05,
 			});
 
-			expect(result.auctionDuration).to.equal(0);
-			expect(result.auctionStartPrice.toString()).to.equal('0');
-			expect(result.auctionEndPrice.toString()).to.equal('0');
+			expect(result.auctionDuration).to.be.undefined;
+			expect(result.auctionStartPrice?.toString()).to.be.undefined;
+			expect(result.auctionEndPrice?.toString()).to.be.undefined;
 		});
 	});
 
