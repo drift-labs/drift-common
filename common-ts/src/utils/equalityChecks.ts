@@ -29,9 +29,9 @@ const arePropertiesEqual = (
 				return obj1[propertyName] === obj2[propertyName];
 			case 'primitiveArray':
 				return (
-					obj1.length === obj2.length &&
-					obj1[propertyName].every((value: any, index: number) => {
-						return value === obj2[propertyName][index];
+					obj1[propertyName]?.length === obj2[propertyName]?.length &&
+					obj1[propertyName]?.every((value: any, index: number) => {
+						return value === obj2[propertyName]?.[index];
 					})
 				);
 			case 'bn':
