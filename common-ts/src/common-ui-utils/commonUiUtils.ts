@@ -41,9 +41,9 @@ const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
 const ACCOUNT_INITIALIZATION_RETRY_ATTEMPTS = 5;
 
 export const EMPTY_AUCTION_PARAMS: AuctionParams = {
-	auctionStartPrice: undefined,
-	auctionEndPrice: undefined,
-	auctionDuration: undefined,
+	auctionStartPrice: null,
+	auctionEndPrice: null,
+	auctionDuration: null,
 };
 
 /**

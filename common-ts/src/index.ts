@@ -13,6 +13,7 @@ export * from './utils/WalletConnectionState';
 export * from './utils/rpcLatency';
 export * from './utils/token';
 export * from './utils/math';
+export * from './utils/equalityChecks';
 export * from './common-ui-utils/commonUiUtils';
 export * from './constants';
 export * from './actions/actionHelpers/actionHelpers';
