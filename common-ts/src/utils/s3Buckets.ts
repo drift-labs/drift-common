@@ -10,7 +10,6 @@ export type DownloadRecordType =
 	| 'funding-payments'
 	| 'deposits'
 	| 'liquidations'
-	| 'candles'
 	| 'settle-pnl-records'
 	| 'lp-records'
 	| 'if-stake-records';
