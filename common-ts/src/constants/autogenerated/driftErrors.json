@@ -322,7 +322,7 @@
 			"name": "OrderAmountTooSmall",
 			"msg": "Order Amount Too Small",
 			"toast": {
-				"nessage": "Order amount too small",
+				"message": "Order amount too small",
 				"description": ""
 			}
 		},
