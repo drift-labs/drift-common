@@ -3,6 +3,17 @@ import { ENUM_UTILS } from '.';
 import { Serializer } from '../serializableTypes';
 import { PnlSnapshotOrderOption, SnapshotEpochResolution } from '../types';
 
+export type DownloadRecordType =
+	| 'trades'
+	| 'market-trades'
+	| 'funding-rates'
+	| 'funding-payments'
+	| 'deposits'
+	| 'liquidations'
+	| 'settle-pnl-records'
+	| 'lp-records'
+	| 'if-stake-records';
+
 const getLeaderboardFilename = (
 	orderBy: PnlSnapshotOrderOption,
 	resolution: SnapshotEpochResolution
