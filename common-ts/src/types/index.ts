@@ -18,6 +18,9 @@ import { OrderType } from '@drift-labs/sdk';
 export * from './MarketId';
 export * from './UIMarket';
 
+// Opaque type pattern
+export type Opaque<K, T> = T & { __TYPE__: K };
+
 // TODO-v2 cleanup these types - most of them should have moved into serializableTypes
 // # UI ↔ History Server Data Types
 
