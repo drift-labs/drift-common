@@ -36,6 +36,7 @@ export { default as DrawGift } from './components/DrawGift';
 export { default as DrawLock } from './components/DrawLock';
 export { default as DrawPrize } from './components/DrawPrize';
 export { default as DrawTicket } from './components/DrawTicket';
+export { default as DrawTicketMono } from './components/DrawTicketMono';
 export { default as Earn } from './components/Earn';
 export { default as Edit } from './components/Edit';
 export { default as Email } from './components/Email';
