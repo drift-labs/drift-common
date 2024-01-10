@@ -85,6 +85,7 @@ export { default as PNL } from './components/PNL';
 export { default as Percent } from './components/Percent';
 export { default as Phoenix } from './components/Phoenix';
 export { default as PieChart } from './components/PieChart';
+export { default as Points } from './components/Points';
 export { default as Positions } from './components/Positions';
 export { default as PriorityFee } from './components/PriorityFee';
 export { default as RecentTrades } from './components/RecentTrades';
