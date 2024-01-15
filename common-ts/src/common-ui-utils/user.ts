@@ -141,6 +141,7 @@ const getOpenPositionData = (
 				costBasis: calculateCostBasis(perpPositionWithRemainderBaseAdded),
 				realizedPnl: perpPositionWithLpSettle.settledPnl,
 				lpShares: perpPositionWithLpSettle.lpShares,
+				remainderBaseAmount: position.remainderBaseAssetAmount ?? 0,
 			};
 		});
 
