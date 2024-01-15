@@ -32,7 +32,9 @@ export class MarketId {
 	 * Returns a unique string that can be used as a key in a map.
 	 */
 	get key() {
-		return `${ENUM_UTILS.toStr(this.marketType)}_${this.marketIndex}` as MarketKey;
+		return `${ENUM_UTILS.toStr(this.marketType)}_${
+			this.marketIndex
+		}` as MarketKey;
 	}
 
 	equals(other: MarketId) {
