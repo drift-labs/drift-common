@@ -46,7 +46,7 @@ export const VersionedSettingsRuleFactory = <T = VersionedSettings>(
 	handler,
 	type,
 	longChangeDescription,
-	shortChangeDescription
+	shortChangeDescription,
 });
 
 export type VersionedSettingsRules<T extends VersionedSettings> =
