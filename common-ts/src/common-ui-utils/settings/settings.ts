@@ -19,21 +19,34 @@ export type SettingsVersionRule<T = VersionedSettings> = {
 	setting: keyof T;
 	handler: TransformerFunction<T>;
 	type: SettingHandlerType;
-	changeDescription?: string;
+	longChangeDescription: string;
+	shortChangeDescription: string;
 };
 
+/**
+ *
+ * @param minVersionDiscriminator
+ * @param setting
+ * @param handler
+ * @param type
+ * @param longChangeDescription : This description will be returned if this was the ONLY transformation rule that needed to apply. E.g. : "Priority fee upgrades were recently release, and your priority fee settings were recently reset to defaults."
+ * @param shortChangeDescription : This description will be returned if this was one of many transformation rules that needed to apply, they will be presented in a list. E.g. : "Your priority fee settings were recently reset to defaults." => "The following settings were changed to support new features : 'Your priority fee settings were recently reset to defaults.',  '{something else}', etc.""
+ * @returns
+ */
 export const VersionedSettingsRuleFactory = <T = VersionedSettings>(
 	minVersionDiscriminator: number,
 	setting: keyof T,
 	handler: TransformerFunction<T>,
 	type: SettingHandlerType,
-	changeDescription?: string
+	longChangeDescription: string,
+	shortChangeDescription: string
 ): SettingsVersionRule<T> => ({
 	minVersionDiscriminator,
 	setting,
 	handler,
 	type,
-	changeDescription,
+	longChangeDescription,
+	shortChangeDescription
 });
 
 export type VersionedSettingsRules<T extends VersionedSettings> =
@@ -72,10 +85,6 @@ export class VersionedSettingsHandler<T extends VersionedSettings> {
 
 		let transformationWasApplied = false;
 
-		const transformationDescriptions = rulesToApply
-			.map((rule) => rule.changeDescription)
-			.filter((desc) => !!desc);
-
 		rulesToApply.forEach((rule) => {
 			newSettings.current = produce(newSettings.current, (draft) => {
 				const { transformationWasApplied: transFormApplied } =
@@ -91,10 +100,22 @@ export class VersionedSettingsHandler<T extends VersionedSettings> {
 			draft.version = maxVersion;
 		});
 
+		let transformationDescription = '';
+
+		if (rulesToApply.length === 1) {
+			transformationDescription = rulesToApply[0].longChangeDescription;
+		}
+
+		if (rulesToApply.length > 1) {
+			transformationDescription = `The following settings were changed to support new features : ${rulesToApply
+				.map((rule) => rule.shortChangeDescription)
+				.join(', ')}`;
+		}
+
 		return {
 			transformationWasApplied,
 			transformedSettings: newSettings.current,
-			transformationDescriptions,
+			transformationDescription,
 		};
 	}
 
