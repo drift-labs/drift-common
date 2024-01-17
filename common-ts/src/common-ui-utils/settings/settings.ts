@@ -39,6 +39,9 @@ export const VersionedSettingsRuleFactory = <T = VersionedSettings>(
 export type VersionedSettingsRules<T extends VersionedSettings> =
 	SettingsVersionRule<T>[];
 
+/**
+ * The versioned settings handler ensures that old settings can be upgraded into newer versioned settings. It reports back on any changes if they were applied.
+ */
 export class VersionedSettingsHandler<T extends VersionedSettings> {
 	private rules: VersionedSettingsRules<T>;
 
