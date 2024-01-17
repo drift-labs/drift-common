@@ -54,7 +54,7 @@ export class VersionedSettingsHandler<T extends VersionedSettings> {
 		);
 
 		const rulesToApply = sortedRules.filter((rule) => {
-			if (!settings[rule.setting]) {
+			if (!settings[rule.setting] || !settings.version) {
 				return true;
 			}
 			return rule.minVersionDiscriminator > settings?.version;
@@ -75,7 +75,8 @@ export class VersionedSettingsHandler<T extends VersionedSettings> {
 
 		rulesToApply.forEach((rule) => {
 			newSettings.current = produce(newSettings.current, (draft) => {
-				const { transformationWasApplied: transFormApplied } = rule.handler(draft);
+				const { transformationWasApplied: transFormApplied } =
+					rule.handler(draft);
 
 				if (transFormApplied) {
 					transformationWasApplied = true;
@@ -83,7 +84,9 @@ export class VersionedSettingsHandler<T extends VersionedSettings> {
 			});
 		});
 
-		newSettings.current.version = maxVersion;
+		newSettings.current = produce(newSettings.current, (draft) => {
+			draft.version = maxVersion;
+		});
 
 		return {
 			transformationWasApplied,
