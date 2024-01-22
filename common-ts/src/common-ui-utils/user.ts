@@ -72,7 +72,7 @@ const getOpenPositionData = (
 
 			const entryPrice = perpPositionWithRemainderBaseAdded.lpShares.eq(ZERO)
 				? calculateEntryPrice(perpPositionWithRemainderBaseAdded)
-				: calculateCostBasis(perpPositionWithRemainderBaseAdded);
+				: calculateCostBasis(perpPositionWithRemainderBaseAdded, true);
 
 			const isShort =
 				perpPositionWithRemainderBaseAdded.baseAssetAmount.isNeg();
