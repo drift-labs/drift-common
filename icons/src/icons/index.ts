@@ -70,6 +70,7 @@ export { default as LiqFull } from './components/LiqFull';
 export { default as LiqHalf } from './components/LiqHalf';
 export { default as LiquidityPool } from './components/LiquidityPool';
 export { default as Loader } from './components/Loader';
+export { default as Lock } from './components/Lock';
 export { default as Medium } from './components/Medium';
 export { default as Menu } from './components/Menu';
 export { default as Money } from './components/Money';
