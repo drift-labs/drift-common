@@ -45,3 +45,7 @@ export const UI_ORDER_TYPES: UIOrderTypeLookup = {
 };
 
 export const UI_ORDER_TYPES_LIST = Object.values(UI_ORDER_TYPES);
+
+export const MIN_AUCTION_DURATION = 20;
+export const MAX_AUCTION_DURATION = 100;
+export const TICKS_PER_DURATION_SLOT = 25;

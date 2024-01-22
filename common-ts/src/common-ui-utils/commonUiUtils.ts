@@ -35,6 +35,11 @@ import { USER_COMMON_UTILS } from './user';
 import { TRADING_COMMON_UTILS } from './trading';
 import { MARKET_COMMON_UTILS } from './market';
 import { ORDER_COMMON_UTILS } from './order';
+import {
+	MAX_AUCTION_DURATION,
+	MIN_AUCTION_DURATION,
+	TICKS_PER_DURATION_SLOT,
+} from '../constants';
 
 // When creating an account, try 5 times over 5 seconds to wait for the new account to hit the blockchain.
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
@@ -500,12 +505,14 @@ const getLimitAuctionParams = ({
 	startPriceFromSettings,
 	duration,
 	auctionStartPriceOffset,
+	orderTickSize,
 }: {
 	direction: PositionDirection;
 	inputPrice: BigNum;
 	startPriceFromSettings: BN;
 	duration: number;
 	auctionStartPriceOffset: number;
+	orderTickSize?: BN;
 }): AuctionParams => {
 	let limitAuctionParams = EMPTY_AUCTION_PARAMS;
 
@@ -538,6 +545,14 @@ const getLimitAuctionParams = ({
 		};
 	}
 
+	if (orderTickSize) {
+		limitAuctionParams.auctionDuration = getDynamicAuctionDuration(
+			orderTickSize,
+			limitAuctionParams.auctionStartPrice,
+			limitAuctionParams.auctionEndPrice
+		);
+	}
+
 	return limitAuctionParams;
 };
 
@@ -560,6 +575,26 @@ const getPriceObject = ({
 			? BN.min(oraclePrice, bestOffer)
 			: BN.max(oraclePrice, bestOffer),
 	};
+};
+
+const getDynamicAuctionDuration = (
+	tickSize: BN,
+	auctionStartPrice: BN,
+	auctionEndPrice: BN
+): number => {
+	const auctionDiff = auctionStartPrice.sub(auctionEndPrice).abs();
+
+	const auctionDiffNum = BigNum.from(auctionDiff, PRICE_PRECISION_EXP).toNum();
+	const tickSizeNum = BigNum.from(tickSize, PRICE_PRECISION_EXP).toNum();
+
+	const tickSizeDiff = auctionDiffNum / tickSizeNum;
+
+	let dynamicDuration = tickSizeDiff / TICKS_PER_DURATION_SLOT;
+
+	dynamicDuration = Math.max(dynamicDuration, MIN_AUCTION_DURATION);
+	dynamicDuration = Math.min(dynamicDuration, MAX_AUCTION_DURATION);
+
+	return dynamicDuration;
 };
 
 /* LP Utils */
