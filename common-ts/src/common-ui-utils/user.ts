@@ -65,15 +65,14 @@ const getOpenPositionData = (
 					true
 				)[0];
 
-			const [estExitPrice, pnlVsOracle] =
-				user.getPositionEstimatedExitPriceAndPnl(
-					perpPositionWithRemainderBaseAdded,
-					perpPositionWithRemainderBaseAdded.baseAssetAmount
-				);
+			const estExitPrice = user.getPositionEstimatedExitPriceAndPnl(
+				perpPositionWithRemainderBaseAdded,
+				perpPositionWithRemainderBaseAdded.baseAssetAmount
+			)[0];
 
-			const entryPrice = calculateEntryPrice(
-				perpPositionWithRemainderBaseAdded
-			);
+			const entryPrice = perpPositionWithRemainderBaseAdded.lpShares.eq(ZERO)
+				? calculateEntryPrice(perpPositionWithRemainderBaseAdded)
+				: calculateCostBasis(perpPositionWithRemainderBaseAdded, true);
 
 			const isShort =
 				perpPositionWithRemainderBaseAdded.baseAssetAmount.isNeg();
@@ -95,6 +94,27 @@ const getOpenPositionData = (
 					BASE_PRECISION_EXP
 				),
 				exitPrice: BigNum.from(markPrice, PRICE_PRECISION_EXP),
+				slippageTolerance: 0,
+				takerFeeBps: 0,
+			}).estimatedProfit.shiftTo(QUOTE_PRECISION_EXP).val;
+
+			const pnlVsOracle = TRADING_COMMON_UTILS.calculatePotentialProfit({
+				currentPositionSize: BigNum.from(
+					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
+					BASE_PRECISION_EXP
+				),
+				currentPositionDirection: isShort
+					? PositionDirection.SHORT
+					: PositionDirection.LONG,
+				currentPositionEntryPrice: BigNum.from(entryPrice, PRICE_PRECISION_EXP),
+				tradeDirection: isShort
+					? PositionDirection.LONG
+					: PositionDirection.SHORT,
+				exitBaseSize: BigNum.from(
+					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
+					BASE_PRECISION_EXP
+				),
+				exitPrice: BigNum.from(oraclePriceData.price, PRICE_PRECISION_EXP),
 				slippageTolerance: 0,
 				takerFeeBps: 0,
 			}).estimatedProfit.shiftTo(QUOTE_PRECISION_EXP).val;
