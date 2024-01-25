@@ -70,9 +70,12 @@ const getOpenPositionData = (
 				perpPositionWithRemainderBaseAdded.baseAssetAmount
 			)[0];
 
-			const entryPrice = perpPositionWithRemainderBaseAdded.lpShares.eq(ZERO)
-				? calculateEntryPrice(perpPositionWithRemainderBaseAdded)
-				: calculateCostBasis(perpPositionWithRemainderBaseAdded, true);
+			const entryPrice = calculateEntryPrice(
+				perpPositionWithRemainderBaseAdded
+			);
+			// const entryPrice = perpPositionWithRemainderBaseAdded.lpShares.eq(ZERO)
+			// 	? calculateEntryPrice(perpPositionWithRemainderBaseAdded)
+			// 	: calculateCostBasis(perpPositionWithRemainderBaseAdded, true);
 
 			const isShort =
 				perpPositionWithRemainderBaseAdded.baseAssetAmount.isNeg();
