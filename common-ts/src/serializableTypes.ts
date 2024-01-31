@@ -1045,12 +1045,6 @@ export class SerializableUserSnapshotRecord implements UserSnapshotRecord {
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	cumulativeReferralVolume: BN;
 	@autoserializeAs(Number) cumulativeReferralCount: number;
-
-	@autoserializeAsArray(SerializableUserPerpPositionSnapshot)
-	perpPositionSnapshots: UserPerpPositionSnapshot[];
-
-	@autoserializeAsArray(SerializableUserSpotPositionSnapshot)
-	spotPositionSnapshots: UserSpotPositionSnapshot[];
 }
 
 @inheritSerialization(SerializableUserSnapshotRecord)
@@ -1090,12 +1084,6 @@ export class UISerializableUserSnapshotRecord extends SerializableUserSnapshotRe
 	cumulativeReferralVolume: BigNum;
 
 	@autoserializeAs(Number) cumulativeReferralCount: number;
-
-	@autoserializeAsArray(SerializableUserPerpPositionSnapshot)
-	perpPositionSnapshots: UserPerpPositionSnapshot[];
-
-	@autoserializeAsArray(SerializableUserSpotPositionSnapshot)
-	spotPositionSnapshots: UserSpotPositionSnapshot[];
 }
 
 export class SerializableCandle {

@@ -149,8 +149,6 @@ export type UserSnapshotRecord = {
 	cumulativeReferralReward: BN;
 	cumulativeReferralVolume: BN;
 	cumulativeReferralCount: number;
-	perpPositionSnapshots: UserPerpPositionSnapshot[];
-	spotPositionSnapshots: UserSpotPositionSnapshot[];
 };
 
 export type PnlSnapshotOrderOption = keyof Pick<
