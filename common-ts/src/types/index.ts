@@ -238,6 +238,22 @@ export type OpenPosition = {
 	realizedPnl: BN;
 	lpShares: BN;
 	remainderBaseAmount?: number; // LP only
+	// FOR TESTING
+	entryPriceQuoteEntryAmount: BN;
+	entryPriceQuoteAssetAmount: BN;
+	entryPriceQuoteBreakevenAmount: BN;
+
+	entryPriceQuoteEntryAmountNoRemainder: BN;
+	entryPriceQuoteAssetAmountNoRemainder: BN;
+	entryPriceQuoteBreakevenAmountNoRemainder: BN;
+
+	pnlForEntryPriceQuoteEntryAmount: BN;
+	pnlForEntryPriceQuoteAssetAmount: BN;
+	pnlForEntryPriceQuoteBreakevenAmount: BN;
+
+	pnlForEntryPriceQuoteEntryAmountNoRemainder: BN;
+	pnlForEntryPriceQuoteAssetAmountNoRemainder: BN;
+	pnlForEntryPriceQuoteBreakevenAmountNoRemainder: BN;
 };
 
 export type UIOrderType =

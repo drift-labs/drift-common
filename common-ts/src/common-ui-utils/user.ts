@@ -1,8 +1,10 @@
 import {
+	AMM_TO_QUOTE_PRECISION_RATIO,
 	BASE_PRECISION_EXP,
 	BN,
 	BigNum,
 	DriftClient,
+	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
 	PerpMarketConfig,
 	PerpPosition,
@@ -19,6 +21,18 @@ import {
 } from '@drift-labs/sdk';
 import { OpenPosition } from 'src/types';
 import { TRADING_COMMON_UTILS } from './trading';
+
+const calcEntry = (quoteAmount: BN, baseAmount: BN): BN => {
+	if (baseAmount.eq(ZERO)) {
+		return ZERO;
+	}
+
+	return quoteAmount
+		.mul(PRICE_PRECISION)
+		.mul(AMM_TO_QUOTE_PRECISION_RATIO)
+		.div(baseAmount)
+		.abs();
+};
 
 const getOpenPositionData = (
 	driftClient: DriftClient,
@@ -165,6 +179,41 @@ const getOpenPositionData = (
 				realizedPnl: perpPositionWithLpSettle.settledPnl,
 				lpShares: perpPositionWithLpSettle.lpShares,
 				remainderBaseAmount: position.remainderBaseAssetAmount ?? 0,
+				// FOR TESTING
+				entryPriceQuoteEntryAmount: calcEntry(
+					perpPositionWithRemainderBaseAdded.quoteEntryAmount,
+					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs()
+				),
+				entryPriceQuoteAssetAmount: calcEntry(
+					perpPositionWithRemainderBaseAdded.quoteAssetAmount,
+					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs()
+				),
+				entryPriceQuoteBreakevenAmount: calcEntry(
+					perpPositionWithRemainderBaseAdded.quoteBreakEvenAmount,
+					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs()
+				),
+
+				entryPriceQuoteEntryAmountNoRemainder: calcEntry(
+					perpPositionWithLpSettle.quoteEntryAmount,
+					perpPositionWithLpSettle.baseAssetAmount.abs()
+				),
+				entryPriceQuoteAssetAmountNoRemainder: calcEntry(
+					perpPositionWithLpSettle.quoteAssetAmount,
+					perpPositionWithLpSettle.baseAssetAmount.abs()
+				),
+				entryPriceQuoteBreakevenAmountNoRemainder: calcEntry(
+					perpPositionWithLpSettle.quoteBreakEvenAmount,
+					perpPositionWithLpSettle.baseAssetAmount.abs()
+				),
+
+				// to do wip
+				pnlForEntryPriceQuoteEntryAmount: ZERO,
+				pnlForEntryPriceQuoteAssetAmount: ZERO,
+				pnlForEntryPriceQuoteBreakevenAmount: ZERO,
+
+				pnlForEntryPriceQuoteEntryAmountNoRemainder: ZERO,
+				pnlForEntryPriceQuoteAssetAmountNoRemainder: ZERO,
+				pnlForEntryPriceQuoteBreakevenAmountNoRemainder: ZERO,
 			};
 		});
 
