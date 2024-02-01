@@ -7,6 +7,7 @@
 	"private": true,
 	"dependencies": {
 		"@drift-labs/sdk": "file:../protocol/sdk",
+		"@glitchful-dev/sol-apy-sdk": "^3.0.2",
 		"@jest/globals": "^29.3.1",
 		"@slack/web-api": "^6.4.0",
 		"@solana/spl-token": "^0.3.8",
