@@ -136,6 +136,50 @@ const getOpenPositionData = (
 				takerFeeBps: 0,
 			}).estimatedProfit.shiftTo(QUOTE_PRECISION_EXP).val;
 
+			const getPnlVsOracle = (entry: BN, baseAmt: BN) => {
+				return TRADING_COMMON_UTILS.calculatePotentialProfit({
+					currentPositionSize: BigNum.from(baseAmt.abs(), BASE_PRECISION_EXP),
+					currentPositionDirection: isShort
+						? PositionDirection.SHORT
+						: PositionDirection.LONG,
+					currentPositionEntryPrice: BigNum.from(entry, PRICE_PRECISION_EXP),
+					tradeDirection: isShort
+						? PositionDirection.LONG
+						: PositionDirection.SHORT,
+					exitBaseSize: BigNum.from(baseAmt.abs(), BASE_PRECISION_EXP),
+					exitPrice: BigNum.from(oraclePriceData.price, PRICE_PRECISION_EXP),
+					slippageTolerance: 0,
+					takerFeeBps: 0,
+				}).estimatedProfit.shiftTo(QUOTE_PRECISION_EXP).val;
+			};
+
+			const entryPriceQuoteEntryAmount = calcEntry(
+				perpPositionWithRemainderBaseAdded.quoteEntryAmount,
+				perpPositionWithRemainderBaseAdded.baseAssetAmount.abs()
+			);
+
+			const entryPriceQuoteAssetAmount = calcEntry(
+				perpPositionWithRemainderBaseAdded.quoteAssetAmount,
+				perpPositionWithRemainderBaseAdded.baseAssetAmount.abs()
+			);
+			const entryPriceQuoteBreakevenAmount = calcEntry(
+				perpPositionWithRemainderBaseAdded.quoteBreakEvenAmount,
+				perpPositionWithRemainderBaseAdded.baseAssetAmount.abs()
+			);
+
+			const entryPriceQuoteEntryAmountNoRemainder = calcEntry(
+				perpPositionWithLpSettle.quoteEntryAmount,
+				perpPositionWithLpSettle.baseAssetAmount.abs()
+			);
+			const entryPriceQuoteAssetAmountNoRemainder = calcEntry(
+				perpPositionWithLpSettle.quoteAssetAmount,
+				perpPositionWithLpSettle.baseAssetAmount.abs()
+			);
+			const entryPriceQuoteBreakevenAmountNoRemainder = calcEntry(
+				perpPositionWithLpSettle.quoteBreakEvenAmount,
+				perpPositionWithLpSettle.baseAssetAmount.abs()
+			);
+
 			return {
 				marketIndex: perpPositionWithLpSettle.marketIndex,
 				marketSymbol: perpMarketConfig.symbol,
@@ -180,40 +224,39 @@ const getOpenPositionData = (
 				lpShares: perpPositionWithLpSettle.lpShares,
 				remainderBaseAmount: position.remainderBaseAssetAmount ?? 0,
 				// FOR TESTING
-				entryPriceQuoteEntryAmount: calcEntry(
-					perpPositionWithRemainderBaseAdded.quoteEntryAmount,
-					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs()
+				entryPriceQuoteEntryAmount,
+				entryPriceQuoteAssetAmount,
+				entryPriceQuoteBreakevenAmount,
+
+				entryPriceQuoteEntryAmountNoRemainder,
+				entryPriceQuoteAssetAmountNoRemainder,
+				entryPriceQuoteBreakevenAmountNoRemainder,
+
+				pnlForEntryPriceQuoteEntryAmount: getPnlVsOracle(
+					entryPriceQuoteEntryAmount,
+					perpPositionWithRemainderBaseAdded.baseAssetAmount
 				),
-				entryPriceQuoteAssetAmount: calcEntry(
-					perpPositionWithRemainderBaseAdded.quoteAssetAmount,
-					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs()
+				pnlForEntryPriceQuoteAssetAmount: getPnlVsOracle(
+					entryPriceQuoteAssetAmount,
+					perpPositionWithRemainderBaseAdded.baseAssetAmount
 				),
-				entryPriceQuoteBreakevenAmount: calcEntry(
-					perpPositionWithRemainderBaseAdded.quoteBreakEvenAmount,
-					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs()
+				pnlForEntryPriceQuoteBreakevenAmount: getPnlVsOracle(
+					entryPriceQuoteBreakevenAmount,
+					perpPositionWithRemainderBaseAdded.baseAssetAmount
 				),
 
-				entryPriceQuoteEntryAmountNoRemainder: calcEntry(
-					perpPositionWithLpSettle.quoteEntryAmount,
-					perpPositionWithLpSettle.baseAssetAmount.abs()
+				pnlForEntryPriceQuoteEntryAmountNoRemainder: getPnlVsOracle(
+					entryPriceQuoteEntryAmountNoRemainder,
+					perpPositionWithLpSettle.baseAssetAmount
 				),
-				entryPriceQuoteAssetAmountNoRemainder: calcEntry(
-					perpPositionWithLpSettle.quoteAssetAmount,
-					perpPositionWithLpSettle.baseAssetAmount.abs()
+				pnlForEntryPriceQuoteAssetAmountNoRemainder: getPnlVsOracle(
+					entryPriceQuoteAssetAmountNoRemainder,
+					perpPositionWithLpSettle.baseAssetAmount
 				),
-				entryPriceQuoteBreakevenAmountNoRemainder: calcEntry(
-					perpPositionWithLpSettle.quoteBreakEvenAmount,
-					perpPositionWithLpSettle.baseAssetAmount.abs()
+				pnlForEntryPriceQuoteBreakevenAmountNoRemainder: getPnlVsOracle(
+					entryPriceQuoteBreakevenAmountNoRemainder,
+					perpPositionWithLpSettle.baseAssetAmount
 				),
-
-				// to do wip
-				pnlForEntryPriceQuoteEntryAmount: ZERO,
-				pnlForEntryPriceQuoteAssetAmount: ZERO,
-				pnlForEntryPriceQuoteBreakevenAmount: ZERO,
-
-				pnlForEntryPriceQuoteEntryAmountNoRemainder: ZERO,
-				pnlForEntryPriceQuoteAssetAmountNoRemainder: ZERO,
-				pnlForEntryPriceQuoteBreakevenAmountNoRemainder: ZERO,
 			};
 		});
 
