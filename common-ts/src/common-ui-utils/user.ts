@@ -165,6 +165,13 @@ const getOpenPositionData = (
 				realizedPnl: perpPositionWithLpSettle.settledPnl,
 				lpShares: perpPositionWithLpSettle.lpShares,
 				remainderBaseAmount: position.remainderBaseAssetAmount ?? 0,
+				lpDeriskPrice: user.liquidationPrice(
+					position.marketIndex,
+					undefined,
+					undefined,
+					'Initial',
+					false
+				),
 			};
 		});
 
