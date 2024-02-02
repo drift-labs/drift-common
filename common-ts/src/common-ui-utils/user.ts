@@ -1,8 +1,10 @@
 import {
+	AMM_TO_QUOTE_PRECISION_RATIO,
 	BASE_PRECISION_EXP,
 	BN,
 	BigNum,
 	DriftClient,
+	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
 	PerpMarketConfig,
 	PerpPosition,
@@ -13,12 +15,23 @@ import {
 	ZERO,
 	calculateClaimablePnl,
 	calculateCostBasis,
-	calculateEntryPrice,
 	calculatePositionFundingPNL,
 	calculatePositionPNL,
 } from '@drift-labs/sdk';
 import { OpenPosition } from 'src/types';
 import { TRADING_COMMON_UTILS } from './trading';
+
+const getAvgEntry = (baseAmount: BN, quoteAmount: BN) => {
+	if (baseAmount.eq(ZERO)) {
+		return ZERO;
+	}
+
+	return quoteAmount
+		.mul(PRICE_PRECISION)
+		.mul(AMM_TO_QUOTE_PRECISION_RATIO)
+		.div(baseAmount)
+		.abs();
+};
 
 const getOpenPositionData = (
 	driftClient: DriftClient,
@@ -70,19 +83,17 @@ const getOpenPositionData = (
 				perpPositionWithRemainderBaseAdded.baseAssetAmount
 			)[0];
 
-			const entryPrice = calculateEntryPrice(
-				perpPositionWithRemainderBaseAdded
+			const entryPrice = getAvgEntry(
+				perpPositionWithLpSettle.baseAssetAmount,
+				perpPositionWithLpSettle.quoteAssetAmount
 			);
-			// const entryPrice = perpPositionWithRemainderBaseAdded.lpShares.eq(ZERO)
-			// 	? calculateEntryPrice(perpPositionWithRemainderBaseAdded)
-			// 	: calculateCostBasis(perpPositionWithRemainderBaseAdded, true);
 
 			const isShort =
 				perpPositionWithRemainderBaseAdded.baseAssetAmount.isNeg();
 
 			const pnlVsMark = TRADING_COMMON_UTILS.calculatePotentialProfit({
 				currentPositionSize: BigNum.from(
-					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
+					perpPositionWithLpSettle.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				currentPositionDirection: isShort
@@ -93,7 +104,7 @@ const getOpenPositionData = (
 					? PositionDirection.LONG
 					: PositionDirection.SHORT,
 				exitBaseSize: BigNum.from(
-					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
+					perpPositionWithLpSettle.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				exitPrice: BigNum.from(markPrice, PRICE_PRECISION_EXP),
@@ -103,7 +114,7 @@ const getOpenPositionData = (
 
 			const pnlVsOracle = TRADING_COMMON_UTILS.calculatePotentialProfit({
 				currentPositionSize: BigNum.from(
-					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
+					perpPositionWithLpSettle.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				currentPositionDirection: isShort
@@ -114,7 +125,7 @@ const getOpenPositionData = (
 					? PositionDirection.LONG
 					: PositionDirection.SHORT,
 				exitBaseSize: BigNum.from(
-					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
+					perpPositionWithLpSettle.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				exitPrice: BigNum.from(oraclePriceData.price, PRICE_PRECISION_EXP),
