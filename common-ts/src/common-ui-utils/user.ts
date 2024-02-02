@@ -15,6 +15,7 @@ import {
 	ZERO,
 	calculateClaimablePnl,
 	calculateCostBasis,
+	calculateEntryPrice,
 	calculatePositionFundingPNL,
 	calculatePositionPNL,
 } from '@drift-labs/sdk';
@@ -83,17 +84,19 @@ const getOpenPositionData = (
 				perpPositionWithRemainderBaseAdded.baseAssetAmount
 			)[0];
 
-			const entryPrice = getAvgEntry(
-				perpPositionWithLpSettle.baseAssetAmount,
-				perpPositionWithLpSettle.quoteAssetAmount
-			);
+			const entryPrice = perpPositionWithRemainderBaseAdded.lpShares.eq(ZERO)
+				? calculateEntryPrice(perpPositionWithLpSettle)
+				: getAvgEntry(
+						perpPositionWithRemainderBaseAdded.baseAssetAmount,
+						perpPositionWithRemainderBaseAdded.quoteAssetAmount
+				  );
 
 			const isShort =
 				perpPositionWithRemainderBaseAdded.baseAssetAmount.isNeg();
 
 			const pnlVsMark = TRADING_COMMON_UTILS.calculatePotentialProfit({
 				currentPositionSize: BigNum.from(
-					perpPositionWithLpSettle.baseAssetAmount.abs(),
+					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				currentPositionDirection: isShort
@@ -104,7 +107,7 @@ const getOpenPositionData = (
 					? PositionDirection.LONG
 					: PositionDirection.SHORT,
 				exitBaseSize: BigNum.from(
-					perpPositionWithLpSettle.baseAssetAmount.abs(),
+					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				exitPrice: BigNum.from(markPrice, PRICE_PRECISION_EXP),
@@ -114,7 +117,7 @@ const getOpenPositionData = (
 
 			const pnlVsOracle = TRADING_COMMON_UTILS.calculatePotentialProfit({
 				currentPositionSize: BigNum.from(
-					perpPositionWithLpSettle.baseAssetAmount.abs(),
+					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				currentPositionDirection: isShort
@@ -125,7 +128,7 @@ const getOpenPositionData = (
 					? PositionDirection.LONG
 					: PositionDirection.SHORT,
 				exitBaseSize: BigNum.from(
-					perpPositionWithLpSettle.baseAssetAmount.abs(),
+					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				exitPrice: BigNum.from(oraclePriceData.price, PRICE_PRECISION_EXP),
