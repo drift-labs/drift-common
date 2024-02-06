@@ -137,11 +137,8 @@ export type UserSnapshotRecord = {
 	user: PublicKey;
 	epochTs: number;
 	ts: number;
-	spotQuoteValue: BN;
-	prevEpochWithdrawalQuoteVal: BN;
-	prevEpochDepositQuoteVal: BN;
 	perpPositionUpnl: BN;
-	prevEpochSettledPnl: BN;
+
 	totalAccountValue: BN;
 	cumulativeDepositQuoteValue: BN;
 	cumulativeWithdrawalQuoteValue: BN;
