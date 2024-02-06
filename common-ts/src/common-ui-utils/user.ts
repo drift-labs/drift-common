@@ -85,7 +85,7 @@ const getOpenPositionData = (
 			)[0];
 
 			const entryPrice = perpPositionWithRemainderBaseAdded.lpShares.eq(ZERO)
-				? calculateEntryPrice(perpPositionWithLpSettle)
+				? calculateEntryPrice(perpPositionWithRemainderBaseAdded)
 				: getAvgEntry(
 						perpPositionWithRemainderBaseAdded.baseAssetAmount,
 						perpPositionWithRemainderBaseAdded.quoteAssetAmount
