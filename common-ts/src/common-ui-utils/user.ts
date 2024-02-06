@@ -172,7 +172,10 @@ const getOpenPositionData = (
 	return newResult;
 };
 
-const getUser30dVolume = (userStatsAccount: UserStatsAccount, now?: BN) => {
+const getUser30dRollingVolumeEstimate = (
+	userStatsAccount: UserStatsAccount,
+	now?: BN
+) => {
 	now = now || new BN(new Date().getTime() / 1000);
 	const sinceLastTaker = BN.max(
 		now.sub(userStatsAccount.lastTakerVolume30DTs),
@@ -197,5 +200,5 @@ const getUser30dVolume = (userStatsAccount: UserStatsAccount, now?: BN) => {
 
 export const USER_COMMON_UTILS = {
 	getOpenPositionData,
-	getUser30dVolume,
+	getUser30dRollingVolumeEstimate,
 };
