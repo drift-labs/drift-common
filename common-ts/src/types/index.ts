@@ -238,6 +238,7 @@ export type OpenPosition = {
 	realizedPnl: BN;
 	lpShares: BN;
 	remainderBaseAmount?: number; // LP only
+	lpDeriskPrice?: BN; //LP only
 };
 
 export type UIOrderType =
