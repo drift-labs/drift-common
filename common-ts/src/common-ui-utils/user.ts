@@ -183,8 +183,7 @@ const getOpenPositionData = (
 					position.marketIndex,
 					undefined,
 					undefined,
-					'Initial',
-					false
+					'Initial'
 				),
 			};
 		});
