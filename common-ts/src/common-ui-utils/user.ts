@@ -22,7 +22,11 @@ import {
 import { OpenPosition } from 'src/types';
 import { TRADING_COMMON_UTILS } from './trading';
 
+<<<<<<< HEAD
 const calcEntry = (quoteAmount: BN, baseAmount: BN): BN => {
+=======
+const getAvgEntry = (baseAmount: BN, quoteAmount: BN) => {
+>>>>>>> master
 	if (baseAmount.eq(ZERO)) {
 		return ZERO;
 	}
@@ -84,12 +88,12 @@ const getOpenPositionData = (
 				perpPositionWithRemainderBaseAdded.baseAssetAmount
 			)[0];
 
-			const entryPrice = calculateEntryPrice(
-				perpPositionWithRemainderBaseAdded
-			);
-			// const entryPrice = perpPositionWithRemainderBaseAdded.lpShares.eq(ZERO)
-			// 	? calculateEntryPrice(perpPositionWithRemainderBaseAdded)
-			// 	: calculateCostBasis(perpPositionWithRemainderBaseAdded, true);
+			const entryPrice = perpPositionWithRemainderBaseAdded.lpShares.eq(ZERO)
+				? calculateEntryPrice(perpPositionWithRemainderBaseAdded)
+				: getAvgEntry(
+						perpPositionWithRemainderBaseAdded.baseAssetAmount,
+						perpPositionWithRemainderBaseAdded.quoteAssetAmount
+				  );
 
 			const isShort =
 				perpPositionWithRemainderBaseAdded.baseAssetAmount.isNeg();
@@ -223,6 +227,7 @@ const getOpenPositionData = (
 				realizedPnl: perpPositionWithLpSettle.settledPnl,
 				lpShares: perpPositionWithLpSettle.lpShares,
 				remainderBaseAmount: position.remainderBaseAssetAmount ?? 0,
+<<<<<<< HEAD
 				// FOR TESTING
 				entryPriceQuoteEntryAmount,
 				entryPriceQuoteAssetAmount,
@@ -256,6 +261,13 @@ const getOpenPositionData = (
 				pnlForEntryPriceQuoteBreakevenAmountNoRemainder: getPnlVsOracle(
 					entryPriceQuoteBreakevenAmountNoRemainder,
 					perpPositionWithLpSettle.baseAssetAmount
+=======
+				lpDeriskPrice: user.liquidationPrice(
+					position.marketIndex,
+					undefined,
+					undefined,
+					'Initial'
+>>>>>>> master
 				),
 			};
 		});

@@ -238,6 +238,8 @@ export type OpenPosition = {
 	realizedPnl: BN;
 	lpShares: BN;
 	remainderBaseAmount?: number; // LP only
+	lpDeriskPrice?: BN; //LP only
+
 	// FOR TESTING
 	entryPriceQuoteEntryAmount: BN;
 	entryPriceQuoteAssetAmount: BN;
