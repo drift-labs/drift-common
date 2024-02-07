@@ -140,7 +140,7 @@
 			"msg": "Price Bands Breached",
 			"toast": {
 				"message": "Market Specific Price Bands Breached",
-				"description": "https://docs.drift.trade/protocol-guard-rails#tDZav"
+				"description": "https://docs.drift.trade/risk-and-safety/protocol-guard-rails"
 			}
 		},
 		"ExchangePaused": {
@@ -1493,7 +1493,7 @@
 			"toast": {
 				"message": "Not enough SOL",
 				"description": "The transaction failed because your wallet did not have enough SOL to cover the user initialization fee. You can learn more about account creation fees in the Drift Docs.",
-				"url": "https://docs.drift.trade/creating-a-subaccount"
+				"url": "https://docs.drift.trade/getting-started/managing-subaccount"
 			}
 		},
 		"CantReclaimRent": {
