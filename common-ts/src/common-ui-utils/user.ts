@@ -12,7 +12,6 @@ import {
 	QUOTE_PRECISION_EXP,
 	QUOTE_SPOT_MARKET_INDEX,
 	User,
-	UserStatsAccount,
 	ZERO,
 	calculateClaimablePnl,
 	calculateCostBasis,
@@ -192,33 +191,6 @@ const getOpenPositionData = (
 	return newResult;
 };
 
-const getUser30dRollingVolumeEstimate = (
-	userStatsAccount: UserStatsAccount,
-	now?: BN
-) => {
-	now = now || new BN(new Date().getTime() / 1000);
-	const sinceLastTaker = BN.max(
-		now.sub(userStatsAccount.lastTakerVolume30DTs),
-		ZERO
-	);
-	const sinceLastMaker = BN.max(
-		now.sub(userStatsAccount.lastMakerVolume30DTs),
-		ZERO
-	);
-	const thirtyDaysInSeconds = new BN(60 * 60 * 24 * 30);
-	const last30dVolume = userStatsAccount.takerVolume30D
-		.mul(thirtyDaysInSeconds.sub(sinceLastTaker))
-		.div(thirtyDaysInSeconds)
-		.add(
-			userStatsAccount.makerVolume30D
-				.mul(thirtyDaysInSeconds.sub(sinceLastMaker))
-				.div(thirtyDaysInSeconds)
-		);
-
-	return last30dVolume;
-};
-
 export const USER_COMMON_UTILS = {
 	getOpenPositionData,
-	getUser30dRollingVolumeEstimate,
 };
