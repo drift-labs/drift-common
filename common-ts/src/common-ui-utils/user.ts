@@ -22,11 +22,7 @@ import {
 import { OpenPosition } from 'src/types';
 import { TRADING_COMMON_UTILS } from './trading';
 
-<<<<<<< HEAD
 const calcEntry = (quoteAmount: BN, baseAmount: BN): BN => {
-=======
-const getAvgEntry = (baseAmount: BN, quoteAmount: BN) => {
->>>>>>> master
 	if (baseAmount.eq(ZERO)) {
 		return ZERO;
 	}
@@ -90,7 +86,7 @@ const getOpenPositionData = (
 
 			const entryPrice = perpPositionWithRemainderBaseAdded.lpShares.eq(ZERO)
 				? calculateEntryPrice(perpPositionWithRemainderBaseAdded)
-				: getAvgEntry(
+				: calcEntry(
 						perpPositionWithRemainderBaseAdded.baseAssetAmount,
 						perpPositionWithRemainderBaseAdded.quoteAssetAmount
 				  );
@@ -184,6 +180,20 @@ const getOpenPositionData = (
 				perpPositionWithLpSettle.baseAssetAmount.abs()
 			);
 
+			const entryPriceQuoteEntryAmountNoLpSettle = calcEntry(
+				position.quoteEntryAmount,
+				position.baseAssetAmount.abs()
+			);
+
+			const entryPriceQuoteAssetAmountNoLpSettle = calcEntry(
+				position.quoteAssetAmount,
+				position.baseAssetAmount.abs()
+			);
+			const entryPriceQuoteBreakevenAmountNoLpSettle = calcEntry(
+				position.quoteBreakEvenAmount,
+				position.baseAssetAmount.abs()
+			);
+
 			return {
 				marketIndex: perpPositionWithLpSettle.marketIndex,
 				marketSymbol: perpMarketConfig.symbol,
@@ -227,7 +237,12 @@ const getOpenPositionData = (
 				realizedPnl: perpPositionWithLpSettle.settledPnl,
 				lpShares: perpPositionWithLpSettle.lpShares,
 				remainderBaseAmount: position.remainderBaseAssetAmount ?? 0,
-<<<<<<< HEAD
+				lpDeriskPrice: user.liquidationPrice(
+					position.marketIndex,
+					undefined,
+					undefined,
+					'Initial'
+				),
 				// FOR TESTING
 				entryPriceQuoteEntryAmount,
 				entryPriceQuoteAssetAmount,
@@ -236,6 +251,10 @@ const getOpenPositionData = (
 				entryPriceQuoteEntryAmountNoRemainder,
 				entryPriceQuoteAssetAmountNoRemainder,
 				entryPriceQuoteBreakevenAmountNoRemainder,
+
+				entryPriceQuoteEntryAmountNoLpSettle,
+				entryPriceQuoteAssetAmountNoLpSettle,
+				entryPriceQuoteBreakevenAmountNoLpSettle,
 
 				pnlForEntryPriceQuoteEntryAmount: getPnlVsOracle(
 					entryPriceQuoteEntryAmount,
@@ -261,13 +280,19 @@ const getOpenPositionData = (
 				pnlForEntryPriceQuoteBreakevenAmountNoRemainder: getPnlVsOracle(
 					entryPriceQuoteBreakevenAmountNoRemainder,
 					perpPositionWithLpSettle.baseAssetAmount
-=======
-				lpDeriskPrice: user.liquidationPrice(
-					position.marketIndex,
-					undefined,
-					undefined,
-					'Initial'
->>>>>>> master
+				),
+
+				pnlForEntryPriceQuoteEntryAmountNoLpSettle: getPnlVsOracle(
+					entryPriceQuoteEntryAmountNoLpSettle,
+					position.baseAssetAmount
+				),
+				pnlForEntryPriceQuoteAssetAmountNoLpSettle: getPnlVsOracle(
+					entryPriceQuoteAssetAmountNoLpSettle,
+					position.baseAssetAmount
+				),
+				pnlForEntryPriceQuoteBreakevenAmountNoLpSettle: getPnlVsOracle(
+					entryPriceQuoteBreakevenAmountNoLpSettle,
+					position.baseAssetAmount
 				),
 			};
 		});

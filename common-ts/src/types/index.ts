@@ -249,6 +249,10 @@ export type OpenPosition = {
 	entryPriceQuoteAssetAmountNoRemainder: BN;
 	entryPriceQuoteBreakevenAmountNoRemainder: BN;
 
+	entryPriceQuoteEntryAmountNoLpSettle: BN;
+	entryPriceQuoteAssetAmountNoLpSettle: BN;
+	entryPriceQuoteBreakevenAmountNoLpSettle: BN;
+
 	pnlForEntryPriceQuoteEntryAmount: BN;
 	pnlForEntryPriceQuoteAssetAmount: BN;
 	pnlForEntryPriceQuoteBreakevenAmount: BN;
@@ -256,6 +260,10 @@ export type OpenPosition = {
 	pnlForEntryPriceQuoteEntryAmountNoRemainder: BN;
 	pnlForEntryPriceQuoteAssetAmountNoRemainder: BN;
 	pnlForEntryPriceQuoteBreakevenAmountNoRemainder: BN;
+
+	pnlForEntryPriceQuoteEntryAmountNoLpSettle: BN;
+	pnlForEntryPriceQuoteAssetAmountNoLpSettle: BN;
+	pnlForEntryPriceQuoteBreakevenAmountNoLpSettle: BN;
 };
 
 export type UIOrderType =
