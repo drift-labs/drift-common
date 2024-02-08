@@ -137,11 +137,8 @@ export type UserSnapshotRecord = {
 	user: PublicKey;
 	epochTs: number;
 	ts: number;
-	spotQuoteValue: BN;
-	prevEpochWithdrawalQuoteVal: BN;
-	prevEpochDepositQuoteVal: BN;
 	perpPositionUpnl: BN;
-	prevEpochSettledPnl: BN;
+
 	totalAccountValue: BN;
 	cumulativeDepositQuoteValue: BN;
 	cumulativeWithdrawalQuoteValue: BN;
@@ -149,8 +146,6 @@ export type UserSnapshotRecord = {
 	cumulativeReferralReward: BN;
 	cumulativeReferralVolume: BN;
 	cumulativeReferralCount: number;
-	perpPositionSnapshots: UserPerpPositionSnapshot[];
-	spotPositionSnapshots: UserSpotPositionSnapshot[];
 };
 
 export type PnlSnapshotOrderOption = keyof Pick<
