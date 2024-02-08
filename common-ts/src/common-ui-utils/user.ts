@@ -18,6 +18,7 @@ import {
 	calculateEntryPrice,
 	calculatePositionFundingPNL,
 	calculatePositionPNL,
+	isOracleValid,
 } from '@drift-labs/sdk';
 import { OpenPosition } from 'src/types';
 import { TRADING_COMMON_UTILS } from './trading';
@@ -41,6 +42,8 @@ const getOpenPositionData = (
 	perpMarketLookup: PerpMarketConfig[],
 	markPriceCallback?: (marketIndex: number) => BN
 ): OpenPosition[] => {
+	const oracleGuardRails = driftClient.getStateAccount().oracleGuardRails;
+
 	const newResult: OpenPosition[] = userPositions
 		.filter(
 			(position) =>
@@ -177,6 +180,12 @@ const getOpenPositionData = (
 				openOrders: perpPositionWithLpSettle.openOrders,
 				costBasis: calculateCostBasis(perpPositionWithRemainderBaseAdded),
 				realizedPnl: perpPositionWithLpSettle.settledPnl,
+				pnlIsClaimable: isOracleValid(
+					perpMarket.amm,
+					oraclePriceData,
+					oracleGuardRails,
+					perpMarket.amm.lastUpdateSlot?.toNumber()
+				),
 				lpShares: perpPositionWithLpSettle.lpShares,
 				remainderBaseAmount: position.remainderBaseAssetAmount ?? 0,
 				lpDeriskPrice: user.liquidationPrice(
