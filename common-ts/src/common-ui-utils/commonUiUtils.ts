@@ -311,22 +311,17 @@ const getMarketOrderLimitPrice = ({
 
 	if (slippageTolerance == undefined) slippageTolerance = 100;
 
-	const numberPrecision = 1000;
-	const mantissaPrecision = PRICE_PRECISION.div(new BN(numberPrecision));
-
 	let limitPricePctDiff;
 	if (isVariant(direction, 'long')) {
-		limitPricePctDiff = 1 + slippageTolerance / 100;
-		limitPrice = entryPrice
-			.mul(new BN(limitPricePctDiff * numberPrecision))
-			.mul(mantissaPrecision)
-			.div(PRICE_PRECISION);
+		limitPricePctDiff = PRICE_PRECISION.add(
+			new BN(slippageTolerance * PRICE_PRECISION.toNumber()).div(new BN(100))
+		);
+		limitPrice = entryPrice.mul(limitPricePctDiff).div(PRICE_PRECISION);
 	} else {
-		limitPricePctDiff = 1 - slippageTolerance / 100;
-		limitPrice = entryPrice
-			.mul(new BN(limitPricePctDiff * numberPrecision))
-			.mul(mantissaPrecision)
-			.div(PRICE_PRECISION);
+		limitPricePctDiff = PRICE_PRECISION.sub(
+			new BN(slippageTolerance * PRICE_PRECISION.toNumber()).div(new BN(100))
+		);
+		limitPrice = entryPrice.mul(limitPricePctDiff).div(PRICE_PRECISION);
 	}
 
 	return limitPrice;
