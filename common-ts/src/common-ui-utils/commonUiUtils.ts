@@ -563,6 +563,8 @@ const getLpSharesAmountForQuote = (
 	marketIndex: number,
 	quoteAmount: BN
 ): BigNum => {
+	const tenMillionBigNum = BigNum.fromPrint('10000000', QUOTE_PRECISION_EXP);
+
 	const pricePerLpShare = BigNum.from(
 		driftClient.getQuoteValuePerLpShare(marketIndex),
 		QUOTE_PRECISION_EXP
@@ -570,10 +572,8 @@ const getLpSharesAmountForQuote = (
 
 	return BigNum.from(quoteAmount, QUOTE_PRECISION_EXP)
 		.scale(
-			10000,
-			pricePerLpShare
-				.mul(BigNum.fromPrint('10000', QUOTE_PRECISION_EXP))
-				.toNum()
+			tenMillionBigNum.toNum(),
+			pricePerLpShare.mul(tenMillionBigNum).toNum()
 		)
 		.shiftTo(AMM_RESERVE_PRECISION_EXP);
 };
