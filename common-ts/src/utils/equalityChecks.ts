@@ -76,6 +76,7 @@ const areTwoOpenPositionsEqual = (
 		['unsettledFundingPnl', 'bn'],
 		['totalUnrealizedPnl', 'bn'],
 		['costBasis', 'bn'],
+		['pnlIsClaimable', 'primitive'],
 		['realizedPnl', 'bn'],
 		['lpShares', 'bn'],
 	];
