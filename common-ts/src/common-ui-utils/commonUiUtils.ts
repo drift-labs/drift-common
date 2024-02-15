@@ -473,7 +473,7 @@ const deriveMarketOrderParams = ({
 		if (!oraclePrice.eq(ZERO)) {
 			// oracle auction max slippage = regular auction start price + slippage tolerance
 			const oracleAuctionSlippageLimitPrice = allowInfSlippage
-				? auctionParams.auctionEndPrice
+				? limitPrice
 				: getMarketOrderLimitPrice({
 						direction,
 						baselinePrice: auctionParams.auctionStartPrice,
