@@ -1025,14 +1025,7 @@ export class SerializableUserSnapshotRecord implements UserSnapshotRecord {
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
 	@autoserializeAs(Number) epochTs: number;
 	@autoserializeAs(Number) ts: number;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) spotQuoteValue: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	prevEpochWithdrawalQuoteVal: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	prevEpochDepositQuoteVal: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) perpPositionUpnl: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	prevEpochSettledPnl: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) totalAccountValue: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	cumulativeDepositQuoteValue: BN;
@@ -1045,32 +1038,13 @@ export class SerializableUserSnapshotRecord implements UserSnapshotRecord {
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	cumulativeReferralVolume: BN;
 	@autoserializeAs(Number) cumulativeReferralCount: number;
-
-	@autoserializeAsArray(SerializableUserPerpPositionSnapshot)
-	perpPositionSnapshots: UserPerpPositionSnapshot[];
-
-	@autoserializeAsArray(SerializableUserSpotPositionSnapshot)
-	spotPositionSnapshots: UserSpotPositionSnapshot[];
 }
 
 @inheritSerialization(SerializableUserSnapshotRecord)
 export class UISerializableUserSnapshotRecord extends SerializableUserSnapshotRecord {
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
-	spotQuoteValue: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	prevEpochWithdrawalQuoteVal: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	prevEpochDepositQuoteVal: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
 	perpPositionUpnl: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	prevEpochSettledPnl: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	totalAccountValue: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
@@ -1090,12 +1064,6 @@ export class UISerializableUserSnapshotRecord extends SerializableUserSnapshotRe
 	cumulativeReferralVolume: BigNum;
 
 	@autoserializeAs(Number) cumulativeReferralCount: number;
-
-	@autoserializeAsArray(SerializableUserPerpPositionSnapshot)
-	perpPositionSnapshots: UserPerpPositionSnapshot[];
-
-	@autoserializeAsArray(SerializableUserSpotPositionSnapshot)
-	spotPositionSnapshots: UserSpotPositionSnapshot[];
 }
 
 export class SerializableCandle {

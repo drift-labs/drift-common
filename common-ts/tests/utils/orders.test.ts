@@ -136,6 +136,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				auctionStartPriceOffset: -0.05,
 				auctionEndPriceOffset: 0.05,
 				auctionStartPriceOffsetFrom: 'entry',
+				slippageTolerance: 0.5,
 				isOracleOrder: true,
 			});
 
@@ -166,6 +167,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				auctionStartPriceOffset: -0.05,
 				auctionEndPriceOffset: 0.05,
 				auctionStartPriceOffsetFrom: 'entry',
+				slippageTolerance: 0.5,
 				isOracleOrder: true,
 			});
 
@@ -196,6 +198,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				auctionStartPriceOffset: -0.05,
 				auctionEndPriceOffset: 0.05,
 				auctionStartPriceOffsetFrom: 'entry',
+				slippageTolerance: 0.5,
 				isOracleOrder: true,
 			});
 
@@ -226,6 +229,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				auctionStartPriceOffset: -0.05,
 				auctionEndPriceOffset: 0.05,
 				auctionStartPriceOffsetFrom: 'entry',
+				slippageTolerance: 0.5,
 				isOracleOrder: true,
 			});
 
@@ -234,6 +238,65 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 			);
 			expect(result.auctionStartPrice?.toString()).to.equal('-7950000');
 			expect(result.auctionEndPrice?.toString()).to.equal('-10000000');
+		});
+	});
+	describe('getMarketOrderLimitPrice', () => {
+		it('should use the correct price for a LONG with 5% max slippage', () => {
+			const result = COMMON_UI_UTILS.getMarketOrderLimitPrice({
+				direction: PositionDirection.LONG,
+				baselinePrice: new BN(100).mul(PRICE_PRECISION),
+				slippageTolerance: 5,
+			});
+
+			expect(result.toString()).to.equal('105000000');
+		});
+
+		it('should use the correct price for a SHORT with 5% max slippage ', () => {
+			const result = COMMON_UI_UTILS.getMarketOrderLimitPrice({
+				direction: PositionDirection.SHORT,
+				baselinePrice: new BN(100).mul(PRICE_PRECISION),
+				slippageTolerance: 5,
+			});
+
+			expect(result.toString()).to.equal('95000000');
+		});
+		it('should use the correct price for a LONG with 0.5% max slippage', () => {
+			const result = COMMON_UI_UTILS.getMarketOrderLimitPrice({
+				direction: PositionDirection.LONG,
+				baselinePrice: new BN(100).mul(PRICE_PRECISION),
+				slippageTolerance: 0.5,
+			});
+
+			expect(result.toString()).to.equal('100500000');
+		});
+
+		it('should use the correct price for a SHORT with 0.5% max slippage ', () => {
+			const result = COMMON_UI_UTILS.getMarketOrderLimitPrice({
+				direction: PositionDirection.SHORT,
+				baselinePrice: new BN(100).mul(PRICE_PRECISION),
+				slippageTolerance: 0.5,
+			});
+
+			expect(result.toString()).to.equal('99500000');
+		});
+		it('should use the correct price for a LONG with 0.05% max slippage', () => {
+			const result = COMMON_UI_UTILS.getMarketOrderLimitPrice({
+				direction: PositionDirection.LONG,
+				baselinePrice: new BN(100).mul(PRICE_PRECISION),
+				slippageTolerance: 0.05,
+			});
+
+			expect(result.toString()).to.equal('100050000');
+		});
+
+		it('should use the correct price for a SHORT with 0.05% max slippage ', () => {
+			const result = COMMON_UI_UTILS.getMarketOrderLimitPrice({
+				direction: PositionDirection.SHORT,
+				baselinePrice: new BN(100).mul(PRICE_PRECISION),
+				slippageTolerance: 0.05,
+			});
+
+			expect(result.toString()).to.equal('99950000');
 		});
 	});
 });

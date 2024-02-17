@@ -26,6 +26,7 @@ const OPEN_POSITION_SOL_LONG: OpenPosition = {
 	unsettledFundingPnl: new BN(100),
 	totalUnrealizedPnl: new BN(100),
 	costBasis: new BN(100),
+	pnlIsClaimable: true,
 	realizedPnl: new BN(100),
 	lpShares: new BN(100),
 };
@@ -51,6 +52,7 @@ const OPEN_POSITION_BTC_SHORT: OpenPosition = {
 	totalUnrealizedPnl: new BN(100),
 	costBasis: new BN(100),
 	realizedPnl: new BN(100),
+	pnlIsClaimable: true,
 	lpShares: new BN(100),
 };
 

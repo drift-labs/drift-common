@@ -298,35 +298,30 @@ const calculateAverageEntryPrice = (
 
 const getMarketOrderLimitPrice = ({
 	direction,
-	entryPrice,
+	baselinePrice,
 	slippageTolerance,
 }: {
 	direction: PositionDirection;
-	entryPrice: BN;
+	baselinePrice: BN;
 	slippageTolerance: number;
 }): BN => {
 	let limitPrice;
 
-	if (slippageTolerance === 0) return entryPrice;
+	if (slippageTolerance === 0) return baselinePrice;
 
 	if (slippageTolerance == undefined) slippageTolerance = 100;
 
-	const numberPrecision = 1000;
-	const mantissaPrecision = PRICE_PRECISION.div(new BN(numberPrecision));
-
 	let limitPricePctDiff;
 	if (isVariant(direction, 'long')) {
-		limitPricePctDiff = 1 + slippageTolerance / 100;
-		limitPrice = entryPrice
-			.mul(new BN(limitPricePctDiff * numberPrecision))
-			.mul(mantissaPrecision)
-			.div(PRICE_PRECISION);
+		limitPricePctDiff = PRICE_PRECISION.add(
+			new BN(slippageTolerance * PRICE_PRECISION.toNumber()).div(new BN(100))
+		);
+		limitPrice = baselinePrice.mul(limitPricePctDiff).div(PRICE_PRECISION);
 	} else {
-		limitPricePctDiff = 1 - slippageTolerance / 100;
-		limitPrice = entryPrice
-			.mul(new BN(limitPricePctDiff * numberPrecision))
-			.mul(mantissaPrecision)
-			.div(PRICE_PRECISION);
+		limitPricePctDiff = PRICE_PRECISION.sub(
+			new BN(slippageTolerance * PRICE_PRECISION.toNumber()).div(new BN(100))
+		);
+		limitPrice = baselinePrice.mul(limitPricePctDiff).div(PRICE_PRECISION);
 	}
 
 	return limitPrice;
@@ -421,6 +416,7 @@ const deriveMarketOrderParams = ({
 	auctionStartPriceOffset,
 	auctionEndPriceOffset,
 	auctionStartPriceOffsetFrom,
+	slippageTolerance,
 	isOracleOrder,
 }: {
 	marketType: MarketType;
@@ -441,6 +437,7 @@ const deriveMarketOrderParams = ({
 	auctionStartPriceOffset: number;
 	auctionEndPriceOffset: number;
 	auctionStartPriceOffsetFrom: 'oracle' | 'bestOffer' | 'entry' | 'best';
+	slippageTolerance: number;
 	isOracleOrder?: boolean;
 }) => {
 	const startPrices = getPriceObject({
@@ -474,12 +471,29 @@ const deriveMarketOrderParams = ({
 	if (isOracleOrder) {
 		// wont work if oracle is zero
 		if (!oraclePrice.eq(ZERO)) {
+			// oracle auction max slippage = regular auction start price + slippage tolerance
+			const oracleAuctionSlippageLimitPrice = allowInfSlippage
+				? limitPrice
+				: getMarketOrderLimitPrice({
+						direction,
+						baselinePrice: auctionParams.auctionStartPrice,
+						slippageTolerance,
+				  });
+
+			// worst (slippageLimitPrice, auctionEndPrice)
+			const oracleAuctionEndPrice = isVariant(direction, 'long')
+				? BN.max(oracleAuctionSlippageLimitPrice, auctionParams.auctionEndPrice)
+				: BN.min(
+						oracleAuctionSlippageLimitPrice,
+						auctionParams.auctionEndPrice
+				  );
+
 			const oracleAuctionParams = deriveOracleAuctionParams({
 				direction: direction,
 				oraclePrice: startPrices.oracle,
 				auctionStartPrice: auctionParams.auctionStartPrice,
-				auctionEndPrice: auctionParams.auctionEndPrice,
-				limitPrice,
+				auctionEndPrice: oracleAuctionEndPrice,
+				limitPrice: oracleAuctionEndPrice,
 			});
 
 			orderParams = {
@@ -568,6 +582,8 @@ const getLpSharesAmountForQuote = (
 	marketIndex: number,
 	quoteAmount: BN
 ): BigNum => {
+	const tenMillionBigNum = BigNum.fromPrint('10000000', QUOTE_PRECISION_EXP);
+
 	const pricePerLpShare = BigNum.from(
 		driftClient.getQuoteValuePerLpShare(marketIndex),
 		QUOTE_PRECISION_EXP
@@ -575,10 +591,8 @@ const getLpSharesAmountForQuote = (
 
 	return BigNum.from(quoteAmount, QUOTE_PRECISION_EXP)
 		.scale(
-			10000,
-			pricePerLpShare
-				.mul(BigNum.fromPrint('10000', QUOTE_PRECISION_EXP))
-				.toNum()
+			tenMillionBigNum.toNum(),
+			pricePerLpShare.mul(tenMillionBigNum).toNum()
 		)
 		.shiftTo(AMM_RESERVE_PRECISION_EXP);
 };
