@@ -6,6 +6,7 @@ import {
 import { BN, BigNum } from '@drift-labs/sdk';
 import { OpenPosition } from '../../src/types';
 
+//@ts-ignore
 const OPEN_POSITION_SOL_LONG: OpenPosition = {
 	marketIndex: 0,
 	marketSymbol: 'SOL-PERP',
@@ -31,6 +32,7 @@ const OPEN_POSITION_SOL_LONG: OpenPosition = {
 	lpShares: new BN(100),
 };
 
+//@ts-ignore
 const OPEN_POSITION_BTC_SHORT: OpenPosition = {
 	marketIndex: 1,
 	marketSymbol: 'BTC-PERP',
