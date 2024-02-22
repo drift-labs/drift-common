@@ -309,7 +309,11 @@ const getMarketOrderLimitPrice = ({
 
 	if (slippageTolerance === 0) return baselinePrice;
 
-	if (slippageTolerance == undefined) slippageTolerance = 100;
+	// infinite slippage capped at 15% currently
+	if (slippageTolerance == undefined) slippageTolerance = 15;
+
+	// if manually entered, cap at 99%
+	if (slippageTolerance > 99) slippageTolerance = 99;
 
 	let limitPricePctDiff;
 	if (isVariant(direction, 'long')) {
