@@ -480,19 +480,20 @@ const deriveMarketOrderParams = ({
 						slippageTolerance,
 				  });
 
-			let oracleAuctionEndPrice = auctionParams.auctionEndPrice;
 			// worst (slippageLimitPrice, auctionEndPrice)
-			if (!allowInfSlippage) {
-				oracleAuctionEndPrice = isVariant(direction, 'long')
-					? BN.max(
-							oracleAuctionSlippageLimitPrice,
-							auctionParams.auctionEndPrice
-					  )
-					: BN.min(
-							oracleAuctionSlippageLimitPrice,
-							auctionParams.auctionEndPrice
-					  );
-			}
+			const oracleAuctionEndPrice = isVariant(direction, 'long')
+				? BN.max(
+						allowInfSlippage
+							? auctionParams.auctionEndPrice.divn(5)
+							: oracleAuctionSlippageLimitPrice,
+						auctionParams.auctionEndPrice
+				  )
+				: BN.min(
+						allowInfSlippage
+							? auctionParams.auctionEndPrice.muln(5)
+							: oracleAuctionSlippageLimitPrice,
+						auctionParams.auctionEndPrice
+				  );
 
 			const oracleAuctionParams = deriveOracleAuctionParams({
 				direction: direction,
