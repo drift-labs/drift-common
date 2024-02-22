@@ -309,7 +309,7 @@ const getMarketOrderLimitPrice = ({
 
 	if (slippageTolerance === 0) return baselinePrice;
 
-	if (slippageTolerance == undefined) slippageTolerance = 100;
+	if (slippageTolerance == undefined) slippageTolerance = 10;
 
 	let limitPricePctDiff;
 	if (isVariant(direction, 'long')) {
@@ -482,16 +482,9 @@ const deriveMarketOrderParams = ({
 
 			// worst (slippageLimitPrice, auctionEndPrice)
 			const oracleAuctionEndPrice = isVariant(direction, 'long')
-				? BN.max(
-						allowInfSlippage
-							? auctionParams.auctionEndPrice.divn(5)
-							: oracleAuctionSlippageLimitPrice,
-						auctionParams.auctionEndPrice
-				  )
+				? BN.max(oracleAuctionSlippageLimitPrice, auctionParams.auctionEndPrice)
 				: BN.min(
-						allowInfSlippage
-							? auctionParams.auctionEndPrice.muln(5)
-							: oracleAuctionSlippageLimitPrice,
+						oracleAuctionSlippageLimitPrice,
 						auctionParams.auctionEndPrice
 				  );
 
