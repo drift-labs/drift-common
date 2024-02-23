@@ -298,30 +298,34 @@ const calculateAverageEntryPrice = (
 
 const getMarketOrderLimitPrice = ({
 	direction,
-	entryPrice,
+	baselinePrice,
 	slippageTolerance,
 }: {
 	direction: PositionDirection;
-	entryPrice: BN;
+	baselinePrice: BN;
 	slippageTolerance: number;
 }): BN => {
 	let limitPrice;
 
-	if (slippageTolerance === 0) return entryPrice;
+	if (slippageTolerance === 0) return baselinePrice;
 
-	if (slippageTolerance == undefined) slippageTolerance = 100;
+	// infinite slippage capped at 15% currently
+	if (slippageTolerance == undefined) slippageTolerance = 15;
+
+	// if manually entered, cap at 99%
+	if (slippageTolerance > 99) slippageTolerance = 99;
 
 	let limitPricePctDiff;
 	if (isVariant(direction, 'long')) {
 		limitPricePctDiff = PRICE_PRECISION.add(
 			new BN(slippageTolerance * PRICE_PRECISION.toNumber()).div(new BN(100))
 		);
-		limitPrice = entryPrice.mul(limitPricePctDiff).div(PRICE_PRECISION);
+		limitPrice = baselinePrice.mul(limitPricePctDiff).div(PRICE_PRECISION);
 	} else {
 		limitPricePctDiff = PRICE_PRECISION.sub(
 			new BN(slippageTolerance * PRICE_PRECISION.toNumber()).div(new BN(100))
 		);
-		limitPrice = entryPrice.mul(limitPricePctDiff).div(PRICE_PRECISION);
+		limitPrice = baselinePrice.mul(limitPricePctDiff).div(PRICE_PRECISION);
 	}
 
 	return limitPrice;
@@ -416,6 +420,7 @@ const deriveMarketOrderParams = ({
 	auctionStartPriceOffset,
 	auctionEndPriceOffset,
 	auctionStartPriceOffsetFrom,
+	slippageTolerance,
 	isOracleOrder,
 }: {
 	marketType: MarketType;
@@ -436,6 +441,7 @@ const deriveMarketOrderParams = ({
 	auctionStartPriceOffset: number;
 	auctionEndPriceOffset: number;
 	auctionStartPriceOffsetFrom: 'oracle' | 'bestOffer' | 'entry' | 'best';
+	slippageTolerance: number;
 	isOracleOrder?: boolean;
 }) => {
 	const startPrices = getPriceObject({
@@ -469,12 +475,29 @@ const deriveMarketOrderParams = ({
 	if (isOracleOrder) {
 		// wont work if oracle is zero
 		if (!oraclePrice.eq(ZERO)) {
+			// oracle auction max slippage = regular auction start price + slippage tolerance
+			const oracleAuctionSlippageLimitPrice = allowInfSlippage
+				? limitPrice
+				: getMarketOrderLimitPrice({
+						direction,
+						baselinePrice: auctionParams.auctionStartPrice,
+						slippageTolerance,
+				  });
+
+			// worst (slippageLimitPrice, auctionEndPrice)
+			const oracleAuctionEndPrice = isVariant(direction, 'long')
+				? BN.max(oracleAuctionSlippageLimitPrice, auctionParams.auctionEndPrice)
+				: BN.min(
+						oracleAuctionSlippageLimitPrice,
+						auctionParams.auctionEndPrice
+				  );
+
 			const oracleAuctionParams = deriveOracleAuctionParams({
 				direction: direction,
 				oraclePrice: startPrices.oracle,
 				auctionStartPrice: auctionParams.auctionStartPrice,
-				auctionEndPrice: auctionParams.auctionEndPrice,
-				limitPrice,
+				auctionEndPrice: oracleAuctionEndPrice,
+				limitPrice: oracleAuctionEndPrice,
 			});
 
 			orderParams = {
