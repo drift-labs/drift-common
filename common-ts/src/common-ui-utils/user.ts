@@ -1,10 +1,8 @@
 import {
-	AMM_TO_QUOTE_PRECISION_RATIO,
 	BASE_PRECISION_EXP,
 	BN,
 	BigNum,
 	DriftClient,
-	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
 	PerpMarketConfig,
 	PerpPosition,
@@ -22,18 +20,6 @@ import {
 } from '@drift-labs/sdk';
 import { OpenPosition } from 'src/types';
 import { TRADING_COMMON_UTILS } from './trading';
-
-const getAvgEntry = (baseAmount: BN, quoteAmount: BN) => {
-	if (baseAmount.eq(ZERO)) {
-		return ZERO;
-	}
-
-	return quoteAmount
-		.mul(PRICE_PRECISION)
-		.mul(AMM_TO_QUOTE_PRECISION_RATIO)
-		.div(baseAmount)
-		.abs();
-};
 
 const getOpenPositionData = (
 	driftClient: DriftClient,
@@ -87,12 +73,9 @@ const getOpenPositionData = (
 				perpPositionWithRemainderBaseAdded.baseAssetAmount
 			)[0];
 
-			const entryPrice = perpPositionWithRemainderBaseAdded.lpShares.eq(ZERO)
-				? calculateEntryPrice(perpPositionWithRemainderBaseAdded)
-				: getAvgEntry(
-						perpPositionWithRemainderBaseAdded.baseAssetAmount,
-						perpPositionWithRemainderBaseAdded.quoteAssetAmount
-				  );
+			const entryPrice = calculateEntryPrice(
+				perpPositionWithRemainderBaseAdded
+			);
 
 			const isShort =
 				perpPositionWithRemainderBaseAdded.baseAssetAmount.isNeg();
