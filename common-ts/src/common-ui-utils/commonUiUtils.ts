@@ -615,14 +615,10 @@ const getQuoteValueForLpShares = (
 };
 
 const getTokenAddress = (
-	mintAddress: string,
-	userPubKey: string
+	mintAddress: PublicKey,
+	userPubKey: PublicKey
 ): Promise<PublicKey> => {
-	return getAssociatedTokenAddress(
-		new PublicKey(mintAddress),
-		new PublicKey(userPubKey),
-		true
-	);
+	return getAssociatedTokenAddress(mintAddress, userPubKey, true);
 };
 
 const getBalanceFromTokenAccountResult = (account: {
@@ -634,8 +630,8 @@ const getBalanceFromTokenAccountResult = (account: {
 
 const getTokenAccount = async (
 	connection: Connection,
-	mintAddress: string,
-	userPubKey: string
+	mintAddress: PublicKey,
+	userPubKey: PublicKey
 ): Promise<{
 	tokenAccount: {
 		pubkey: PublicKey;
@@ -646,13 +642,13 @@ const getTokenAccount = async (
 	tokenAccountWarning: boolean;
 }> => {
 	const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
-		new PublicKey(userPubKey),
-		{ mint: new PublicKey(mintAddress) }
+		userPubKey,
+		{ mint: mintAddress }
 	);
 
 	const associatedAddress = await getAssociatedTokenAddress(
-		new PublicKey(mintAddress),
-		new PublicKey(userPubKey),
+		mintAddress,
+		userPubKey,
 		true
 	);
 
