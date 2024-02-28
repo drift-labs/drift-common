@@ -236,7 +236,7 @@
 			"name": "InvalidOracle",
 			"msg": "InvalidOracle",
 			"toast": {
-				"message": "Oracle Information deemed Invalid for Action",
+				"message": "Oracle Information deemed Invalid for Action. Please try again in a few minutes",
 				"description": ""
 			}
 		},
