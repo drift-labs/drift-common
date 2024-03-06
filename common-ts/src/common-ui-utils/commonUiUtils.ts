@@ -480,7 +480,10 @@ const deriveMarketOrderParams = ({
 				? limitPrice
 				: getMarketOrderLimitPrice({
 						direction,
-						baselinePrice: auctionParams.auctionStartPrice,
+						// baselinePrice should fallback to oracle if this is somehow 0
+						baselinePrice: auctionParams.auctionStartPrice.eq(ZERO)
+							? oraclePrice
+							: auctionParams.auctionStartPrice,
 						slippageTolerance,
 				  });
 
@@ -494,7 +497,7 @@ const deriveMarketOrderParams = ({
 
 			const oracleAuctionParams = deriveOracleAuctionParams({
 				direction: direction,
-				oraclePrice: startPrices.oracle,
+				oraclePrice,
 				auctionStartPrice: auctionParams.auctionStartPrice,
 				auctionEndPrice: oracleAuctionEndPrice,
 				limitPrice: oracleAuctionEndPrice,
