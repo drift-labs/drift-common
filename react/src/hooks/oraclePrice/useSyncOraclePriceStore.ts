@@ -27,6 +27,7 @@ export const useSyncOraclePriceStore = (
 	marketsAndAccounts: MarketAndAccount[],
 	refreshTimeMs = 1000
 ) => {
+	const driftClient = useCommonDriftStore((s) => s.driftClient.client);
 	const connection = useCommonDriftStore((s) => s.connection);
 	const bulkAccountLoader = useCommonDriftStore((s) => s.bulkAccountLoader);
 	const setOraclePriceStore = useOraclePriceStore((s) => s.set);
@@ -71,14 +72,25 @@ export const useSyncOraclePriceStore = (
 
 	useEffect(() => {
 		if (!connection) return;
+		if (!driftClient) return;
 
-		setPythClient(getOracleClient(OracleSource.PYTH, connection));
-		setPyth1KClient(getOracleClient(OracleSource.PYTH_1K, connection));
-		setPyth1MClient(getOracleClient(OracleSource.PYTH_1M, connection));
-		setPythStableCoin(
-			getOracleClient(OracleSource.PYTH_STABLE_COIN, connection)
+		setPythClient(
+			getOracleClient(OracleSource.PYTH, connection, driftClient.program)
 		);
-	}, [connection]);
+		setPyth1KClient(
+			getOracleClient(OracleSource.PYTH_1K, connection, driftClient.program)
+		);
+		setPyth1MClient(
+			getOracleClient(OracleSource.PYTH_1M, connection, driftClient.program)
+		);
+		setPythStableCoin(
+			getOracleClient(
+				OracleSource.PYTH_STABLE_COIN,
+				connection,
+				driftClient.program
+			)
+		);
+	}, [connection, driftClient]);
 
 	useEffect(() => {
 		if (!connection) return;
