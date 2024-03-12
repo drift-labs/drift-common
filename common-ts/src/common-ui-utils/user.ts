@@ -164,7 +164,7 @@ const getOpenPositionData = (
 				costBasis: calculateCostBasis(perpPositionWithRemainderBaseAdded),
 				realizedPnl: perpPositionWithLpSettle.settledPnl,
 				pnlIsClaimable: isOracleValid(
-					perpMarket.amm,
+					perpMarket,
 					oraclePriceData,
 					oracleGuardRails,
 					perpMarket.amm.lastUpdateSlot?.toNumber()
