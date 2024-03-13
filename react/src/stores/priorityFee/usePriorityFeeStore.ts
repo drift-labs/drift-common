@@ -2,14 +2,19 @@ import { create } from 'zustand';
 import { produce } from 'immer';
 import { devtools } from 'zustand/middleware';
 
+export type FeeType = 'custom' | 'dynamic' | 'boosted' | 'turbo';
+
 export type PriorityFeeStore = {
 	set: (x: (s: PriorityFeeStore) => void) => void;
 	get: () => PriorityFeeStore;
 	ready: boolean;
 	getPriorityFeeToUse: (
-		notionalValueOfTx?: number,
-		feeTypeOverride?: 'custom' | 'dynamic' | 'boosted' | 'turbo'
-	) => number;
+		computeUnitsLimit?: number,
+		feeTypeOverride?: FeeType
+	) => {
+		priorityFeeInSol: number;
+		computeUnitsPrice: number;
+	};
 };
 
 export const usePriorityFeeStore = create(
@@ -17,6 +22,9 @@ export const usePriorityFeeStore = create(
 		set: (fn) => set(produce(fn)),
 		get: () => get(),
 		ready: false,
-		getPriorityFeeToUse: () => 0,
+		getPriorityFeeToUse: () => ({
+			priorityFeeInSol: 0,
+			computeUnitsPrice: 0,
+		}),
 	}))
 );

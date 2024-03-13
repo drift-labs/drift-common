@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useRef } from 'react';
 import { useInterval } from 'react-use';
 
-export const getHeliusPriorityFeeEstimate = async (
+const getHeliusPriorityFeeEstimate = async (
 	heliusRpcUrl: string,
 	feeSubscriptionAddressStrings: string[],
 	targetPercentile: number
@@ -70,7 +70,6 @@ export const getHeliusPriorityFeeEstimate = async (
 	}
 };
 
-// TODO: Figure out why this hook doesn't work when used in Drift ...
 export const useHeliusPriorityFees = (
 	enabled: boolean,
 	pollingInterval: number,
@@ -80,7 +79,7 @@ export const useHeliusPriorityFees = (
 ) => {
 	const pollMs = pollingInterval;
 
-	const [latestHeliusFeeResult, setLatestHeliusFeeResult] = useState<number>(0);
+	const latestHeliusFeeResultRef = useRef<number>(0);
 
 	const refreshHeliusPriorityFeeValue = async () => {
 		if (!enabled) return;
@@ -92,13 +91,13 @@ export const useHeliusPriorityFees = (
 		);
 
 		if (!heliusResult) {
-			setLatestHeliusFeeResult(0);
+			latestHeliusFeeResultRef.current = 0;
 		} else {
-			setLatestHeliusFeeResult(heliusResult);
+			latestHeliusFeeResultRef.current = heliusResult;
 		}
 	};
 
 	useInterval(refreshHeliusPriorityFeeValue, pollMs);
 
-	return latestHeliusFeeResult;
+	return latestHeliusFeeResultRef;
 };
