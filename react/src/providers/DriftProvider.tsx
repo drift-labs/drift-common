@@ -9,8 +9,7 @@ import DriftWalletProvider from './DriftWalletProvider';
 import { DRIFT_WALLET_PROVIDERS } from '../constants/wallets';
 import { DriftClientConfig } from '@drift-labs/sdk';
 
-interface AppSetupProps {
-	children: React.ReactNode;
+export interface AppSetupProps {
 	disable?: {
 		idlePollingRateSwitcher?: boolean;
 		emulation?: boolean;
@@ -22,6 +21,7 @@ interface AppSetupProps {
 	autoconnectionDelay?: number;
 	disableAutoconnect?: boolean;
 	additionalDriftClientConfig?: Partial<DriftClientConfig>;
+	priorityFeePollingMultiplier: number;
 }
 
 const DriftProviderInner = (props: PropsWithChildren<any>) => {
@@ -44,7 +44,9 @@ const DriftProviderInner = (props: PropsWithChildren<any>) => {
 	return <>{props.children}</>;
 };
 
-const DriftProvider = (props: AppSetupProps) => {
+const DriftProvider = (
+	props: AppSetupProps & { children: React.ReactNode }
+) => {
 	return (
 		<>
 			<DriftWalletProvider

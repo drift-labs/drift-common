@@ -88,7 +88,7 @@ export const useSyncPriorityFeeStore = ({
 	targetFeePercentile: number;
 	userPriorityFeeType: FeeType;
 	userCustomMaxPriorityFeeCap: number;
-	userCustomPriorityFee: number;
+	userCustomPriorityFee: number | null;
 }) => {
 	const percentilePriorityFeeStrategy =
 		createPercentilePriorityFeeStrategy(targetFeePercentile);
