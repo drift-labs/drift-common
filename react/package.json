@@ -1,45 +1,47 @@
 {
-  "name": "@drift-labs/react",
-  "version": "1.0.0",
-  "description": "Common building blocks for connecting to the Drift program from React",
-  "main": "lib/index.js",
-  "repository": "https://github.com/drift-labs/drift-common",
-  "author": "Drift Labs",
-  "license": "MIT",
-  "scripts": {
-    "lint": "eslint './**/*.{ts,tsx}' --quiet",
-    "build": "yarn clean && tsc",
-    "clean": "rm -rf lib"
-  },
-  "directories": {
-    "lib": "lib"
-  },
-  "devDependencies": {
-    "@solana/spl-token": "^0.3.8",
-    "@solana/web3.js": "^1.77.3",
-    "@types/react": "18.2.21",
-    "encoding": "^0.1.13",
-    "eslint": "^8.43.0",
-    "lokijs": "^1.5.12",
-    "pino-pretty": "^10.2.3",
-    "react": "18.2.0",
-    "typescript": "^5.1.6"
-  },
-  "peerDependencies": {
-    "@drift-labs/sdk": "^2.32.1-beta.12",
-    "@solana/spl-token": "^0.3.8",
-    "@solana/web3.js": "^1.77.3",
-    "react": "18.2.0"
-  },
-  "dependencies": {
-    "@drift/common": "file:../common-ts",
-    "@solana/wallet-adapter-base": "^0.9.23",
-    "@solana/wallet-adapter-react": "^0.15.32",
-    "@solana/wallet-adapter-wallets": "^0.19.20",
-    "immer": "^10.0.2",
-    "react-singleton-hook": "^4.0.1",
-    "react-use": "^17.4.0",
-    "use-immer": "^0.9.0",
-    "zustand": "^4.3.8"
-  }
+	"name": "@drift-labs/react",
+	"version": "1.0.0",
+	"description": "Common building blocks for connecting to the Drift program from React",
+	"main": "lib/index.js",
+	"repository": "https://github.com/drift-labs/drift-common",
+	"author": "Drift Labs",
+	"license": "MIT",
+	"scripts": {
+		"lint": "eslint './**/*.{ts,tsx}' --quiet",
+		"build": "yarn clean && tsc",
+		"clean": "rm -rf lib"
+	},
+	"directories": {
+		"lib": "lib"
+	},
+	"devDependencies": {
+		"@solana/spl-token": "^0.3.8",
+		"@solana/web3.js": "^1.77.3",
+		"@types/react": "18.2.21",
+		"encoding": "^0.1.13",
+		"eslint": "^8.43.0",
+		"lokijs": "^1.5.12",
+		"pino-pretty": "^10.2.3",
+		"react": "18.2.0",
+		"react-dom": "18.2.0",
+		"typescript": "^5.1.6"
+	},
+	"peerDependencies": {
+		"@drift-labs/sdk": "^2.32.1-beta.12",
+		"@solana/spl-token": "^0.3.8",
+		"@solana/web3.js": "^1.77.3",
+		"react": "18.2.0",
+		"react-dom": "18.2.0"
+	},
+	"dependencies": {
+		"@drift/common": "file:../common-ts",
+		"@solana/wallet-adapter-base": "0.9.23",
+		"@solana/wallet-adapter-react": "0.15.35",
+		"@solana/wallet-adapter-wallets": "0.19.30",
+		"immer": "^10.0.2",
+		"react-singleton-hook": "^4.0.1",
+		"react-use": "^17.4.0",
+		"use-immer": "^0.9.0",
+		"zustand": "^4.3.8"
+	}
 }
