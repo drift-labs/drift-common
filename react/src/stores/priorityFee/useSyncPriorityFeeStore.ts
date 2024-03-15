@@ -1,79 +1,20 @@
 import {
-	PriorityFeeStrategy,
-	SolanaPriorityFeeResponse,
-} from '@drift-labs/sdk';
+	PriorityFeeCalculator,
+	PriorityFeeStrategyFactory,
+	SANITY_CHECK_ABS_MAX_FEE_IN_SOL,
+} from '@drift/common';
+import { useCallback, useEffect, useRef } from 'react';
 import {
 	BOOSTED_MULITPLIER,
 	FEE_SUBSCRIPTION_SLOT_LOOKBACK,
 	PRIORITY_FEE_SUBSCRIPTION_ADDRESS_STRINGS,
 	TURBO_MULTIPLIER,
 } from '../../constants/priorityFees';
-import { FeeType, usePriorityFeeStore } from './usePriorityFeeStore';
-import { useHeliusPriorityFees } from './useHeliusPriorityFees';
-import { usePriorityFeeSubscriber } from '../../hooks/priorityFees/usePriorityFeeSubscriber';
-import {
-	PriorityFeeCalculator,
-	SANITY_CHECK_ABS_MAX_FEE_IN_SOL,
-} from '@drift/common';
-import { useCallback, useEffect, useRef } from 'react';
-import { useImmediateInterval } from '../../hooks/useImmediateInterval';
 import { usePriorityFeesPollingRate } from '../../hooks/priorityFees/usePriorityFeesPollingRate';
-
-const RECENT_SAMPLES: number[][] = []; // array of slots, each slot is an array of priority fees
-let LAST_SEEN_SLOT_IN_SAMPLES = 0;
-
-/**
- * Custom priority fee strategy that calculates the priority fee based on the recent samples.
- * New samples are provided to the calculate function, and the strategy uses the given percentile of
- * the the last 10 batches of recent samples as a benchmark for the priority fee to be used.
- */
-const createPercentilePriorityFeeStrategy = (
-	targetPercentile: number
-): PriorityFeeStrategy => {
-	const percentilePriorityFeeStrategy: PriorityFeeStrategy = {
-		calculate(newSamples: SolanaPriorityFeeResponse[]) {
-			if (!newSamples?.length) return 0;
-
-			const filteredSamples = newSamples.filter(
-				(sample) => sample.slot > LAST_SEEN_SLOT_IN_SAMPLES
-			);
-
-			RECENT_SAMPLES.unshift(newSamples.map((s) => s.prioritizationFee));
-			RECENT_SAMPLES.splice(FEE_SUBSCRIPTION_SLOT_LOOKBACK);
-
-			const allRecentSamplesAscendingSorted = RECENT_SAMPLES.flat().sort(
-				(a, b) => {
-					return a - b;
-				}
-			);
-
-			const targetPercentileIndex = Math.min(
-				allRecentSamplesAscendingSorted.length - 1,
-				Math.ceil(
-					(allRecentSamplesAscendingSorted.length / 100) * targetPercentile
-				)
-			);
-
-			const shouldSplitWithBelow =
-				targetPercentile < 100 &&
-				targetPercentileIndex >= allRecentSamplesAscendingSorted.length - 1; // If the number of samples being returned are sufficiently small then in practise the target percentile is just selecting the MAX priority fee every time. For some safety, average top two instead when we get this case.
-
-			const pFee = shouldSplitWithBelow
-				? (allRecentSamplesAscendingSorted[targetPercentileIndex] +
-						allRecentSamplesAscendingSorted[targetPercentileIndex - 1]) /
-				  2
-				: allRecentSamplesAscendingSorted[targetPercentileIndex];
-
-			LAST_SEEN_SLOT_IN_SAMPLES = Math.max(
-				...filteredSamples.map((sample) => sample.slot)
-			);
-
-			return pFee;
-		},
-	};
-
-	return percentilePriorityFeeStrategy;
-};
+import { useImmediateInterval } from '../../hooks/useImmediateInterval';
+import { useHeliusPriorityFees } from './useHeliusPriorityFees';
+import { FeeType, usePriorityFeeStore } from './usePriorityFeeStore';
+import { usePriorityFeeSubscriber } from '../../hooks/priorityFees/usePriorityFeeSubscriber';
 
 export const useSyncPriorityFeeStore = ({
 	heliusRpcUrl,
@@ -91,7 +32,10 @@ export const useSyncPriorityFeeStore = ({
 	userCustomPriorityFee: number | null;
 }) => {
 	const percentilePriorityFeeStrategy =
-		createPercentilePriorityFeeStrategy(targetFeePercentile);
+		PriorityFeeStrategyFactory.movingWindowTargetPercentileStrategy(
+			targetFeePercentile,
+			FEE_SUBSCRIPTION_SLOT_LOOKBACK
+		);
 
 	const pollingFrequencyMs = usePriorityFeesPollingRate();
 	const setPriorityFeeStore = usePriorityFeeStore((s) => s.set);
