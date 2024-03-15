@@ -19,7 +19,7 @@ export * from './constants';
 export * from './actions/actionHelpers/actionHelpers';
 export * from './utils/SharedInterval';
 export * from './utils/Stopwatch';
-export * from './utils/priority-fees/PriorityFeeCalculator';
+export * from './utils/priority-fees';
 export * from './common-ui-utils/settings/settings';
 
 // External Program Errors

@@ -44,7 +44,9 @@ const DriftProviderInner = (props: PropsWithChildren<any>) => {
 	return <>{props.children}</>;
 };
 
-const DriftProvider = (props: AppSetupProps & { children: React.ReactNode }) => {
+const DriftProvider = (
+	props: AppSetupProps & { children: React.ReactNode }
+) => {
 	return (
 		<>
 			<DriftWalletProvider
