@@ -37,6 +37,7 @@ export const useSyncOraclePriceStore = (
 	const [pyth1MClient, setPyth1MClient] = useState<OracleClient>();
 	const [pythStableCoin, setPythStableCoin] = useState<OracleClient>();
 	const [switchboardClient, setSwitchboardClient] = useState<OracleClient>();
+	const [preLaunchClient, setPreLaunchClient] = useState<OracleClient>();
 
 	// Keep a local price store state so that the app isn't re-rendering non-stop for every price change
 	const [localPriceStoreState, setLocalPriceStoreState] = useImmer<
@@ -50,7 +51,8 @@ export const useSyncOraclePriceStore = (
 		!!pyth1KClient &&
 		!!pyth1MClient &&
 		!!pythStableCoin &&
-		!!switchboardClient;
+		!!switchboardClient &&
+		!!preLaunchClient;
 
 	const getMatchingOracleClient = useCallback(
 		(oracleSource: OracleSource) => {
@@ -68,6 +70,8 @@ export const useSyncOraclePriceStore = (
 					return pythStableCoin;
 				case OracleSource.SWITCHBOARD:
 					return switchboardClient;
+				case OracleSource.Prelaunch:
+					return preLaunchClient;
 				default:
 					throw new Error(`Unaccounted for oracle type in useSyncOraclePriceStore ${JSON.stringify(
 						oracleSource
@@ -104,6 +108,9 @@ export const useSyncOraclePriceStore = (
 		);
 		setSwitchboardClient(
 			getOracleClient(OracleSource.SWITCHBOARD, connection, driftClient.program)
+		);
+		setPreLaunchClient(
+			getOracleClient(OracleSource.Prelaunch, connection, driftClient.program)
 		);
 	}, [connection, driftClient]);
 
