@@ -52,8 +52,8 @@ export interface CommonDriftStore {
 		driftEnv: DriftEnv;
 		historyServerUrl: string;
 		basePollingRateMs: number;
+		priorityFeePollingMultiplier: number;
 		rpcOverride: string | undefined;
-		// nextEnv?: string;
 		isDev?: boolean;
 	};
 	sdkConfig: ReturnType<typeof initialize> | undefined;
@@ -62,9 +62,11 @@ export interface CommonDriftStore {
 		updateSignaler: any;
 		isSubscribed: boolean;
 	};
+	checkIsDriftClientReady: () => boolean;
 	subscribedToSubaccounts: boolean | undefined;
 	isGeoBlocked: boolean;
 	emulationMode: boolean;
+	pollingMultiplier: number;
 	bulkAccountLoader: BulkAccountLoader | undefined;
 	userAccounts: UserAccount[];
 	userAccountNotInitialized: boolean | undefined;
@@ -80,7 +82,6 @@ const defaultState = {
 	currentlyConnectedWalletContext: null,
 	currentSolBalance: DEFAULT_SOL_BALANCE,
 	connection: undefined,
-	// env
 	sdkConfig: undefined,
 	driftClient: {
 		client: undefined,
@@ -90,6 +91,7 @@ const defaultState = {
 	subscribedToSubaccounts: undefined,
 	isGeoBlocked: false,
 	emulationMode: false,
+	pollingMultiplier: 1,
 	bulkAccountLoader: undefined,
 	userAccounts: [],
 	userAccountNotInitialized: undefined,
@@ -102,7 +104,7 @@ const initializeDriftStore = (Env: {
 	historyServerUrl: string;
 	basePollingRateMs: number;
 	rpcOverride: string | undefined;
-	// nextEnv?: string;
+	priorityFeePollingMultiplier: number;
 	isDev?: boolean;
 }) => {
 	if (!useCommonDriftStore) {
@@ -117,6 +119,14 @@ const initializeDriftStore = (Env: {
 				env: Env,
 				set: setProducerFn,
 				get: () => get(),
+				checkIsDriftClientReady: () => {
+					const driftClient = get().driftClient;
+					return (
+						!!driftClient.client &&
+						driftClient.client.isSubscribed &&
+						driftClient.isSubscribed
+					);
+				},
 				clearUserData: () => {
 					setProducerFn((s) => {
 						s.authority = undefined;

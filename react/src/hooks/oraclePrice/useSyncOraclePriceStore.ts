@@ -69,9 +69,14 @@ export const useSyncOraclePriceStore = (
 				case OracleSource.SWITCHBOARD:
 					return switchboardClient;
 				default:
-					throw `Unaccounted for oracle type in useSyncOraclePriceStore ${JSON.stringify(
+					throw new Error(`Unaccounted for oracle type in useSyncOraclePriceStore ${JSON.stringify(
 						oracleSource
-					)}`;
+					)}. Available clients: 
+					pythClient: ${JSON.stringify(pythClient)},
+					pyth1KClient: ${JSON.stringify(pyth1KClient)},
+					pyth1MClient: ${JSON.stringify(pyth1MClient)},
+					pythStableCoin: ${JSON.stringify(pythStableCoin)},
+					switchboardClient: ${JSON.stringify(switchboardClient)}`);
 			}
 		},
 		[areOracleClientsReady]
