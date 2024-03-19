@@ -236,7 +236,7 @@
 			"name": "InvalidOracle",
 			"msg": "InvalidOracle",
 			"toast": {
-				"message": "Oracle Information deemed Invalid for Action. Please try again in a few minutes",
+				"message": "Oracle price information is delayed or stale. Please try again in a few minutes",
 				"description": ""
 			}
 		},
@@ -517,7 +517,7 @@
 		"AMMNotUpdatedInSameSlot": {
 			"code": 6096,
 			"name": "AMMNotUpdatedInSameSlot",
-			"msg": "AMMNotUpdatedInSameSlot"
+			"msg": "Oracle price information is delayed or the market is experiencing high volatility. Please try again in a few minutes."
 		},
 		"AuctionNotComplete": {
 			"code": 6097,
