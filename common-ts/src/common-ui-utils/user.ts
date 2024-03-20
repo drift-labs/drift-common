@@ -175,7 +175,8 @@ const getOpenPositionData = (
 					position.marketIndex,
 					undefined,
 					undefined,
-					'Initial'
+					'Initial',
+					true
 				),
 			};
 		});
