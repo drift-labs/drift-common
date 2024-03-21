@@ -16,6 +16,11 @@ export class MarketId {
 		return new MarketId(marketIndex, MarketType.SPOT);
 	}
 
+	static getMarketIdFromKey(key: MarketKey) {
+		const [marketType, marketIndex] = key.split('_');
+		return new MarketId(parseInt(marketIndex), ENUM_UTILS.toObj(marketType));
+	}
+
 	get isSpot() {
 		return ENUM_UTILS.match(this.marketType, MarketType.SPOT);
 	}
