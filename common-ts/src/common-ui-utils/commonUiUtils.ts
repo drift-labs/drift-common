@@ -46,6 +46,12 @@ export const EMPTY_AUCTION_PARAMS: AuctionParams = {
 	auctionDuration: null,
 };
 
+const abbreviateAddress = (address: string | PublicKey, length = 4) => {
+	if (!address) return '';
+	const authString = address.toString();
+	return `${authString.slice(0, length)}...${authString.slice(-length)}`;
+};
+
 /**
  * Get a unique key for an authority's subaccount
  * @param userId
@@ -786,6 +792,7 @@ const trimTrailingZeros = (str: string, zerosToShow = 1) => {
 // --- Export The Utils
 
 export const COMMON_UI_UTILS = {
+	abbreviateAddress,
 	calculateAverageEntryPrice,
 	chunks,
 	compareSignatures,
