@@ -18,6 +18,9 @@ import { OrderType } from '@drift-labs/sdk';
 export * from './MarketId';
 export * from './UIMarket';
 
+// Opaque type pattern
+export type Opaque<K, T> = T & { __TYPE__: K };
+
 // TODO-v2 cleanup these types - most of them should have moved into serializableTypes
 // # UI ↔ History Server Data Types
 
@@ -134,11 +137,8 @@ export type UserSnapshotRecord = {
 	user: PublicKey;
 	epochTs: number;
 	ts: number;
-	spotQuoteValue: BN;
-	prevEpochWithdrawalQuoteVal: BN;
-	prevEpochDepositQuoteVal: BN;
 	perpPositionUpnl: BN;
-	prevEpochSettledPnl: BN;
+
 	totalAccountValue: BN;
 	cumulativeDepositQuoteValue: BN;
 	cumulativeWithdrawalQuoteValue: BN;
@@ -146,8 +146,6 @@ export type UserSnapshotRecord = {
 	cumulativeReferralReward: BN;
 	cumulativeReferralVolume: BN;
 	cumulativeReferralCount: number;
-	perpPositionSnapshots: UserPerpPositionSnapshot[];
-	spotPositionSnapshots: UserSpotPositionSnapshot[];
 };
 
 export type PnlSnapshotOrderOption = keyof Pick<
@@ -234,6 +232,9 @@ export type OpenPosition = {
 	costBasis: BN;
 	realizedPnl: BN;
 	lpShares: BN;
+	pnlIsClaimable: boolean;
+	remainderBaseAmount?: number; // LP only
+	lpDeriskPrice?: BN; //LP only
 };
 
 export type UIOrderType =

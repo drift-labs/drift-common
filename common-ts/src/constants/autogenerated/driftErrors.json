@@ -140,7 +140,7 @@
 			"msg": "Price Bands Breached",
 			"toast": {
 				"message": "Market Specific Price Bands Breached",
-				"description": "https://docs.drift.trade/protocol-guard-rails#tDZav"
+				"description": "https://docs.drift.trade/risk-and-safety/protocol-guard-rails"
 			}
 		},
 		"ExchangePaused": {
@@ -236,7 +236,7 @@
 			"name": "InvalidOracle",
 			"msg": "InvalidOracle",
 			"toast": {
-				"message": "Oracle Information deemed Invalid for Action",
+				"message": "Oracle Information deemed Invalid for Action. Please try again in a few minutes",
 				"description": ""
 			}
 		},
@@ -322,7 +322,7 @@
 			"name": "OrderAmountTooSmall",
 			"msg": "Order Amount Too Small",
 			"toast": {
-				"nessage": "Order amount too small",
+				"message": "Order amount too small",
 				"description": ""
 			}
 		},
@@ -1493,8 +1493,13 @@
 			"toast": {
 				"message": "Not enough SOL",
 				"description": "The transaction failed because your wallet did not have enough SOL to cover the user initialization fee. You can learn more about account creation fees in the Drift Docs.",
-				"url": "https://docs.drift.trade/creating-a-subaccount"
+				"url": "https://docs.drift.trade/getting-started/managing-subaccount"
 			}
+		},
+		"CantReclaimRent": {
+			"code": 6257,
+			"name": "CantReclaimRent",
+			"msg": "CantReclaimRent"
 		}
 	},
 	"errorCodesMap": {
@@ -1754,6 +1759,7 @@
 		"6253": "CantUpdatePerpBidAskTwap",
 		"6254": "UserReduceOnly",
 		"6255": "InvalidMarginCalculation",
-		"6256": "CantPayUserInitFee"
+		"6256": "CantPayUserInitFee",
+		"6257": "CantReclaimRent"
 	}
 }

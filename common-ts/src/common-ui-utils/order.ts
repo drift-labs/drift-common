@@ -80,7 +80,9 @@ const getLimitPriceFromOracleOffset = (
 	if (
 		(order.price && !order.price.eqZero()) ||
 		!order.oraclePriceOffset ||
-		order.oraclePriceOffset.eqZero()
+		order.oraclePriceOffset.eqZero() ||
+		!oraclePrice ||
+		oraclePrice?.eqZero()
 	) {
 		return order.price;
 	}

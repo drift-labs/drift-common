@@ -38,7 +38,7 @@ const useInitializeConnection = (
 
 	useEffect(() => {
 		initConnection();
-	}, [currentRpc, Env.driftEnv, Env.rpcOverride]);
+	}, [currentRpc.value, Env.driftEnv, Env.rpcOverride]);
 };
 
 export default useInitializeConnection;

@@ -5,11 +5,7 @@ import { useCommonDriftStore } from '../stores';
  */
 export const useDriftClientIsReady = () => {
 	const driftClientIsReady = useCommonDriftStore((s) => {
-		return (
-			s.driftClient.client &&
-			s.driftClient.client.isSubscribed &&
-			s.driftClient.isSubscribed
-		);
+		return s.checkIsDriftClientReady();
 	});
 
 	return driftClientIsReady;

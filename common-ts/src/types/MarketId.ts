@@ -1,5 +1,9 @@
 import { MarketType } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../utils';
+import { Opaque } from '.';
+
+// Define MarketKey as an opaque type
+export type MarketKey = Opaque<'MarketKey', string>;
 
 export class MarketId {
 	constructor(readonly marketIndex: number, readonly marketType: MarketType) {}
@@ -10,6 +14,11 @@ export class MarketId {
 
 	static createSpotMarket(marketIndex: number) {
 		return new MarketId(marketIndex, MarketType.SPOT);
+	}
+
+	static getMarketIdFromKey(key: MarketKey) {
+		const [marketType, marketIndex] = key.split('_');
+		return new MarketId(parseInt(marketIndex), ENUM_UTILS.toObj(marketType));
 	}
 
 	get isSpot() {
@@ -28,7 +37,9 @@ export class MarketId {
 	 * Returns a unique string that can be used as a key in a map.
 	 */
 	get key() {
-		return `${ENUM_UTILS.toStr(this.marketType)}_${this.marketIndex}`;
+		return `${ENUM_UTILS.toStr(this.marketType)}_${
+			this.marketIndex
+		}` as MarketKey;
 	}
 
 	equals(other: MarketId) {

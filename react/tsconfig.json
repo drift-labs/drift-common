@@ -3,8 +3,8 @@
 		/* Visit https://aka.ms/tsconfig to read more about this file */
 
 		"jsx": "react",
-		"module": "ES6",
-		"target": "ES6",
+		"module": "ES2022",
+		"target": "ES2022",
 		"moduleResolution": "node",
 		"sourceMap": true,
 		"outDir": "lib",

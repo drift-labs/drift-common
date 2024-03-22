@@ -27,6 +27,7 @@ export const useSyncOraclePriceStore = (
 	marketsAndAccounts: MarketAndAccount[],
 	refreshTimeMs = 1000
 ) => {
+	const driftClient = useCommonDriftStore((s) => s.driftClient.client);
 	const connection = useCommonDriftStore((s) => s.connection);
 	const bulkAccountLoader = useCommonDriftStore((s) => s.bulkAccountLoader);
 	const setOraclePriceStore = useOraclePriceStore((s) => s.set);
@@ -35,6 +36,8 @@ export const useSyncOraclePriceStore = (
 	const [pyth1KClient, setPyth1KClient] = useState<OracleClient>();
 	const [pyth1MClient, setPyth1MClient] = useState<OracleClient>();
 	const [pythStableCoin, setPythStableCoin] = useState<OracleClient>();
+	const [switchboardClient, setSwitchboardClient] = useState<OracleClient>();
+	const [preLaunchClient, setPreLaunchClient] = useState<OracleClient>();
 
 	// Keep a local price store state so that the app isn't re-rendering non-stop for every price change
 	const [localPriceStoreState, setLocalPriceStoreState] = useImmer<
@@ -43,12 +46,18 @@ export const useSyncOraclePriceStore = (
 
 	const bulkLoaderCallbacks = useRef<[string, PublicKey][]>([]);
 
-	const arePythClientsReady =
-		!!pythClient && !!pyth1KClient && !!pyth1MClient && !!pythStableCoin;
+	const areOracleClientsReady =
+		!!pythClient &&
+		!!pyth1KClient &&
+		!!pyth1MClient &&
+		!!pythStableCoin &&
+		!!switchboardClient &&
+		!!preLaunchClient;
 
 	const getMatchingOracleClient = useCallback(
 		(oracleSource: OracleSource) => {
-			if (!arePythClientsReady) throw new Error('Pyth clients are not ready');
+			if (!areOracleClientsReady)
+				throw new Error('Oracle clients are not ready');
 
 			switch (oracleSource) {
 				case OracleSource.PYTH:
@@ -59,28 +68,56 @@ export const useSyncOraclePriceStore = (
 					return pyth1MClient;
 				case OracleSource.PYTH_STABLE_COIN:
 					return pythStableCoin;
+				case OracleSource.SWITCHBOARD:
+					return switchboardClient;
+				case OracleSource.Prelaunch:
+					return preLaunchClient;
 				default:
-					throw 'Unaccounted for oracle type in useSyncOraclePriceStore';
+					throw new Error(`Unaccounted for oracle type in useSyncOraclePriceStore ${JSON.stringify(
+						oracleSource
+					)}. Available clients: 
+					pythClient: ${JSON.stringify(pythClient)},
+					pyth1KClient: ${JSON.stringify(pyth1KClient)},
+					pyth1MClient: ${JSON.stringify(pyth1MClient)},
+					pythStableCoin: ${JSON.stringify(pythStableCoin)},
+					switchboardClient: ${JSON.stringify(switchboardClient)}`);
 			}
 		},
-		[arePythClientsReady]
+		[areOracleClientsReady]
 	);
 
 	useEffect(() => {
 		if (!connection) return;
+		if (!driftClient) return;
 
-		setPythClient(getOracleClient(OracleSource.PYTH, connection));
-		setPyth1KClient(getOracleClient(OracleSource.PYTH_1K, connection));
-		setPyth1MClient(getOracleClient(OracleSource.PYTH_1M, connection));
-		setPythStableCoin(
-			getOracleClient(OracleSource.PYTH_STABLE_COIN, connection)
+		setPythClient(
+			getOracleClient(OracleSource.PYTH, connection, driftClient.program)
 		);
-	}, [connection]);
+		setPyth1KClient(
+			getOracleClient(OracleSource.PYTH_1K, connection, driftClient.program)
+		);
+		setPyth1MClient(
+			getOracleClient(OracleSource.PYTH_1M, connection, driftClient.program)
+		);
+		setPythStableCoin(
+			getOracleClient(
+				OracleSource.PYTH_STABLE_COIN,
+				connection,
+				driftClient.program
+			)
+		);
+		setSwitchboardClient(
+			getOracleClient(OracleSource.SWITCHBOARD, connection, driftClient.program)
+		);
+		setPreLaunchClient(
+			getOracleClient(OracleSource.Prelaunch, connection, driftClient.program)
+		);
+	}, [connection, driftClient]);
 
 	useEffect(() => {
 		if (!connection) return;
 		if (!bulkAccountLoader) return;
-		if (!arePythClientsReady) return;
+		if (!areOracleClientsReady) return;
 
 		fetchAndSetPrices(bulkAccountLoader, marketsAndAccounts);
 
@@ -96,7 +133,7 @@ export const useSyncOraclePriceStore = (
 		return cleanup;
 	}, [
 		connection,
-		arePythClientsReady,
+		areOracleClientsReady,
 		bulkAccountLoader,
 		getMatchingOracleClient,
 	]);
