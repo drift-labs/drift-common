@@ -1318,7 +1318,7 @@ export class SerializableDlobOracleInfo {
 	@autoserializeAs(Boolean) hasSufficientNumberOfDataPoints: boolean;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) twap: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) twapConfidence: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) maxPrice: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) maxPrice?: BN;
 }
 
 export class SerializableDLOBState {
