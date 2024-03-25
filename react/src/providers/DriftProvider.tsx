@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import useIdlePollingRateSwitcher from '../hooks/useIdlePollingRateSwitcher';
 import useInitializeConnection from '../hooks/useInitializeConnection';
 import { useSolBalance } from '../hooks/useSolBalance';
@@ -8,8 +8,14 @@ import { useCommonDriftStore } from '../stores';
 import DriftWalletProvider from './DriftWalletProvider';
 import { DRIFT_WALLET_PROVIDERS } from '../constants/wallets';
 import { DriftClientConfig } from '@drift-labs/sdk';
+import { Breakpoints, useSyncScreenSize } from '../stores/useScreenSizeStore';
 
 export interface AppSetupProps {
+	priorityFeePollingMultiplier: number;
+}
+
+type DriftAppHooksProps = {
+	children: React.ReactNode;
 	disable?: {
 		idlePollingRateSwitcher?: boolean;
 		emulation?: boolean;
@@ -18,13 +24,20 @@ export interface AppSetupProps {
 	geoBlocking?: {
 		callback?: () => void;
 	};
-	autoconnectionDelay?: number;
-	disableAutoconnect?: boolean;
-	additionalDriftClientConfig?: Partial<DriftClientConfig>;
-	priorityFeePollingMultiplier: number;
-}
 
-const DriftProviderInner = (props: PropsWithChildren<any>) => {
+	// instead of making this optional and setting a default, we force the user to provide the breakpoints,
+	// although they can still import DEFAULT_BREAKPOINTS. this ensures that the user is aware of
+	// the breakpoints they are using
+	breakpoints: Breakpoints;
+	additionalDriftClientConfig?: Partial<DriftClientConfig>;
+};
+
+export type DriftProviderProps = {
+	disableAutoconnect?: boolean;
+	autoconnectionDelay?: number;
+} & DriftAppHooksProps;
+
+const DriftProviderInner = (props: DriftAppHooksProps) => {
 	const get = useCommonDriftStore((s) => s.get);
 
 	useEffect(() => {
@@ -38,6 +51,7 @@ const DriftProviderInner = (props: PropsWithChildren<any>) => {
 
 	useInitializeConnection(props?.additionalDriftClientConfig);
 	useSolBalance();
+	useSyncScreenSize(props.breakpoints);
 
 	// not sure why this doesn't work in drift provider, but works in app setup
 	// useSyncWalletToStore(props?.syncWalletToStore?.clearDataFromStore);
@@ -45,7 +59,7 @@ const DriftProviderInner = (props: PropsWithChildren<any>) => {
 };
 
 const DriftProvider = (
-	props: AppSetupProps & { children: React.ReactNode }
+	props: DriftProviderProps & { children: React.ReactNode }
 ) => {
 	return (
 		<>
@@ -55,7 +69,14 @@ const DriftProvider = (
 				autoconnectionDelay={props.autoconnectionDelay}
 			>
 				{/* Need to put this _INSIDE_ the wallet provider, otherwise, every loop where a hook inside wallet provider was keeping the wallet state in sync, the outer DriftProvider was running causing an infinite loop */}
-				<DriftProviderInner>{props.children}</DriftProviderInner>
+				<DriftProviderInner
+					disable={props.disable}
+					geoBlocking={props.geoBlocking}
+					breakpoints={props.breakpoints}
+					additionalDriftClientConfig={props.additionalDriftClientConfig}
+				>
+					{props.children}
+				</DriftProviderInner>
 			</DriftWalletProvider>
 		</>
 	);
