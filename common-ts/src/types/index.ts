@@ -300,7 +300,7 @@ export type DriftUiNotificationData = {
 	};
 	customIcon?: any;
 	customIconSizeOverride?: number; // current max width is 26px, set this prop to override,
-	offerIgnoreToast?: string;
+	offerIgnoreToast?: keyof ToastsToIgnoreSettings;
 };
 
 export type DriftUiNewNotificationProps = Omit<
@@ -314,4 +314,9 @@ export type DriftUiNewNotificationProps = Omit<
 	showUntilCancelled?: boolean;
 	onlyShowIfPreviousTarget?: boolean;
 	bottomContent?: any;
+};
+
+export type ToastsToIgnoreSettings = {
+	sweepstakes: boolean;
+	walletVersionedTxCompatibility: boolean;
 };

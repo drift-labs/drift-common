@@ -50,6 +50,21 @@ type TransactionHandlerOpts = {
 	isDev?: boolean;
 };
 
+export const tryGetDriftErrorCode = (error: AnchorError) => {
+	let errorCode = error.code;
+
+	if (!errorCode && error?.message) {
+		const matches = error.message.match(/custom program error: (0x[0-9a-f]+)/);
+		if (matches && matches[1]) {
+			errorCode = parseInt(matches[1], 16);
+		}
+	}
+
+	const errorName = DriftErrors.errorCodesMap[`${errorCode}`];
+	const mappedError: PrettyError = DriftErrors.errorsList[errorName];
+	return mappedError;
+};
+
 export class TransactionErrorHandler {
 	showErrorLogs: boolean;
 	notifyCallback?: (props: DriftUiNewNotificationProps) => void;
@@ -266,19 +281,7 @@ export class TransactionErrorHandler {
 			// # Check for Drift Error
 			// -----------------------------------------------------------------------------------------------------------------------------
 			(() => {
-				let errorCode = error.code;
-
-				if (!errorCode && error?.message) {
-					const matches = error.message.match(
-						/custom program error: (0x[0-9a-f]+)/
-					);
-					if (matches && matches[1]) {
-						errorCode = parseInt(matches[1], 16);
-					}
-				}
-
-				const errorName = DriftErrors.errorCodesMap[`${errorCode}`];
-				const mappedError: PrettyError = DriftErrors.errorsList[errorName];
+				const mappedError = tryGetDriftErrorCode(error);
 
 				if (mappedError) {
 					if (mappedError.toast) {
@@ -335,6 +338,29 @@ export class TransactionErrorHandler {
 				});
 
 				ERROR_HANDLED.set(true);
+			})();
+
+			if (ERROR_HANDLED.get()) return;
+			// # Check for Unhandled Jupiter Error
+			// -----------------------------------------------------------------------------------------------------------------------------
+			(() => {
+				if (
+					!!error?.message?.match(/error from Jupiter/) ||
+					!!error?.message?.match(/AMM was not found/)
+				) {
+					this.notifyCallback({
+						type: 'error',
+						message: 'An error with Jupiter occurred',
+						description: 'Please try again.',
+						id: toastId,
+						updatePrevious: true,
+						subDescription: undefined,
+					});
+
+					ERROR_HANDLED.set(true);
+
+					return;
+				}
 			})();
 
 			if (ERROR_HANDLED.get()) return;
