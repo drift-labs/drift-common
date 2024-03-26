@@ -175,6 +175,12 @@ export const useSyncOraclePriceStore = (
 									oraclePriceData.twapConfidence,
 									PRICE_PRECISION_EXP
 								).toNum(),
+								maxPrice: oraclePriceData.maxPrice
+									? BigNum.from(
+											oraclePriceData.maxPrice,
+											PRICE_PRECISION_EXP
+									  ).toNum()
+									: undefined,
 							},
 							rawPriceData: oraclePriceData,
 						};

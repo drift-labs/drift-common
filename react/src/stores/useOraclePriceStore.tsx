@@ -10,6 +10,7 @@ export type FormattedOraclePriceData = {
 	confidence: number;
 	twap?: number;
 	twapConfidence?: number;
+	maxPrice?: number;
 };
 
 export type OraclePriceInfo = {
