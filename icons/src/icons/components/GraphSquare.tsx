@@ -8,27 +8,22 @@ const GraphSquare = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
 					<path
-						d="M11.717 6.987a.5.5 0 00-.768-.64L9.751 7.784c-.246.297-.399.477-.524.59a.51.51 0 01-.108.081l-.008.004-.007-.004a.511.511 0 01-.11-.081c-.124-.113-.276-.293-.523-.59l-.195-.233c-.22-.264-.417-.5-.6-.667-.201-.181-.454-.343-.787-.343-.334 0-.586.162-.787.343-.184.167-.381.403-.6.667l-1.22 1.462a.5.5 0 10.769.64l1.198-1.437c.246-.297.399-.477.524-.59a.51.51 0 01.108-.081l.008-.004.007.004c.04.022.077.05.11.081.124.113.276.293.523.59l.195.233c.22.264.417.5.6.667.201.181.454.343.787.343.334 0 .586-.162.787-.343.184-.167.381-.403.6-.667l1.22-1.462z"
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M18 5.5H6a.5.5 0 00-.5.5v12a.5.5 0 00.5.5h12a.5.5 0 00.5-.5V6a.5.5 0 00-.5-.5zM6 4a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H6z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
-					<mask id="prefix__a" fill="#fff">
-						<rect x={2} y={2} width={12} height={12} rx={1} />
-					</mask>
-					<rect
-						x={2}
-						y={2}
-						width={12}
-						height={12}
-						rx={1}
-						stroke={allProps.color ? allProps.color : 'currentColor'}
-						strokeWidth={2.4}
-						mask="url(#prefix__a)"
+					<path
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M16.398 9.364a.75.75 0 01.238 1.034l-2.655 4.24a1.25 1.25 0 01-2.18-.11l-1.391-2.815-1.734 3.612a.75.75 0 01-1.352-.65l1.956-4.074c.45-.94 1.786-.947 2.247-.013l1.42 2.875 2.417-3.861a.75.75 0 011.034-.238z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
 			}

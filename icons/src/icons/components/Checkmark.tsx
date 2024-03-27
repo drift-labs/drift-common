@@ -8,17 +8,16 @@ const Checkmark = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
 					<path
-						d="M12.444 4.667l-6.11 6.11L3.555 8"
-						stroke={allProps.color ? allProps.color : 'currentColor'}
-						strokeWidth={1.5}
-						strokeLinecap="round"
-						strokeLinejoin="round"
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M20.618 5.346a.9.9 0 01.036 1.272l-10.875 11.5a.9.9 0 01-1.343-.039l-4.625-5.5a.9.9 0 111.378-1.158l3.975 4.727L19.346 5.382a.9.9 0 011.272-.036z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
 			}

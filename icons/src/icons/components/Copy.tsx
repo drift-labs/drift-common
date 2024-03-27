@@ -8,7 +8,7 @@ const Copy = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
@@ -16,17 +16,8 @@ const Copy = (allProps: IconProps) => {
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
-						d="M3.333 3.2h7.334c.073 0 .133.06.133.133v1.334H12V3.333C12 2.597 11.403 2 10.667 2H3.333C2.597 2 2 2.597 2 3.333v7.334C2 11.403 2.597 12 3.333 12h1.334v-1.2H3.333a.133.133 0 01-.133-.133V3.333c0-.073.06-.133.133-.133z"
+						d="M5.6 4.75a.855.855 0 00-.85.85v8c0 .466.384.85.85.85h.59a.75.75 0 010 1.5H5.6a2.355 2.355 0 01-2.35-2.35v-8A2.355 2.355 0 015.6 3.25h8a2.355 2.355 0 012.35 2.35v.643a.75.75 0 01-1.5 0V5.6a.855.855 0 00-.85-.85h-8zm4.8 4.8a.85.85 0 00-.85.85v8c0 .47.38.85.85.85h8c.47 0 .85-.38.85-.85v-8a.85.85 0 00-.85-.85h-8zm-2.35.85a2.35 2.35 0 012.35-2.35h8a2.35 2.35 0 012.35 2.35v8a2.35 2.35 0 01-2.35 2.35h-8a2.35 2.35 0 01-2.35-2.35v-8z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
-					/>
-					<rect
-						x={5.267}
-						y={5.267}
-						width={8.133}
-						height={8.133}
-						rx={0.644}
-						stroke={allProps.color ? allProps.color : 'currentColor'}
-						strokeWidth={1.2}
 					/>
 				</svg>
 			}

@@ -2,21 +2,22 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const RecentTrades = (allProps: IconProps) => {
+const WarningFilled = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
 					<path
-						d="M2 8h12M2 8v3m0-3V5m12 3v3m0-3V5M2 11v2.6a.4.4 0 00.4.4h11.2a.4.4 0 00.4-.4V11M2 11h12M2 5V2.4a.4.4 0 01.4-.4h11.2a.4.4 0 01.4.4V5M2 5h12"
-						stroke={allProps.color ? allProps.color : 'currentColor'}
-						strokeWidth={1.2}
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10zm-10-.75a.75.75 0 01.75.75v4a.75.75 0 01-1.5 0v-4a.75.75 0 01.75-.75zM12 9a1 1 0 100-2 1 1 0 000 2z"
+						fill="#F2C94C"
 					/>
 				</svg>
 			}
@@ -24,4 +25,4 @@ const RecentTrades = (allProps: IconProps) => {
 		/>
 	);
 };
-export default RecentTrades;
+export default WarningFilled;

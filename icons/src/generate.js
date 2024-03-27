@@ -82,23 +82,27 @@ exporter
     canvas: FIGMA_CANVAS
 })
     .then(function (svgsData) { return __awaiter(void 0, void 0, void 0, function () {
-    var downloadedSVGsData, _i, downloadedSVGsData_1, svg, manuallyAddedSvgs, svgFiles, allSVGs;
+    var filteredSvgs, downloadedSVGsData, _i, downloadedSVGsData_1, svg, manuallyAddedSvgs, svgFiles, allSVGs;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 // 3. Download SVG files from Figma
+                console.log(chalk_1["default"].blueBright("-> Fetched ".concat(svgsData.svgs.length, " SVGs")));
                 console.log(chalk_1["default"].blueBright('-> Downloading SVG code'));
-                return [4 /*yield*/, (0, utils_1.downloadSVGsData)(svgsData.svgs)];
+                filteredSvgs = svgsData.svgs.filter(function (svg) { return svg.name.includes('ic/'); });
+                console.log(chalk_1["default"].blueBright("-> Filtered ".concat(filteredSvgs.length, " SVGs")));
+                return [4 /*yield*/, (0, utils_1.downloadSVGsData)(filteredSvgs)];
             case 1:
                 downloadedSVGsData = _a.sent();
                 // Filter out any icons that aren't 16px to remove duplicates
                 downloadedSVGsData = downloadedSVGsData.filter(function (svg) {
-                    return svg.name.includes('16px');
+                    return svg.name.includes('ic/');
                 });
                 // Replace annoying stuff in icon names
                 for (_i = 0, downloadedSVGsData_1 = downloadedSVGsData; _i < downloadedSVGsData_1.length; _i++) {
                     svg = downloadedSVGsData_1[_i];
                     svg.name = svg.name
+                        .replace('ic/', '')
                         .replace('Icon', '')
                         .replace('16px', '')
                         .replace('Size', '')

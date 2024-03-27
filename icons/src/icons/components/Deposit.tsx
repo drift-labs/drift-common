@@ -8,17 +8,20 @@ const Deposit = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
 					<path
-						d="M8 10V2m0 8L5.333 7.333M8 10l2.667-2.667m-9.334 4l.414 1.657A1.333 1.333 0 003.041 14h9.918a1.333 1.333 0 001.294-1.01l.414-1.657"
-						stroke={allProps.color ? allProps.color : 'currentColor'}
-						strokeWidth={1.2}
-						strokeLinecap="round"
-						strokeLinejoin="round"
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M12.53 21.03a.75.75 0 01-1.06 0l-6-6a.75.75 0 111.06-1.06l4.72 4.72V7a.75.75 0 011.5 0v11.69l4.72-4.72a.75.75 0 111.06 1.06l-6 6z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
+					/>
+					<path
+						d="M13 4a1 1 0 11-2 0 1 1 0 012 0z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
 			}

@@ -2,13 +2,13 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const Collapse = (allProps: IconProps) => {
+const Play = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
@@ -16,7 +16,11 @@ const Collapse = (allProps: IconProps) => {
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
-						d="M5.12 4.419l2.5 2.045a.6.6 0 00.76 0l2.5-2.045a.6.6 0 10-.76-.929L8.6 4.734V1.5a.6.6 0 00-1.2 0v3.234L5.88 3.49a.6.6 0 00-.76.929zM3 7.9a.6.6 0 01.6-.6h8.8a.6.6 0 110 1.2H3.6a.6.6 0 01-.6-.6zm2.12 3.681l2.5-2.045a.6.6 0 01.76 0l2.5 2.045a.6.6 0 11-.76.929L8.6 11.266V14.5a.6.6 0 11-1.2 0v-3.234L5.88 12.51a.6.6 0 11-.76-.929z"
+						d="M12 3.75a8.25 8.25 0 100 16.5 8.25 8.25 0 000-16.5zM2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
+					/>
+					<path
+						d="M10 8.934a.5.5 0 01.777-.416l4.599 3.066a.5.5 0 010 .832l-4.599 3.066a.5.5 0 01-.777-.416V8.934z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
@@ -25,4 +29,4 @@ const Collapse = (allProps: IconProps) => {
 		/>
 	);
 };
-export default Collapse;
+export default Play;
