@@ -8,17 +8,20 @@ const Withdraw = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
 					<path
-						d="M8 2v8m0-8L5.333 4.667M8 2l2.667 2.667m-9.334 6.666l.414 1.657A1.333 1.333 0 003.041 14h9.918a1.333 1.333 0 001.294-1.01l.414-1.657"
-						stroke={allProps.color ? allProps.color : 'currentColor'}
-						strokeWidth={1.2}
-						strokeLinecap="round"
-						strokeLinejoin="round"
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M11.47 2.47a.75.75 0 011.06 0l6 6a.75.75 0 01-1.06 1.06l-4.72-4.72V16.5a.75.75 0 01-1.5 0V4.81L6.53 9.53a.75.75 0 01-1.06-1.06l6-6z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
+					/>
+					<path
+						d="M13 20a1 1 0 11-2 0 1 1 0 012 0z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
 			}

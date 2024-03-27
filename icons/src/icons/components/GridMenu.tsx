@@ -8,22 +8,15 @@ const GridMenu = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
-					<g clipPath="url(#prefix__clip0_32429_40601)">
-						<path
-							d="M6.364 5.272h3.272V2H6.364v3.272zM10.728 2v3.272H14V3a1 1 0 00-1-1h-2.272zM2 5.272h3.272V2H3a1 1 0 00-1 1v2.272zm4.364 4.364h3.272V6.364H6.364v3.272zm4.364 0H14V6.364h-3.272v3.272zM2 9.636h3.272V6.364H2v3.272zM6.364 14h3.272v-3.272H6.364V14zm4.364 0H13a1 1 0 001-1v-2.272h-3.272V14zM2 13a1 1 0 001 1h2.272v-3.272H2V13z"
-							fill={allProps.color ? allProps.color : 'currentColor'}
-						/>
-					</g>
-					<defs>
-						<clipPath id="prefix__clip0_32429_40601">
-							<path fill="#fff" transform="translate(2 2)" d="M0 0h12v12H0z" />
-						</clipPath>
-					</defs>
+					<path
+						d="M9.819 8.363h4.362V4H9.82v4.363zM15.637 4v4.363H20V5a1 1 0 00-1-1h-3.363zM4 8.363h4.363V4H5a1 1 0 00-1 1v3.363zm5.819 5.818h4.362V9.82H9.82v4.362zm5.818 0H20V9.82h-4.363v4.362zM4 14.181h4.363V9.82H4v4.362zM9.819 20h4.362v-4.363H9.82V20zm5.818 0H19a1 1 0 001-1v-3.363h-4.363V20zM4 19a1 1 0 001 1h3.363v-4.363H4V19z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
+					/>
 				</svg>
 			}
 			{...restProps}

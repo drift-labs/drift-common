@@ -40,18 +40,25 @@ exporter
 	})
 	.then(async (svgsData) => {
 		// 3. Download SVG files from Figma
+		console.log(chalk.blueBright(`-> Fetched ${svgsData.svgs.length} SVGs`));
 		console.log(chalk.blueBright('-> Downloading SVG code'));
 
-		let downloadedSVGsData = await downloadSVGsData(svgsData.svgs);
+		const filteredSvgs = svgsData.svgs.filter((svg) =>
+			svg.name.includes('ic/')
+		);
+		console.log(chalk.blueBright(`-> Filtered ${filteredSvgs.length} SVGs`));
+
+		let downloadedSVGsData = await downloadSVGsData(filteredSvgs);
 
 		// Filter out any icons that aren't 16px to remove duplicates
 		downloadedSVGsData = downloadedSVGsData.filter((svg) =>
-			svg.name.includes('16px')
+			svg.name.includes('ic/')
 		);
 
 		// Replace annoying stuff in icon names
 		for (const svg of downloadedSVGsData) {
 			svg.name = svg.name
+				.replace('ic/', '')
 				.replace('Icon', '')
 				.replace('16px', '')
 				.replace('Size', '')

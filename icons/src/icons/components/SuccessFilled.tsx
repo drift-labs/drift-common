@@ -8,7 +8,7 @@ const SuccessFilled = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
@@ -16,7 +16,7 @@ const SuccessFilled = (allProps: IconProps) => {
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
-						d="M8 14.667A6.667 6.667 0 108 1.333a6.667 6.667 0 000 13.334zm3.501-8.61a.552.552 0 10-.78-.78L6.833 9.163 5.28 7.61a.552.552 0 00-.78.78l1.944 1.945a.552.552 0 00.78 0l4.278-4.278z"
+						d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm5.197-12.97a.75.75 0 00-1.06-1.06l-5.887 5.886-2.386-2.386a.75.75 0 00-1.06 1.06l2.916 2.917a.75.75 0 001.06 0l6.417-6.417z"
 						fill="#34CB88"
 					/>
 				</svg>

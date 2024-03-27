@@ -8,7 +8,7 @@ const ExitPosition = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
@@ -16,14 +16,14 @@ const ExitPosition = (allProps: IconProps) => {
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
-						d="M12.227 4.596a.625.625 0 00-.954.808L13.05 7.5H6.375a.625.625 0 100 1.25h6.462l-1.564 1.846a.625.625 0 10.954.808l2.404-2.838a.875.875 0 000-1.132l-2.404-2.838z"
+						d="M16.53 7.47a.75.75 0 10-1.06 1.06l2.72 2.72H9.257a.75.75 0 000 1.5h8.932l-2.72 2.72a.75.75 0 101.06 1.06l3.824-3.823a1 1 0 000-1.414L16.53 7.47z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 					<path
-						d="M7.875 12v1.5a.5.5 0 01-.5.5H4a2 2 0 01-2-2V4a2 2 0 012-2h3.375a.5.5 0 01.5.5V4"
-						stroke={allProps.color ? allProps.color : 'currentColor'}
-						strokeWidth={1.25}
-						strokeLinecap="round"
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M3.25 6A2.75 2.75 0 016 3.25h6a.75.75 0 010 1.5H6c-.69 0-1.25.56-1.25 1.25v12c0 .69.56 1.25 1.25 1.25h6a.75.75 0 010 1.5H6A2.75 2.75 0 013.25 18V6z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
 			}
