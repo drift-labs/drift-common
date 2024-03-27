@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const Loading = (allProps: IconProps) => {
+const RecentTrades = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
@@ -16,7 +16,13 @@ const Loading = (allProps: IconProps) => {
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
-						d="M3.75 12A8.25 8.25 0 1012 3.75a.75.75 0 010-1.5A9.75 9.75 0 112.25 12a.75.75 0 011.5 0z"
+						d="M4.5 4.5v15h15v-15h-15zM4 3a1 1 0 00-1 1v16a1 1 0 001 1h16a1 1 0 001-1V4a1 1 0 00-1-1H4z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
+					/>
+					<path
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M20 16.75H4v-1.5h16v1.5zM20 12.75H4v-1.5h16v1.5zM20 8.75H4v-1.5h16v1.5z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
@@ -25,4 +31,4 @@ const Loading = (allProps: IconProps) => {
 		/>
 	);
 };
-export default Loading;
+export default RecentTrades;
