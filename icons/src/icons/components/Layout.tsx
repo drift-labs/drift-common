@@ -8,7 +8,7 @@ const Layout = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
@@ -16,7 +16,7 @@ const Layout = (allProps: IconProps) => {
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
-						d="M2.667 3.5a.167.167 0 00-.167.167V5.5h11V3.667a.167.167 0 00-.167-.167H2.667zM2.5 12.333V6.5h3v6H2.667a.167.167 0 01-.167-.167zm4 .167h6.833a.167.167 0 00.167-.167V6.5h-7v6zm-5-8.833c0-.645.522-1.167 1.167-1.167h10.666c.645 0 1.167.522 1.167 1.167v8.666c0 .645-.522 1.167-1.167 1.167H2.667A1.167 1.167 0 011.5 12.333V3.667z"
+						d="M4 5.25a.25.25 0 00-.25.25v2.75h16.5V5.5a.25.25 0 00-.25-.25H4zM3.75 18.5V9.75h4.5v9H4a.25.25 0 01-.25-.25zm6 .25H20a.25.25 0 00.25-.25V9.75H9.75v9zM2.25 5.5c0-.966.784-1.75 1.75-1.75h16c.966 0 1.75.784 1.75 1.75v13A1.75 1.75 0 0120 20.25H4a1.75 1.75 0 01-1.75-1.75v-13z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>

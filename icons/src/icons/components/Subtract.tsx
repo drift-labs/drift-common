@@ -2,21 +2,21 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const Status = (allProps: IconProps) => {
+const Subtract = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
-					<circle
-						cx={8}
-						cy={8}
-						r={4}
+					<path
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M19.821 12.071a.75.75 0 01-.75.75H4.93a.75.75 0 010-1.5H19.07a.75.75 0 01.75.75z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
@@ -25,4 +25,4 @@ const Status = (allProps: IconProps) => {
 		/>
 	);
 };
-export default Status;
+export default Subtract;

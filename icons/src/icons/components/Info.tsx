@@ -8,17 +8,16 @@ const Info = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
 					<path
-						d="M7.833 13.667A5.833 5.833 0 107.833 2a5.833 5.833 0 000 11.667zM7.833 10.167V7.834M7.833 5.5h.007"
-						stroke={allProps.color ? allProps.color : 'currentColor'}
-						strokeWidth={1.19}
-						strokeLinecap="round"
-						strokeLinejoin="round"
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M12 3.75a8.25 8.25 0 100 16.5 8.25 8.25 0 000-16.5zM2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zM12 7.65a.75.75 0 01.75.75v.1a.75.75 0 01-1.5 0v-.1a.75.75 0 01.75-.75zm0 3a.75.75 0 01.75.75v5a.75.75 0 01-1.5 0v-5a.75.75 0 01.75-.75z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
 			}

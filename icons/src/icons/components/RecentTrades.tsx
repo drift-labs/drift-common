@@ -8,15 +8,22 @@ const RecentTrades = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
 					<path
-						d="M2 8h12M2 8v3m0-3V5m12 3v3m0-3V5M2 11v2.6a.4.4 0 00.4.4h11.2a.4.4 0 00.4-.4V11M2 11h12M2 5V2.4a.4.4 0 01.4-.4h11.2a.4.4 0 01.4.4V5M2 5h12"
-						stroke={allProps.color ? allProps.color : 'currentColor'}
-						strokeWidth={1.2}
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M4.5 4.5v15h15v-15h-15zM4 3a1 1 0 00-1 1v16a1 1 0 001 1h16a1 1 0 001-1V4a1 1 0 00-1-1H4z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
+					/>
+					<path
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M20 16.75H4v-1.5h16v1.5zM20 12.75H4v-1.5h16v1.5zM20 8.75H4v-1.5h16v1.5z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
 			}

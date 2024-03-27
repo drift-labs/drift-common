@@ -8,22 +8,21 @@ const CheckFilled = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
-					<rect
-						x={2}
-						y={2}
-						width={12}
-						height={12}
-						rx={1}
-						stroke={allProps.color ? allProps.color : 'currentColor'}
-						strokeWidth={1.25}
+					<path
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M3.25 4A.75.75 0 014 3.25h16a.75.75 0 01.75.75v16a.75.75 0 01-.75.75H4a.75.75 0 01-.75-.75V4zm1.5.75v14.5h14.5V4.75H4.75z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 					<path
-						d="M10.97 4.97a.75.75 0 011.071 1.05l-3.992 4.99a.75.75 0 01-1.08.02L4.324 8.384a.75.75 0 111.06-1.06l2.094 2.093 3.473-4.425a.238.238 0 01.02-.022h-.001z"
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M17.53 8.47a.75.75 0 010 1.06l-7.016 7a.75.75 0 01-1.09-.031L6.44 13.151a.75.75 0 111.12-.998l2.456 2.756 6.454-6.44a.75.75 0 011.06.001z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>

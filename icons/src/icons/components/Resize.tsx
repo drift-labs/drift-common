@@ -8,13 +8,15 @@ const Resize = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
 					<path
-						d="M13.952 2.372A.6.6 0 0013.4 2H9.8a.6.6 0 100 1.2h2.154L3.2 11.954V9.8a.6.6 0 10-1.2 0v3.6a.6.6 0 00.6.6h3.6a.6.6 0 100-1.2H4.046L12.8 4.046V6.2a.6.6 0 101.2 0V2.6a.6.6 0 00-.048-.228z"
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M13 5.75a.75.75 0 010-1.5h6a.75.75 0 01.75.75v6a.75.75 0 01-1.5 0V6.81L6.81 18.25H11a.75.75 0 010 1.5H5a.75.75 0 01-.75-.75v-6a.75.75 0 011.5 0v4.19L17.19 5.75H13z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>

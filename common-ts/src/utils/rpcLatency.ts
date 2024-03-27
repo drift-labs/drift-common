@@ -8,7 +8,7 @@ export const getResponseTimes = async (rpcOptions: RpcEndpoint[]) => {
 		})
 	);
 
-	return responseTimes;
+	return responseTimes.filter((result) => result.latency != null);
 };
 
 export const getRpcWithLowestPing = async (rpcEndpoints: RpcEndpoint[]) => {
@@ -16,7 +16,9 @@ export const getRpcWithLowestPing = async (rpcEndpoints: RpcEndpoint[]) => {
 		rpcEndpoints.map((endpoint) => getResponseTime(endpoint.value))
 	);
 
-	const validResults = results.filter((responseTime) => responseTime !== -1);
+	const validResults = results.filter(
+		(responseTime) => responseTime !== -1 && responseTime != null
+	);
 
 	if (validResults.length <= 0) return undefined;
 
@@ -28,6 +30,8 @@ export const getRpcWithLowestPing = async (rpcEndpoints: RpcEndpoint[]) => {
 };
 
 export const getResponseTime = async (endpoint: string): Promise<number> => {
+	if (!endpoint) return null;
+
 	const storage =
 		typeof localStorage !== 'undefined'
 			? localStorage

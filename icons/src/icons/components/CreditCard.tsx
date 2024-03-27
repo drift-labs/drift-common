@@ -8,13 +8,21 @@ const CreditCard = (allProps: IconProps) => {
 		<IconWrapper
 			icon={
 				<svg
-					viewBox="0 0 16 16"
+					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
 					<path
-						d="M14 3.125H2A.875.875 0 001.125 4v8a.875.875 0 00.875.875h12a.875.875 0 00.875-.875V4A.875.875 0 0014 3.125zm-12 .75h12a.125.125 0 01.125.125v1.625H1.875V4A.125.125 0 012 3.875zm12 8.25H2A.125.125 0 011.875 12V6.375h12.25V12a.125.125 0 01-.125.125zM12.875 10.5a.375.375 0 01-.375.375h-2a.375.375 0 010-.75h2a.375.375 0 01.375.375zm-4 0a.375.375 0 01-.375.375h-1a.375.375 0 110-.75h1a.375.375 0 01.375.375z"
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M4.8 5.75c-.508 0-1.05.483-1.05 1.25v2.25h16.5V7c0-.767-.543-1.25-1.05-1.25H4.8zM21.75 7c0-1.442-1.07-2.75-2.55-2.75H4.8C3.32 4.25 2.25 5.558 2.25 7v10c0 1.442 1.07 2.75 2.55 2.75h14.4c1.48 0 2.55-1.308 2.55-2.75V7zm-1.5 3.75H3.75V17c0 .767.542 1.25 1.05 1.25h14.4c.508 0 1.05-.483 1.05-1.25v-6.25z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
+					/>
+					<path
+						fillRule="evenodd"
+						clipRule="evenodd"
+						d="M13 16.75h-2v-1.5h2v1.5zM19 16.75h-4v-1.5h4v1.5z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
