@@ -16,31 +16,7 @@ const OrderBook = (allProps: IconProps) => {
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
-						d="M3.5 16.5v3h17v-3h-17zM3 15a1 1 0 00-1 1v4a1 1 0 001 1h18a1 1 0 001-1v-4a1 1 0 00-1-1H3z"
-						fill={allProps.color ? allProps.color : 'currentColor'}
-					/>
-					<path
-						fillRule="evenodd"
-						clipRule="evenodd"
-						d="M4 15a1 1 0 001 1h.5v-3.5h13V16h.5a1 1 0 001-1v-3a1 1 0 00-1-1H5a1 1 0 00-1 1v3z"
-						fill={allProps.color ? allProps.color : 'currentColor'}
-					/>
-					<path
-						fillRule="evenodd"
-						clipRule="evenodd"
-						d="M6 11a1 1 0 001 1h.5V8.5h9V12h.5a1 1 0 001-1V8a1 1 0 00-1-1H7a1 1 0 00-1 1v3z"
-						fill={allProps.color ? allProps.color : 'currentColor'}
-					/>
-					<path
-						fillRule="evenodd"
-						clipRule="evenodd"
-						d="M8 7a1 1 0 001 1h.5V4.5h5V8h.5a1 1 0 001-1V4a1 1 0 00-1-1H9a1 1 0 00-1 1v3z"
-						fill={allProps.color ? allProps.color : 'currentColor'}
-					/>
-					<path
-						fillRule="evenodd"
-						clipRule="evenodd"
-						d="M12 3.75a.75.75 0 01.75.75V20a.75.75 0 01-1.5 0V4.5a.75.75 0 01.75-.75z"
+						d="M8 4v3H7a1 1 0 00-1 1v3H5a1 1 0 00-1 1v3H3a1 1 0 00-1 1v4a1 1 0 001 1h18a1 1 0 001-1v-4a1 1 0 00-1-1h-1v-3a1 1 0 00-1-1h-1V8a1 1 0 00-1-1h-1V4a1 1 0 00-1-1H9a1 1 0 00-1 1zm6.5.5V7h-1.75V4.5h1.75zm-3.25 0V7H9.5V4.5h1.75zm0 4H7.5V11h3.75V8.5zm0 4H5.5V15h5.75v-2.5zm1.5 2.5v-2.5h5.75V15h-5.75zm-1.5 1.5H3.5v3h7.75v-3zm1.5 3v-3h7.75v3h-7.75zm0-8.5V8.5h3.75V11h-3.75z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>

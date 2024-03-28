@@ -16,7 +16,7 @@ const Loading = (allProps: IconProps) => {
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
-						d="M3.75 12A8.25 8.25 0 1012 3.75a.75.75 0 010-1.5A9.75 9.75 0 112.25 12a.75.75 0 011.5 0z"
+						d="M4.75 12A7.25 7.25 0 1012 4.75a.75.75 0 010-1.5A8.75 8.75 0 113.25 12a.75.75 0 011.5 0z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>

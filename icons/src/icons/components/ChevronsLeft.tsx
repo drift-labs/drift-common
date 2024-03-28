@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const RecentTrades = (allProps: IconProps) => {
+const ChevronsLeft = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
@@ -16,7 +16,7 @@ const RecentTrades = (allProps: IconProps) => {
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
-						d="M4.5 15.25v-2.5h15v2.5h-15zm15-4h-15v-2.5h15v2.5zm0-4h-15V4.5h15v2.75zm-15 9.5v2.75h15v-2.75h-15zM3 4a1 1 0 011-1h16a1 1 0 011 1v16a1 1 0 01-1 1H4a1 1 0 01-1-1V4z"
+						d="M19.523 18.538a.75.75 0 01-1.06-.015l-5.834-6a.75.75 0 010-1.046l5.833-6a.75.75 0 111.076 1.046L14.213 12l5.325 5.477a.75.75 0 01-.015 1.06zm-8.167 0a.75.75 0 01-1.06-.015l-5.834-6a.75.75 0 010-1.046l5.834-6a.75.75 0 111.075 1.046L6.046 12l5.325 5.477a.75.75 0 01-.015 1.06z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
@@ -25,4 +25,4 @@ const RecentTrades = (allProps: IconProps) => {
 		/>
 	);
 };
-export default RecentTrades;
+export default ChevronsLeft;
