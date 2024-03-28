@@ -16,6 +16,7 @@ export * from './utils/math';
 export * from './utils/equalityChecks';
 export * from './common-ui-utils/commonUiUtils';
 export * from './constants';
+export * from './common-ui-utils/TransactionErrorHandler';
 export * from './actions/actionHelpers/actionHelpers';
 export * from './utils/SharedInterval';
 export * from './utils/Stopwatch';

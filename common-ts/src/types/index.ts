@@ -256,3 +256,67 @@ export type UIOrderTypeValue = {
 export type UIOrderTypeLookup = {
 	[key in UIOrderType]: UIOrderTypeValue;
 };
+
+export interface PrettyError {
+	code: number;
+	name: string;
+	msg: string;
+	toast?: {
+		message?: string;
+		description?: string;
+	};
+}
+
+export type DriftUiNotificationData = {
+	id?: string;
+	type:
+		| 'error'
+		| 'warning'
+		| 'info'
+		| 'success'
+		| 'awaiting'
+		| 'auction'
+		| 'announcement'
+		| 'prize';
+	bgType?: 'error' | 'info' | 'success';
+	message?: any;
+	startTimeMs: number;
+	lengthMs: number;
+	url?: string;
+	description?: string;
+	txid?: string;
+	isHovered?: boolean;
+	showUntilCancelled?: boolean;
+	subDescription?: string;
+	statusWarning?: string;
+	auctionState?: any;
+	hidden?: boolean;
+	bottomContent?: any;
+	flags?: string[];
+	action?: {
+		label: string;
+		callback: () => void;
+		type?: 'default' | 'rainbow-button' | 'prize-button';
+	};
+	customIcon?: any;
+	customIconSizeOverride?: number; // current max width is 26px, set this prop to override,
+	offerIgnoreToast?: keyof ToastsToIgnoreSettings;
+};
+
+export type DriftUiNewNotificationProps = Omit<
+	DriftUiNotificationData,
+	'startTimeMs' | 'lengthMs' | 'isHovered' | 'message'
+> & {
+	lengthMs?: number;
+	startTimeMs?: number;
+	updatePrevious?: boolean;
+	message?: any;
+	showUntilCancelled?: boolean;
+	onlyShowIfPreviousTarget?: boolean;
+	bottomContent?: any;
+};
+
+export type ToastsToIgnoreSettings = {
+	sweepstakes: boolean;
+	walletVersionedTxCompatibility: boolean;
+};
