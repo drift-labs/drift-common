@@ -3,6 +3,7 @@ import {
 	BigNum,
 	BN,
 	CandleResolution,
+	CurveRecord,
 	DepositExplanation,
 	DepositRecord,
 	Event,
@@ -39,6 +40,7 @@ import {
 	SettlePnlRecord,
 	SpotBalanceType,
 	SpotBankruptcyRecord,
+	SpotInterestRecord,
 	StakeAction,
 	SwapRecord,
 	TEN,
@@ -585,6 +587,56 @@ export class UISerializableDepositRecord extends SerializableDepositRecord {
 		instance.marketWithdrawBalance.precision =
 			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 	}
+}
+
+// Spot interest record event
+export type SpotInterestRecordEvent = Event<SpotInterestRecord>;
+export class SerializableSpotInterestRecord implements SpotInterestRecordEvent {
+	@autoserializeAs(Number) id: number;
+	@autoserializeAs(String) txSig: string;
+	@autoserializeAs(Number) txSigIndex: number;
+	@autoserializeAs(Number) slot: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
+	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) depositBalance: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	cumulativeDepositInterest: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) borrowBalance: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	cumulativeBorrowInterest: BN;
+	@autoserializeAs(Number) optimalUtilization: number;
+	@autoserializeAs(Number) optimalBorrowRate: number;
+	@autoserializeAs(Number) maxBorrowRate: number;
+}
+
+// Curve record event
+export type CurveRecordEvent = Event<CurveRecord>;
+export class SerializableCurveRecord implements CurveRecordEvent {
+	@autoserializeAs(Number) id: number;
+	@autoserializeAs(String) txSig: string;
+	@autoserializeAs(Number) txSigIndex: number;
+	@autoserializeAs(Number) slot: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) recordId: BN;
+	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) pegMultiplierBefore: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetReserveBefore: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetReserveBefore: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) sqrtKBefore: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) pegMultiplierAfter: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetReserveAfter: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetReserveAfter: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) sqrtKAfter: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmountLong: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmountShort: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmountWithAmm: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) totalFee: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	totalFeeMinusDistributions: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) adjustmentCost: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) numberOfUsers: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) oraclePrice: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) fillRecord: BN;
 }
 
 // Settle Pnl Records
@@ -1596,6 +1648,9 @@ export const Serializer = {
 		SettlePnl: (cls: any) => Serialize(cls, SerializableSettlePnlRecord),
 		UISettlePnl: (cls: any) => Serialize(cls, UISerializableSettlePnlRecord),
 		UIOrderRecord: (cls: any) => Serialize(cls, UISerializableOrderRecord),
+		SpotInterestRecord: (cls: any) =>
+			Serialize(cls, SerializableSpotInterestRecord),
+		CurveRecord: (cls: any) => Serialize(cls, SerializableCurveRecord),
 		Candle: (cls: any) => Serialize(cls, SerializableCandle),
 		UICandle: (cls: any) => Serialize(cls, UISerializableCandle),
 		UIOrderActionRecord: (cls: any) =>
@@ -1688,6 +1743,16 @@ export const Serializer = {
 				cls as JsonObject,
 				SerializableSettlePnlRecord
 			) as SettlePnlRecordEvent,
+		SpotInterest: (cls: Record<string, unknown>) =>
+			Deserialize(
+				cls as JsonObject,
+				SerializableSpotInterestRecord
+			) as SpotInterestRecordEvent,
+		CurveRecord: (cls: Record<string, unknown>) =>
+			Deserialize(
+				cls as JsonObject,
+				SerializableCurveRecord
+			) as SerializableCurveRecord,
 		UISettlePnl: (cls: Record<string, unknown>) =>
 			Deserialize(cls as JsonObject, UISerializableSettlePnlRecord),
 		Candle: (cls: Record<string, unknown>) =>
