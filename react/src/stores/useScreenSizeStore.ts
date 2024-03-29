@@ -6,12 +6,15 @@ import { useWindowSize } from 'react-use';
 
 type ScreenSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
+/**
+ * Default breakpoints referenced from Tailwind
+ */
 export const DEFAULT_BREAKPOINTS = {
 	xs: 0,
-	sm: 760,
-	md: 1100,
-	lg: 1250,
-	xl: 1600,
+	sm: 640,
+	md: 768,
+	lg: 1024,
+	xl: 1536,
 };
 
 export interface ScreenSizeStore {
