@@ -92,6 +92,7 @@ export { default as PointDiamond } from './components/PointDiamond';
 export { default as PointGold } from './components/PointGold';
 export { default as PointSilver } from './components/PointSilver';
 export { default as PointUnranked } from './components/PointUnranked';
+export { default as PointsGradient } from './components/PointsGradient';
 export { default as PointsMono } from './components/PointsMono';
 export { default as PonitBronze } from './components/PonitBronze';
 export { default as PonitDiamond } from './components/PonitDiamond';
