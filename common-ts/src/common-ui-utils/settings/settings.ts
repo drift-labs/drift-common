@@ -83,18 +83,20 @@ export class VersionedSettingsHandler<T extends VersionedSettings> {
 
 		const newSettings = { current: settings };
 
-		let transformationWasApplied = false;
+		const transformsApplied: SettingsVersionRule<T>[] = [];
 
 		rulesToApply.forEach((rule) => {
 			newSettings.current = produce(newSettings.current, (draft) => {
-				const { transformationWasApplied: transFormApplied } =
+				const { transformationWasApplied: ruleTransformApplied } =
 					rule.handler(draft);
 
-				if (transFormApplied) {
-					transformationWasApplied = true;
+				if (ruleTransformApplied) {
+					transformsApplied.push(rule);
 				}
 			});
 		});
+
+		const aTransformWasApplied = transformsApplied.length > 0;
 
 		newSettings.current = produce(newSettings.current, (draft) => {
 			draft.version = maxVersion;
@@ -102,18 +104,18 @@ export class VersionedSettingsHandler<T extends VersionedSettings> {
 
 		let transformationDescription = '';
 
-		if (rulesToApply.length === 1) {
-			transformationDescription = rulesToApply[0].longChangeDescription;
+		if (transformsApplied.length === 1) {
+			transformationDescription = transformsApplied[0].longChangeDescription;
 		}
 
-		if (rulesToApply.length > 1) {
-			transformationDescription = `The following settings were changed to support new features : ${rulesToApply
+		if (transformsApplied.length > 1) {
+			transformationDescription = `The following settings were changed to support new features : ${transformsApplied
 				.map((rule) => rule.shortChangeDescription)
 				.join(', ')}`;
 		}
 
 		return {
-			transformationWasApplied,
+			transformationWasApplied: aTransformWasApplied,
 			transformedSettings: newSettings.current,
 			transformationDescription,
 		};
