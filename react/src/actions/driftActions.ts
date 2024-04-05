@@ -23,7 +23,6 @@ import type {
 } from '@solana/wallet-adapter-base';
 
 const DEFAULT_WALLET = new Wallet(new Keypair());
-const POLLING_FREQUENCY_MS = 1000;
 const DEFAULT_COMMITMENT_LEVEL: Commitment = 'confirmed';
 
 const createDriftActions = (
@@ -120,7 +119,7 @@ const createDriftActions = (
 			accountLoader = new BulkAccountLoader(
 				newConnection,
 				DEFAULT_COMMITMENT_LEVEL,
-				POLLING_FREQUENCY_MS
+				storeState.get().env.basePollingRateMs
 			);
 		}
 
