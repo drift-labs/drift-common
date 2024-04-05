@@ -28,12 +28,12 @@ export const EnvironmentConstants = {
 				wsValue: 'wss://drift-drift-951a.mainnet.rpcpool.com/whirligig',
 				allowAdditionalConnection: true,
 			},
-			{
-				label: 'Helius 1',
-				value: 'https://cold-hanni-fast-mainnet.helius-rpc.com/',
-				wsValue: 'wss://cold-hanni-fast-mainnet.helius-rpc.com/',
-				allowAdditionalConnection: true,
-			},
+			// {
+			// 	label: 'Helius 1',
+			// 	value: 'https://cold-hanni-fast-mainnet.helius-rpc.com/',
+			// 	wsValue: 'wss://cold-hanni-fast-mainnet.helius-rpc.com/',
+			// 	allowAdditionalConnection: true,
+			// },
 		] as RpcEndpoint[],
 	},
 	historyServerUrl: {
