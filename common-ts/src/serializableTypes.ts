@@ -22,6 +22,7 @@ import {
 	LPRecord,
 	MarketType,
 	NewUserRecord,
+	NINE,
 	Order,
 	OrderAction,
 	OrderActionExplanation,
@@ -165,6 +166,24 @@ const PriceBigNumDeserializationFn = (val: string) =>
 const PriceBigNumSerializeAndDeserializeFns = {
 	Serialize: PriceBigNumSerializationFn,
 	Deserialize: PriceBigNumDeserializationFn,
+};
+
+const DriftTokenBigNumSerializationFn = (target: BigNum | BN) =>
+	target
+		? target instanceof BigNum
+			? target.print()
+			: target.toString()
+		: undefined;
+const DriftTokenBigNumDeserializationFn = (val: string) =>
+	val
+		? BigNum.from(
+				typeof val === 'string' ? val.replace('.', '') : val,
+				NINE // TODO: Update this to read the correct precision from the config
+		  )
+		: undefined;
+const DriftTokenBigNumSerializeAndDeserializeFns = {
+	Serialize: DriftTokenBigNumSerializationFn,
+	Deserialize: DriftTokenBigNumDeserializationFn,
 };
 
 const FundingRateBigNumSerializationFn = (target: BigNum | BN) =>
@@ -1628,6 +1647,26 @@ export class UISerializableSwapRecord extends SerializableSwapRecord {
 	}
 }
 
+// Trader Rewards
+
+export class SerializableTraderRewardsSnapshot {
+	@autoserializeAs(Number) epoch: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) startTs: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) endTs: BN;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) authority: PublicKey;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) totalVolume: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) rewardsEarned: BN;
+}
+export class UISerializableTraderRewardsSnapshot extends SerializableTraderRewardsSnapshot {
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	totalVolume: BigNum;
+
+	@autoserializeUsing(DriftTokenBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	rewardsEarned: BigNum;
+}
+
 // Serializer
 export const Serializer = {
 	Serialize: {
@@ -1690,6 +1729,10 @@ export const Serializer = {
 		UILPRecord: (cls: any) => Serialize(cls, UISerializableLPRecord),
 		SwapRecord: (cls: any) => Serialize(cls, SerializableSwapRecord),
 		UISwapRecord: (cls: any) => Serialize(cls, UISerializableSwapRecord),
+		TraderRewardsSnapshot: (cls: any) =>
+			Serialize(cls, SerializableTraderRewardsSnapshot),
+		UITraderRewardsSnapshot: (cls: any) =>
+			Serialize(cls, UISerializableTraderRewardsSnapshot),
 	},
 	Deserialize: {
 		Order: (cls: Record<string, unknown>) =>
@@ -1812,6 +1855,10 @@ export const Serializer = {
 			Deserialize(cls as JsonObject, SerializableSwapRecord) as SwapRecordEvent,
 		UISwapRecord: (cls: Record<string, unknown>) =>
 			Deserialize(cls as JsonObject, UISerializableSwapRecord),
+		TraderRewardsSnapshot: (cls: Record<string, unknown>) =>
+			Deserialize(cls as JsonObject, SerializableTraderRewardsSnapshot),
+		UITraderRewardsSnapshot: (cls: Record<string, unknown>) =>
+			Deserialize(cls as JsonObject, UISerializableTraderRewardsSnapshot),
 	},
 	setDeserializeFromSnakeCase: () => {
 		SetDeserializeKeyTransform(SnakeCase);
