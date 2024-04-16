@@ -21,6 +21,11 @@ export * from './UIMarket';
 // Opaque type pattern
 export type Opaque<K, T> = T & { __TYPE__: K };
 
+/**
+ * Allows for partial types to be created by specifying certain keys to be optional from the original type.
+ */
+export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
 // TODO-v2 cleanup these types - most of them should have moved into serializableTypes
 // # UI ↔ History Server Data Types
 

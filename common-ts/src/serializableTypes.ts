@@ -1657,6 +1657,7 @@ export class SerializableTraderRewardsSnapshot {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) totalVolume: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) rewardsEarned: BN;
 }
+@inheritSerialization(SerializableTraderRewardsSnapshot)
 export class UISerializableTraderRewardsSnapshot extends SerializableTraderRewardsSnapshot {
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	// @ts-ignore
