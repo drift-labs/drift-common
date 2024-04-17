@@ -1651,6 +1651,7 @@ export class UISerializableSwapRecord extends SerializableSwapRecord {
 
 export class SerializableTraderRewardsSnapshot {
 	@autoserializeAs(Number) epoch: number;
+	@autoserializeAs(Boolean) claimable: boolean;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) startTs: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) endTs: BN;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) authority: PublicKey;
