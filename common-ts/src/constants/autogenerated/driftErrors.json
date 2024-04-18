@@ -457,7 +457,11 @@
 		"NoSpotPositionAvailable": {
 			"code": 6084,
 			"name": "NoSpotPositionAvailable",
-			"msg": "NoSpotPositionAvailable"
+			"msg": "No Spot Position Available",
+			"toast": {
+				"message": "No Spot Position Available",
+				"description": "This transaction failed because it would have exceeded the limit of available spot balances. The limit is 8. You'll need to close one of your existing spot positions (withdraw or swap it all) to open a new one."
+			}
 		},
 		"InvalidSpotMarketInitialization": {
 			"code": 6085,
@@ -517,7 +521,11 @@
 		"AMMNotUpdatedInSameSlot": {
 			"code": 6096,
 			"name": "AMMNotUpdatedInSameSlot",
-			"msg": "AMMNotUpdatedInSameSlot"
+			"msg": "AMMNotUpdatedInSameSlot",
+			"toast": {
+				"message": "AMM Not Updated in Same Slot",
+				"description": "This can happen when the oracle is stale. Please try again."
+			}
 		},
 		"AuctionNotComplete": {
 			"code": 6097,
