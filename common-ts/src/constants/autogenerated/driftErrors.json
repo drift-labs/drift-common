@@ -457,7 +457,7 @@
 		"NoSpotPositionAvailable": {
 			"code": 6084,
 			"name": "NoSpotPositionAvailable",
-			"msg": "No Spot Position Available",
+			"msg": "NoSpotPositionAvailable",
 			"toast": {
 				"message": "No Spot Position Available",
 				"description": "This transaction failed because it would have exceeded the limit of available spot balances. The limit is 8. You'll need to close one of your existing spot positions (withdraw or swap it all) to open a new one."
