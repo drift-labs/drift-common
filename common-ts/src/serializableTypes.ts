@@ -22,7 +22,6 @@ import {
 	LPRecord,
 	MarketType,
 	NewUserRecord,
-	NINE,
 	Order,
 	OrderAction,
 	OrderActionExplanation,
@@ -39,6 +38,7 @@ import {
 	QUOTE_PRECISION_EXP,
 	SettlePnlExplanation,
 	SettlePnlRecord,
+	SIX,
 	SpotBalanceType,
 	SpotBankruptcyRecord,
 	SpotInterestRecord,
@@ -178,7 +178,7 @@ const DriftTokenBigNumDeserializationFn = (val: string) =>
 	val
 		? BigNum.from(
 				typeof val === 'string' ? val.replace('.', '') : val,
-				NINE // TODO: Update this to read the correct precision from the config
+				SIX // TODO: Update this to read the correct precision from the config
 		  )
 		: undefined;
 const DriftTokenBigNumSerializeAndDeserializeFns = {
