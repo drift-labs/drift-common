@@ -528,12 +528,14 @@ const getLimitAuctionParams = ({
 	startPriceFromSettings,
 	duration,
 	auctionStartPriceOffset,
+	oraclePriceBands,
 }: {
 	direction: PositionDirection;
 	inputPrice: BigNum;
 	startPriceFromSettings: BN;
 	duration: number;
 	auctionStartPriceOffset: number;
+	oraclePriceBands?: [BN, BN];
 }): AuctionParams => {
 	let limitAuctionParams = EMPTY_AUCTION_PARAMS;
 
@@ -565,6 +567,42 @@ const getLimitAuctionParams = ({
 			auctionDuration: duration,
 		};
 	}
+
+	console.log(
+		'start price:: ',
+		limitAuctionParams.auctionStartPrice.toString()
+	);
+	console.log('end price:: ', limitAuctionParams.auctionEndPrice.toString());
+	console.log('oracle price bands min:: ', oraclePriceBands[0].toString());
+	console.log('oracle price bands max:: ', oraclePriceBands[1].toString());
+
+	if (oraclePriceBands) {
+		// start and end price cant be outside of the oracle price bands
+		const [minPrice, maxPrice] = oraclePriceBands;
+		limitAuctionParams.auctionEndPrice = limitAuctionParams.auctionEndPrice.gt(
+			maxPrice
+		)
+			? maxPrice
+			: limitAuctionParams.auctionEndPrice.lt(minPrice)
+			? minPrice
+			: limitAuctionParams.auctionEndPrice;
+
+		limitAuctionParams.auctionStartPrice =
+			limitAuctionParams.auctionStartPrice.gt(maxPrice)
+				? maxPrice
+				: limitAuctionParams.auctionStartPrice.lt(minPrice)
+				? minPrice
+				: limitAuctionParams.auctionStartPrice;
+	}
+
+	console.log(
+		'start price after:: ',
+		limitAuctionParams.auctionStartPrice.toString()
+	);
+	console.log(
+		'end price after:: ',
+		limitAuctionParams.auctionEndPrice.toString()
+	);
 
 	return limitAuctionParams;
 };
