@@ -568,41 +568,20 @@ const getLimitAuctionParams = ({
 		};
 	}
 
-	console.log(
-		'start price:: ',
-		limitAuctionParams.auctionStartPrice.toString()
-	);
-	console.log('end price:: ', limitAuctionParams.auctionEndPrice.toString());
-	console.log('oracle price bands min:: ', oraclePriceBands[0].toString());
-	console.log('oracle price bands max:: ', oraclePriceBands[1].toString());
-
-	if (oraclePriceBands) {
-		// start and end price cant be outside of the oracle price bands
+	if (oraclePriceBands && limitAuctionParams.auctionDuration) {
 		const [minPrice, maxPrice] = oraclePriceBands;
-		limitAuctionParams.auctionEndPrice = limitAuctionParams.auctionEndPrice.gt(
-			maxPrice
-		)
-			? maxPrice
-			: limitAuctionParams.auctionEndPrice.lt(minPrice)
-			? minPrice
-			: limitAuctionParams.auctionEndPrice;
 
-		limitAuctionParams.auctionStartPrice =
-			limitAuctionParams.auctionStartPrice.gt(maxPrice)
-				? maxPrice
-				: limitAuctionParams.auctionStartPrice.lt(minPrice)
-				? minPrice
-				: limitAuctionParams.auctionStartPrice;
+		// start and end price cant be outside of the oracle price bands
+		limitAuctionParams.auctionStartPrice = BN.max(
+			BN.min(limitAuctionParams.auctionStartPrice, maxPrice),
+			minPrice
+		);
+
+		limitAuctionParams.auctionEndPrice = BN.max(
+			BN.min(limitAuctionParams.auctionEndPrice, maxPrice),
+			minPrice
+		);
 	}
-
-	console.log(
-		'start price after:: ',
-		limitAuctionParams.auctionStartPrice.toString()
-	);
-	console.log(
-		'end price after:: ',
-		limitAuctionParams.auctionEndPrice.toString()
-	);
 
 	return limitAuctionParams;
 };
