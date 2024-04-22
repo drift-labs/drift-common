@@ -27,7 +27,7 @@ const PointUnranked = (allProps: IconProps) => {
 						fill="#282323"
 					/>
 					<path
-						fill="url(#prefix__pattern0)"
+						fill="url(#prefix__pattern0_52_3588)"
 						d="M6.449 4h19.108v22.737H6.449z"
 						opacity={0.15}
 					/>
@@ -55,7 +55,7 @@ const PointUnranked = (allProps: IconProps) => {
 					</mask>
 					<g mask="url(#prefix__a)">
 						<path
-							fill="url(#prefix__pattern1)"
+							fill="url(#prefix__pattern1_52_3588)"
 							d="M-11.672-10.705h38.991v38.018h-38.991z"
 							opacity={0.35}
 						/>
@@ -78,7 +78,7 @@ const PointUnranked = (allProps: IconProps) => {
 					</mask>
 					<g mask="url(#prefix__b)">
 						<path
-							fill="url(#prefix__pattern2)"
+							fill="url(#prefix__pattern2_52_3588)"
 							d="M4.223 4.925h23.552v23.162H4.223z"
 							opacity={0.25}
 						/>
@@ -107,7 +107,7 @@ const PointUnranked = (allProps: IconProps) => {
 					</mask>
 					<g mask="url(#prefix__c)">
 						<path
-							fill="url(#prefix__pattern3)"
+							fill="url(#prefix__pattern3_52_3588)"
 							style={{
 								mixBlendMode: 'color-dodge',
 							}}
@@ -116,7 +116,7 @@ const PointUnranked = (allProps: IconProps) => {
 					</g>
 					<defs>
 						<pattern
-							id="prefix__pattern0"
+							id="prefix__pattern0_52_3588"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -127,7 +127,7 @@ const PointUnranked = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern1"
+							id="prefix__pattern1_52_3588"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -138,7 +138,7 @@ const PointUnranked = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern2"
+							id="prefix__pattern2_52_3588"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -149,7 +149,7 @@ const PointUnranked = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern3"
+							id="prefix__pattern3_52_3588"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}

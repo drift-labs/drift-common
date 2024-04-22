@@ -21,10 +21,13 @@ const PointDiamond = (allProps: IconProps) => {
 						fill="url(#prefix__paint0_radial_52_3592)"
 					/>
 					<path
-						fill="url(#prefix__pattern0)"
+						fill="url(#prefix__pattern0_52_3592)"
 						d="M4.294 9.32h2.711v2.875H4.294z"
 					/>
-					<path fill="url(#prefix__pattern1)" d="M3.773 9.795h3.606v4H3.773z" />
+					<path
+						fill="url(#prefix__pattern1_52_3592)"
+						d="M3.773 9.795h3.606v4H3.773z"
+					/>
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
@@ -44,19 +47,19 @@ const PointDiamond = (allProps: IconProps) => {
 						fill="url(#prefix__paint3_radial_52_3592)"
 					/>
 					<path
-						fill="url(#prefix__pattern2)"
+						fill="url(#prefix__pattern2_52_3592)"
 						d="M2.105 10.516h4.901v4.106H2.105z"
 					/>
 					<path
-						fill="url(#prefix__pattern3)"
+						fill="url(#prefix__pattern3_52_3592)"
 						d="M4.442 18.27h2.563v1.802H4.442z"
 					/>
 					<path
-						fill="url(#prefix__pattern4)"
+						fill="url(#prefix__pattern4_52_3592)"
 						d="M1.34 12.555h3.91v4.335H1.34z"
 					/>
 					<path
-						fill="url(#prefix__pattern5)"
+						fill="url(#prefix__pattern5_52_3592)"
 						d="M3.147 16.635h3.91v3.271h-3.91z"
 					/>
 					<path
@@ -66,7 +69,7 @@ const PointDiamond = (allProps: IconProps) => {
 						fill="url(#prefix__paint4_radial_52_3592)"
 					/>
 					<path
-						fill="url(#prefix__pattern6)"
+						fill="url(#prefix__pattern6_52_3592)"
 						d="M3.147 14.569h3.91v3.279h-3.91z"
 					/>
 					<path
@@ -76,31 +79,31 @@ const PointDiamond = (allProps: IconProps) => {
 						fill="url(#prefix__paint5_radial_52_3592)"
 					/>
 					<path
-						fill="url(#prefix__pattern7)"
+						fill="url(#prefix__pattern7_52_3592)"
 						d="M4.086 13.03h2.919v3.376H4.086z"
 					/>
 					<path
-						fill="url(#prefix__pattern8)"
+						fill="url(#prefix__pattern8_52_3592)"
 						d="M4.147 16.248h2.859v2.216H4.147z"
 					/>
 					<path
-						fill="url(#prefix__pattern9)"
+						fill="url(#prefix__pattern9_52_3592)"
 						d="M.167 9.61h1.764v3.429H.167z"
 					/>
 					<path
-						fill="url(#prefix__pattern10)"
+						fill="url(#prefix__pattern10_52_3592)"
 						d="M.958 13.109h1.825v3.297H.958z"
 					/>
 					<path
-						fill="url(#prefix__pattern11)"
+						fill="url(#prefix__pattern11_52_3592)"
 						d="M2.183 16.96h2.946v3.042H2.183z"
 					/>
 					<path
-						fill="url(#prefix__pattern12)"
+						fill="url(#prefix__pattern12_52_3592)"
 						d="M1.114 9.707h5.092v2.444H1.114z"
 					/>
 					<path
-						fill="url(#prefix__pattern13)"
+						fill="url(#prefix__pattern13_52_3592)"
 						d="M2.843 12.116h3.762v2.4H2.843z"
 					/>
 					<path
@@ -110,11 +113,11 @@ const PointDiamond = (allProps: IconProps) => {
 						fill="url(#prefix__paint6_radial_52_3592)"
 					/>
 					<path
-						fill="url(#prefix__pattern14)"
+						fill="url(#prefix__pattern14_52_3592)"
 						d="M24.989 9.32h2.72v2.875h-2.72z"
 					/>
 					<path
-						fill="url(#prefix__pattern15)"
+						fill="url(#prefix__pattern15_52_3592)"
 						d="M24.616 9.795h3.615v4h-3.615z"
 					/>
 					<path
@@ -136,19 +139,19 @@ const PointDiamond = (allProps: IconProps) => {
 						fill="url(#prefix__paint9_radial_52_3592)"
 					/>
 					<path
-						fill="url(#prefix__pattern16)"
+						fill="url(#prefix__pattern16_52_3592)"
 						d="M24.998 10.516h4.901v4.106h-4.901z"
 					/>
 					<path
-						fill="url(#prefix__pattern17)"
+						fill="url(#prefix__pattern17_52_3592)"
 						d="M24.989 18.27h2.563v1.802h-2.563z"
 					/>
 					<path
-						fill="url(#prefix__pattern18)"
+						fill="url(#prefix__pattern18_52_3592)"
 						d="M26.753 12.555h3.91v4.335h-3.91z"
 					/>
 					<path
-						fill="url(#prefix__pattern19)"
+						fill="url(#prefix__pattern19_52_3592)"
 						d="M24.946 16.635h3.91v3.271h-3.91z"
 					/>
 					<path
@@ -158,7 +161,7 @@ const PointDiamond = (allProps: IconProps) => {
 						fill="url(#prefix__paint10_radial_52_3592)"
 					/>
 					<path
-						fill="url(#prefix__pattern20)"
+						fill="url(#prefix__pattern20_52_3592)"
 						d="M24.946 14.569h3.91v3.279h-3.91z"
 					/>
 					<path
@@ -168,31 +171,31 @@ const PointDiamond = (allProps: IconProps) => {
 						fill="url(#prefix__paint11_radial_52_3592)"
 					/>
 					<path
-						fill="url(#prefix__pattern21)"
+						fill="url(#prefix__pattern21_52_3592)"
 						d="M24.998 13.03h2.919v3.376h-2.919z"
 					/>
 					<path
-						fill="url(#prefix__pattern22)"
+						fill="url(#prefix__pattern22_52_3592)"
 						d="M24.989 16.248h2.859v2.216h-2.859z"
 					/>
 					<path
-						fill="url(#prefix__pattern23)"
+						fill="url(#prefix__pattern23_52_3592)"
 						d="M30.072 9.61h1.755v3.429h-1.755z"
 					/>
 					<path
-						fill="url(#prefix__pattern24)"
+						fill="url(#prefix__pattern24_52_3592)"
 						d="M29.221 13.109h1.816v3.297h-1.816z"
 					/>
 					<path
-						fill="url(#prefix__pattern25)"
+						fill="url(#prefix__pattern25_52_3592)"
 						d="M26.875 16.96h2.937v3.042h-2.937z"
 					/>
 					<path
-						fill="url(#prefix__pattern26)"
+						fill="url(#prefix__pattern26_52_3592)"
 						d="M25.789 9.707h5.092v2.444h-5.092z"
 					/>
 					<path
-						fill="url(#prefix__pattern27)"
+						fill="url(#prefix__pattern27_52_3592)"
 						d="M25.398 12.116h3.762v2.4h-3.762z"
 					/>
 					<path
@@ -208,7 +211,7 @@ const PointDiamond = (allProps: IconProps) => {
 						fill="url(#prefix__paint13_radial_52_3592)"
 					/>
 					<path
-						fill="url(#prefix__pattern28)"
+						fill="url(#prefix__pattern28_52_3592)"
 						d="M6.449 4h19.108v22.737H6.449z"
 						opacity={0.15}
 					/>
@@ -236,7 +239,7 @@ const PointDiamond = (allProps: IconProps) => {
 					</mask>
 					<g mask="url(#prefix__a)">
 						<path
-							fill="url(#prefix__pattern29)"
+							fill="url(#prefix__pattern29_52_3592)"
 							d="M-11.672-10.705h38.991v38.018h-38.991z"
 							opacity={0.35}
 						/>
@@ -259,7 +262,7 @@ const PointDiamond = (allProps: IconProps) => {
 					</mask>
 					<g mask="url(#prefix__b)">
 						<path
-							fill="url(#prefix__pattern30)"
+							fill="url(#prefix__pattern30_52_3592)"
 							d="M4.223 4.925h23.552v23.162H4.223z"
 							opacity={0.25}
 						/>
@@ -287,7 +290,7 @@ const PointDiamond = (allProps: IconProps) => {
 						</mask>
 						<g mask="url(#prefix__c)">
 							<path
-								fill="url(#prefix__pattern31)"
+								fill="url(#prefix__pattern31_52_3592)"
 								d="M3.516 4.142h24.965v24.729H3.516z"
 							/>
 						</g>
@@ -316,7 +319,7 @@ const PointDiamond = (allProps: IconProps) => {
 					</mask>
 					<g mask="url(#prefix__d)">
 						<path
-							fill="url(#prefix__pattern32)"
+							fill="url(#prefix__pattern32_52_3592)"
 							style={{
 								mixBlendMode: 'color-dodge',
 							}}
@@ -337,7 +340,7 @@ const PointDiamond = (allProps: IconProps) => {
 					/>
 					<defs>
 						<pattern
-							id="prefix__pattern0"
+							id="prefix__pattern0_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -348,7 +351,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern1"
+							id="prefix__pattern1_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -359,7 +362,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern2"
+							id="prefix__pattern2_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -370,7 +373,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern3"
+							id="prefix__pattern3_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -381,7 +384,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern4"
+							id="prefix__pattern4_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -392,7 +395,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern5"
+							id="prefix__pattern5_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -403,7 +406,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern6"
+							id="prefix__pattern6_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -414,7 +417,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern7"
+							id="prefix__pattern7_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -425,7 +428,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern8"
+							id="prefix__pattern8_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -436,7 +439,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern9"
+							id="prefix__pattern9_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -447,7 +450,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern10"
+							id="prefix__pattern10_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -458,7 +461,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern11"
+							id="prefix__pattern11_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -469,7 +472,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern12"
+							id="prefix__pattern12_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -480,7 +483,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern13"
+							id="prefix__pattern13_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -491,7 +494,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern14"
+							id="prefix__pattern14_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -502,7 +505,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern15"
+							id="prefix__pattern15_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -513,7 +516,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern16"
+							id="prefix__pattern16_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -524,7 +527,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern17"
+							id="prefix__pattern17_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -535,7 +538,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern18"
+							id="prefix__pattern18_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -546,7 +549,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern19"
+							id="prefix__pattern19_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -557,7 +560,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern20"
+							id="prefix__pattern20_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -568,7 +571,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern21"
+							id="prefix__pattern21_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -579,7 +582,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern22"
+							id="prefix__pattern22_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -590,7 +593,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern23"
+							id="prefix__pattern23_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -601,7 +604,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern24"
+							id="prefix__pattern24_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -612,7 +615,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern25"
+							id="prefix__pattern25_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -623,7 +626,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern26"
+							id="prefix__pattern26_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -634,7 +637,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern27"
+							id="prefix__pattern27_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -645,7 +648,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern28"
+							id="prefix__pattern28_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -656,7 +659,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern29"
+							id="prefix__pattern29_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -667,7 +670,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern30"
+							id="prefix__pattern30_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -678,7 +681,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern31"
+							id="prefix__pattern31_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
@@ -689,7 +692,7 @@ const PointDiamond = (allProps: IconProps) => {
 							/>
 						</pattern>
 						<pattern
-							id="prefix__pattern32"
+							id="prefix__pattern32_52_3592"
 							patternContentUnits="objectBoundingBox"
 							width={1}
 							height={1}
