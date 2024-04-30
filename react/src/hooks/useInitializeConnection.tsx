@@ -5,6 +5,7 @@ import { useCurrentRpc } from './useCurrentRpc';
 import { DriftClientConfig } from '@drift-labs/sdk';
 
 const useInitializeConnection = (
+	enable: boolean,
 	additionalDriftClientConfig: Partial<DriftClientConfig> = {}
 ) => {
 	const Env = useCommonDriftStore((s) => s.env);
@@ -12,6 +13,8 @@ const useInitializeConnection = (
 	const [currentRpc] = useCurrentRpc();
 
 	const initConnection = async () => {
+		if (!enable) return;
+
 		const rpcToUse = Env.rpcOverride
 			? {
 					label: 'RPC Override',

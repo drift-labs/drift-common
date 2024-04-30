@@ -6,7 +6,8 @@ import { useCommonDriftStore } from '../stores';
 export const MAINNET_RPCS = EnvironmentConstants.rpcs.mainnet;
 export const DEVNET_RPCS = EnvironmentConstants.rpcs.dev;
 
-const DEFAULT_MAINNET_RPC = MAINNET_RPCS[0];
+const DEFAULT_MAINNET_RPC =
+	MAINNET_RPCS[Math.floor(Math.random() * MAINNET_RPCS.length)];
 
 const _useCurrentRpc = () => {
 	const Env = useCommonDriftStore((s) => s.env);

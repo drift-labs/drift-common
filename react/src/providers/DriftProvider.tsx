@@ -20,6 +20,7 @@ type DriftAppHooksProps = {
 		idlePollingRateSwitcher?: boolean;
 		emulation?: boolean;
 		geoblocking?: boolean;
+		initConnection?: boolean;
 	};
 	geoBlocking?: {
 		callback?: () => void;
@@ -49,7 +50,10 @@ const DriftProviderInner = (props: DriftAppHooksProps) => {
 	!props.disable?.emulation && useEmulation();
 	!props.disable?.geoblocking && useGeoBlocking(props?.geoBlocking?.callback);
 
-	useInitializeConnection(props?.additionalDriftClientConfig);
+	useInitializeConnection(
+		!props.disable?.initConnection,
+		props?.additionalDriftClientConfig
+	);
 	useSolBalance();
 	useSyncScreenSize(props.breakpoints);
 
