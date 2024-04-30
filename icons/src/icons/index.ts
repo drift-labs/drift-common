@@ -50,6 +50,8 @@ export { default as Expand } from './components/Expand';
 export { default as EyeHide } from './components/EyeHide';
 export { default as EyeShow } from './components/EyeShow';
 export { default as Filter } from './components/Filter';
+export { default as Form } from './components/Form';
+export { default as Fuel } from './components/Fuel';
 export { default as Github } from './components/Github';
 export { default as Google } from './components/Google';
 export { default as Grafana } from './components/Grafana';
