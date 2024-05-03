@@ -2,14 +2,33 @@ import { useState, useEffect } from 'react';
 
 type SetValue<T> = T | ((val: T) => T);
 
+const LOCAL_STORAGE_EVENT_TYPE = 'local-storage';
+
+/**
+ * This hook syncs the value of a key in localStorage, across all usage of this hook with the same key.
+ *
+ * @template T - The type of the value stored in localStorage.
+ * @param {string} key - The key used to store the value in localStorage.
+ * @param {T} initialValue - The initial value to be stored in localStorage if the key does not exist.
+ * @returns {[T, (value: SetValue<T>) => void]} - An array containing the stored value and a function to update the value.
+ */
 export function useSyncLocalStorage<T>(
 	key: string,
 	initialValue: T
 ): [T, (value: SetValue<T>) => void] {
-	// Retrieve the initial value from localStorage or use the provided initial value
+	// Function to safely access localStorage
+	const safeLocalStorage = () => {
+		if (typeof window !== 'undefined') {
+			return window.localStorage;
+		}
+		return undefined; // or a mock localStorage object, if needed
+	};
+
 	const [storedValue, setStoredValue] = useState<T>(() => {
 		try {
-			const item = window.localStorage.getItem(key);
+			const storage = safeLocalStorage();
+			if (!storage) return initialValue;
+			const item = storage.getItem(key);
 			return item ? (JSON.parse(item) as T) : initialValue;
 		} catch (error) {
 			console.log(error);
@@ -17,27 +36,30 @@ export function useSyncLocalStorage<T>(
 		}
 	});
 
-	// A function to set value in localStorage and update local state
 	const setValue = (value: SetValue<T>) => {
 		try {
-			// Allow for value to be a function so we have the same API as useState
+			const storage = safeLocalStorage();
+			if (!storage) return;
+
 			const valueToStore =
 				value instanceof Function ? value(storedValue) : value;
 			setStoredValue(valueToStore);
-			window.localStorage.setItem(key, JSON.stringify(valueToStore));
-			window.dispatchEvent(new Event('local-storage'));
+			storage.setItem(key, JSON.stringify(valueToStore));
+			if (typeof window !== 'undefined') {
+				window.dispatchEvent(new Event(LOCAL_STORAGE_EVENT_TYPE));
+			}
 		} catch (error) {
 			console.log(error);
 		}
 	};
 
-	// Effect to handle updates from other components or instances
 	useEffect(() => {
 		const handleStorageChange = () => {
 			try {
-				const newValue = JSON.parse(
-					window.localStorage.getItem(key) as string
-				) as T;
+				const storage = safeLocalStorage();
+				if (!storage) return;
+
+				const newValue = JSON.parse(storage.getItem(key) as string) as T;
 				if (newValue !== storedValue) {
 					setStoredValue(newValue);
 				}
@@ -46,10 +68,15 @@ export function useSyncLocalStorage<T>(
 			}
 		};
 
-		window.addEventListener('local-storage', handleStorageChange);
-		return () => {
-			window.removeEventListener('local-storage', handleStorageChange);
-		};
+		if (typeof window !== 'undefined') {
+			window.addEventListener(LOCAL_STORAGE_EVENT_TYPE, handleStorageChange);
+			return () => {
+				window.removeEventListener(
+					LOCAL_STORAGE_EVENT_TYPE,
+					handleStorageChange
+				);
+			};
+		}
 	}, [key, storedValue]);
 
 	return [storedValue, setValue];
