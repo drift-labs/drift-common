@@ -219,7 +219,8 @@ const createDriftActions = (
 
 	const handleWalletConnect = async (
 		authority: PublicKey,
-		adapter: Adapter
+		adapter: Adapter,
+		subscribeToDriftUsers = true
 	) => {
 		const state = get();
 		state.clearUserData();
@@ -228,19 +229,26 @@ const createDriftActions = (
 		if (!driftClient) return;
 
 		try {
-			driftClient.updateWallet(adapter as IWallet);
-			const userAccounts = await fetchAndSubscribeToUsersAndSubaccounts(
-				driftClient,
-				authority
-			);
-			if (userAccounts.length > 0) {
-				driftClient.switchActiveUser(userAccounts[0].subAccountId);
-			}
+			if (subscribeToDriftUsers) {
+				driftClient.updateWallet(adapter as IWallet);
 
-			set((s) => {
-				s.authority = authority;
-				s.subscribedToSubaccounts = true;
-			});
+				const userAccounts = await fetchAndSubscribeToUsersAndSubaccounts(
+					driftClient,
+					authority
+				);
+				if (userAccounts.length > 0) {
+					driftClient.switchActiveUser(userAccounts[0].subAccountId);
+				}
+				
+				set((s) => {
+					s.authority = authority;
+					s.subscribedToSubaccounts = true;
+				});
+			} else {
+				set((s) => {
+					s.authority = authority;
+				});
+			}
 		} catch (err) {
 			console.log('failed to subscribe to users');
 			console.log(err);
