@@ -1,13 +1,13 @@
 import { sleep, COMMON_UTILS } from '..';
-import Redis, { RedisOptions } from 'ioredis';
+import Redis, { Cluster, RedisOptions } from 'ioredis';
 
 const BULK_WRITE_CHUNK_SIZE = 500;
 const BULK_READ_CHUNK_SIZE = 1000;
 const CHUNK_SLEEP_TIME = 100;
 
-export enum RedisClientType {
-	EXCHANGE = 0,
-	USER_MAP = 1,
+export enum RedisClientPrefix {
+	EXCHANGE = '',
+	USER_MAP = 'usermap-server:',
 }
 
 function isWrite() {
@@ -42,36 +42,101 @@ function isRead(
 	return descriptor;
 }
 
+const getTlsConfiguration = () => {
+	if (
+		process.env.RUNNING_LOCAL === 'true' &&
+		process.env.LOCAL_CACHE === 'true'
+	) {
+		console.log('Redis: Running LOCAL with LOCAL cache');
+		return undefined;
+	}
+	if (process.env.RUNNING_LOCAL === 'true') {
+		console.log('Redis: Running LOCAL with REMOTE cache');
+		return {
+			checkServerIdentity: () => {
+				return undefined;
+			},
+		};
+	}
+	console.log('Redis: Making a tls connection');
+	return {};
+};
+
+export const getRedisClusterClient = (
+	host: string,
+	port: string,
+	prefix: string,
+	opts?: RedisOptions
+): Cluster => {
+	if (host && port) {
+		console.log(`Connecting to configured cluster redis:: ${host}:${port}`);
+
+		const redisClient = new Redis.Cluster(
+			[
+				{
+					host,
+					port: parseInt(port, 10),
+				},
+			],
+			{
+				keyPrefix: prefix,
+				clusterRetryStrategy: (times) => {
+					const delay = Math.min(times * 1000, 10000);
+					console.log(
+						`Reconnecting to Redis in ${delay}ms... (retries: ${times})`
+					);
+					return delay;
+				},
+				dnsLookup: (address, callback) => callback(null, address),
+				redisOptions: {
+					reconnectOnError: (err) => {
+						const targetError = 'ECONNREFUSED';
+						if (err.message.includes(targetError)) {
+							console.log(
+								`Redis error: ${targetError}. Attempting to reconnect...`
+							);
+							return true;
+						}
+						return false;
+					},
+					maxRetriesPerRequest: null,
+					tls: getTlsConfiguration(),
+				},
+				...(opts ?? {}),
+			}
+		);
+
+		redisClient.on('connect', () => {
+			console.log('Connected to Redis.');
+		});
+
+		redisClient.on('error', (err) => {
+			console.error('Redis error:', err);
+		});
+
+		redisClient.on('reconnecting', () => {
+			console.log('Reconnecting to Redis...');
+		});
+
+		return redisClient;
+	}
+
+	throw Error('Missing redis client configuration');
+};
+
 export const getRedisClient = (
 	host: string,
 	port: string,
-	db: number,
+	prefix: string,
 	opts?: RedisOptions
 ): Redis => {
 	if (host && port) {
 		console.log(`Connecting to configured redis:: ${host}:${port}`);
 
-		const getTlsConfiguration = () => {
-			if (
-				process.env.RUNNING_LOCAL === 'true' &&
-				process.env.LOCAL_CACHE === 'true'
-			) {
-				return undefined;
-			}
-			if (process.env.RUNNING_LOCAL === 'true') {
-				return {
-					checkServerIdentity: () => {
-						return undefined;
-					},
-				};
-			}
-			return {};
-		};
-
 		const redisClient = new Redis({
 			host,
 			port: parseInt(port, 10),
-			db,
+			keyPrefix: prefix,
 			...(opts ?? {}),
 			retryStrategy: (times) => {
 				const delay = Math.min(times * 1000, 10000);
@@ -109,8 +174,7 @@ export const getRedisClient = (
 		return redisClient;
 	}
 
-	console.log(`Using default redis`);
-	return new Redis({ db });
+	throw Error('Missing redis client configuration');
 };
 
 /**
@@ -123,22 +187,29 @@ export const getRedisClient = (
  * - Sorted sets are explained here : https://redis.io/docs/data-types/sorted-sets/
  */
 export class RedisClient {
-	private client: Redis;
+	private client: Redis | Cluster;
 
 	connectionPromise: Promise<void>;
 
 	constructor({
 		host = process.env.ELASTICACHE_HOST ?? 'localhost',
 		port = process.env.ELASTICACHE_PORT ?? '6379',
-		db = RedisClientType.EXCHANGE,
+		prefix = RedisClientPrefix.EXCHANGE,
 		opts,
+		cluster = process.env.LOCAL_CACHE === 'true' &&
+			process.env.RUNNING_LOCAL === 'true',
 	}: {
 		host?: string;
 		port?: string;
-		db?: RedisClientType;
+		prefix?: RedisClientPrefix;
 		opts?: RedisOptions;
+		cluster?: boolean;
 	}) {
-		this.client = getRedisClient(host, port, db, opts);
+		if (cluster) {
+			this.client = getRedisClusterClient(host, port, prefix, opts);
+			return;
+		}
+		this.client = getRedisClient(host, port, prefix, opts);
 	}
 
 	/**
