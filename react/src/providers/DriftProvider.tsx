@@ -6,9 +6,9 @@ import { useEmulation } from '../hooks/useEmulation';
 import { useGeoBlocking } from '../hooks/useGeoBlocking';
 import { useCommonDriftStore } from '../stores';
 import DriftWalletProvider from './DriftWalletProvider';
-import { DRIFT_WALLET_PROVIDERS } from '../constants/wallets';
 import { DriftClientConfig } from '@drift-labs/sdk';
 import { Breakpoints, useSyncScreenSize } from '../stores/useScreenSizeStore';
+import { WalletAdapter } from '@solana/wallet-adapter-base';
 
 export interface AppSetupProps {
 	priorityFeePollingMultiplier: number;
@@ -36,6 +36,7 @@ type DriftAppHooksProps = {
 export type DriftProviderProps = {
 	disableAutoconnect?: boolean;
 	autoconnectionDelay?: number;
+	wallets?: WalletAdapter[];
 } & DriftAppHooksProps;
 
 const DriftProviderInner = (props: DriftAppHooksProps) => {
@@ -68,7 +69,7 @@ const DriftProvider = (
 	return (
 		<>
 			<DriftWalletProvider
-				wallets={DRIFT_WALLET_PROVIDERS}
+				wallets={props.wallets}
 				disableAutoconnect={props.disableAutoconnect}
 				autoconnectionDelay={props.autoconnectionDelay}
 			>

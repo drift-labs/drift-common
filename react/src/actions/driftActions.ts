@@ -239,7 +239,7 @@ const createDriftActions = (
 				if (userAccounts.length > 0) {
 					driftClient.switchActiveUser(userAccounts[0].subAccountId);
 				}
-				
+
 				set((s) => {
 					s.authority = authority;
 					s.subscribedToSubaccounts = true;
