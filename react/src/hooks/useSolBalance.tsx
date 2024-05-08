@@ -2,7 +2,6 @@ import { PublicKey } from '@drift-labs/sdk';
 import { BigNum, LAMPORTS_EXP } from '@drift-labs/sdk';
 import { Connection } from '@solana/web3.js';
 import { useEffect, useRef } from 'react';
-import { useInterval } from 'react-use';
 import { useCommonDriftStore } from '../stores';
 import { useWalletContext } from './useWalletContext';
 
@@ -63,9 +62,17 @@ export const useSolBalance = () => {
 		updateBalance();
 	}, [connected, connection]);
 
-	useInterval(() => {
+	useEffect(() => {
+		if (Env.basePollingRateMs === 0) return;
+
 		if (connected && !balanceHasLoaded) {
-			updateBalance();
+			const interval = setInterval(() => {
+				updateBalance();
+			}, Env.basePollingRateMs);
+
+			return () => {
+				clearInterval(interval);
+			};
 		}
-	}, Env.basePollingRateMs);
+	}, [Env.basePollingRateMs, connected, balanceHasLoaded]);
 };
