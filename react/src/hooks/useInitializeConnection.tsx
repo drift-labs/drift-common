@@ -36,6 +36,7 @@ const useInitializeConnection = (
 			newRpc: rpcToUse,
 			newDriftEnv: Env.driftEnv,
 			additionalDriftClientConfig,
+			subscribeToAccounts: Env.subscribeToAccounts ?? true,
 		});
 	};
 

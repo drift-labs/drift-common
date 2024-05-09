@@ -62,16 +62,23 @@ const createDriftActions = (
 	};
 
 	/**
-	 * Updates connection AND creates new driftClient instance
+	 *
+	 * @param newRpc Rpc URL to be updated to
+	 * @param newDriftEnv Drift environment to be updated to
+	 * @param subscribe Whether to subscribe to the new connection. Default is true.
+	 * @param additionalDriftClientConfig Additional drift client configuration
+	 * @returns
 	 */
 	const updateConnection = async ({
 		newRpc,
 		newDriftEnv,
+		subscribeToAccounts = true,
 		additionalDriftClientConfig = {},
 	}: {
 		newRpc: RpcEndpoint;
 		newDriftEnv?: DriftEnv;
 		additionalDriftClientConfig?: Partial<DriftClientConfig>;
+		subscribeToAccounts?: boolean;
 	}) => {
 		const storeState = get();
 		const Env = storeState.env;
@@ -172,7 +179,9 @@ const createDriftActions = (
 			s.sdkConfig = sdkConfig;
 		});
 
-		await subscribeToDriftClientData();
+		if (subscribeToAccounts) {
+			await subscribeToDriftClientData();
+		}
 	};
 
 	/*

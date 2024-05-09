@@ -12,6 +12,7 @@ import { WalletAdapter } from '@solana/wallet-adapter-base';
 
 export interface AppSetupProps {
 	priorityFeePollingMultiplier: number;
+	subscribeToAccounts?: boolean; // default is true
 }
 
 type DriftAppHooksProps = {
@@ -21,6 +22,7 @@ type DriftAppHooksProps = {
 		emulation?: boolean;
 		geoblocking?: boolean;
 		initConnection?: boolean;
+		subscribeSolBalance?: boolean;
 	};
 	geoBlocking?: {
 		callback?: () => void;
@@ -55,7 +57,7 @@ const DriftProviderInner = (props: DriftAppHooksProps) => {
 		!props.disable?.initConnection,
 		props?.additionalDriftClientConfig
 	);
-	useSolBalance();
+	useSolBalance(props.disable?.subscribeSolBalance);
 	useSyncScreenSize(props.breakpoints);
 
 	// not sure why this doesn't work in drift provider, but works in app setup

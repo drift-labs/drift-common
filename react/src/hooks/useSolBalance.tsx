@@ -8,7 +8,7 @@ import { useWalletContext } from './useWalletContext';
 /**
  * Keeps SOL balance updated in app store. Only use once across the app, and retrieve balance from the store in components
  */
-export const useSolBalance = () => {
+export const useSolBalance = (disable = false) => {
 	const listenerId = useRef<number | null>(null);
 	const wallet = useWalletContext();
 	const connected = wallet?.connected;
@@ -35,6 +35,8 @@ export const useSolBalance = () => {
 	};
 
 	const updateBalance = () => {
+		if (disable) return;
+
 		if (connected && connection && wallet?.publicKey) {
 			getBalance(wallet.publicKey);
 
@@ -60,7 +62,7 @@ export const useSolBalance = () => {
 
 	useEffect(() => {
 		updateBalance();
-	}, [connected, connection]);
+	}, [connected, connection, disable]);
 
 	useEffect(() => {
 		if (Env.basePollingRateMs === 0) return;
@@ -74,5 +76,5 @@ export const useSolBalance = () => {
 				clearInterval(interval);
 			};
 		}
-	}, [Env.basePollingRateMs, connected, balanceHasLoaded]);
+	}, [Env.basePollingRateMs, connected, balanceHasLoaded, disable]);
 };
