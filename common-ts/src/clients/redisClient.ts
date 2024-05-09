@@ -62,6 +62,28 @@ const getTlsConfiguration = () => {
 	return {};
 };
 
+const getNatMap = () => {
+	if (
+		process.env.RUNNING_LOCAL === 'true' &&
+		process.env.LOCAL_CACHE === 'false'
+	) {
+		console.log('Redis: Getting NATMAP for remote connection');
+		const natMap = process.env?.NAT_MAP
+			? JSON.parse(process.env.NAT_MAP)
+			: false;
+		console.log(`NATMAP: ${process.env.NAT_MAP}`);
+		if (!natMap) {
+			throw new Error(
+				'NATMAP not found. When running the openElasticacheTunnel script copy the output into your terminal'
+			);
+		}
+
+		return natMap;
+	}
+
+	return {};
+};
+
 export const getRedisClusterClient = (
 	host: string,
 	port: string,
@@ -80,6 +102,7 @@ export const getRedisClusterClient = (
 			],
 			{
 				keyPrefix: prefix,
+				natMap: getNatMap(),
 				clusterRetryStrategy: (times) => {
 					const delay = Math.min(times * 1000, 10000);
 					console.log(
