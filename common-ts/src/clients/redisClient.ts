@@ -129,6 +129,28 @@ export const getRedisClusterClient = (
 			}
 		);
 
+		const waitForNodes = (client: Cluster, timeout = 5000, interval = 50) => {
+			return new Promise<void>((resolve, reject) => {
+				const startTime = Date.now();
+
+				function check() {
+					if (client.nodes('all').length > 0) {
+						resolve();
+					} else if (Date.now() - startTime > timeout) {
+						reject(new Error('Timeout waiting for nodes'));
+					} else {
+						setTimeout(check, interval);
+					}
+				}
+
+				check();
+			});
+		};
+
+		waitForNodes(redisClient)
+			.then(() => console.log('Cluster nodes are ready!'))
+			.catch((error) => console.error('Failed to load cluster nodes:', error));
+
 		redisClient.on('connect', () => {
 			console.log('Connected to Redis.');
 		});
