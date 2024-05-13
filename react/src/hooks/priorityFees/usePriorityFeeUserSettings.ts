@@ -1,6 +1,6 @@
-import { useLocalStorage } from 'react-use';
 import { FeeType } from '../../stores';
 import { singletonHook } from 'react-singleton-hook';
+import { useSyncLocalStorage } from '../useSyncLocalStorage';
 
 type UserPriorityFeeSettings = {
 	userPriorityFeeType: FeeType;
@@ -18,7 +18,7 @@ export const usePriorityFeeUserSettings = singletonHook(
 	{ priorityFeeSettings: DEFAULT_SETTING, setPriorityFeeSettings: () => {} },
 	() => {
 		const [priorityFeeSettings, setPriorityFeeSettings] =
-			useLocalStorage<UserPriorityFeeSettings>(
+			useSyncLocalStorage<UserPriorityFeeSettings>(
 				'priorityFeeSettings',
 				DEFAULT_SETTING
 			);

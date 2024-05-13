@@ -62,16 +62,23 @@ const createDriftActions = (
 	};
 
 	/**
-	 * Updates connection AND creates new driftClient instance
+	 *
+	 * @param newRpc Rpc URL to be updated to
+	 * @param newDriftEnv Drift environment to be updated to
+	 * @param subscribe Whether to subscribe to the new connection. Default is true.
+	 * @param additionalDriftClientConfig Additional drift client configuration
+	 * @returns
 	 */
 	const updateConnection = async ({
 		newRpc,
 		newDriftEnv,
+		subscribeToAccounts = true,
 		additionalDriftClientConfig = {},
 	}: {
 		newRpc: RpcEndpoint;
 		newDriftEnv?: DriftEnv;
 		additionalDriftClientConfig?: Partial<DriftClientConfig>;
+		subscribeToAccounts?: boolean;
 	}) => {
 		const storeState = get();
 		const Env = storeState.env;
@@ -172,7 +179,9 @@ const createDriftActions = (
 			s.sdkConfig = sdkConfig;
 		});
 
-		await subscribeToDriftClientData();
+		if (subscribeToAccounts) {
+			await subscribeToDriftClientData();
+		}
 	};
 
 	/*
@@ -219,7 +228,8 @@ const createDriftActions = (
 
 	const handleWalletConnect = async (
 		authority: PublicKey,
-		adapter: Adapter
+		adapter: Adapter,
+		subscribeToDriftUsers = true
 	) => {
 		const state = get();
 		state.clearUserData();
@@ -228,19 +238,26 @@ const createDriftActions = (
 		if (!driftClient) return;
 
 		try {
-			driftClient.updateWallet(adapter as IWallet);
-			const userAccounts = await fetchAndSubscribeToUsersAndSubaccounts(
-				driftClient,
-				authority
-			);
-			if (userAccounts.length > 0) {
-				driftClient.switchActiveUser(userAccounts[0].subAccountId);
-			}
+			if (subscribeToDriftUsers) {
+				driftClient.updateWallet(adapter as IWallet);
 
-			set((s) => {
-				s.authority = authority;
-				s.subscribedToSubaccounts = true;
-			});
+				const userAccounts = await fetchAndSubscribeToUsersAndSubaccounts(
+					driftClient,
+					authority
+				);
+				if (userAccounts.length > 0) {
+					driftClient.switchActiveUser(userAccounts[0].subAccountId);
+				}
+
+				set((s) => {
+					s.authority = authority;
+					s.subscribedToSubaccounts = true;
+				});
+			} else {
+				set((s) => {
+					s.authority = authority;
+				});
+			}
 		} catch (err) {
 			console.log('failed to subscribe to users');
 			console.log(err);

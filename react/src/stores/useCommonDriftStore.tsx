@@ -55,6 +55,7 @@ export interface CommonDriftStore {
 		priorityFeePollingMultiplier: number;
 		rpcOverride: string | undefined;
 		isDev?: boolean;
+		subscribeToAccounts?: boolean;
 	};
 	sdkConfig: ReturnType<typeof initialize> | undefined;
 	driftClient: {

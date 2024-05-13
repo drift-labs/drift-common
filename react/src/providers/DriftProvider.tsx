@@ -6,12 +6,13 @@ import { useEmulation } from '../hooks/useEmulation';
 import { useGeoBlocking } from '../hooks/useGeoBlocking';
 import { useCommonDriftStore } from '../stores';
 import DriftWalletProvider from './DriftWalletProvider';
-import { DRIFT_WALLET_PROVIDERS } from '../constants/wallets';
 import { DriftClientConfig } from '@drift-labs/sdk';
 import { Breakpoints, useSyncScreenSize } from '../stores/useScreenSizeStore';
+import { WalletAdapter } from '@solana/wallet-adapter-base';
 
 export interface AppSetupProps {
 	priorityFeePollingMultiplier: number;
+	subscribeToAccounts?: boolean; // default is true
 }
 
 type DriftAppHooksProps = {
@@ -21,6 +22,7 @@ type DriftAppHooksProps = {
 		emulation?: boolean;
 		geoblocking?: boolean;
 		initConnection?: boolean;
+		subscribeSolBalance?: boolean;
 	};
 	geoBlocking?: {
 		callback?: () => void;
@@ -36,6 +38,7 @@ type DriftAppHooksProps = {
 export type DriftProviderProps = {
 	disableAutoconnect?: boolean;
 	autoconnectionDelay?: number;
+	wallets?: WalletAdapter[];
 } & DriftAppHooksProps;
 
 const DriftProviderInner = (props: DriftAppHooksProps) => {
@@ -54,7 +57,7 @@ const DriftProviderInner = (props: DriftAppHooksProps) => {
 		!props.disable?.initConnection,
 		props?.additionalDriftClientConfig
 	);
-	useSolBalance();
+	useSolBalance(props.disable?.subscribeSolBalance);
 	useSyncScreenSize(props.breakpoints);
 
 	// not sure why this doesn't work in drift provider, but works in app setup
@@ -68,7 +71,7 @@ const DriftProvider = (
 	return (
 		<>
 			<DriftWalletProvider
-				wallets={DRIFT_WALLET_PROVIDERS}
+				wallets={props.wallets}
 				disableAutoconnect={props.disableAutoconnect}
 				autoconnectionDelay={props.autoconnectionDelay}
 			>

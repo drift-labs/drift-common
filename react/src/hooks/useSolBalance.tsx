@@ -2,14 +2,13 @@ import { PublicKey } from '@drift-labs/sdk';
 import { BigNum, LAMPORTS_EXP } from '@drift-labs/sdk';
 import { Connection } from '@solana/web3.js';
 import { useEffect, useRef } from 'react';
-import { useInterval } from 'react-use';
 import { useCommonDriftStore } from '../stores';
 import { useWalletContext } from './useWalletContext';
 
 /**
  * Keeps SOL balance updated in app store. Only use once across the app, and retrieve balance from the store in components
  */
-export const useSolBalance = () => {
+export const useSolBalance = (disable = false) => {
 	const listenerId = useRef<number | null>(null);
 	const wallet = useWalletContext();
 	const connected = wallet?.connected;
@@ -36,6 +35,8 @@ export const useSolBalance = () => {
 	};
 
 	const updateBalance = () => {
+		if (disable) return;
+
 		if (connected && connection && wallet?.publicKey) {
 			getBalance(wallet.publicKey);
 
@@ -61,11 +62,19 @@ export const useSolBalance = () => {
 
 	useEffect(() => {
 		updateBalance();
-	}, [connected, connection]);
+	}, [connected, connection, disable]);
 
-	useInterval(() => {
+	useEffect(() => {
+		if (Env.basePollingRateMs === 0) return;
+
 		if (connected && !balanceHasLoaded) {
-			updateBalance();
+			const interval = setInterval(() => {
+				updateBalance();
+			}, Env.basePollingRateMs);
+
+			return () => {
+				clearInterval(interval);
+			};
 		}
-	}, Env.basePollingRateMs);
+	}, [Env.basePollingRateMs, connected, balanceHasLoaded, disable]);
 };
