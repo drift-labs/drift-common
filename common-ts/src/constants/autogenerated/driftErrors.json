@@ -634,7 +634,10 @@
 		"UserIsBeingLiquidated": {
 			"code": 6117,
 			"name": "UserIsBeingLiquidated",
-			"msg": "UserIsBeingLiquidated"
+			"msg": "UserIsBeingLiquidated",
+			"toast": {
+				"message": "Deposit to get out of liquidation territory"
+			}
 		},
 		"LiquidationsOngoing": {
 			"code": 6118,
