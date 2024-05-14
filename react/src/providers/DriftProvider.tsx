@@ -6,9 +6,10 @@ import { useEmulation } from '../hooks/useEmulation';
 import { useGeoBlocking } from '../hooks/useGeoBlocking';
 import { useCommonDriftStore } from '../stores';
 import DriftWalletProvider from './DriftWalletProvider';
-import { DriftClientConfig } from '@drift-labs/sdk';
+import { DriftClientConfig, WhileValidTxSender } from '@drift-labs/sdk';
 import { Breakpoints, useSyncScreenSize } from '../stores/useScreenSizeStore';
 import { WalletAdapter } from '@solana/wallet-adapter-base';
+import { useWhileTxSender } from '../hooks/useWhileTxSender';
 
 export interface AppSetupProps {
 	priorityFeePollingMultiplier: number;
@@ -23,9 +24,15 @@ type DriftAppHooksProps = {
 		geoblocking?: boolean;
 		initConnection?: boolean;
 		subscribeSolBalance?: boolean;
+		whileValidTxSender?: boolean;
 	};
 	geoBlocking?: {
 		callback?: () => void;
+	};
+	whileValidTxSender?: {
+		retryInterval?: WhileValidTxSender['retrySleep'];
+		additionalTxSenderCallbacks?: WhileValidTxSender['additionalTxSenderCallbacks'];
+		additionalConnections?: WhileValidTxSender['additionalConnections'];
 	};
 
 	// instead of making this optional and setting a default, we force the user to provide the breakpoints,
@@ -53,6 +60,13 @@ const DriftProviderInner = (props: DriftAppHooksProps) => {
 	!props.disable?.emulation && useEmulation();
 	!props.disable?.geoblocking && useGeoBlocking(props?.geoBlocking?.callback);
 
+	useWhileTxSender({
+		disable: props.disable?.whileValidTxSender,
+		retryInterval: props.whileValidTxSender?.retryInterval,
+		additionalTxSenderCallbacks:
+			props.whileValidTxSender?.additionalTxSenderCallbacks,
+		additionalConnections: props.whileValidTxSender?.additionalConnections,
+	});
 	useInitializeConnection(
 		!props.disable?.initConnection,
 		props?.additionalDriftClientConfig
