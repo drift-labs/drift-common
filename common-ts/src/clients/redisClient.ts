@@ -160,7 +160,6 @@ export const getRedisClient = (
 			host,
 			port: parseInt(port, 10),
 			keyPrefix: prefix,
-			...(opts ?? {}),
 			retryStrategy: (times) => {
 				const delay = Math.min(times * 1000, 10000);
 				console.log(
@@ -180,6 +179,7 @@ export const getRedisClient = (
 			},
 			maxRetriesPerRequest: null,
 			tls: getTlsConfiguration(),
+			...(opts ?? {}),
 		});
 
 		redisClient.on('connect', () => {
