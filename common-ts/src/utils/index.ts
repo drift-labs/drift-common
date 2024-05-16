@@ -951,6 +951,13 @@ const timedPromise = async <T>(promise: T) => {
 	};
 };
 
+const chunks = <T>(array: readonly T[], size: number): T[][] => {
+	return new Array(Math.ceil(array.length / size))
+		.fill(null)
+		.map((_, index) => index * size)
+		.map((begin) => array.slice(begin, begin + size));
+};
+
 export const COMMON_UTILS = {
 	getIfVaultBalance: getIfVaultBalance,
 	getIfStakingVaultApr: getIfStakingVaultApr,
@@ -968,6 +975,7 @@ export const COMMON_UTILS = {
 	calculateZScore,
 	glueArray,
 	timedPromise,
+	chunks,
 	MATH: {
 		NUM: {
 			mean: calculateMean,
