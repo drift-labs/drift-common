@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { produce } from 'immer';
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
 import { useWindowSize } from 'react-use';
 
 type ScreenSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -24,13 +23,11 @@ export interface ScreenSizeStore {
 	screenSize: ScreenSize;
 }
 
-export const useScreenSizeStore = create(
-	devtools<ScreenSizeStore>((set, get) => ({
-		set: (fn) => set(produce(fn)),
-		get: () => get(),
-		screenSize: 'md',
-	}))
-);
+export const useScreenSizeStore = create<ScreenSizeStore>((set, get) => ({
+	set: (fn) => set(produce(fn)),
+	get: () => get(),
+	screenSize: 'md',
+}));
 
 export type Breakpoints = {
 	xs: number;

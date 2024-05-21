@@ -1,6 +1,5 @@
 import { produce } from 'immer';
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
 import { MarketId, UIMarket } from '@drift/common';
 import { OraclePriceData } from '@drift-labs/sdk';
 
@@ -28,11 +27,9 @@ export interface OraclePriceStore {
 	};
 }
 
-export const useOraclePriceStore = create(
-	devtools<OraclePriceStore>((set, get) => ({
-		set: (fn) => set(produce(fn)),
-		get: () => get(),
-		getMarketPriceData: (market: MarketId) => get().symbolMap[market.key],
-		symbolMap: {},
-	}))
-);
+export const useOraclePriceStore = create<OraclePriceStore>((set, get) => ({
+	set: (fn) => set(produce(fn)),
+	get: () => get(),
+	getMarketPriceData: (market: MarketId) => get().symbolMap[market.key],
+	symbolMap: {},
+}));
