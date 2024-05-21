@@ -312,13 +312,9 @@ export class RedisClient {
 		const chunkedValues = COMMON_UTILS.chunks(values, BULK_WRITE_CHUNK_SIZE);
 
 		for (const valuesChunk of chunkedValues) {
-			const pipeline = this.client.pipeline();
-
 			for (const [key, val] of valuesChunk) {
-				pipeline.set(key, JSON.stringify(val));
+				await this.client.set(key, JSON.stringify(val));
 			}
-
-			await pipeline.exec();
 
 			if (chunkedValues.length > 0) {
 				await sleep(CHUNK_SLEEP_TIME);
@@ -344,16 +340,13 @@ export class RedisClient {
 
 		this.assertConnected();
 
-		const pipeline = this.client.pipeline();
-
 		const chunkedValues = COMMON_UTILS.chunks(values, BULK_WRITE_CHUNK_SIZE);
 
 		for (const valuesChunk of chunkedValues) {
 			for (const [key, val] of valuesChunk) {
-				pipeline.setex(key, expirySeconds, JSON.stringify(val));
+				this.client.setex(key, expirySeconds, JSON.stringify(val));
 			}
 
-			await pipeline.exec();
 			if (chunkedValues.length > 0) {
 				await sleep(CHUNK_SLEEP_TIME);
 			}
@@ -402,14 +395,9 @@ export class RedisClient {
 		const rawValues = [];
 
 		for (const valuesChunk of chunkedValues) {
-			const pipeline = this.client.pipeline();
-
 			for (const key of valuesChunk) {
-				pipeline.get(key);
+				rawValues.push(await this.client.get(key));
 			}
-
-			const response = await pipeline.exec();
-			response.forEach(([, rawValue]) => rawValues.push(rawValue));
 
 			if (chunkedValues.length > 0) {
 				await sleep(20);
@@ -552,18 +540,10 @@ export class RedisClient {
 
 		let count = 0;
 		for (const valuesChunk of chunkedValues) {
-			const pipeline = this.client.pipeline();
-
 			for (const key of valuesChunk) {
-				pipeline.del(key);
+				await this.client.del(key);
+				count++;
 			}
-
-			const response = await pipeline.exec();
-			const sum = response.reduce(
-				(acc, [_, value]: [any, number]) => acc + value,
-				0
-			);
-			count = +sum;
 
 			if (chunkedValues.length > 0) {
 				await sleep(20);
