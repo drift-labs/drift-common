@@ -298,6 +298,12 @@ export class RedisClient {
 		this.client.set(key, JSON.stringify(value));
 	}
 
+	@isWrite()
+	async setRaw(key: string, value) {
+		this.assertConnected();
+		this.client.set(key, value);
+	}
+
 	/**
 	 * IMPORTANT NOTE: non-expiring keys will not be cleared up by the eviction policy, so they must be cleared manually
 	 * @param key
