@@ -945,8 +945,12 @@ const timedPromise = async <T>(promise: T) => {
 	const start = Date.now();
 	const promiseResult = await promise;
 
+	const now = Date.now();
+
 	return {
-		promiseTime: Date.now() - start,
+		startTime: start,
+		endTime: now,
+		promiseTime: now - start,
 		promiseResult,
 	};
 };
