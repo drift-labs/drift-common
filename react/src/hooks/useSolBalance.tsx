@@ -9,7 +9,7 @@ import { useCommonDriftStore } from '../stores';
  */
 export const useSolBalance = (disable = false) => {
 	const listenerId = useRef<number | null>(null);
-	const authority = useCommonDriftStore(s => s.authority);
+	const authority = useCommonDriftStore((s) => s.authority);
 	const connected = !!authority;
 	const balanceHasLoaded = useCommonDriftStore(
 		(s) => s.currentSolBalance.loaded
