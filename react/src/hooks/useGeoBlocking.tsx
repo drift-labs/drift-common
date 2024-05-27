@@ -68,7 +68,11 @@ export const useGeoBlocking = (callback?: () => void) => {
 	useEffect(() => {
 		if (isGeoBlocked && walletContext?.connected) {
 			callback && callback();
-			walletContext?.disconnect();
+
+			// timeout is to minimize race condition that wallet is not fully connected yet before we attempt to disconnect
+			setTimeout(() => {
+				walletContext?.disconnect();
+			}, 3000);
 		}
 	}, [isGeoBlocked, walletContext?.connected]);
 
