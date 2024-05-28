@@ -3,15 +3,14 @@ import { BigNum, LAMPORTS_EXP } from '@drift-labs/sdk';
 import { Connection } from '@solana/web3.js';
 import { useEffect, useRef } from 'react';
 import { useCommonDriftStore } from '../stores';
-import { useWalletContext } from './useWalletContext';
 
 /**
  * Keeps SOL balance updated in app store. Only use once across the app, and retrieve balance from the store in components
  */
 export const useSolBalance = (disable = false) => {
 	const listenerId = useRef<number | null>(null);
-	const wallet = useWalletContext();
-	const connected = wallet?.connected;
+	const authority = useCommonDriftStore((s) => s.authority);
+	const connected = !!authority;
 	const balanceHasLoaded = useCommonDriftStore(
 		(s) => s.currentSolBalance.loaded
 	);
@@ -37,11 +36,11 @@ export const useSolBalance = (disable = false) => {
 	const updateBalance = () => {
 		if (disable) return;
 
-		if (connected && connection && wallet?.publicKey) {
-			getBalance(wallet.publicKey);
+		if (connected && connection && authority) {
+			getBalance(authority);
 
 			const newListenerId = connection.onAccountChange(
-				wallet.publicKey,
+				authority,
 				(accountInfo) => {
 					handleNewBalance(accountInfo.lamports);
 				}

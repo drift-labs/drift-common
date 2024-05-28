@@ -8,6 +8,8 @@ const CHUNK_SLEEP_TIME = 100;
 export enum RedisClientPrefix {
 	EXCHANGE = '',
 	USER_MAP = 'usermap-server:',
+	DLOB = 'dlob:',
+	DLOB_HELIUS = 'dlob-helius:',
 }
 
 function isWrite() {
@@ -526,6 +528,21 @@ export class RedisClient {
 	@isRead
 	async lIndex(key: string, index: number) {
 		const resp = await this.client.lindex(key, index);
+		return resp;
+	}
+	@isWrite()
+	async publish(key: string, value) {
+		const resp = await this.client.publish(key, JSON.stringify(value));
+		return resp;
+	}
+
+	async subscribe(key: string) {
+		const resp = await this.client.subscribe(key);
+		return resp;
+	}
+
+	async unsubscribe(key: string) {
+		const resp = await this.client.unsubscribe(key);
 		return resp;
 	}
 

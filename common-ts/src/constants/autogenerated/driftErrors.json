@@ -457,7 +457,11 @@
 		"NoSpotPositionAvailable": {
 			"code": 6084,
 			"name": "NoSpotPositionAvailable",
-			"msg": "NoSpotPositionAvailable"
+			"msg": "NoSpotPositionAvailable",
+			"toast": {
+				"message": "No Spot Positions Available",
+				"description": "You can only have a maximum of 8 Spot Positions (aka balances) at a time. You can try fully withdrawing an asset or closing an open borrow to make space for a new one."
+			}
 		},
 		"InvalidSpotMarketInitialization": {
 			"code": 6085,

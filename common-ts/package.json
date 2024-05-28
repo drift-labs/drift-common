@@ -35,7 +35,7 @@
 		"lib": "lib"
 	},
 	"engines": {
-		"node": ">=14 <19"
+		"node": ">=14"
 	},
 	"devDependencies": {
 		"@types/mocha": "^10.0.4",
