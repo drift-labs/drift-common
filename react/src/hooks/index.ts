@@ -14,3 +14,4 @@ export * from './oraclePrice';
 export * from './priorityFees';
 export * from './useImmediateInterval';
 export * from './useSyncLocalStorage';
+export * from './useHandleBadRpc';

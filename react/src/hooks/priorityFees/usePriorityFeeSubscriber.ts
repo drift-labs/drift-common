@@ -52,7 +52,7 @@ export const usePriorityFeeSubscriber = (
 		priorityFeeSubscriber.subscribe();
 
 		return () => {
-			subscriber.current?.unsubscribe();
+			priorityFeeSubscriber?.unsubscribe();
 		};
 	}, [connection, pollingFrequencyMs, priorityFeeStrategy]);
 
