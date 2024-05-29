@@ -61,7 +61,7 @@ export const useSyncPriorityFeeStore = ({
 		}
 
 		const latestSubscriberFeeResult =
-			priorityFeeSubscriberRef.current.lastAvgStrategyResult; // TODO: temp use lastAvgStrategyResult instead of lastCustomStrategyResult first since the latter is somehow returning 0
+			priorityFeeSubscriberRef.current.lastCustomStrategyResult;
 
 		latestSubscriberFeeSample.current = latestSubscriberFeeResult;
 	}, [priorityFeeSubscriberRef.current]);

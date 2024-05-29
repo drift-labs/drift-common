@@ -22,10 +22,12 @@ const movingWindowTargetPercentileStrategy = (
 			if (!newSamples?.length) return 0;
 
 			const filteredSamples = newSamples.filter(
-				(sample) => sample.slot > LAST_SEEN_SLOT_IN_SAMPLES
+				(sample) =>
+					sample.slot > LAST_SEEN_SLOT_IN_SAMPLES &&
+					sample.prioritizationFee > 0
 			);
 
-			RECENT_SAMPLES.unshift(newSamples.map((s) => s.prioritizationFee));
+			RECENT_SAMPLES.unshift(filteredSamples.map((s) => s.prioritizationFee));
 			RECENT_SAMPLES.splice(feeSubscriptionSlotLookback);
 
 			const allRecentSamplesAscendingSorted = RECENT_SAMPLES.flat().sort(
