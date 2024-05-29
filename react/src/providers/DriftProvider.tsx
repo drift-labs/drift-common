@@ -12,6 +12,7 @@ import { WalletAdapter } from '@solana/wallet-adapter-base';
 
 export interface AppSetupProps {
 	priorityFeePollingMultiplier: number;
+	txSenderRetryInterval: number;
 	subscribeToAccounts?: boolean; // default is true
 }
 

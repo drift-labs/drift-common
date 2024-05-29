@@ -56,6 +56,8 @@ export interface CommonDriftStore {
 		rpcOverride: string | undefined;
 		isDev?: boolean;
 		subscribeToAccounts?: boolean;
+		txSenderRetryInterval: number;
+		additionalTxSenderCallbacks?: ((base58EncodedTx: string) => void)[];
 	};
 	sdkConfig: ReturnType<typeof initialize> | undefined;
 	driftClient: {
@@ -100,14 +102,7 @@ const defaultState = {
 
 let useCommonDriftStore: UseBoundStore<StoreApi<CommonDriftStore>>;
 
-const initializeDriftStore = (Env: {
-	driftEnv: DriftEnv;
-	historyServerUrl: string;
-	basePollingRateMs: number;
-	rpcOverride: string | undefined;
-	priorityFeePollingMultiplier: number;
-	isDev?: boolean;
-}) => {
+const initializeDriftStore = (Env: CommonDriftStore['env']) => {
 	if (!useCommonDriftStore) {
 		useCommonDriftStore = create<CommonDriftStore>()((set, get) => {
 			const setProducerFn = (fn: (s: CommonDriftStore) => void) =>

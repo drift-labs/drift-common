@@ -7,8 +7,8 @@ import {
 	IWallet,
 	PollingDriftClientAccountSubscriber,
 	PublicKey,
-	RetryTxSender,
 	Wallet,
+	WhileValidTxSender,
 	getMarketsAndOraclesForSubscription,
 	initialize,
 } from '@drift-labs/sdk';
@@ -83,6 +83,7 @@ const createDriftActions = (
 		const storeState = get();
 		const Env = storeState.env;
 		const driftEnvToUse = newDriftEnv || Env.driftEnv;
+		const additionalTxSenderCallbacks = Env.additionalTxSenderCallbacks;
 		const sdkConfig = initialize({ env: driftEnvToUse });
 		let rpcToUse = newRpc?.value;
 
@@ -164,10 +165,13 @@ const createDriftActions = (
 			)
 			.map((rpc) => new Connection(rpc.value, DEFAULT_COMMITMENT_LEVEL));
 
-		newDriftClient.txSender = new RetryTxSender({
+		newDriftClient.txSender = new WhileValidTxSender({
 			connection: newConnection,
-			additionalConnections,
 			wallet: newDriftClient.wallet,
+			retrySleep: Env.txSenderRetryInterval,
+			additionalConnections,
+			additionalTxSenderCallbacks,
+			txHandler: newDriftClient.txHandler,
 		});
 
 		set((s) => {
