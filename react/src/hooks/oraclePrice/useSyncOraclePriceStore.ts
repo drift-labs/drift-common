@@ -13,7 +13,7 @@ import {
 } from '../../stores';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useImmer } from 'use-immer';
-import { UIMarket } from '@drift/common';
+import { ENUM_UTILS, UIMarket } from '@drift/common';
 import { useInterval } from 'react-use';
 
 type OracleClient = ReturnType<typeof getOracleClient>;
@@ -59,28 +59,25 @@ export const useSyncOraclePriceStore = (
 			if (!areOracleClientsReady)
 				throw new Error('Oracle clients are not ready');
 
-			switch (oracleSource) {
-				case OracleSource.PYTH:
-					return pythClient;
-				case OracleSource.PYTH_1K:
-					return pyth1KClient;
-				case OracleSource.PYTH_1M:
-					return pyth1MClient;
-				case OracleSource.PYTH_STABLE_COIN:
-					return pythStableCoin;
-				case OracleSource.SWITCHBOARD:
-					return switchboardClient;
-				case OracleSource.Prelaunch:
-					return preLaunchClient;
-				default:
-					throw new Error(`Unaccounted for oracle type in useSyncOraclePriceStore ${JSON.stringify(
-						oracleSource
-					)}. Available clients: 
-					pythClient: ${JSON.stringify(pythClient)},
-					pyth1KClient: ${JSON.stringify(pyth1KClient)},
-					pyth1MClient: ${JSON.stringify(pyth1MClient)},
-					pythStableCoin: ${JSON.stringify(pythStableCoin)},
-					switchboardClient: ${JSON.stringify(switchboardClient)}`);
+			if (ENUM_UTILS.match(oracleSource, OracleSource.PYTH)) {
+				return pythClient;
+			} else if (ENUM_UTILS.match(oracleSource, OracleSource.PYTH_1K)) {
+				return pyth1KClient;
+			} else if (ENUM_UTILS.match(oracleSource, OracleSource.PYTH_1M)) {
+				return pyth1MClient;
+			} else if (
+				ENUM_UTILS.match(oracleSource, OracleSource.PYTH_STABLE_COIN)
+			) {
+				return pythStableCoin;
+			} else if (ENUM_UTILS.match(oracleSource, OracleSource.SWITCHBOARD)) {
+				return switchboardClient;
+			} else if (ENUM_UTILS.match(oracleSource, OracleSource.Prelaunch)) {
+				return preLaunchClient;
+			} else {
+				console.error(JSON.stringify(oracleSource));
+				throw new Error(
+					`Unaccounted for oracle type in useSyncOraclePriceStore.`
+				);
 			}
 		},
 		[areOracleClientsReady]

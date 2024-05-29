@@ -3,7 +3,7 @@ import {
 	PriorityFeeStrategyFactory,
 	SANITY_CHECK_ABS_MAX_FEE_IN_SOL,
 } from '@drift/common';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
 	BOOSTED_MULITPLIER,
 	FEE_SUBSCRIPTION_SLOT_LOOKBACK,
@@ -31,11 +31,14 @@ export const useSyncPriorityFeeStore = ({
 	userCustomMaxPriorityFeeCap: number;
 	userCustomPriorityFee: number | null;
 }) => {
-	const percentilePriorityFeeStrategy =
-		PriorityFeeStrategyFactory.movingWindowTargetPercentileStrategy(
-			targetFeePercentile,
-			FEE_SUBSCRIPTION_SLOT_LOOKBACK
-		);
+	const percentilePriorityFeeStrategy = useMemo(
+		() =>
+			PriorityFeeStrategyFactory.movingWindowTargetPercentileStrategy(
+				targetFeePercentile,
+				FEE_SUBSCRIPTION_SLOT_LOOKBACK
+			),
+		[targetFeePercentile]
+	);
 
 	const pollingFrequencyMs = usePriorityFeesPollingRate();
 	const setPriorityFeeStore = usePriorityFeeStore((s) => s.set);
@@ -50,7 +53,7 @@ export const useSyncPriorityFeeStore = ({
 		percentilePriorityFeeStrategy
 	);
 
-	const latestSubscriberFeeSample = useRef<number>();
+	const latestSubscriberFeeSample = useRef<number>(0);
 
 	const updateRecentSubscriberFeeHistory = useCallback(() => {
 		if (!priorityFeeSubscriberRef.current) {
@@ -58,7 +61,7 @@ export const useSyncPriorityFeeStore = ({
 		}
 
 		const latestSubscriberFeeResult =
-			priorityFeeSubscriberRef.current.lastCustomStrategyResult;
+			priorityFeeSubscriberRef.current.lastAvgStrategyResult; // TODO: temp use lastAvgStrategyResult instead of lastCustomStrategyResult first since the latter is somehow returning 0
 
 		latestSubscriberFeeSample.current = latestSubscriberFeeResult;
 	}, [priorityFeeSubscriberRef.current]);
@@ -146,9 +149,11 @@ export const useSyncPriorityFeeStore = ({
 	);
 
 	useEffect(() => {
-		setPriorityFeeStore((s) => {
-			s.ready = true;
-			s.getPriorityFeeToUse = getPriorityFeeToUse;
-		});
-	}, [getPriorityFeeToUse]);
+		if (latestSubscriberFeeSample.current > 0 && getPriorityFeeToUse) {
+			setPriorityFeeStore((s) => {
+				s.ready = true;
+				s.getPriorityFeeToUse = getPriorityFeeToUse;
+			});
+		}
+	}, [getPriorityFeeToUse, latestSubscriberFeeSample.current]);
 };
