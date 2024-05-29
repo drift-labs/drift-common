@@ -168,7 +168,6 @@ const createDriftActions = (
 			connection: newConnection,
 			additionalConnections,
 			wallet: newDriftClient.wallet,
-			txHandler: newDriftClient.txHandler,
 		});
 
 		set((s) => {
