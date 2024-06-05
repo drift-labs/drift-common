@@ -1,4 +1,4 @@
-import { useCurrentRpc } from '@drift-labs/react';
+import { useCurrentRpc } from './useCurrentRpc';
 import { EnvironmentConstants, getResponseTime } from '@drift/common';
 import { useEffect } from 'react';
 import useIsMainnet from './useIsMainnet';
