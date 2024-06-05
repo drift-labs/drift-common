@@ -515,6 +515,11 @@ export class RedisClient {
 		const resp = await this.client.lrem(key, count, element);
 		return resp;
 	}
+	@isWrite()
+	async lSet(key: string, index: number, element: string | number | Buffer) {
+		const resp = await this.client.lset(key, index, element);
+		return resp;
+	}
 	@isRead
 	async lRange(key: string, start: number, stop: number) {
 		const resp = await this.client.lrange(key, start, stop);
