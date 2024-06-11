@@ -402,20 +402,27 @@ export class RedisClient {
 		const chunkedValues = COMMON_UTILS.chunks(keys, BULK_READ_CHUNK_SIZE);
 		const rawValues = [];
 
-		for (const valuesChunk of chunkedValues) {
-			for (const key of valuesChunk) {
-				rawValues.push(await this.client.get(key));
-			}
+		const chunkPromises = chunkedValues.map(async (valuesChunk, index) => {
+			const chunkResults = await Promise.all(
+				valuesChunk.map((key) => this.client.get(key))
+			);
 
-			if (chunkedValues.length > 0) {
+			if (index < chunkedValues.length - 1) {
 				await sleep(20);
 			}
+
+			return chunkResults;
+		});
+
+		const allChunks = await Promise.all(chunkPromises);
+
+		for (const chunk of allChunks) {
+			rawValues.push(...chunk);
 		}
 
 		const parsedValues = rawValues.map((value) => {
 			if (value) {
-				const parsedValue = JSON.parse(value);
-				return parsedValue;
+				return JSON.parse(value);
 			}
 			return undefined;
 		});
