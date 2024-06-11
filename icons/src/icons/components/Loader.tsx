@@ -32,7 +32,6 @@ const Loader = (allProps: IconProps) => {
 						cy={12}
 						r={8.5}
 						stroke="url(#prefix__paint2_angular_53_6593)"
-						strokeOpacity={0.2}
 						strokeWidth={3}
 					/>
 					<circle
@@ -40,7 +39,6 @@ const Loader = (allProps: IconProps) => {
 						cy={12}
 						r={8.5}
 						stroke="url(#prefix__paint3_angular_53_6593)"
-						strokeOpacity={0.1}
 						strokeWidth={3}
 					/>
 					<circle
@@ -48,7 +46,6 @@ const Loader = (allProps: IconProps) => {
 						cy={12}
 						r={8.5}
 						stroke="url(#prefix__paint4_linear_53_6593)"
-						strokeOpacity={0.2}
 						strokeWidth={3}
 					/>
 					<defs>
@@ -83,7 +80,7 @@ const Loader = (allProps: IconProps) => {
 							y2={12}
 							gradientUnits="userSpaceOnUse"
 						>
-							<stop stopColor="#fff" />
+							<stop stopColor="#fff" stopOpacity={0.2} />
 							<stop offset={1} stopOpacity={0} />
 						</linearGradient>
 						<radialGradient
@@ -94,7 +91,7 @@ const Loader = (allProps: IconProps) => {
 							gradientUnits="userSpaceOnUse"
 							gradientTransform="matrix(2.4098 4.07956 -4.07299 2.40593 2.527 9.03)"
 						>
-							<stop offset={0.926} stopColor="#fff" />
+							<stop offset={0.926} stopColor="#fff" stopOpacity={0.2} />
 							<stop offset={1} stopColor="#fff" stopOpacity={0} />
 						</radialGradient>
 						<radialGradient
@@ -105,7 +102,7 @@ const Loader = (allProps: IconProps) => {
 							gradientUnits="userSpaceOnUse"
 							gradientTransform="rotate(51.982 -4.643 9.159) scale(3.09405 4.64473)"
 						>
-							<stop offset={0.086} stopColor="#fff" />
+							<stop offset={0.086} stopColor="#fff" stopOpacity={0.1} />
 							<stop offset={0.941} stopColor="#fff" stopOpacity={0} />
 						</radialGradient>
 					</defs>
