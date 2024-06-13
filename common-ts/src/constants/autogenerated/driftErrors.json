@@ -1504,6 +1504,21 @@
 			"code": 6257,
 			"name": "CantReclaimRent",
 			"msg": "CantReclaimRent"
+		},
+		"InsuranceFundOperationPaused": {
+			"code": 6258,
+			"name": "InsuranceFundOperationPaused",
+			"msg": "InsuranceFundOperationPaused"
+		},
+		"NoUnsettledPnl": {
+			"code": 6259,
+			"name": "NoUnsettledPnl",
+			"msg": "NoUnsettledPnl"
+		},
+		"PnlPoolCantSettleUser": {
+			"code": 6260,
+			"name": "PnlPoolCantSettleUser",
+			"msg": "PnlPoolCantSettleUser"
 		}
 	},
 	"errorCodesMap": {
@@ -1764,6 +1779,9 @@
 		"6254": "UserReduceOnly",
 		"6255": "InvalidMarginCalculation",
 		"6256": "CantPayUserInitFee",
-		"6257": "CantReclaimRent"
+		"6257": "CantReclaimRent",
+		"6258": "InsuranceFundOperationPaused",
+		"6259": "NoUnsettledPnl",
+		"6260": "PnlPoolCantSettleUser"
 	}
 }
