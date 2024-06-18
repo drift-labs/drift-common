@@ -369,7 +369,7 @@ export class SerializableOrderActionRecord implements Event<OrderActionRecord> {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) makerPnl: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) takerFee: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) makerRebate: BN | null;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) referrerReward: BN | null;
+	@autoserializeAs(Number) referrerReward: number | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) refereeDiscount: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	quoteAssetAmountSurplus: BN | null;
@@ -433,9 +433,7 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	//@ts-ignore
 	makerRebate: BigNum | null;
 
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	referrerReward: BigNum | null;
+	@autoserializeAs(Number) referrerReward: number | null;
 
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
