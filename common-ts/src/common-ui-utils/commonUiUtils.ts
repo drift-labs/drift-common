@@ -4,12 +4,20 @@ import {
 	BASE_PRECISION_EXP,
 	BN,
 	BigNum,
+	DevnetPerpMarkets,
+	DevnetSpotMarkets,
 	DriftClient,
+	DriftEnv,
 	IWallet,
+	MainnetPerpMarkets,
+	MainnetSpotMarkets,
 	MarketType,
+	OracleInfo,
+	OracleSource,
 	OrderType,
 	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
+	PerpMarketConfig,
 	PositionDirection,
 	PublicKey,
 	QUOTE_PRECISION_EXP,
@@ -45,6 +53,133 @@ export const EMPTY_AUCTION_PARAMS: AuctionParams = {
 	auctionStartPrice: null,
 	auctionEndPrice: null,
 	auctionDuration: null,
+};
+
+const S3_MARKETS_MAINNET =
+	'https://market-configs-test.s3.eu-west-1.amazonaws.com/markets.json';
+const S3_MARKETS_DEVNET =
+	'https://market-configs-test.s3.eu-west-1.amazonaws.com/markets-devnet.json';
+
+type S3PerpMarket = {
+	fullName: string;
+	symbol: string;
+	baseAssetSymbol: string;
+	marketIndex: number;
+	oracle: string;
+	launchTs: number;
+	oracleSource: string;
+};
+
+type S3SpotMarket = {
+	symbol: string;
+	marketIndex: number;
+	oracle: string;
+	launchTs: number;
+	oracleSource: string;
+	mint: string;
+	precisionExp: number;
+	coingeckoId: string;
+	serumMarket?: string;
+	phoenixMarket?: string;
+};
+
+const fetchMarketConfigs = async (
+	env: DriftEnv
+): Promise<{
+	perpMarkets: PerpMarketConfig[];
+	spotMarkets: SpotMarketConfig[];
+}> => {
+	const isMainnet = env === 'mainnet-beta';
+
+	let perpMarkets = [];
+	let spotMarkets = [];
+
+	const perpMarketMapper = (mkt: S3PerpMarket): PerpMarketConfig => {
+		return {
+			fullName: mkt.fullName,
+			symbol: mkt.symbol,
+			baseAssetSymbol: mkt.baseAssetSymbol,
+			marketIndex: mkt.marketIndex,
+			oracle: new PublicKey(mkt.oracle),
+			launchTs: mkt.launchTs,
+			oracleSource: OracleSource[mkt.oracleSource],
+		};
+	};
+
+	const spotMarketMapper = (mkt: S3SpotMarket): SpotMarketConfig => {
+		return {
+			symbol: mkt.symbol,
+			marketIndex: mkt.marketIndex,
+			oracle: new PublicKey(mkt.oracle),
+			oracleSource: OracleSource[mkt.oracleSource],
+			mint: new PublicKey(mkt.mint),
+			precision: new BN(10).pow(new BN(mkt.precisionExp)),
+			precisionExp: new BN(mkt.precisionExp),
+			phoenixMarket: mkt.phoenixMarket
+				? new PublicKey(mkt.phoenixMarket)
+				: undefined,
+			serumMarket: mkt.serumMarket ? new PublicKey(mkt.serumMarket) : undefined,
+			launchTs: mkt.launchTs,
+		};
+	};
+
+	try {
+		const resp = await fetch(
+			isMainnet ? S3_MARKETS_MAINNET : S3_MARKETS_DEVNET,
+			{
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			}
+		);
+		const jsonResp = await resp.json();
+		perpMarkets = jsonResp.perpMarkets.map(perpMarketMapper);
+		spotMarkets = jsonResp.spotMarkets.map(spotMarketMapper);
+	} catch (err) {
+		console.error('Error fetching markets from S3: ', err);
+		perpMarkets = isMainnet ? MainnetPerpMarkets : DevnetPerpMarkets;
+		spotMarkets = isMainnet ? MainnetSpotMarkets : DevnetSpotMarkets;
+	}
+
+	console.log('returning ', { perpMarkets, spotMarkets });
+
+	return { perpMarkets, spotMarkets };
+};
+
+const getMarketsAndOraclesForSubscription = (
+	perpMarketConfigs: PerpMarketConfig[],
+	spotMarketConfigs: SpotMarketConfig[]
+): {
+	perpMarketIndexes: number[];
+	spotMarketIndexes: number[];
+	oracleInfos: OracleInfo[];
+} => {
+	const perpMarketIndexes = [];
+	const spotMarketIndexes = [];
+	const oracleInfos = new Map<string, OracleInfo>();
+
+	for (const market of perpMarketConfigs) {
+		perpMarketIndexes.push(market.marketIndex);
+		oracleInfos.set(market.oracle.toString(), {
+			publicKey: market.oracle,
+			source: market.oracleSource,
+		});
+	}
+
+	for (const spotMarket of spotMarketConfigs) {
+		spotMarketIndexes.push(spotMarket.marketIndex);
+		oracleInfos.set(spotMarket.oracle.toString(), {
+			publicKey: spotMarket.oracle,
+			source: spotMarket.oracleSource,
+		});
+	}
+
+	return {
+		perpMarketIndexes: perpMarketIndexes,
+		spotMarketIndexes: spotMarketIndexes,
+		oracleInfos: Array.from(oracleInfos.values()),
+	};
 };
 
 const abbreviateAddress = (address: string | PublicKey, length = 4) => {
@@ -852,6 +987,7 @@ export const COMMON_UI_UTILS = {
 	createThrowawayIWallet,
 	deriveMarketOrderParams,
 	fetchCurrentSubaccounts,
+	fetchMarketConfigs,
 	fetchUserClientsAndAccounts,
 	formatTokenInputCurried,
 	getBalanceFromTokenAccountResult,
@@ -861,6 +997,7 @@ export const COMMON_UI_UTILS = {
 	getMarketAuctionParams,
 	getMarketKey,
 	getMarketOrderLimitPrice,
+	getMarketsAndOraclesForSubscription,
 	getMultipleAccounts,
 	getMultipleAccountsCore,
 	getPriceObject,
