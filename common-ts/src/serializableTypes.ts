@@ -369,9 +369,7 @@ export class SerializableOrderActionRecord implements Event<OrderActionRecord> {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) makerPnl: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) takerFee: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) makerRebate: BN | null;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) referrerReward:
-		| number
-		| null;
+	@autoserializeAs(Number) referrerReward: number | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) refereeDiscount: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	quoteAssetAmountSurplus: BN | null;
@@ -434,7 +432,8 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	makerRebate: BigNum | null;
-	@autoserializeAs(Number) referrerReward: number;
+
+	@autoserializeAs(Number) referrerReward: number | null;
 
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
@@ -1287,6 +1286,8 @@ export class UISerializableLeaderboardResult extends SerializableLeaderboardResu
 }
 
 export class SerializableNewUserRecord implements NewUserRecord {
+	@autoserializeAs(String) txSig: string;
+	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
 	userAuthority: PublicKey;
@@ -1780,6 +1781,8 @@ export const Serializer = {
 			Deserialize(cls as JsonObject, UISerializableLeaderboardResult),
 		UIAccountSnapshotHistory: (cls: Record<string, unknown>) =>
 			Deserialize(cls as JsonObject, UISerializableAccountSnapshot),
+		NewUser: (cls: Record<string, unknown>) =>
+			Deserialize(cls as JsonObject, SerializableNewUserRecord),
 		DLOBState: (cls: Record<string, unknown>) =>
 			Deserialize(cls as JsonObject, SerializableDLOBState),
 		CompetitionResult: (cls: Record<string, unknown>) =>
