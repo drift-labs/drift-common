@@ -142,8 +142,6 @@ const fetchMarketConfigs = async (
 		spotMarkets = isMainnet ? MainnetSpotMarkets : DevnetSpotMarkets;
 	}
 
-	console.log('returning ', { perpMarkets, spotMarkets });
-
 	return { perpMarkets, spotMarkets };
 };
 
