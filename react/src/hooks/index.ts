@@ -15,3 +15,5 @@ export * from './priorityFees';
 export * from './useImmediateInterval';
 export * from './useSyncLocalStorage';
 export * from './useHandleBadRpc';
+export * from './useSuperstakeEstimatedApr';
+export * from './useSuperstakeEstimatedLiquidationRatio';
