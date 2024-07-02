@@ -5,14 +5,20 @@ import {
 	DriftClientConfig,
 	DriftEnv,
 	IWallet,
+	PerpMarketConfig,
 	PollingDriftClientAccountSubscriber,
 	PublicKey,
+	SpotMarketConfig,
 	Wallet,
 	WhileValidTxSender,
-	getMarketsAndOraclesForSubscription,
+	//getMarketsAndOraclesForSubscription,
 	initialize,
 } from '@drift-labs/sdk';
-import { EnvironmentConstants, RpcEndpoint } from '@drift/common';
+import {
+	COMMON_UI_UTILS,
+	EnvironmentConstants,
+	RpcEndpoint,
+} from '@drift/common';
 import { Commitment, Connection, Keypair } from '@solana/web3.js';
 import { StoreApi } from 'zustand';
 
@@ -131,8 +137,18 @@ const createDriftActions = (
 			);
 		}
 
+		let commonPerpMarkets: PerpMarketConfig[] = [];
+		let commonSpotMarkets: SpotMarketConfig[] = [];
+
+		COMMON_UI_UTILS.fetchMarketConfigs(driftEnvToUse).then((result) => {
+			commonPerpMarkets = result.perpMarkets;
+			commonSpotMarkets = result.spotMarkets;
+		});
 		const { oracleInfos, perpMarketIndexes, spotMarketIndexes } =
-			getMarketsAndOraclesForSubscription(driftEnvToUse);
+			COMMON_UI_UTILS.getMarketsAndOraclesForSubscription(
+				commonPerpMarkets,
+				commonSpotMarkets
+			);
 
 		const driftClientConfig: DriftClientConfig = {
 			connection: newConnection,
