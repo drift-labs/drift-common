@@ -51,6 +51,7 @@ const DEFAULT_VALUE = {
 const getSuperstakeEstimatedApr = ({
 	lstSpotMarket,
 	lstMetrics,
+	initialLstDeposit,
 	lstAmount,
 	solAmount,
 	driftClient,
@@ -60,6 +61,7 @@ const getSuperstakeEstimatedApr = ({
 }: {
 	lstSpotMarket: SpotMarketConfig;
 	lstAmount: number;
+	initialLstDeposit: number;
 	solAmount: number;
 	lstMetrics: LstMetrics;
 	driftClient: DriftClient;
@@ -115,8 +117,10 @@ const getSuperstakeEstimatedApr = ({
 	);
 
 	const superStakeLstDeposit = lstAmount;
-	const initialLstDeposit = lstAmount - solAmount / lstMetrics.priceInSol;
+	// const initialLstDeposit = lstAmount - solAmount / lstMetrics.priceInSol;
 	const solBorrowAmount = solAmount;
+
+	console.log('initialLstDeposit', initialLstDeposit);
 
 	if (isNaN(solBorrowAmount)) return DEFAULT_VALUE;
 
@@ -281,7 +285,7 @@ const getSuperstakeEstimatedLiquidationRatio = ({
  * @returns
  */
 const fetchLstMetrics = async (lstSpotMarket: SpotMarketConfig) => {
-	if (lstSpotMarket.symbol === M_SOL.symbol) {
+	if (lstSpotMarket.symbol.toLowerCase() === M_SOL.symbol.toLowerCase()) {
 		const mSolMetrics = await fetchMSolMetrics();
 
 		return {
@@ -289,24 +293,27 @@ const fetchLstMetrics = async (lstSpotMarket: SpotMarketConfig) => {
 			priceInSol: mSolMetrics.m_sol_price ?? 0,
 			loaded: true,
 		};
-	} else if (lstSpotMarket.symbol === JITO_SOL.symbol) {
-		const jitoSolMetrics = await fetchJitoSolMetrics();
+	} else if (
+		lstSpotMarket.symbol.toLowerCase() === JITO_SOL.symbol.toLowerCase()
+	) {
+		const data = await fetchJitoSolMetrics();
 
 		const past30DaysApyAvg =
-			(jitoSolMetrics.apy.slice(-30).reduce((a, b) => a + b.data, 0) / 30) *
-			100;
+			(data.apy.slice(-30).reduce((a, b) => a + b.data, 0) / 30) * 100;
 
 		const priceInSol =
-			jitoSolMetrics.tvl.slice(-1)[0].data /
+			data.tvl.slice(-1)[0].data /
 			JITO_SOL.spotMarket.precision.toNumber() /
-			jitoSolMetrics.supply.slice(-1)[0].data;
+			data.supply.slice(-1)[0].data;
 
 		return {
 			lstPriceApy30d: past30DaysApyAvg ?? 0,
 			priceInSol: priceInSol ?? 0,
 			loaded: true,
 		};
-	} else if (lstSpotMarket.symbol === B_SOL.symbol) {
+	} else if (
+		lstSpotMarket.symbol.toLowerCase() === B_SOL.symbol.toLowerCase()
+	) {
 		let baseApy: number;
 		let blzeApy: number;
 		let lendingMultiplier: number;
@@ -332,7 +339,7 @@ const fetchLstMetrics = async (lstSpotMarket: SpotMarketConfig) => {
 			loaded: true,
 			lstPriceApy30d: baseApy ?? 0,
 			priceInSol: priceInSol ?? 0,
-			blzeApy,
+			emissionsApy: blzeApy,
 			driftEmissions,
 		};
 	}
