@@ -21,6 +21,7 @@ export * from './actions/actionHelpers/actionHelpers';
 export * from './utils/SharedInterval';
 export * from './utils/Stopwatch';
 export * from './utils/priority-fees';
+export * from './utils/superstake';
 export * from './common-ui-utils/settings/settings';
 export * from './utils/priority-fees';
 export * from './clients';
