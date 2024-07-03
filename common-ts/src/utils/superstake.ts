@@ -117,10 +117,7 @@ const getSuperstakeEstimatedApr = ({
 	);
 
 	const superStakeLstDeposit = lstAmount;
-	// const initialLstDeposit = lstAmount - solAmount / lstMetrics.priceInSol;
 	const solBorrowAmount = solAmount;
-
-	console.log('initialLstDeposit', initialLstDeposit);
 
 	if (isNaN(solBorrowAmount)) return DEFAULT_VALUE;
 
