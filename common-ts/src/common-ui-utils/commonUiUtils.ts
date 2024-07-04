@@ -372,8 +372,11 @@ const getMarketAuctionParams = ({
 
 	if (isVariant(direction, 'long')) {
 		auctionStartPrice = startPriceFromSettings.sub(auctionStartPriceBuffer);
+
+		const worstPriceToUse = BN.max(worstPrice, startPriceFromSettings); // Handles edge cases like if the worst price on the book was better than the oracle price, and the settings are asking to be relative to the oracle price
+
 		auctionEndPrice = PRICE_PRECISION.add(auctionEndPriceBuffer)
-			.mul(worstPrice)
+			.mul(worstPriceToUse)
 			.div(PRICE_PRECISION);
 
 		auctionEndPrice = BN.min(limitPrice, auctionEndPrice);
@@ -384,8 +387,11 @@ const getMarketAuctionParams = ({
 		);
 	} else {
 		auctionStartPrice = startPriceFromSettings.add(auctionStartPriceBuffer);
+
+		const worstPriceToUse = BN.min(worstPrice, startPriceFromSettings); // Handles edge cases like if the worst price on the book was better than the oracle price, and the settings are asking to be relative to the oracle price
+
 		auctionEndPrice = PRICE_PRECISION.sub(auctionEndPriceBuffer)
-			.mul(worstPrice)
+			.mul(worstPriceToUse)
 			.div(PRICE_PRECISION);
 
 		auctionEndPrice = BN.max(limitPrice, auctionEndPrice);
