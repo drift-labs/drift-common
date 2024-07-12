@@ -344,7 +344,7 @@ const getMarketAuctionParams = ({
 	worstPrice,
 	limitPrice,
 	duration,
-	marketTickSize,
+	marketTickSize: _marketTickSize,
 	auctionStartPriceOffset,
 	auctionEndPriceOffset,
 }: {
@@ -381,10 +381,7 @@ const getMarketAuctionParams = ({
 
 		auctionEndPrice = BN.min(limitPrice, auctionEndPrice);
 
-		auctionStartPrice = BN.min(
-			auctionStartPrice,
-			auctionEndPrice.sub(marketTickSize)
-		);
+		auctionStartPrice = BN.min(auctionStartPrice, auctionEndPrice);
 	} else {
 		auctionStartPrice = startPriceFromSettings.add(auctionStartPriceBuffer);
 
@@ -396,10 +393,7 @@ const getMarketAuctionParams = ({
 
 		auctionEndPrice = BN.max(limitPrice, auctionEndPrice);
 
-		auctionStartPrice = BN.max(
-			auctionStartPrice,
-			auctionEndPrice.add(marketTickSize)
-		);
+		auctionStartPrice = BN.max(auctionStartPrice, auctionEndPrice);
 	}
 
 	return {
