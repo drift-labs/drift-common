@@ -41,6 +41,9 @@ import { ORDER_COMMON_UTILS } from './order';
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
 const ACCOUNT_INITIALIZATION_RETRY_ATTEMPTS = 5;
 
+// Min number of tick sizes that the auction end price should be away from the otherwise calculated end price
+const AUCTION_END_TICK_SIZE_MIN_OFFSET = new BN(3);
+
 export const EMPTY_AUCTION_PARAMS: AuctionParams = {
 	auctionStartPrice: null,
 	auctionEndPrice: null,
@@ -344,7 +347,7 @@ const getMarketAuctionParams = ({
 	worstPrice,
 	limitPrice,
 	duration,
-	marketTickSize: _marketTickSize,
+	marketTickSize: marketTickSize,
 	auctionStartPriceOffset,
 	auctionEndPriceOffset,
 }: {
@@ -375,9 +378,14 @@ const getMarketAuctionParams = ({
 
 		const worstPriceToUse = BN.max(worstPrice, startPriceFromSettings); // Handles edge cases like if the worst price on the book was better than the oracle price, and the settings are asking to be relative to the oracle price
 
-		auctionEndPrice = PRICE_PRECISION.add(auctionEndPriceBuffer)
+		const bufferedEndPrice = PRICE_PRECISION.add(auctionEndPriceBuffer)
 			.mul(worstPriceToUse)
 			.div(PRICE_PRECISION);
+
+		auctionEndPrice = BN.max(
+			bufferedEndPrice,
+			worstPriceToUse.add(marketTickSize.mul(AUCTION_END_TICK_SIZE_MIN_OFFSET))
+		);
 
 		auctionEndPrice = BN.min(limitPrice, auctionEndPrice);
 
@@ -387,9 +395,14 @@ const getMarketAuctionParams = ({
 
 		const worstPriceToUse = BN.min(worstPrice, startPriceFromSettings); // Handles edge cases like if the worst price on the book was better than the oracle price, and the settings are asking to be relative to the oracle price
 
-		auctionEndPrice = PRICE_PRECISION.sub(auctionEndPriceBuffer)
+		const bufferedAuctionEndPrice = PRICE_PRECISION.sub(auctionEndPriceBuffer)
 			.mul(worstPriceToUse)
 			.div(PRICE_PRECISION);
+
+		auctionEndPrice = BN.min(
+			bufferedAuctionEndPrice,
+			worstPriceToUse.sub(marketTickSize.mul(AUCTION_END_TICK_SIZE_MIN_OFFSET))
+		);
 
 		auctionEndPrice = BN.max(limitPrice, auctionEndPrice);
 
