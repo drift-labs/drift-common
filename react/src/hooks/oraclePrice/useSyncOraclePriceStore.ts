@@ -23,6 +23,16 @@ export type MarketAndAccount = {
 	accountToUse: PublicKey;
 };
 
+const ORACLE_CLIENT_KEYS = Object.values(OracleSource).map(value => Object.keys(value)[0]);
+type OracleClientsMap = Map<string, OracleClient | undefined>;
+const DEFAULT_ORACLE_CLIENTS_MAP: OracleClientsMap = ORACLE_CLIENT_KEYS.reduce(
+	(acc, key) => {
+		acc.set(key, undefined);
+		return acc;
+	},
+	new Map()
+);
+
 export const useSyncOraclePriceStore = (
 	marketsAndAccounts: MarketAndAccount[],
 	refreshTimeMs = 1000
@@ -32,12 +42,9 @@ export const useSyncOraclePriceStore = (
 	const bulkAccountLoader = useCommonDriftStore((s) => s.bulkAccountLoader);
 	const setOraclePriceStore = useOraclePriceStore((s) => s.set);
 
-	const [pythClient, setPythClient] = useState<OracleClient>();
-	const [pyth1KClient, setPyth1KClient] = useState<OracleClient>();
-	const [pyth1MClient, setPyth1MClient] = useState<OracleClient>();
-	const [pythStableCoin, setPythStableCoin] = useState<OracleClient>();
-	const [switchboardClient, setSwitchboardClient] = useState<OracleClient>();
-	const [preLaunchClient, setPreLaunchClient] = useState<OracleClient>();
+	const [oracleClients, setOracleClients] = useState<OracleClientsMap>(
+		DEFAULT_ORACLE_CLIENTS_MAP
+	);
 
 	// Keep a local price store state so that the app isn't re-rendering non-stop for every price change
 	const [localPriceStoreState, setLocalPriceStoreState] = useImmer<
@@ -46,39 +53,26 @@ export const useSyncOraclePriceStore = (
 
 	const bulkLoaderCallbacks = useRef<[string, PublicKey][]>([]);
 
-	const areOracleClientsReady =
-		!!pythClient &&
-		!!pyth1KClient &&
-		!!pyth1MClient &&
-		!!pythStableCoin &&
-		!!switchboardClient &&
-		!!preLaunchClient;
+	const areOracleClientsReady = Array.from(oracleClients.values()).every(
+		(client) => !!client
+	);
 
 	const getMatchingOracleClient = useCallback(
 		(oracleSource: OracleSource) => {
 			if (!areOracleClientsReady)
 				throw new Error('Oracle clients are not ready');
 
-			if (ENUM_UTILS.match(oracleSource, OracleSource.PYTH)) {
-				return pythClient;
-			} else if (ENUM_UTILS.match(oracleSource, OracleSource.PYTH_1K)) {
-				return pyth1KClient;
-			} else if (ENUM_UTILS.match(oracleSource, OracleSource.PYTH_1M)) {
-				return pyth1MClient;
-			} else if (
-				ENUM_UTILS.match(oracleSource, OracleSource.PYTH_STABLE_COIN)
-			) {
-				return pythStableCoin;
-			} else if (ENUM_UTILS.match(oracleSource, OracleSource.SWITCHBOARD)) {
-				return switchboardClient;
-			} else if (ENUM_UTILS.match(oracleSource, OracleSource.Prelaunch)) {
-				return preLaunchClient;
-			} else {
+			const oracleSourceString = ENUM_UTILS.toStr(oracleSource);
+			const oracleClient = oracleClients.get(oracleSourceString);
+
+			if (!oracleClient) {
 				console.error(JSON.stringify(oracleSource));
 				throw new Error(
 					`Unaccounted for oracle type in useSyncOraclePriceStore.`
 				);
 			}
+
+			return oracleClient;
 		},
 		[areOracleClientsReady]
 	);
@@ -87,28 +81,18 @@ export const useSyncOraclePriceStore = (
 		if (!connection) return;
 		if (!driftClient) return;
 
-		setPythClient(
-			getOracleClient(OracleSource.PYTH, connection, driftClient.program)
-		);
-		setPyth1KClient(
-			getOracleClient(OracleSource.PYTH_1K, connection, driftClient.program)
-		);
-		setPyth1MClient(
-			getOracleClient(OracleSource.PYTH_1M, connection, driftClient.program)
-		);
-		setPythStableCoin(
-			getOracleClient(
-				OracleSource.PYTH_STABLE_COIN,
+		ORACLE_CLIENT_KEYS.forEach((oracleSourceKey) => {
+			const oracleSource = ENUM_UTILS.toObj(oracleSourceKey);
+			const oracleClient = getOracleClient(
+				oracleSource,
 				connection,
 				driftClient.program
-			)
-		);
-		setSwitchboardClient(
-			getOracleClient(OracleSource.SWITCHBOARD, connection, driftClient.program)
-		);
-		setPreLaunchClient(
-			getOracleClient(OracleSource.Prelaunch, connection, driftClient.program)
-		);
+			);
+			setOracleClients((s) => {
+				s.set(oracleSourceKey, oracleClient);
+				return s;
+			});
+		});
 	}, [connection, driftClient]);
 
 	useEffect(() => {
