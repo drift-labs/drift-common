@@ -23,7 +23,9 @@ export type MarketAndAccount = {
 	accountToUse: PublicKey;
 };
 
-const ORACLE_CLIENT_KEYS = Object.values(OracleSource).map(value => Object.keys(value)[0]);
+const ORACLE_CLIENT_KEYS = Object.values(OracleSource).map(
+	(value) => Object.keys(value)[0]
+);
 type OracleClientsMap = Map<string, OracleClient | undefined>;
 const DEFAULT_ORACLE_CLIENTS_MAP: OracleClientsMap = ORACLE_CLIENT_KEYS.reduce(
 	(acc, key) => {
