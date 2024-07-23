@@ -1,14 +1,21 @@
 {
-  "name": "common",
-  "targets": {
-    "build": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun install && bun link @drift-labs/sdk && bun run build && bun link",
-        "cwd": "drift-common/common-ts"
-      },
-      "dependsOn": [{ "projects": "sdk", "target": "build" }],
-      "outputs": ["dist"]
-    }
-  }
+	"name": "common",
+	"targets": {
+		"build": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "bun install && bun link @drift-labs/sdk && bun run build && bun link",
+				"cwd": "drift-common/common-ts"
+			},
+			"dependsOn": [
+				{
+					"projects": "sdk",
+					"target": "build"
+				}
+			],
+			"outputs": [
+				"{workspaceRoot}/dist"
+			]
+		}
+	}
 }
