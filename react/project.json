@@ -1,0 +1,14 @@
+{
+  "name": "react",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun install && bun run build && bun link @drift-labs/sdk && bun link @drift/common && bun link",
+        "cwd": "drift-common/react"
+      },
+      "dependsOn": [{ "projects": "sdk", "target": "build" },{ "projects": "common", "target": "build" }],
+      "outputs": ["dist"]
+    }
+  }
+}
