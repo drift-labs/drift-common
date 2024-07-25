@@ -4,7 +4,7 @@
 		"build": {
 			"executor": "nx:run-commands",
 			"options": {
-				"command": "bun link @drift-labs/sdk && bun link @drift/common && bun run build && bun link",
+				"command": "bun i && bun link @drift-labs/sdk && bun link @drift/common && bun run build && bun link",
 				"cwd": "drift-common/react"
 			},
 			"dependsOn": [
