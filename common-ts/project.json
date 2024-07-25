@@ -11,6 +11,10 @@
 				{
 					"projects": "sdk",
 					"target": "build"
+				},
+				{
+					"projects": "sdk",
+					"target": "link"
 				}
 			],
 			"outputs": [

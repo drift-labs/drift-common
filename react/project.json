@@ -4,7 +4,7 @@
 		"build": {
 			"executor": "nx:run-commands",
 			"options": {
-				"command": "bun i && bun link @drift-labs/sdk && bun link @drift/common && bun run build && bun link",
+				"command": "bun i && bun link @drift-labs/sdk && bun link @drift/common && bun run build",
 				"cwd": "drift-common/react"
 			},
 			"dependsOn": [
@@ -13,12 +13,30 @@
 					"target": "build"
 				},
 				{
+					"projects": "sdk",
+					"target": "link"
+				},
+				{
 					"projects": "common",
 					"target": "build"
+				},
+				{
+					"projects": "common",
+					"target": "link"
 				}
 			],
 			"outputs": [
 				"{workspaceRoot}/dist"
+			]
+		},
+		"link": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "bun link",
+				"cwd": "drift-common/react"
+			},
+			"dependsOn": [
+				"build"
 			]
 		}
 	}
