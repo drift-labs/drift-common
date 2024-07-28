@@ -39,6 +39,10 @@ export class UIMarket {
 		return new UIMarket(marketIndex, MarketType.PERP);
 	}
 
+	static fromMarketId(marketId: MarketId) {
+		return new UIMarket(marketId.marketIndex, marketId.marketType);
+	}
+
 	get isSpot() {
 		return this.marketId.isSpot;
 	}
