@@ -4,6 +4,11 @@ import {
 } from '@solana/spl-token';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 
+export {
+	TOKEN_PROGRAM_ID,
+	createTransferCheckedInstruction,
+} from '@solana/spl-token';
+
 export const getTokenAddress = (
 	mintAddress: string,
 	userPubKey: string
