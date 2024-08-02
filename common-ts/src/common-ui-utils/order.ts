@@ -15,9 +15,12 @@ export const getOrderLabelFromOrderDetails = (
 		return UI_ORDER_TYPES.market.label;
 
 	if (matchEnum(orderDetails.orderType, OrderType.LIMIT))
-		return `${orderDetails.oraclePriceOffset ? 'Oracle ' : ''}${
-			UI_ORDER_TYPES.limit.label
-		}`;
+		return `${
+			orderDetails.oraclePriceOffset &&
+			!orderDetails.oraclePriceOffset?.eqZero()
+				? 'Oracle '
+				: ''
+		}${UI_ORDER_TYPES.limit.label}`;
 
 	if (matchEnum(orderDetails.orderType, OrderType.ORACLE))
 		return UI_ORDER_TYPES.oracle.label;
