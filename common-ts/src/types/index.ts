@@ -224,6 +224,7 @@ export type OpenPosition = {
 	pnlVsMark: BN;
 	quoteAssetNotionalAmount: BN;
 	quoteEntryAmount: BN;
+	quoteBreakEvenAmount: BN;
 	unrealizedFundingPnl: BN;
 	lastCumulativeFundingRate: BN;
 	openOrders: number;

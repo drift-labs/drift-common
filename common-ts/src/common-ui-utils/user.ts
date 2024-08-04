@@ -137,6 +137,8 @@ const getOpenPositionData = (
 				quoteAssetNotionalAmount:
 					perpPositionWithRemainderBaseAdded.quoteAssetAmount,
 				quoteEntryAmount: perpPositionWithRemainderBaseAdded.quoteEntryAmount,
+				quoteBreakEvenAmount:
+					perpPositionWithRemainderBaseAdded.quoteBreakEvenAmount,
 				pnlVsMark,
 				pnlVsOracle,
 				unsettledPnl: calculateClaimablePnl(
