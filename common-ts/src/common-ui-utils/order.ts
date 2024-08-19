@@ -36,7 +36,7 @@ export const getOrderLabelFromOrderDetails = (
 					: UI_ORDER_TYPES.stopMarket.label
 				: matchEnum(orderDetails.direction, PositionDirection.SHORT)
 				? UI_ORDER_TYPES.takeProfitMarket.label
-				: 'Trigger Market';
+				: UI_ORDER_TYPES.stopMarket.label;
 		} else {
 			return matchEnum(
 				orderDetails.existingPositionDirection,
@@ -47,7 +47,7 @@ export const getOrderLabelFromOrderDetails = (
 					: UI_ORDER_TYPES.takeProfitMarket.label
 				: matchEnum(orderDetails.direction, PositionDirection.SHORT)
 				? UI_ORDER_TYPES.stopMarket.label
-				: 'Trigger Market';
+				: UI_ORDER_TYPES.takeProfitMarket.label;
 		}
 	}
 
