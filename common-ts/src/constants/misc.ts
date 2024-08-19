@@ -6,7 +6,7 @@ export const USDC_SPOT_MARKET_INDEX = 0;
  * Equal to 0.01
  */
 export const NEW_ACCOUNT_DONATION = BigNum.fromPrint(
-	'0.01',
+	'0.0001',
 	BASE_PRECISION_EXP
 );
 
@@ -32,6 +32,6 @@ export const IF_STAKE_ACCOUNT_BASE_RENT = BigNum.fromPrint(
 /**
  * Equal to 0.02
  */
-export const MIN_LEFTOVER_SOL = BigNum.fromPrint('0.02', BASE_PRECISION_EXP);
+export const MIN_LEFTOVER_SOL = BigNum.fromPrint('0.01', BASE_PRECISION_EXP);
 
 export const ONE_DAY_MS = 1000 * 60 * 60 * 24;
