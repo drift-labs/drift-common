@@ -30,8 +30,8 @@ export const IF_STAKE_ACCOUNT_BASE_RENT = BigNum.fromPrint(
 );
 
 /**
- * Equal to 0.02
+ * Equal to 0.015
  */
-export const MIN_LEFTOVER_SOL = BigNum.fromPrint('0.01', BASE_PRECISION_EXP);
+export const MIN_LEFTOVER_SOL = BigNum.fromPrint('0.015', BASE_PRECISION_EXP);
 
 export const ONE_DAY_MS = 1000 * 60 * 60 * 24;
