@@ -15,13 +15,16 @@ const calculatePnlPctFromPosition = (
 ): number => {
 	if (!quoteEntryAmount || quoteEntryAmount.eq(ZERO)) return 0;
 
+	const leverageAdjustedEntryAmount = BigNum.from(
+		quoteEntryAmount.abs(),
+		QUOTE_PRECISION_EXP
+	).div(new BN(Math.max(1, leverage || 1)));
+
 	return (
 		BigNum.from(pnl, QUOTE_PRECISION_EXP)
 			.shift(5)
-			.div(BigNum.from(quoteEntryAmount.abs(), QUOTE_PRECISION_EXP))
-			.toNum() *
-		100 *
-		(leverage ?? 1)
+			.div(leverageAdjustedEntryAmount)
+			.toNum() * 100
 	);
 };
 
