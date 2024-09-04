@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const Swap = (allProps: IconProps) => {
+const YES = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
@@ -16,7 +16,7 @@ const Swap = (allProps: IconProps) => {
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
-						d="M3.307 15.213A.75.75 0 014 14.75h16a.75.75 0 010 1.5H5.81l2.72 2.72a.75.75 0 11-1.06 1.06l-4-4a.75.75 0 01-.163-.817zM3.25 8.5A.75.75 0 014 7.75h14.19l-2.72-2.72a.75.75 0 011.06-1.06l4 4A.75.75 0 0120 9.25H4a.75.75 0 01-.75-.75z"
+						d="M3.75 12a8.25 8.25 0 1116.5 0 8.25 8.25 0 01-16.5 0zM12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm5.53 7.28a.75.75 0 10-1.06-1.06l-6.454 6.439-2.456-2.756a.75.75 0 10-1.12.998L9.424 16.5a.75.75 0 001.09.032l7.016-7z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
@@ -25,4 +25,4 @@ const Swap = (allProps: IconProps) => {
 		/>
 	);
 };
-export default Swap;
+export default YES;
