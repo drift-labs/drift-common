@@ -427,6 +427,7 @@ const deriveMarketOrderParams = ({
 	auctionStartPriceOffset,
 	auctionEndPriceOffset,
 	auctionStartPriceOffsetFrom,
+	auctionPriceCaps,
 	slippageTolerance,
 	isOracleOrder,
 }: {
@@ -447,6 +448,10 @@ const deriveMarketOrderParams = ({
 	auctionDuration: number;
 	auctionStartPriceOffset: number;
 	auctionEndPriceOffset: number;
+	auctionPriceCaps?: {
+		min: BN;
+		max: BN;
+	};
 	auctionStartPriceOffsetFrom: 'oracle' | 'bestOffer' | 'entry' | 'best';
 	slippageTolerance: number;
 	isOracleOrder?: boolean;
@@ -508,6 +513,7 @@ const deriveMarketOrderParams = ({
 				auctionStartPrice: auctionParams.auctionStartPrice,
 				auctionEndPrice: oracleAuctionEndPrice,
 				limitPrice: oracleAuctionEndPrice,
+				auctionPriceCaps: auctionPriceCaps,
 			});
 
 			orderParams = {
