@@ -14,6 +14,89 @@ export type DownloadRecordType =
 	| 'lp-records'
 	| 'if-stake-records';
 
+export type DownloadPeriod =
+	| 'week'
+	| 'month'
+	| '3mo'
+	| 'ytd'
+	| 'year'
+	| 'custom';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const dateToS3DateString = (date: Date): string => {
+	const year = date.getFullYear();
+	const month = date.getMonth() + 1;
+	const day = date.getDate();
+
+	return `${year}${month < 10 ? '0' + month : month}${
+		day < 10 ? '0' + day : day
+	}`;
+};
+
+export const getDateRangeFromSelection = (
+	downloadPeriod: DownloadPeriod,
+	customOpts?: { day?: number; month?: number; year: number }
+): { from: string; to: string } => {
+	let from, to;
+	const now = new Date();
+
+	switch (downloadPeriod) {
+		case 'week':
+			from = dateToS3DateString(new Date(now.getTime() - 7 * DAY_MS));
+			to = dateToS3DateString(now);
+			break;
+		case 'month':
+			from = dateToS3DateString(new Date(now.getFullYear(), now.getMonth(), 1));
+			to = dateToS3DateString(now);
+			break;
+		case '3mo':
+			from = dateToS3DateString(new Date(now.getTime() - 90 * DAY_MS));
+			to = dateToS3DateString(now);
+			break;
+		case 'ytd':
+			from = dateToS3DateString(new Date(now.getFullYear(), 0, 1));
+			to = dateToS3DateString(now);
+			break;
+		case 'year':
+			from = dateToS3DateString(new Date(now.getTime() - 365 * DAY_MS));
+			to = dateToS3DateString(now);
+			break;
+		case 'custom':
+			if (!customOpts || !customOpts?.year) {
+				console.error(
+					'Requested custom date range without providing customOpts'
+				);
+				break;
+			}
+
+			if (!customOpts.day && !customOpts.month) {
+				//request a full year
+				from = dateToS3DateString(new Date(customOpts.year, 0, 1));
+				to = dateToS3DateString(new Date(customOpts.year, 11, 31));
+			} else if (!customOpts.day && customOpts.month) {
+				//request a month
+				from = dateToS3DateString(
+					new Date(customOpts.year, customOpts.month + 1, 1)
+				);
+				to = dateToS3DateString(
+					new Date(customOpts.year, customOpts.month + 2, 0)
+				);
+			} else {
+				// request a day
+				from = dateToS3DateString(
+					new Date(customOpts.year, customOpts.month + 1, customOpts.day)
+				);
+				to = dateToS3DateString(
+					new Date(customOpts.year, customOpts.month + 1, customOpts.day)
+				);
+			}
+			break;
+	}
+
+	return { from, to };
+};
+
 const getLeaderboardFilename = (
 	orderBy: PnlSnapshotOrderOption,
 	resolution: SnapshotEpochResolution
