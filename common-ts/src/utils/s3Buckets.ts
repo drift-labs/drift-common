@@ -3,6 +3,17 @@ import { ENUM_UTILS } from '.';
 import { Serializer } from '../serializableTypes';
 import { PnlSnapshotOrderOption, SnapshotEpochResolution } from '../types';
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export type DownloadFile = {
+	type: DownloadRecordType;
+	requestedDate: string;
+	fromDate: string;
+	toDate: string;
+	user: string;
+	downloadUrl?: string;
+};
+
 export type DownloadRecordType =
 	| 'trades'
 	| 'market-trades'
@@ -22,9 +33,7 @@ export type DownloadPeriod =
 	| 'year'
 	| 'custom';
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-const dateToS3DateString = (date: Date): string => {
+export const dateToS3DateString = (date: Date): string => {
 	const year = date.getFullYear();
 	const month = date.getMonth() + 1;
 	const day = date.getDate();
