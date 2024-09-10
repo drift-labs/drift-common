@@ -6,12 +6,20 @@ import { PnlSnapshotOrderOption, SnapshotEpochResolution } from '../types';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type DownloadFile = {
-	type: DownloadRecordType;
+	key: string;
+	requestParams: DownloadRequestParams;
+	downloadUrl?: string;
+};
+
+export type DownloadRequestParams = {
+	fileType: DownloadRecordType;
 	requestedDate: string;
 	fromDate: string;
 	toDate: string;
 	user: string;
-	downloadUrl?: string;
+	programId: string;
+	authority: string;
+	marketSymbol?: string;
 };
 
 export type DownloadRecordType =
@@ -33,6 +41,18 @@ export type DownloadPeriod =
 	| 'year'
 	| 'custom';
 
+// Redis key for download requests is the downloadRequestParams with colon delimeters.
+// Make sure it stringifies the keys alphabetically so we don't have mismatches for identical requests
+export const getFileRedisKeyFromParams = (
+	downloadRequestParams: DownloadRequestParams
+): string => {
+	return Object.keys(downloadRequestParams)
+		.sort((a, b) => a.localeCompare(b))
+		.map((sortedKey) => downloadRequestParams[sortedKey])
+		.filter((val) => !!val)
+		.join(':');
+};
+
 export const dateToS3DateString = (date: Date): string => {
 	const year = date.getFullYear();
 	const month = date.getMonth() + 1;
@@ -41,6 +61,14 @@ export const dateToS3DateString = (date: Date): string => {
 	return `${year}${month < 10 ? '0' + month : month}${
 		day < 10 ? '0' + day : day
 	}`;
+};
+
+export const s3DateStringToDate = (dateStr: string): Date => {
+	return new Date(
+		parseFloat(dateStr.slice(0, 4)),
+		parseFloat(dateStr.slice(4, 6)) - 1,
+		parseFloat(dateStr.slice(6, 8))
+	);
 };
 
 export const getDateRangeFromSelection = (
