@@ -87,10 +87,13 @@ export const getDateRangeFromSelection = (
 			from = dateToS3DateString(new Date(now.getFullYear(), now.getMonth(), 1));
 			to = dateToS3DateString(now);
 			break;
-		case '3mo':
-			from = dateToS3DateString(new Date(now.getTime() - 90 * DAY_MS));
+		case '3mo': {
+			const fromDate = new Date();
+			fromDate.setMonth(now.getMonth() - 3);
+			from = dateToS3DateString(fromDate);
 			to = dateToS3DateString(now);
 			break;
+		}
 		case 'ytd':
 			from = dateToS3DateString(new Date(now.getFullYear(), 0, 1));
 			to = dateToS3DateString(now);
