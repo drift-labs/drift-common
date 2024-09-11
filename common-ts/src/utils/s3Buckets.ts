@@ -8,6 +8,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export type DownloadFile = {
 	key: string;
 	requestParams: DownloadRequestParams;
+	lastModifiedTs: number;
 	downloadUrl?: string;
 };
 
