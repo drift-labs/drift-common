@@ -42,8 +42,8 @@ export type DownloadPeriod =
 	| 'year'
 	| 'custom';
 
-// Redis key for download requests is the downloadRequestParams with colon delimeters.
-// Make sure it stringifies the keys alphabetically so we don't have mismatches for identical requests
+// # Redis key for download requests is the downloadRequestParams with colon delimeters.
+// # Stringifies the keys alphabetically so we don't have mismatches for identical requests
 export const getFileRedisKeyFromParams = (
 	downloadRequestParams: DownloadRequestParams
 ): string => {
@@ -54,6 +54,7 @@ export const getFileRedisKeyFromParams = (
 		.join(':');
 };
 
+// # Converts a date object into the string format used for S3 files
 export const dateToS3DateString = (date: Date): string => {
 	const year = date.getFullYear();
 	const month = date.getMonth() + 1;
@@ -64,6 +65,7 @@ export const dateToS3DateString = (date: Date): string => {
 	}`;
 };
 
+// # Converts a string date in S3 file format into a Date object
 export const s3DateStringToDate = (dateStr: string): Date => {
 	return new Date(
 		parseFloat(dateStr.slice(0, 4)),
@@ -72,6 +74,7 @@ export const s3DateStringToDate = (dateStr: string): Date => {
 	);
 };
 
+// # Get the from and to dates in S3 file format for a download request
 export const getDateRangeFromSelection = (
 	downloadPeriod: DownloadPeriod,
 	customOpts?: { day?: number; month?: number; year: number }
@@ -112,11 +115,11 @@ export const getDateRangeFromSelection = (
 			}
 
 			if (!customOpts.day && !customOpts.month) {
-				//request a full year
+				// request a full year
 				from = dateToS3DateString(new Date(customOpts.year, 0, 1));
 				to = dateToS3DateString(new Date(customOpts.year, 11, 31));
 			} else if (!customOpts.day && customOpts.month) {
-				//request a month
+				// request a month
 				from = dateToS3DateString(
 					new Date(customOpts.year, customOpts.month + 1, 1)
 				);
