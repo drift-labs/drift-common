@@ -2,8 +2,7 @@ import { DriftEnv } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '.';
 import { Serializer } from '../serializableTypes';
 import { PnlSnapshotOrderOption, SnapshotEpochResolution } from '../types';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { ONE_DAY_MS } from '../constants';
 
 export type DownloadFile = {
 	key: string;
@@ -84,7 +83,7 @@ export const getDateRangeFromSelection = (
 
 	switch (downloadPeriod) {
 		case 'week':
-			from = dateToS3DateString(new Date(now.getTime() - 7 * DAY_MS));
+			from = dateToS3DateString(new Date(now.getTime() - 7 * ONE_DAY_MS));
 			to = dateToS3DateString(now);
 			break;
 		case 'month':
@@ -103,7 +102,7 @@ export const getDateRangeFromSelection = (
 			to = dateToS3DateString(now);
 			break;
 		case 'year':
-			from = dateToS3DateString(new Date(now.getTime() - 365 * DAY_MS));
+			from = dateToS3DateString(new Date(now.getTime() - 365 * ONE_DAY_MS));
 			to = dateToS3DateString(now);
 			break;
 		case 'custom':
