@@ -332,6 +332,7 @@ export class UISerializableOrder extends SerializableOrder {
 // @ts-ignore
 export class SerializableOrderRecord implements OrderRecordEvent {
 	@autoserializeAs(String) txSig: string;
+	@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
