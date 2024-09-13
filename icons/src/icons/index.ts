@@ -31,6 +31,7 @@ export { default as Copy } from './components/Copy';
 export { default as CreditCard } from './components/CreditCard';
 export { default as Delegation } from './components/Delegation';
 export { default as Deposit } from './components/Deposit';
+export { default as Details } from './components/Details';
 export { default as Diamond } from './components/Diamond';
 export { default as Disclaimers } from './components/Disclaimers';
 export { default as Discord } from './components/Discord';
