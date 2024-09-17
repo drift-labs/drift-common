@@ -51,4 +51,9 @@ export const EnvironmentConstants = {
 		mainnet: 'wss://dlob.drift.trade/ws',
 		staging: 'wss://staging.dlob.drift.trade/ws',
 	},
+	eventsServerUrl: {
+		mainnet: 'wss://events.drift.trade/ws',
+		staging: 'wss://events.drift.trade/ws',
+	},
 };
+
