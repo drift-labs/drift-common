@@ -56,4 +56,3 @@ export const EnvironmentConstants = {
 		staging: 'wss://events.drift.trade/ws',
 	},
 };
-

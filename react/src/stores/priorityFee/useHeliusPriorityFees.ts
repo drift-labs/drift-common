@@ -55,7 +55,7 @@ const getHeliusPriorityFeeEstimate = async (
 		}
 		 */
 
-		const resultToUse: keyof (typeof result)['result']['priorityFeeLevels'] =
+		const resultToUse: keyof typeof result['result']['priorityFeeLevels'] =
 			targetPercentile > 75
 				? 'veryHigh'
 				: targetPercentile > 50
