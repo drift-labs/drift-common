@@ -2,6 +2,25 @@ import { DriftEnv } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '.';
 import { Serializer } from '../serializableTypes';
 import { PnlSnapshotOrderOption, SnapshotEpochResolution } from '../types';
+import { ONE_DAY_MS } from '../constants';
+
+export type DownloadFile = {
+	key: string;
+	requestParams: DownloadRequestParams;
+	lastModifiedTs: number;
+	downloadUrl?: string;
+};
+
+export type DownloadRequestParams = {
+	fileType: DownloadRecordType;
+	requestedDate: string;
+	fromDate: string;
+	toDate: string;
+	user: string;
+	programId: string;
+	authority: string;
+	marketSymbol?: string;
+};
 
 export type DownloadRecordType =
 	| 'trades'
@@ -13,6 +32,113 @@ export type DownloadRecordType =
 	| 'settle-pnl-records'
 	| 'lp-records'
 	| 'if-stake-records';
+
+export type DownloadPeriod =
+	| 'week'
+	| 'month'
+	| '3mo'
+	| 'ytd'
+	| 'year'
+	| 'custom';
+
+// # Redis key for download requests is the downloadRequestParams with colon delimeters.
+// # Stringifies the keys alphabetically so we don't have mismatches for identical requests
+export const getFileRedisKeyFromParams = (
+	downloadRequestParams: DownloadRequestParams
+): string => {
+	return Object.keys(downloadRequestParams)
+		.sort((a, b) => a.localeCompare(b))
+		.map((sortedKey) => downloadRequestParams[sortedKey])
+		.filter((val) => !!val)
+		.join(':');
+};
+
+// # Converts a date object into the string format used for S3 files
+export const dateToS3DateString = (date: Date): string => {
+	const year = date.getFullYear();
+	const month = date.getMonth() + 1;
+	const day = date.getDate();
+
+	return `${year}${month < 10 ? '0' + month : month}${
+		day < 10 ? '0' + day : day
+	}`;
+};
+
+// # Converts a string date in S3 file format into a Date object
+export const s3DateStringToDate = (dateStr: string): Date => {
+	return new Date(
+		parseFloat(dateStr.slice(0, 4)),
+		parseFloat(dateStr.slice(4, 6)) - 1,
+		parseFloat(dateStr.slice(6, 8))
+	);
+};
+
+// # Get the from and to dates in S3 file format for a download request
+export const getDateRangeFromSelection = (
+	downloadPeriod: DownloadPeriod,
+	customOpts?: { day?: number; month?: number; year: number }
+): { from: string; to: string } => {
+	let from, to;
+	const now = new Date();
+
+	switch (downloadPeriod) {
+		case 'week':
+			from = dateToS3DateString(new Date(now.getTime() - 7 * ONE_DAY_MS));
+			to = dateToS3DateString(now);
+			break;
+		case 'month':
+			from = dateToS3DateString(new Date(now.getFullYear(), now.getMonth(), 1));
+			to = dateToS3DateString(now);
+			break;
+		case '3mo': {
+			const fromDate = new Date();
+			fromDate.setMonth(now.getMonth() - 3);
+			from = dateToS3DateString(fromDate);
+			to = dateToS3DateString(now);
+			break;
+		}
+		case 'ytd':
+			from = dateToS3DateString(new Date(now.getFullYear(), 0, 1));
+			to = dateToS3DateString(now);
+			break;
+		case 'year':
+			from = dateToS3DateString(new Date(now.getTime() - 365 * ONE_DAY_MS));
+			to = dateToS3DateString(now);
+			break;
+		case 'custom':
+			if (!customOpts || !customOpts?.year) {
+				console.error(
+					'Requested custom date range without providing customOpts'
+				);
+				break;
+			}
+
+			if (!customOpts.day && !customOpts.month) {
+				// request a full year
+				from = dateToS3DateString(new Date(customOpts.year, 0, 1));
+				to = dateToS3DateString(new Date(customOpts.year, 11, 31));
+			} else if (!customOpts.day && customOpts.month) {
+				// request a month
+				from = dateToS3DateString(
+					new Date(customOpts.year, customOpts.month + 1, 1)
+				);
+				to = dateToS3DateString(
+					new Date(customOpts.year, customOpts.month + 2, 0)
+				);
+			} else {
+				// request a day
+				from = dateToS3DateString(
+					new Date(customOpts.year, customOpts.month + 1, customOpts.day)
+				);
+				to = dateToS3DateString(
+					new Date(customOpts.year, customOpts.month + 1, customOpts.day)
+				);
+			}
+			break;
+	}
+
+	return { from, to };
+};
 
 const getLeaderboardFilename = (
 	orderBy: PnlSnapshotOrderOption,
