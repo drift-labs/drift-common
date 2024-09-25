@@ -74,6 +74,7 @@ export const s3DateStringToDate = (dateStr: string): Date => {
 };
 
 // # Get the from and to dates in S3 file format for a download request
+// # For custom opts, month number should be the index (ie: January is index 0)
 export const getDateRangeFromSelection = (
 	downloadPeriod: DownloadPeriod,
 	customOpts?: { day?: number; month?: number; year: number }
@@ -120,18 +121,26 @@ export const getDateRangeFromSelection = (
 			} else if (!customOpts.day && customOpts.month) {
 				// request a month
 				from = dateToS3DateString(
-					new Date(customOpts.year, customOpts.month + 1, 1)
+					new Date(customOpts.year, customOpts.month, 1)
 				);
-				to = dateToS3DateString(
-					new Date(customOpts.year, customOpts.month + 2, 0)
-				);
+
+				// if December, to date should be 12/31
+				if (customOpts.month === 11) {
+					to = dateToS3DateString(
+						new Date(customOpts.year, customOpts.month, 31)
+					);
+				} else {
+					to = dateToS3DateString(
+						new Date(customOpts.year, customOpts.month + 1, 0)
+					);
+				}
 			} else {
 				// request a day
 				from = dateToS3DateString(
-					new Date(customOpts.year, customOpts.month + 1, customOpts.day)
+					new Date(customOpts.year, customOpts.month, customOpts.day)
 				);
 				to = dateToS3DateString(
-					new Date(customOpts.year, customOpts.month + 1, customOpts.day)
+					new Date(customOpts.year, customOpts.month, customOpts.day)
 				);
 			}
 			break;
