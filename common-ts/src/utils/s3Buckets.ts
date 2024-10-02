@@ -19,6 +19,7 @@ export type DownloadRequestParams = {
 	user: string;
 	programId: string;
 	authority: string;
+	isEmulationMode: boolean;
 	marketSymbol?: string;
 };
 
