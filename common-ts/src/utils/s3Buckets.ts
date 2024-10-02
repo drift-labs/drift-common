@@ -50,7 +50,7 @@ export const getFileRedisKeyFromParams = (
 	return Object.keys(downloadRequestParams)
 		.sort((a, b) => a.localeCompare(b))
 		.map((sortedKey) => downloadRequestParams[sortedKey])
-		.filter((val) => !!val)
+		.filter((val) => val !== undefined)
 		.join(':');
 };
 
