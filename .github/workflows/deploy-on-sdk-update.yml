@@ -16,9 +16,10 @@ jobs:
         run: |
           cd protocol
           git pull --rebase origin master
+          cd ..
           git config user.name "GitHub Actions"
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A
+          git add protocol
           git commit --allow-empty -m "Bumping protocol sdk to ${{ github.event.client_payload.sdk-version }}"
           git push
 
