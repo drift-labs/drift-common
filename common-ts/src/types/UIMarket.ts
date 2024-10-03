@@ -2,7 +2,9 @@ import {
 	MarketType,
 	OracleSource,
 	PerpMarketConfig,
+	PerpMarkets,
 	SpotMarketConfig,
+	SpotMarkets,
 } from '@drift-labs/sdk';
 import { MarketId } from './MarketId';
 import { Config } from '../Config';
@@ -11,6 +13,9 @@ import { USDC_SPOT_MARKET_INDEX } from '../constants';
 import { ENUM_UTILS } from '../utils';
 
 export class UIMarket {
+	static perpMarkets = PerpMarkets['devnet'];
+	static spotMarkets = SpotMarkets['devnet'];
+
 	readonly market: SpotMarketConfig | PerpMarketConfig;
 	readonly marketId: MarketId;
 
@@ -29,6 +34,14 @@ export class UIMarket {
 
 		this.marketId = marketId;
 		this.market = markets[marketIndex];
+	}
+
+	static setPerpMarkets(perpMarkets: PerpMarketConfig[]) {
+		this.perpMarkets = perpMarkets;
+	}
+
+	static setSpotMarkets(spotMarkets: SpotMarketConfig[]) {
+		this.spotMarkets = spotMarkets;
 	}
 
 	static createSpotMarket(marketIndex: number) {
