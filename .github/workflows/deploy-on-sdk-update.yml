@@ -14,13 +14,11 @@ jobs:
 
       - name: Bump protocol sdk
         run: |
-          cd protocol
-          git pull --rebase origin master
-          cd ..
+          git submodule update --remote
           git config user.name "GitHub Actions"
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add protocol
-          git commit --allow-empty -m "Bumping protocol sdk to ${{ github.event.client_payload.sdk-version }}"
+          git commit --allow-empty -m "Bumping protocol sdk to ${{ github.event.client_payload.version }}"
           git push
 
       - name: Get latest commit hash
@@ -56,4 +54,4 @@ jobs:
             }}"
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
-          VERSION: ${{ github.event.client_payload.sdk-version }}
+          VERSION: ${{ github.event.client_payload.version }}
