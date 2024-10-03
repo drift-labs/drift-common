@@ -6,6 +6,8 @@ on:
 jobs:
   update-sdk:
     runs-on: ubicloud
+    outputs:
+      commit_hash: ${{ steps.get_commit.outputs.commit_hash }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
