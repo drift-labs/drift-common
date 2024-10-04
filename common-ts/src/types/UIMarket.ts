@@ -15,6 +15,12 @@ import { ENUM_UTILS } from '../utils';
 export class UIMarket {
 	static perpMarkets = PerpMarkets['devnet'];
 	static spotMarkets = SpotMarkets['devnet'];
+	static perpMarketIds = PerpMarkets['devnet'].map((m) =>
+		MarketId.createPerpMarket(m.marketIndex)
+	);
+	static spotMarketIds = SpotMarkets['devnet'].map((m) =>
+		MarketId.createSpotMarket(m.marketIndex)
+	);
 
 	readonly market: SpotMarketConfig | PerpMarketConfig;
 	readonly marketId: MarketId;
@@ -38,10 +44,16 @@ export class UIMarket {
 
 	static setPerpMarkets(perpMarkets: PerpMarketConfig[]) {
 		this.perpMarkets = perpMarkets;
+		this.perpMarketIds = perpMarkets.map((m) =>
+			MarketId.createPerpMarket(m.marketIndex)
+		);
 	}
 
 	static setSpotMarkets(spotMarkets: SpotMarketConfig[]) {
 		this.spotMarkets = spotMarkets;
+		this.spotMarketIds = spotMarkets.map((m) =>
+			MarketId.createSpotMarket(m.marketIndex)
+		);
 	}
 
 	static createSpotMarket(marketIndex: number) {
