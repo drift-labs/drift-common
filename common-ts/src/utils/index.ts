@@ -25,7 +25,6 @@ import {
 import {
 	UIMatchedOrderRecordAndAction,
 	UISerializableOrderActionRecord,
-	UISerializableOrderRecord,
 } from '../serializableTypes';
 
 export const matchEnum = (enum1: any, enum2) => {
@@ -168,8 +167,8 @@ const getChronologicalValueForOrderAction = (action: OrderAction) => {
  * @returns
  */
 export const getSortScoreForOrderRecords = (
-	orderA: UISerializableOrderRecord | Event<OrderRecord>,
-	orderB: UISerializableOrderRecord | Event<OrderRecord>
+	orderA: { slot: number },
+	orderB: { slot: number }
 ) => {
 	if (orderA.slot !== orderB.slot) {
 		return orderA.slot > orderB.slot ? 1 : -1;
@@ -287,8 +286,8 @@ export const sortUIOrderActionRecords = (
 	return direction === 'desc' ? ascSortedRecords.reverse() : ascSortedRecords;
 };
 
-export const sortUIOrderRecords = (
-	records: UISerializableOrderRecord[],
+export const sortUIOrderRecords = <T extends { slot: number }>(
+	records: T[],
 	direction: 'asc' | 'desc' = 'desc'
 ) => {
 	const ascSortedRecords = records.sort(getSortScoreForOrderRecords);
@@ -305,23 +304,23 @@ export const sortOrderRecords = (
 	return direction === 'desc' ? ascSortedRecords.reverse() : ascSortedRecords;
 };
 
-export const getLatestOfTwoUIOrderRecords = (
-	orderA: UISerializableOrderRecord,
-	orderB: UISerializableOrderRecord
+export const getLatestOfTwoUIOrderRecords = <T extends { slot: number }>(
+	orderA: T,
+	orderB: T
 ) => {
 	return getSortScoreForOrderRecords(orderA, orderB) === 1 ? orderA : orderB;
 };
 
-export const getLatestOfTwoOrderRecords = (
-	orderA: Event<OrderRecord>,
-	orderB: Event<OrderRecord>
+export const getLatestOfTwoOrderRecords = <T extends { slot: number }>(
+	orderA: T,
+	orderB: T
 ) => {
 	return getSortScoreForOrderRecords(orderA, orderB) === 1 ? orderA : orderB;
 };
 
-export const getUIOrderRecordsLaterThanTarget = (
-	target: UISerializableOrderRecord,
-	records: UISerializableOrderRecord[]
+export const getUIOrderRecordsLaterThanTarget = <T extends { slot: number }>(
+	target: T,
+	records: T[]
 ) =>
 	records.filter(
 		(record) => getLatestOfTwoUIOrderRecords(record, target) === record
