@@ -26,7 +26,7 @@ import {
 	UIMatchedOrderRecordAndAction,
 	UISerializableOrderActionRecord,
 	UISerializableOrderRecord,
-} from 'src/serializableTypes';
+} from '../serializableTypes';
 
 export const matchEnum = (enum1: any, enum2) => {
 	return JSON.stringify(enum1) === JSON.stringify(enum2);
