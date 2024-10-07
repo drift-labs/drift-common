@@ -6,7 +6,6 @@ export interface IPredictionMarketConfig {
 	resolutionDateUnix: number;
 	category?: string;
 	symbol: string;
-	imgSrc: string;
 	previewImgSrc?: string;
 	devnetMarketIndex?: number;
 	mainnetMarketIndex?: number;
