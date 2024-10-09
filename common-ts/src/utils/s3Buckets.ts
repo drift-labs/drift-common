@@ -32,7 +32,8 @@ export type DownloadRecordType =
 	| 'liquidations'
 	| 'settle-pnl-records'
 	| 'lp-records'
-	| 'if-stake-records';
+	| 'if-stake-records'
+	| 'swap-records';
 
 export type DownloadPeriod =
 	| 'week'
