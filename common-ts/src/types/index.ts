@@ -247,7 +247,8 @@ export type UIOrderType =
 	| 'takeProfitMarket'
 	| 'takeProfitLimit'
 	| 'oracle'
-	| 'oracleLimit';
+	| 'oracleLimit'
+	| 'scaledOrders';
 
 export type UIOrderTypeValue = {
 	label: string;

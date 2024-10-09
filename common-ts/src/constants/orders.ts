@@ -42,6 +42,11 @@ export const UI_ORDER_TYPES: UIOrderTypeLookup = {
 		value: 'oracleLimit',
 		orderType: OrderType.LIMIT,
 	},
+	scaledOrders: {
+		label: 'Scaled Orders',
+		value: 'scaledOrders',
+		orderType: OrderType.LIMIT,
+	},
 };
 
 export const UI_ORDER_TYPES_LIST = Object.values(UI_ORDER_TYPES);
