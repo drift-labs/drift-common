@@ -31,7 +31,7 @@ import {
 import bcrypt from 'bcryptjs-react';
 import nacl, { sign } from 'tweetnacl';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
-import { AuctionParams } from 'src/types';
+import { AuctionParams } from '../types/trade';
 import { USER_COMMON_UTILS } from './user';
 import { TRADING_COMMON_UTILS } from './trading';
 import { MARKET_COMMON_UTILS } from './market';
