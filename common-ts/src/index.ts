@@ -1,6 +1,5 @@
 export * from './Config';
 export * from './chartConstants';
-export * from './utils/candleUtils';
 export * from './types';
 export * from './EnvironmentConstants';
 export * from './utils';

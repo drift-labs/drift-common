@@ -24,9 +24,10 @@ import {
 	QUOTE_PRECISION_EXP,
 	calculateScaledInitialAssetWeight,
 } from '@drift-labs/sdk';
-import { LstMetrics, aprFromApy } from '../';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { B_SOL, JITO_SOL, M_SOL } from '../constants';
+import { aprFromApy } from '.';
+import { LstMetrics } from 'src/types/Superstake';
 
 // Default value for estimated APR
 const DEFAULT_VALUE = {

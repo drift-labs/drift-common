@@ -11,7 +11,7 @@ import {
 import { describe, expect, test } from '@jest/globals';
 import { PartialUISerializableOrderActionRecord } from '..';
 import { Serializer, UISerializableCandle } from '../../serializableTypes';
-import { CANDLE_UTILS } from '../candleUtils';
+import { CANDLE_UTILS } from '../Candle';
 
 const timestampFromDateString = (dateString: string) =>
 	Math.floor(new Date(Date.parse(dateString + ' GMT')).getTime());

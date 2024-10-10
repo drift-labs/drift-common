@@ -1,5 +1,5 @@
-import { sleep, COMMON_UTILS } from '..';
 import Redis, { Cluster, RedisOptions } from 'ioredis';
+import { sleep, COMMON_UTILS } from '../utils';
 
 const BULK_WRITE_CHUNK_SIZE = 500;
 const BULK_READ_CHUNK_SIZE = 1000;

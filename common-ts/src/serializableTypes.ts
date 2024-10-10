@@ -58,21 +58,17 @@ import {
 	SetSerializeKeyTransform,
 	SnakeCase,
 } from 'cerializr';
+import { assert } from './utils/assert';
+import { Config } from './Config';
 import {
-	AccountSnapshot,
-	Config,
-	LeaderboardResult,
-	LeaderBoardResultRow,
 	PnlHistoryDataPoint,
 	PnlSnapshotOrderOption,
 	RollingPnlData,
 	SnapshotEpochResolution,
-	UIAccountSnapshot,
 	UserPerpPositionSnapshot,
-	UserSnapshotRecord,
 	UserSpotPositionSnapshot,
-} from './index';
-import { assert } from './utils/assert';
+} from './types/history-server';
+import { LeaderboardResult, LeaderBoardResultRow } from './types/leaderboard';
 
 // Reusable transformers
 
@@ -1823,4 +1819,74 @@ export const Serializer = {
 	setSerializeFromSnakeCase: () => {
 		SetSerializeKeyTransform(SnakeCase);
 	},
+};
+
+export type UserSnapshotRecord = {
+	programId: PublicKey;
+	authority: PublicKey;
+	user: PublicKey;
+	epochTs: number;
+	ts: number;
+	perpPositionUpnl: BN;
+
+	totalAccountValue: BN;
+	cumulativeDepositQuoteValue: BN;
+	cumulativeWithdrawalQuoteValue: BN;
+	cumulativeSettledPerpPnl: BN;
+	cumulativeReferralReward: BN;
+	cumulativeReferralVolume: BN;
+	cumulativeReferralCount: number;
+};
+
+export type UIAccountSnapshot = Pick<
+	UserSnapshotRecord,
+	'authority' | 'user' | 'epochTs'
+> &
+	Pick<
+		UISerializableUserSnapshotRecord,
+		| 'cumulativeDepositQuoteValue'
+		| 'cumulativeWithdrawalQuoteValue'
+		| 'totalAccountValue'
+		| 'cumulativeReferralReward'
+		| 'cumulativeReferralVolume'
+		| 'cumulativeReferralCount'
+	> & {
+		allTimeTotalPnl: BigNum;
+		allTimeTotalPnlPct: BigNum;
+	};
+
+export type AccountSnapshot = Pick<
+	UserSnapshotRecord,
+	'authority' | 'user' | 'epochTs'
+> &
+	Pick<
+		SerializableUserSnapshotRecord,
+		| 'cumulativeDepositQuoteValue'
+		| 'cumulativeWithdrawalQuoteValue'
+		| 'totalAccountValue'
+		| 'cumulativeReferralReward'
+		| 'cumulativeReferralVolume'
+		| 'cumulativeReferralCount'
+	> & {
+		allTimeTotalPnl: BN;
+		allTimeTotalPnlPct: BN;
+	};
+
+export enum HistoryResolution {
+	DAY = 'DAY',
+	WEEK = 'WEEK',
+	MONTH = 'MONTH',
+	ALL = 'ALL',
+}
+
+export type UISnapshotHistory = {
+	[HistoryResolution.DAY]: UISerializableAccountSnapshot[];
+	[HistoryResolution.WEEK]: UISerializableAccountSnapshot[];
+	[HistoryResolution.MONTH]: UISerializableAccountSnapshot[];
+	[HistoryResolution.ALL]: UISerializableAccountSnapshot[];
+	dailyAllTimePnls: UISerializableAllTimePnlData[];
+};
+
+export type SnapshotHistory = {
+	[key in HistoryResolution]: AccountSnapshot[];
 };
