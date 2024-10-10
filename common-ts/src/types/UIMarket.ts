@@ -7,7 +7,6 @@ import {
 	SpotMarkets,
 } from '@drift-labs/sdk';
 import { MarketId } from './MarketId';
-import { Config } from '../Config';
 import invariant from 'tiny-invariant';
 import { USDC_SPOT_MARKET_INDEX } from '../constants';
 import { ENUM_UTILS } from '../utils';
@@ -28,8 +27,8 @@ export class UIMarket {
 	constructor(readonly marketIndex: number, readonly marketType: MarketType) {
 		const marketId = new MarketId(marketIndex, marketType);
 		const markets = marketId.isPerp
-			? Config.perpMarketsLookup
-			: Config.spotMarketsLookup;
+			? UIMarket.perpMarkets
+			: UIMarket.spotMarkets;
 
 		const market = markets[marketIndex];
 
