@@ -26,9 +26,9 @@ const NewMarket = (allProps: IconProps) => {
 							y2={12}
 							gradientUnits="userSpaceOnUse"
 						>
-							<stop stopColor="#FFC2C0" />
-							<stop offset={0.5} stopColor="#AC85FF" />
-							<stop offset={1} stopColor="#89E3FF" />
+							<stop stopColor="#E8A2A0" />
+							<stop offset={0.5} stopColor="#9468F1" />
+							<stop offset={1} stopColor="#71CCE9" />
 						</linearGradient>
 					</defs>
 				</svg>
