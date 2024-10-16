@@ -9,6 +9,7 @@
 	"scripts": {
 		"lint": "eslint './**/*.{ts,tsx}' --quiet",
 		"build": "yarn clean && tsc",
+		"build:watch": "yarn clean && tsc --watch",
 		"clean": "rm -rf lib"
 	},
 	"directories": {
