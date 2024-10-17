@@ -6,11 +6,13 @@ export interface IPredictionMarketConfig {
 	resolutionDateUnix: number;
 	category?: string;
 	symbol: string;
+	imgSrc: string;
 	previewImgSrc?: string;
 	devnetMarketIndex?: number;
 	mainnetMarketIndex?: number;
 	production?: boolean;
 	endingSoonThresholdDays?: number;
+	resolutionDateUnknown?: boolean;
 }
 
 export type SerializedSpotMarketConfig = Omit<
