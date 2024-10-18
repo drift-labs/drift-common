@@ -37,6 +37,10 @@
   "directories": {
     "lib": "lib"
   },
+  "exports": {
+    ".": "./lib/index.js",
+    "./clients": "./lib/clients/index.js"
+  },
   "engines": {
     "node": ">=14"
   },
