@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		/* Visit https://aka.ms/tsconfig to read more about this file */
 
-		"jsx": "react",
+		"jsx": "react-jsx",
 		"module": "ES2022",
 		"target": "ES2022",
 		"moduleResolution": "node",
