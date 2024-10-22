@@ -14,6 +14,7 @@ import {
 	calculateClaimablePnl,
 	calculateCostBasis,
 	calculateEntryPrice,
+	calculateFeesAndFundingPnl,
 	calculatePositionFundingPNL,
 	calculatePositionPNL,
 	isOracleValid,
@@ -148,6 +149,11 @@ const getOpenPositionData = (
 					oraclePriceData
 				),
 				unsettledFundingPnl: calculatePositionFundingPNL(
+					perpMarket,
+					perpPositionWithLpSettle
+				),
+				// Includes both settled and unsettled funding as well as fees
+				feesAndFundingPnl: calculateFeesAndFundingPnl(
 					perpMarket,
 					perpPositionWithLpSettle
 				),
