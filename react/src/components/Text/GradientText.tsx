@@ -1,28 +1,31 @@
-import styled from '@emotion/styled';
 import React, { CSSProperties, PropsWithChildren } from 'react';
 
-const GradientBgTxt = styled.div`
-	background: var(--app-gradient);
-	-webkit-background-clip: text;
-	-webkit-text-fill-color: transparent;
-	display: inline-block;
-`;
+type GradientBgTxtProps = PropsWithChildren<{
+	className?: string;
+}> & React.ComponentProps<'div'>;
 
-const HoverGradientParent = styled.div`
-	& > *:nth-of-type(1) {
-		display: inline-block;
-	}
-	& > *:nth-of-type(2) {
-		display: none;
-	}
+export const GradientBgTxt = ({ children, className = '', ...props }: GradientBgTxtProps) => {
+	return (
+		<div
+			{...props}
+			className={`bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent inline-block ${className}`}
+		>
+			{children}
+		</div>
+	);
+};
 
-	&:hover > *:nth-of-type(1) {
-		display: none;
-	}
-	&:hover > *:nth-of-type(2) {
-		display: inline-block;
-	}
-`;
+type HoverGradientParentProps = PropsWithChildren<{
+	className?: string;
+}>;
+
+export const HoverGradientParent = ({ children, className = '' }: HoverGradientParentProps) => {
+	return (
+		<div className={`[&>*:nth-child(1)]:inline-block [&>*:nth-child(2)]:hidden hover:[&>*:nth-child(1)]:hidden hover:[&>*:nth-child(2)]:inline-block ${className}`}>
+			{children}
+		</div>
+	);
+};
 
 export const GradientText = (
 	props: PropsWithChildren<{

@@ -16,7 +16,6 @@
     "typecheck": "tsc --project common-ts --noEmit"
   },
   "dependencies": {
-    "@emotion/styled": "^11.1.5",
     "@types/big.js": "^6.2.2",
     "eslint": "^8.44.0",
     "posthog-js": "1.72.1",

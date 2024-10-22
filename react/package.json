@@ -35,7 +35,6 @@
 		"react-dom": "18.2.0"
 	},
 	"dependencies": {
-		"@emotion/styled": "^11.1.5",
 		"@drift/common": "file:../common-ts",
 		"@solana/wallet-adapter-base": "0.9.23",
 		"@solana/wallet-adapter-react": "0.15.35",
