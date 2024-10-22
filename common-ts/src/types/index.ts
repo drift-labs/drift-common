@@ -226,6 +226,7 @@ export type OpenPosition = {
 	quoteEntryAmount: BN;
 	quoteBreakEvenAmount: BN;
 	unrealizedFundingPnl: BN;
+	feesAndFundingPnl: BN;
 	lastCumulativeFundingRate: BN;
 	openOrders: number;
 	unsettledPnl: BN;
