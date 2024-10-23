@@ -1,7 +1,7 @@
 import React, { PropsWithChildren, useMemo } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-type TextProps = PropsWithChildren<{
+export type TextProps = PropsWithChildren<{
 	className?: string;
 	onClick?: () => void;
 	style?: React.CSSProperties;
