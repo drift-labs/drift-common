@@ -1,5 +1,4 @@
-import { TextProps } from './Text';
-import { DetailedHTMLProps, HTMLAttributes } from 'react';
+import { DetailedHTMLProps, HTMLAttributes, PropsWithChildren } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 /*
@@ -16,6 +15,12 @@ import { twMerge } from 'tailwind-merge';
  * e.g. className="text-h1 text-text-label" -> even though 'text-h1' and 'text-text-label' are 2 different classes that apply completely different CSS, twMerge will only use 'text-text-label'.
  *
  */
+
+export type TextProps = PropsWithChildren<{
+	className?: string;
+	onClick?: () => void;
+	style?: React.CSSProperties;
+}>;
 
 export const Typo = (
 	props: DetailedHTMLProps<HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>
