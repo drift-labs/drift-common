@@ -8,7 +8,9 @@
 	"license": "MIT",
 	"scripts": {
 		"lint": "eslint './**/*.{ts,tsx}' --quiet",
-		"build": "yarn clean && tsc",
+		"build": "yarn clean && tsc && yarn copy-files",
+		"build:watch": "yarn clean && tsc --watch",
+		"copy-files": "copyfiles -u 1 src/**/*.html src/**/*.css lib/",
 		"clean": "rm -rf lib"
 	},
 	"directories": {
@@ -18,6 +20,7 @@
 		"@solana/spl-token": "^0.3.8",
 		"@solana/web3.js": "^1.77.3",
 		"@types/react": "18.2.21",
+		"copyfiles": "^2.4.1",
 		"encoding": "^0.1.13",
 		"eslint": "^8.43.0",
 		"lokijs": "^1.5.12",
