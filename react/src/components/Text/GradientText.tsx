@@ -2,9 +2,14 @@ import React, { CSSProperties, PropsWithChildren } from 'react';
 
 type GradientBgTxtProps = PropsWithChildren<{
 	className?: string;
-}> & React.ComponentProps<'div'>;
+}> &
+	React.ComponentProps<'div'>;
 
-export const GradientBgTxt = ({ children, className = '', ...props }: GradientBgTxtProps) => {
+export const GradientBgTxt = ({
+	children,
+	className = '',
+	...props
+}: GradientBgTxtProps) => {
 	return (
 		<div
 			{...props}
@@ -19,9 +24,14 @@ type HoverGradientParentProps = PropsWithChildren<{
 	className?: string;
 }>;
 
-export const HoverGradientParent = ({ children, className = '' }: HoverGradientParentProps) => {
+export const HoverGradientParent = ({
+	children,
+	className = '',
+}: HoverGradientParentProps) => {
 	return (
-		<div className={`[&>*:nth-child(1)]:inline-block [&>*:nth-child(2)]:hidden hover:[&>*:nth-child(1)]:hidden hover:[&>*:nth-child(2)]:inline-block ${className}`}>
+		<div
+			className={`[&>*:nth-child(1)]:inline-block [&>*:nth-child(2)]:hidden hover:[&>*:nth-child(1)]:hidden hover:[&>*:nth-child(2)]:inline-block ${className}`}
+		>
 			{children}
 		</div>
 	);
