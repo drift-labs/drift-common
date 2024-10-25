@@ -30,7 +30,7 @@
 		"typescript": "^5.1.6"
 	},
 	"peerDependencies": {
-		"@drift-labs/sdk": "^2.97.0-beta.23",
+		"@drift-labs/sdk": "^2.98.0-beta.6",
 		"@solana/spl-token": "^0.3.8",
 		"@solana/web3.js": "^1.77.3",
 		"react": "18.2.0",
@@ -38,7 +38,6 @@
 	},
 	"dependencies": {
 		"@drift/common": "file:../common-ts",
-		"@drift-labs/sdk": "^2.97.0-beta.23",
 		"@solana/wallet-adapter-base": "0.9.23",
 		"@solana/wallet-adapter-react": "0.15.35",
 		"@solana/wallet-adapter-wallets": "0.19.30",
