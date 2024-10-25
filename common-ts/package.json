@@ -45,6 +45,7 @@
     "node": ">=14"
   },
   "devDependencies": {
+    "@drift-labs/sdk": "^2.97.0-beta.23",
     "@types/mocha": "^10.0.4",
     "chai": "^4.3.10",
     "encoding": "^0.1.13",
