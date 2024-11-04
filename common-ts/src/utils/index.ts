@@ -157,8 +157,8 @@ const getChronologicalValueForOrderAction = (action: OrderAction) => {
 	return matchEnum(action, OrderAction.PLACE)
 		? 0
 		: matchEnum(action, OrderAction.FILL)
-		? 1
-		: 2;
+			? 1
+			: 2;
 };
 
 /**
@@ -777,7 +777,7 @@ const syncGetIfStakingVaultApr = (
 	const userRevenueFactor =
 		spotMarket.insuranceFund.totalFactor > 0
 			? spotMarket.insuranceFund.userFactor /
-			  spotMarket.insuranceFund.totalFactor
+				spotMarket.insuranceFund.totalFactor
 			: 0;
 
 	const revPoolTokensNum = BigNum.from(

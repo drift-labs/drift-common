@@ -234,7 +234,7 @@ const createThrowawayIWallet = (walletPubKey?: PublicKey) => {
 		? new Keypair({
 				publicKey: walletPubKey.toBytes(),
 				secretKey: new Keypair().publicKey.toBytes(),
-		  })
+			})
 		: new Keypair();
 
 	const newWallet: IWallet = {
@@ -497,7 +497,7 @@ const deriveMarketOrderParams = ({
 							? oraclePrice
 							: auctionParams.auctionStartPrice,
 						slippageTolerance,
-				  });
+					});
 
 			// worst (slippageLimitPrice, auctionEndPrice)
 			const oracleAuctionEndPrice = isVariant(direction, 'long')
@@ -505,7 +505,7 @@ const deriveMarketOrderParams = ({
 				: BN.min(
 						oracleAuctionSlippageLimitPrice,
 						auctionParams.auctionEndPrice
-				  );
+					);
 
 			const oracleAuctionParams = deriveOracleAuctionParams({
 				direction: direction,

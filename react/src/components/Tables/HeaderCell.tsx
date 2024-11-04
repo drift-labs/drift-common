@@ -2,16 +2,16 @@ import { PropsWithChildren } from 'react';
 import { HeaderCellWrapper } from './HeaderCellWrapper';
 
 export const HeaderCell = ({
-    children,
-    className,
-    alignRight,
+	children,
+	className,
+	alignRight,
 }: PropsWithChildren<{
-    className?: string;
-    alignRight?: boolean;
+	className?: string;
+	alignRight?: boolean;
 }>) => {
-    return (
-        <HeaderCellWrapper className={className} alignRight={alignRight}>
-            {children}
-        </HeaderCellWrapper>
-    );
+	return (
+		<HeaderCellWrapper className={className} alignRight={alignRight}>
+			{children}
+		</HeaderCellWrapper>
+	);
 };
