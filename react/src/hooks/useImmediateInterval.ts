@@ -12,7 +12,8 @@ export function useImmediateInterval(
 	delayMs: number,
 	runOnCallbackChange = false
 ) {
-	const savedCallback = useRef<() => void>();
+	const savedCallback: React.MutableRefObject<(() => void) | null> =
+		useRef<() => void>(null);
 
 	// Remember the latest callback.
 	useEffect(() => {
