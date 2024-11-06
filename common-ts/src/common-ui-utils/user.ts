@@ -22,7 +22,7 @@ import {
 	calculatePositionPNL,
 	isOracleValid,
 } from '@drift-labs/sdk';
-import { OpenPosition, UIMarket } from 'src/types';
+import { OpenPosition, UIMarket } from '../types';
 import { TRADING_COMMON_UTILS } from './trading';
 import { ENUM_UTILS } from '@drift/common';
 
