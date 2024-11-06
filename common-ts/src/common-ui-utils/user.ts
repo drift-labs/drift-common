@@ -5,6 +5,7 @@ import {
 	DriftClient,
 	MarketStatus,
 	ONE,
+	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
 	PerpMarketConfig,
 	PerpPosition,
@@ -97,8 +98,8 @@ const getOpenPositionData = (
 					);
 
 					const price = resolvedToNo
-						? ZERO.mul(PRICE_PRECISION_EXP)
-						: ONE.mul(PRICE_PRECISION_EXP);
+						? ZERO.mul(PRICE_PRECISION)
+						: ONE.mul(PRICE_PRECISION);
 
 					estExitPrice = price;
 					markPrice = price;
