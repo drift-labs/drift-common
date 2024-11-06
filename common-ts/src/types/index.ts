@@ -255,6 +255,7 @@ export type UIOrderTypeValue = {
 	label: string;
 	value: UIOrderType;
 	orderType: OrderType;
+	description?: string;
 };
 
 export type UIOrderTypeLookup = {
