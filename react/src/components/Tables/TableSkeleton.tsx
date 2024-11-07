@@ -2,6 +2,7 @@ import { twMerge } from 'tailwind-merge';
 import CentreFillScroller from '../Utils/CentreFillScroller';
 import { BodyRowWrapper } from './BodyRowWrapper';
 import { PropsWithChildren } from 'react';
+import InlineLoadingBar from '../Loaders/InlineLoadingBar';
 
 export const TableSkeleton = (
 	props: PropsWithChildren<{
@@ -17,6 +18,7 @@ export const TableSkeleton = (
 		className?: string;
 		autoHeight?: boolean;
 		innerClassName?: string;
+		loading?: boolean;
 		setIsScrollable?: (_isScrollable: boolean) => void;
 	}>
 ) => {
@@ -29,7 +31,15 @@ export const TableSkeleton = (
 				props.className
 			)}
 			top={props.hideHeadersOnMobile && props.isMobile ? null : props.top}
-			middle={<BodyRowWrapper noBg>{props.middle}</BodyRowWrapper>}
+			middle={
+				!props.loading ? (
+					<BodyRowWrapper noBg>{props.middle}</BodyRowWrapper>
+				) : (
+					<div className="w-full flex items-center justify-center my-8">
+						<InlineLoadingBar />
+					</div>
+				)
+			}
 			bottom={props.bottom}
 			fillSpace={props.fillSpace}
 			autoHeight={props.autoHeight}
