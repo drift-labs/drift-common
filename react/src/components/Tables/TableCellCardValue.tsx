@@ -1,4 +1,4 @@
-import { useMemo, ReactNode } from 'react';
+import { useMemo, ReactNode, type JSX } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 export const TableCellCardValue = ({

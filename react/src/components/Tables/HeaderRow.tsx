@@ -1,4 +1,4 @@
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, type JSX } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { TableRowWrapper } from './TableRowWrapper';
 

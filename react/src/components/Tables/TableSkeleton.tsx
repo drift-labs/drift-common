@@ -1,7 +1,7 @@
 import { twMerge } from 'tailwind-merge';
 import CentreFillScroller from '../Utils/CentreFillScroller';
 import { BodyRowWrapper } from './BodyRowWrapper';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, type JSX } from 'react';
 import InlineLoadingBar from '../Loaders/InlineLoadingBar';
 
 export const TableSkeleton = (
