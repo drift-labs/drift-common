@@ -4,7 +4,7 @@ import {
 } from '../../constants/priorityFees';
 import { useCommonDriftStore } from '../../stores/useCommonDriftStore';
 import { PriorityFeeStrategy, PriorityFeeSubscriber } from '@drift-labs/sdk';
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { usePriorityFeesPollingRate } from './usePriorityFeesPollingRate';
 
@@ -32,7 +32,8 @@ export const usePriorityFeeSubscriber = (
 ) => {
 	const connection = useCommonDriftStore((s) => s.connection);
 
-	const subscriber = useRef<PriorityFeeSubscriber>();
+	const subscriber: React.MutableRefObject<PriorityFeeSubscriber | null> =
+		useRef<PriorityFeeSubscriber>(null);
 
 	const pollingFrequencyMs = usePriorityFeesPollingRate();
 
