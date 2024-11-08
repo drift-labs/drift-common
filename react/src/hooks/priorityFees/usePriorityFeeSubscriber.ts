@@ -32,7 +32,7 @@ export const usePriorityFeeSubscriber = (
 ) => {
 	const connection = useCommonDriftStore((s) => s.connection);
 
-	const subscriber = useRef<PriorityFeeSubscriber>();
+	const subscriber = useRef<PriorityFeeSubscriber | undefined>(undefined);
 
 	const pollingFrequencyMs = usePriorityFeesPollingRate();
 

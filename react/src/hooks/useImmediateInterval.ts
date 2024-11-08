@@ -12,7 +12,7 @@ export function useImmediateInterval(
 	delayMs: number,
 	runOnCallbackChange = false
 ) {
-	const savedCallback = useRef<() => void>();
+	const savedCallback = useRef<(() => void) | undefined>(undefined);
 
 	// Remember the latest callback.
 	useEffect(() => {
