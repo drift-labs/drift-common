@@ -1,6 +1,6 @@
 import './inlineLoading.css';
 
-const InlineLoadingBar = () => {
+export const InlineLoadingBar = () => {
 	return (
 		<div className="block w-[40px] h-[10px] rounded-[5px] border-darkBlue-80 border-solid p-[1px] bg-transparent">
 			<div
@@ -16,5 +16,3 @@ const InlineLoadingBar = () => {
 		</div>
 	);
 };
-
-export default InlineLoadingBar;

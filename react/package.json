@@ -41,6 +41,7 @@
 		"@solana/wallet-adapter-base": "0.9.23",
 		"@solana/wallet-adapter-react": "0.15.35",
 		"@solana/wallet-adapter-wallets": "0.19.30",
+		"dayjs": "^1.11.13",
 		"immer": "^10.0.2",
 		"react-singleton-hook": "^4.0.1",
 		"react-use": "^17.4.0",
