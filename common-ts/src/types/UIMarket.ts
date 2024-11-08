@@ -14,7 +14,10 @@ export class UIMarket {
 	readonly market: SpotMarketConfig | PerpMarketConfig;
 	readonly marketId: MarketId;
 
-	constructor(readonly marketIndex: number, readonly marketType: MarketType) {
+	constructor(
+		readonly marketIndex: number,
+		readonly marketType: MarketType
+	) {
 		const marketId = new MarketId(marketIndex, marketType);
 		const markets = marketId.isPerp
 			? Config.perpMarketsLookup

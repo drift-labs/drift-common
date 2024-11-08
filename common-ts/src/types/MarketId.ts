@@ -6,7 +6,10 @@ import { Opaque } from '.';
 export type MarketKey = Opaque<'MarketKey', string>;
 
 export class MarketId {
-	constructor(readonly marketIndex: number, readonly marketType: MarketType) {}
+	constructor(
+		readonly marketIndex: number,
+		readonly marketType: MarketType
+	) {}
 
 	static createPerpMarket(marketIndex: number) {
 		return new MarketId(marketIndex, MarketType.PERP);
