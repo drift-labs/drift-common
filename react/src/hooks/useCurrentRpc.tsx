@@ -22,7 +22,12 @@ const _useCurrentRpc = () => {
 
 	// if saved rpc was removed, revert to default
 	const rpcList = Env.driftEnv === 'mainnet-beta' ? MAINNET_RPCS : DEVNET_RPCS;
-	if (!rpcList.map((rpc) => rpc.value).includes(savedRpc.value)) {
+	if (
+		!rpcList
+			.map((rpc) => rpc?.value)
+			.filter((val) => !!val)
+			.includes(savedRpc?.value)
+	) {
 		return [DEFAULT_MAINNET_RPC, setSavedRpc] as [
 			RpcEndpoint,
 			(savedRpc: RpcEndpoint) => void
