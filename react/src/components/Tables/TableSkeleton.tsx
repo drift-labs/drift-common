@@ -6,7 +6,7 @@ import { InlineLoadingBar } from '../Loaders/InlineLoadingBar';
 
 export const TableSkeleton = (
 	props: PropsWithChildren<{
-		top: JSX.Element;
+		top: JSX.Element | null;
 		middle: JSX.Element;
 		bottom?: JSX.Element;
 		hideHeadersOnMobile?: boolean;

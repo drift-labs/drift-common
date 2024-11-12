@@ -36,7 +36,7 @@ export const BodyCellWrapper = ({
 			{label && <div className="text-xs text-text-label">{label}</div>}
 			<Typo.B2
 				className={twMerge(
-					`flex`,
+					`flex w-full`,
 					alignCenter
 						? 'items-center'
 						: alignRight

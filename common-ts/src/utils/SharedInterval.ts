@@ -9,7 +9,7 @@ import { Observable, Subject } from 'rxjs';
  */
 export class SharedInterval<SubscriberProps> {
 	private tickRate: number;
-	private interval: NodeJS.Timeout;
+	private interval: ReturnType<typeof setInterval>;
 	private tickCount = 0;
 	private subscription: Subject<SubscriberProps[]> = new Subject<
 		SubscriberProps[]
