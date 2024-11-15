@@ -30,7 +30,7 @@ export const HoverGradientParent = ({
 }: HoverGradientParentProps) => {
 	return (
 		<div
-			className={`[&>*:nth-child(1)]:inline-block [&>*:nth-child(2)]:hidden hover:[&>*:nth-child(1)]:hidden hover:[&>*:nth-child(2)]:inline-block ${className}`}
+			className={`[&>*:nth-child(1)]:inline-block [&>*:nth-child(2)]:hidden hover:[&>*:nth-child(1)]:opacity-50 hover:[&>*:nth-child(2)]:inline-block ${className}`}
 		>
 			{children}
 		</div>

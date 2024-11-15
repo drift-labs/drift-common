@@ -25,7 +25,7 @@ export const BodyCellWrapper = ({
 	return (
 		<div
 			className={twMerge(
-				`w-full flex flex-row py-2 px-1 items-center`,
+				`w-full flex flex-row px-1 items-center h-full`,
 				alignRight && 'justify-end',
 				onClick && 'hover:cursor-pointer',
 				className

@@ -20,6 +20,7 @@ export const TableSkeleton = (
 		innerClassName?: string;
 		loading?: boolean;
 		setIsScrollable?: (_isScrollable: boolean) => void;
+		overflowAuto?: boolean;
 	}>
 ) => {
 	return (
@@ -44,7 +45,7 @@ export const TableSkeleton = (
 			fillSpace={props.fillSpace}
 			autoHeight={props.autoHeight}
 			innerClassName={props.innerClassName}
-			overflowAuto
+			overflowAuto={props.overflowAuto}
 			setIsScrollable={props.setIsScrollable}
 		/>
 	);
