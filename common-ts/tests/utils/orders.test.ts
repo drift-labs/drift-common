@@ -148,6 +148,38 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 			expect(result.auctionEndPrice?.toString()).to.equal('-5000000');
 		});
 
+		it('should correctly generate params for LONG non-oracle market order when oracle > est entry', () => {
+			const result = COMMON_UI_UTILS.deriveMarketOrderParams({
+				marketType: MarketType.PERP,
+				marketIndex: 0,
+				direction: PositionDirection.LONG,
+				maxLeverageSelected: false,
+				maxLeverageOrderSize: new BN(1000).mul(BASE_PRECISION),
+				baseAmount: new BN(1).mul(BASE_PRECISION),
+				reduceOnly: false,
+				allowInfSlippage: false,
+				bestPrice: new BN(99).mul(PRICE_PRECISION),
+				entryPrice: new BN(100).mul(PRICE_PRECISION),
+				oraclePrice: new BN(108).mul(PRICE_PRECISION),
+				worstPrice: new BN(105).mul(PRICE_PRECISION),
+				limitPrice: new BN(103).mul(PRICE_PRECISION),
+				auctionDuration: 20,
+				marketTickSize: new BN(1),
+				auctionStartPriceOffset: -0.05,
+				auctionEndPriceOffset: 0.05,
+				auctionStartPriceOffsetFrom: 'best',
+				auctionEndPriceOffsetFrom: 'oracle',
+				slippageTolerance: 0.5,
+				isOracleOrder: false,
+			});
+
+			expect(ENUM_UTILS.toStr(result.orderType)).to.equal(
+				ENUM_UTILS.toStr(OrderType.MARKET)
+			);
+			expect(result.auctionStartPrice?.toString()).to.equal('98950500');
+			expect(result.auctionEndPrice?.toString()).to.equal('10800000');
+		});
+
 		it('should correctly generate params for LONG oracle order when oracle < est entry', () => {
 			const result = COMMON_UI_UTILS.deriveMarketOrderParams({
 				marketType: MarketType.PERP,
@@ -232,7 +264,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				auctionStartPriceOffset: -0.05,
 				auctionEndPriceOffset: 0.05,
 				auctionStartPriceOffsetFrom: 'entry',
-				auctionEndPriceOffsetFrom: 'oracle',
+				auctionEndPriceOffsetFrom: 'worst',
 				slippageTolerance: 0.5,
 				isOracleOrder: true,
 			});
@@ -241,7 +273,39 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				ENUM_UTILS.toStr(OrderType.ORACLE)
 			);
 			expect(result.auctionStartPrice?.toString()).to.equal('-7950000');
-			expect(result.auctionEndPrice?.toString()).to.equal('-10800000');
+			expect(result.auctionEndPrice?.toString()).to.equal('-10000000');
+		});
+
+		it('should correctly generate params for SHORT non-oracle market order when oracle > est entry', () => {
+			const result = COMMON_UI_UTILS.deriveMarketOrderParams({
+				marketType: MarketType.PERP,
+				marketIndex: 0,
+				direction: PositionDirection.SHORT,
+				maxLeverageSelected: false,
+				maxLeverageOrderSize: new BN(1000).mul(BASE_PRECISION),
+				baseAmount: new BN(1).mul(BASE_PRECISION),
+				reduceOnly: false,
+				allowInfSlippage: false,
+				bestPrice: new BN(101).mul(PRICE_PRECISION),
+				entryPrice: new BN(100).mul(PRICE_PRECISION),
+				oraclePrice: new BN(108).mul(PRICE_PRECISION),
+				worstPrice: new BN(95).mul(PRICE_PRECISION),
+				limitPrice: new BN(98).mul(PRICE_PRECISION),
+				auctionDuration: 20,
+				marketTickSize: new BN(1),
+				auctionStartPriceOffset: -0.05,
+				auctionEndPriceOffset: 0.05,
+				auctionStartPriceOffsetFrom: 'best',
+				auctionEndPriceOffsetFrom: 'entry',
+				slippageTolerance: 0.5,
+				isOracleOrder: false,
+			});
+
+			expect(ENUM_UTILS.toStr(result.orderType)).to.equal(
+				ENUM_UTILS.toStr(OrderType.MARKET)
+			);
+			expect(result.auctionStartPrice?.toString()).to.equal('10000500');
+			expect(result.auctionEndPrice?.toString()).to.equal('9900500');
 		});
 	});
 	describe('getMarketOrderLimitPrice', () => {
