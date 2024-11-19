@@ -428,6 +428,7 @@ const deriveMarketOrderParams = ({
 	bestPrice,
 	entryPrice,
 	worstPrice,
+	markPrice,
 	marketTickSize,
 	auctionDuration,
 	auctionStartPriceOffset,
@@ -451,6 +452,7 @@ const deriveMarketOrderParams = ({
 	bestPrice: BN;
 	entryPrice: BN;
 	worstPrice: BN;
+	markPrice: BN;
 	marketTickSize: BN;
 	auctionDuration: number;
 	auctionStartPriceOffset: number;
@@ -459,10 +461,16 @@ const deriveMarketOrderParams = ({
 		min: BN;
 		max: BN;
 	};
-	auctionStartPriceOffsetFrom: 'oracle' | 'bestOffer' | 'entry' | 'best';
+	auctionStartPriceOffsetFrom:
+		| 'oracle'
+		| 'mark'
+		| 'bestOffer'
+		| 'entry'
+		| 'best';
 	auctionEndPriceOffsetFrom:
 		| 'worst'
 		| 'oracle'
+		| 'mark'
 		| 'bestOffer'
 		| 'entry'
 		| 'best';
@@ -471,6 +479,7 @@ const deriveMarketOrderParams = ({
 }) => {
 	const priceObject = getPriceObject({
 		oraclePrice,
+		markPrice,
 		bestOffer: bestPrice,
 		entryPrice,
 		worstPrice,
@@ -611,12 +620,14 @@ const getPriceObject = ({
 	bestOffer,
 	entryPrice,
 	worstPrice,
+	markPrice,
 	direction,
 }: {
 	oraclePrice: BN;
 	bestOffer: BN;
 	entryPrice: BN;
 	worstPrice: BN;
+	markPrice: BN;
 	direction: PositionDirection;
 }) => {
 	return {
@@ -627,6 +638,7 @@ const getPriceObject = ({
 			? BN.min(oraclePrice, bestOffer)
 			: BN.max(oraclePrice, bestOffer),
 		worst: worstPrice,
+		mark: markPrice,
 	};
 };
 

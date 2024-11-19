@@ -131,6 +131,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				oraclePrice: new BN(108).mul(PRICE_PRECISION),
 				worstPrice: new BN(105).mul(PRICE_PRECISION),
 				limitPrice: new BN(103).mul(PRICE_PRECISION),
+				markPrice: new BN(108).mul(PRICE_PRECISION),
 				auctionDuration: 20,
 				marketTickSize: new BN(1),
 				auctionStartPriceOffset: -0.05,
@@ -163,6 +164,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				oraclePrice: new BN(108).mul(PRICE_PRECISION),
 				worstPrice: new BN(105).mul(PRICE_PRECISION),
 				limitPrice: new BN(103).mul(PRICE_PRECISION),
+				markPrice: new BN(108).mul(PRICE_PRECISION),
 				auctionDuration: 20,
 				marketTickSize: new BN(1),
 				auctionStartPriceOffset: -0.05,
@@ -177,7 +179,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				ENUM_UTILS.toStr(OrderType.MARKET)
 			);
 			expect(result.auctionStartPrice?.toString()).to.equal('98950500');
-			expect(result.auctionEndPrice?.toString()).to.equal('10800000');
+			expect(result.auctionEndPrice?.toString()).to.equal('103000000');
 		});
 
 		it('should correctly generate params for LONG oracle order when oracle < est entry', () => {
@@ -195,6 +197,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				oraclePrice: new BN(92).mul(PRICE_PRECISION),
 				worstPrice: new BN(105).mul(PRICE_PRECISION),
 				limitPrice: new BN(103).mul(PRICE_PRECISION),
+				markPrice: new BN(92).mul(PRICE_PRECISION),
 				auctionDuration: 20,
 				marketTickSize: new BN(1),
 				auctionStartPriceOffset: -0.05,
@@ -227,6 +230,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				oraclePrice: new BN(92).mul(PRICE_PRECISION),
 				worstPrice: new BN(95).mul(PRICE_PRECISION),
 				limitPrice: new BN(98).mul(PRICE_PRECISION),
+				markPrice: new BN(92).mul(PRICE_PRECISION),
 				auctionDuration: 20,
 				marketTickSize: new BN(1),
 				auctionStartPriceOffset: -0.05,
@@ -259,6 +263,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				oraclePrice: new BN(108).mul(PRICE_PRECISION),
 				worstPrice: new BN(95).mul(PRICE_PRECISION),
 				limitPrice: new BN(98).mul(PRICE_PRECISION),
+				markPrice: new BN(108).mul(PRICE_PRECISION),
 				auctionDuration: 20,
 				marketTickSize: new BN(1),
 				auctionStartPriceOffset: -0.05,
@@ -291,11 +296,12 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				oraclePrice: new BN(108).mul(PRICE_PRECISION),
 				worstPrice: new BN(95).mul(PRICE_PRECISION),
 				limitPrice: new BN(98).mul(PRICE_PRECISION),
+				markPrice: new BN(108).mul(PRICE_PRECISION),
 				auctionDuration: 20,
 				marketTickSize: new BN(1),
 				auctionStartPriceOffset: -0.05,
 				auctionEndPriceOffset: 0.05,
-				auctionStartPriceOffsetFrom: 'best',
+				auctionStartPriceOffsetFrom: 'oracle',
 				auctionEndPriceOffsetFrom: 'entry',
 				slippageTolerance: 0.5,
 				isOracleOrder: false,
@@ -304,8 +310,8 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 			expect(ENUM_UTILS.toStr(result.orderType)).to.equal(
 				ENUM_UTILS.toStr(OrderType.MARKET)
 			);
-			expect(result.auctionStartPrice?.toString()).to.equal('10000500');
-			expect(result.auctionEndPrice?.toString()).to.equal('9900500');
+			expect(result.auctionStartPrice?.toString()).to.equal('108054000');
+			expect(result.auctionEndPrice?.toString()).to.equal('99950000');
 		});
 	});
 	describe('getMarketOrderLimitPrice', () => {
