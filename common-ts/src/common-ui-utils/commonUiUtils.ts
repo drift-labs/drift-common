@@ -630,15 +630,30 @@ const getPriceObject = ({
 	markPrice: BN;
 	direction: PositionDirection;
 }) => {
+	let best;
+
+	const nonZeroOptions = [oraclePrice, bestOffer, markPrice].filter((price) =>
+		price.gt(ZERO)
+	);
+
+	if (nonZeroOptions.length === 0) {
+		throw new Error('Unable to create valid auction params');
+	}
+
+	if (isVariant(direction, 'long')) {
+		best = nonZeroOptions.reduce((a, b) => (a.lt(b) ? a : b)); // lowest price
+	} else {
+		best = nonZeroOptions.reduce((a, b) => (a.gt(b) ? a : b)); // highest price
+	}
+
+	// if zero values come through, fallback to nonzero value
 	return {
-		oracle: oraclePrice,
-		bestOffer,
+		oracle: oraclePrice.gt(ZERO) ? oraclePrice : best,
+		bestOffer: bestOffer.gt(ZERO) ? bestOffer : best,
 		entry: entryPrice,
-		best: isVariant(direction, 'long')
-			? BN.min(oraclePrice, bestOffer)
-			: BN.max(oraclePrice, bestOffer),
+		best,
 		worst: worstPrice,
-		mark: markPrice,
+		mark: markPrice.gt(ZERO) ? markPrice : best,
 	};
 };
 
