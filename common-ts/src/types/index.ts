@@ -259,3 +259,11 @@ export type UIOrderTypeValue = {
 export type UIOrderTypeLookup = {
 	[key in UIOrderType]: UIOrderTypeValue;
 };
+
+export type TradeOffsetPrice =
+	| 'worst'
+	| 'best'
+	| 'oracle'
+	| 'mark'
+	| 'entry'
+	| 'bestOffer';

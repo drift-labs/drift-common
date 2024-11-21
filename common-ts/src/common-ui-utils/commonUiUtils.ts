@@ -31,7 +31,7 @@ import {
 import bcrypt from 'bcryptjs-react';
 import nacl, { sign } from 'tweetnacl';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
-import { AuctionParams } from 'src/types';
+import { AuctionParams, TradeOffsetPrice } from 'src/types';
 import { USER_COMMON_UTILS } from './user';
 import { TRADING_COMMON_UTILS } from './trading';
 import { MARKET_COMMON_UTILS } from './market';
@@ -461,19 +461,8 @@ const deriveMarketOrderParams = ({
 		min: BN;
 		max: BN;
 	};
-	auctionStartPriceOffsetFrom:
-		| 'oracle'
-		| 'mark'
-		| 'bestOffer'
-		| 'entry'
-		| 'best';
-	auctionEndPriceOffsetFrom:
-		| 'worst'
-		| 'oracle'
-		| 'mark'
-		| 'bestOffer'
-		| 'entry'
-		| 'best';
+	auctionStartPriceOffsetFrom: TradeOffsetPrice;
+	auctionEndPriceOffsetFrom: TradeOffsetPrice;
 	slippageTolerance: number;
 	isOracleOrder?: boolean;
 }) => {
