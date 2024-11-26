@@ -57,7 +57,7 @@ export const UI_ORDER_TYPES: UIOrderTypeLookup = {
 			'An Oracle Limit Order allows you to specify an offset rather than limit price to execute your order. The offset represents the price above/below the current Oracle Price you want to be filled at. Learn more.',
 	},
 	scaledOrders: {
-		label: 'Scale Order',
+		label: 'Scale',
 		value: 'scaledOrders',
 		orderType: OrderType.LIMIT,
 		description:
