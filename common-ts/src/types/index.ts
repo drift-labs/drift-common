@@ -203,6 +203,7 @@ export type AuctionParams = {
 	auctionStartPrice: BN;
 	auctionEndPrice: BN;
 	auctionDuration: number;
+	constrainedBySlippage?: boolean; // flag to tell the UI that end price is constrained by max slippage tolerance
 };
 
 export type MarketMakerRewardRecord = {
