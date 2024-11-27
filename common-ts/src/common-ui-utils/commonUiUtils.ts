@@ -7,6 +7,7 @@ import {
 	DriftClient,
 	IWallet,
 	MarketType,
+	OptionalOrderParams,
 	OrderType,
 	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
@@ -467,7 +468,7 @@ const deriveMarketOrderParams = ({
 	auctionEndPriceOffsetFrom: TradeOffsetPrice;
 	slippageTolerance: number;
 	isOracleOrder?: boolean;
-}) => {
+}): OptionalOrderParams & { constrainedBySlippage?: boolean } => {
 	const priceObject = getPriceObject({
 		oraclePrice,
 		markPrice,
@@ -615,11 +616,19 @@ const getPriceObject = ({
 	let best;
 
 	const nonZeroOptions = [oraclePrice, bestOffer, markPrice].filter(
-		(price) => !!price && price?.gt(ZERO)
+		(price) => price !== undefined && price?.gt(ZERO)
 	);
 
 	if (nonZeroOptions.length === 0) {
-		throw new Error('Unable to create valid auction params');
+		console.error('Unable to create valid auction params');
+		return {
+			oraclePrice: ZERO,
+			bestOffer: ZERO,
+			entryPrice: ZERO,
+			worstPrice: ZERO,
+			markPrice: ZERO,
+			direction,
+		};
 	}
 
 	if (isVariant(direction, 'long')) {
