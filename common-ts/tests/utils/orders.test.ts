@@ -143,7 +143,9 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				ENUM_UTILS.toStr(OrderType.ORACLE)
 			);
 			expect(result.auctionStartPrice?.toString()).to.equal('-8050000');
-			expect(result.auctionEndPrice?.toString()).to.equal('-5000000');
+			expect(result.auctionEndPrice?.toString()).to.equal('-7550250');
+			//@ts-ignore
+			expect(result.constrainedBySlippage).to.equal(true);
 		});
 
 		it('should correctly generate params for LONG non-oracle market order when oracle > est entry', () => {
@@ -167,7 +169,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				auctionEndPriceOffset: 0.05,
 				auctionStartPriceOffsetFrom: 'best',
 				auctionEndPriceOffsetFrom: 'oracle',
-				slippageTolerance: 0.5,
+				slippageTolerance: 20,
 				isOracleOrder: false,
 			});
 
@@ -176,6 +178,8 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 			);
 			expect(result.auctionStartPrice?.toString()).to.equal('98950500');
 			expect(result.auctionEndPrice?.toString()).to.equal('103000000');
+			//@ts-ignore
+			expect(result.constrainedBySlippage).to.equal(false);
 		});
 
 		it('should correctly generate params for LONG oracle order when oracle < est entry', () => {
@@ -207,7 +211,9 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				ENUM_UTILS.toStr(OrderType.ORACLE)
 			);
 			expect(result.auctionStartPrice?.toString()).to.equal('7950000');
-			expect(result.auctionEndPrice?.toString()).to.equal('11000000');
+			expect(result.auctionEndPrice?.toString()).to.equal('8449750');
+			//@ts-ignore
+			expect(result.constrainedBySlippage).to.equal(true);
 		});
 
 		it('should correctly generate params for SHORT oracle order when oracle < est entry', () => {
@@ -239,7 +245,9 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				ENUM_UTILS.toStr(OrderType.ORACLE)
 			);
 			expect(result.auctionStartPrice?.toString()).to.equal('8050000');
-			expect(result.auctionEndPrice?.toString()).to.equal('6000000');
+			expect(result.auctionEndPrice?.toString()).to.equal('7549750');
+			//@ts-ignore
+			expect(result.constrainedBySlippage).to.equal(true);
 		});
 
 		it('should correctly generate params for SHORT oracle order when oracle > est entry', () => {
@@ -261,8 +269,8 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 				auctionDuration: 20,
 				auctionStartPriceOffset: -0.05,
 				auctionEndPriceOffset: 0.05,
-				auctionStartPriceOffsetFrom: 'entry',
-				auctionEndPriceOffsetFrom: 'worst',
+				auctionStartPriceOffsetFrom: 'best',
+				auctionEndPriceOffsetFrom: 'entry',
 				slippageTolerance: 0.5,
 				isOracleOrder: true,
 			});
@@ -272,6 +280,8 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 			);
 			expect(result.auctionStartPrice?.toString()).to.equal('-7950000');
 			expect(result.auctionEndPrice?.toString()).to.equal('-10000000');
+			//@ts-ignore
+			expect(result.constrainedBySlippage).to.equal(false);
 		});
 
 		it('should correctly generate params for SHORT non-oracle market order when oracle > est entry', () => {

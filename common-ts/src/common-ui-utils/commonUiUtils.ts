@@ -381,6 +381,9 @@ const getMarketAuctionParams = ({
 			.mul(worstPriceToUse)
 			.div(PRICE_PRECISION);
 
+		console.log('limit price: ', limitPrice.toString());
+		console.log('auctionEndPrice: ', auctionEndPrice.toString());
+
 		constrainedBySlippage = limitPrice.lt(auctionEndPrice);
 
 		// use BEST (limit price, auction end price) as end price
@@ -624,8 +627,8 @@ const getPriceObject = ({
 }) => {
 	let best;
 
-	const nonZeroOptions = [oraclePrice, bestOffer, markPrice].filter((price) =>
-		price.gt(ZERO)
+	const nonZeroOptions = [oraclePrice, bestOffer, markPrice].filter(
+		(price) => !!price && price?.gt(ZERO)
 	);
 
 	if (nonZeroOptions.length === 0) {
@@ -640,12 +643,12 @@ const getPriceObject = ({
 
 	// if zero values come through, fallback to nonzero value
 	return {
-		oracle: oraclePrice.gt(ZERO) ? oraclePrice : best,
-		bestOffer: bestOffer.gt(ZERO) ? bestOffer : best,
+		oracle: oraclePrice?.gt(ZERO) ? oraclePrice : best,
+		bestOffer: bestOffer?.gt(ZERO) ? bestOffer : best,
 		entry: entryPrice,
 		best,
 		worst: worstPrice,
-		mark: markPrice.gt(ZERO) ? markPrice : best,
+		mark: markPrice?.gt(ZERO) ? markPrice : best,
 	};
 };
 
