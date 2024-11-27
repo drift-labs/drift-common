@@ -381,9 +381,6 @@ const getMarketAuctionParams = ({
 			.mul(worstPriceToUse)
 			.div(PRICE_PRECISION);
 
-		console.log('limit price: ', limitPrice.toString());
-		console.log('auctionEndPrice: ', auctionEndPrice.toString());
-
 		constrainedBySlippage = limitPrice.lt(auctionEndPrice);
 
 		// use BEST (limit price, auction end price) as end price
@@ -432,7 +429,6 @@ const deriveMarketOrderParams = ({
 	baseAmount,
 	reduceOnly,
 	allowInfSlippage,
-	limitPrice,
 	oraclePrice,
 	bestPrice,
 	entryPrice,
@@ -455,7 +451,6 @@ const deriveMarketOrderParams = ({
 	baseAmount: BN;
 	reduceOnly: boolean;
 	allowInfSlippage: boolean;
-	limitPrice: BN;
 	oraclePrice: BN;
 	bestPrice: BN;
 	entryPrice: BN;
@@ -482,6 +477,13 @@ const deriveMarketOrderParams = ({
 		direction,
 	});
 
+	// max slippage price
+	const limitPrice = getMarketOrderLimitPrice({
+		direction,
+		baselinePrice: priceObject[auctionStartPriceOffsetFrom],
+		slippageTolerance,
+	});
+
 	const auctionParams = getMarketAuctionParams({
 		direction,
 		startPriceFromSettings: priceObject[auctionStartPriceOffsetFrom],
@@ -505,25 +507,10 @@ const deriveMarketOrderParams = ({
 	if (isOracleOrder) {
 		// wont work if oracle is zero
 		if (!oraclePrice.eq(ZERO)) {
-			// oracle auction max slippage = regular auction start price + slippage tolerance
-			const oracleAuctionSlippageLimitPrice = allowInfSlippage
-				? limitPrice
-				: getMarketOrderLimitPrice({
-						direction,
-						// baselinePrice should fallback to oracle if this is somehow 0
-						baselinePrice: auctionParams.auctionStartPrice?.eq(ZERO)
-							? oraclePrice
-							: auctionParams.auctionStartPrice,
-						slippageTolerance,
-				  });
-
 			// BEST (slippageLimitPrice, auctionEndPrice)
 			const oracleAuctionEndPrice = isVariant(direction, 'long')
-				? BN.min(oracleAuctionSlippageLimitPrice, auctionParams.auctionEndPrice)
-				: BN.max(
-						oracleAuctionSlippageLimitPrice,
-						auctionParams.auctionEndPrice
-				  );
+				? BN.min(limitPrice, auctionParams.auctionEndPrice)
+				: BN.max(limitPrice, auctionParams.auctionEndPrice);
 
 			const oracleAuctionParams = deriveOracleAuctionParams({
 				direction: direction,
