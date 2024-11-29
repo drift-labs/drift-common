@@ -315,6 +315,8 @@ const getMarketOrderLimitPrice = ({
 }): BN => {
 	let limitPrice;
 
+	if (!baselinePrice) return ZERO;
+
 	if (slippageTolerance === 0) return baselinePrice;
 
 	// infinite slippage capped at 15% currently
