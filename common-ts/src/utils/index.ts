@@ -557,7 +557,10 @@ const getCurrentOpenInterestForMarket = (
 			BASE_PRECISION_EXP
 		);
 
-		const priceData = driftClient.getOraclePriceDataAndSlot(market.amm.oracle);
+		const priceData = driftClient.getOraclePriceDataAndSlot(
+			market.amm.oracle,
+			market.amm.oracleSource
+		);
 
 		const price = BigNum.from(priceData.data.price, PRICE_PRECISION_EXP);
 
@@ -642,7 +645,10 @@ const getTotalBorrowsForMarket = (
 		market.precisionExp
 	);
 
-	const priceData = driftClient.getOraclePriceDataAndSlot(marketAccount.oracle);
+	const priceData = driftClient.getOraclePriceDataAndSlot(
+		marketAccount.oracle,
+		marketAccount.oracleSource
+	);
 
 	const price = BigNum.from(priceData.data.price, PRICE_PRECISION_EXP);
 
@@ -668,7 +674,10 @@ const getTotalDepositsForMarket = (
 		market.precisionExp
 	);
 
-	const priceData = driftClient.getOraclePriceDataAndSlot(marketAccount.oracle);
+	const priceData = driftClient.getOraclePriceDataAndSlot(
+		marketAccount.oracle,
+		marketAccount.oracleSource
+	);
 
 	const price = BigNum.from(priceData.data.price, PRICE_PRECISION_EXP);
 
