@@ -8,24 +8,32 @@ import { JLP_POOL_ID, MAIN_POOL_ID } from './constants';
 
 export const Config: {
 	initialized: boolean;
-	spotMarketsLookup: Record<number, SpotMarketConfig>;
-	jlpSpotMarketsLookup: Record<number, SpotMarketConfig>;
-	perpMarketsLookup: Record<number, PerpMarketConfig>;
+	spotMarketsLookup: SpotMarketConfig[];
+	jlpSpotMarketsLookup: SpotMarketConfig[];
+	perpMarketsLookup: PerpMarketConfig[];
 	sdkConfig: ReturnType<typeof initialize>;
 } = {
 	initialized: false,
-	spotMarketsLookup: {},
-	jlpSpotMarketsLookup: {},
-	perpMarketsLookup: {},
+	spotMarketsLookup: [],
+	jlpSpotMarketsLookup: [],
+	perpMarketsLookup: [],
 	sdkConfig: undefined,
 };
 
 export const Initialize = (env: DriftEnv) => {
 	const SDKConfig = initialize({ env });
 
-	const jlpSpotMarkets = {};
-	const spotMarkets = {};
-	const markets = {};
+	const maxSpotMarketIndex = Math.max(
+		...SDKConfig.SPOT_MARKETS.map((market) => market.marketIndex)
+	);
+
+	const maxPerpMarketIndex = Math.max(
+		...SDKConfig.PERP_MARKETS.map((market) => market.marketIndex)
+	);
+
+	const jlpSpotMarkets = new Array(maxSpotMarketIndex);
+	const spotMarkets = new Array(maxSpotMarketIndex);
+	const markets = new Array(maxPerpMarketIndex);
 
 	SDKConfig.SPOT_MARKETS.filter(
 		(market) => market.poolId === MAIN_POOL_ID
