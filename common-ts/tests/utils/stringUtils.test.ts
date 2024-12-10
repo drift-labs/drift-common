@@ -2,6 +2,7 @@ import { COMMON_UI_UTILS } from '../../src/common-ui-utils/commonUiUtils';
 import { expect } from 'chai';
 describe('trimTrailingZeros', () => {
 	it('trims trailing zeros after decimal', () => {
+		expect(COMMON_UI_UTILS.trimTrailingZeros('1.0000')).to.equal('1.0'); // default is leave 1 zero
 		expect(COMMON_UI_UTILS.trimTrailingZeros('1.0000', 0)).to.equal('1');
 		expect(COMMON_UI_UTILS.trimTrailingZeros('1.1000', 0)).to.equal('1.1');
 		expect(COMMON_UI_UTILS.trimTrailingZeros('1.1200', 0)).to.equal('1.12');
