@@ -484,7 +484,7 @@ const deriveMarketOrderParams = ({
 	const limitPrice = getMarketOrderLimitPrice({
 		direction,
 		baselinePrice: priceObject[auctionStartPriceOffsetFrom],
-		slippageTolerance,
+		slippageTolerance: allowInfSlippage ? undefined : slippageTolerance,
 	});
 
 	const auctionParams = getMarketAuctionParams({
