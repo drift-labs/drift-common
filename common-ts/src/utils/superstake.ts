@@ -110,7 +110,7 @@ const getSuperstakeEstimatedApr = ({
 			includeBorrowRateDelta
 				? new BN(
 						Math.min(solAmount * LAMPORTS_PER_SOL, Number.MAX_SAFE_INTEGER)
-					).neg()
+				  ).neg()
 				: ZERO
 		),
 		PERCENTAGE_PRECISION_EXP

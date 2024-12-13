@@ -104,7 +104,7 @@ const QuoteBigNumDeserializationFn = (val: string) =>
 		? BigNum.from(
 				typeof val === 'string' ? val.replace('.', '') : val,
 				QUOTE_PRECISION_EXP
-			)
+		  )
 		: undefined;
 const QuoteBigNumSerializeAndDeserializeFns = {
 	Serialize: QuoteBigNumSerializationFn,
@@ -123,7 +123,7 @@ const PctBigNumDeserializationFn = (val: string) =>
 		? BigNum.from(
 				typeof val === 'string' ? val.replace('.', '') : val,
 				PERCENTAGE_PRECISION_EXP
-			)
+		  )
 		: undefined;
 
 const PctBigNumSerializeAndDeserializeFns = {
@@ -142,7 +142,7 @@ const BaseBigNumDeserializationFn = (val: string) =>
 		? BigNum.from(
 				typeof val === 'string' ? val.replace('.', '') : val,
 				BASE_PRECISION_EXP
-			)
+		  )
 		: undefined;
 const BaseBigNumSerializeAndDeserializeFns = {
 	Serialize: BaseBigNumSerializationFn,
@@ -160,7 +160,7 @@ const PriceBigNumDeserializationFn = (val: string) =>
 		? BigNum.from(
 				typeof val === 'string' ? val.replace('.', '') : val,
 				PRICE_PRECISION_EXP
-			)
+		  )
 		: undefined;
 const PriceBigNumSerializeAndDeserializeFns = {
 	Serialize: PriceBigNumSerializationFn,
@@ -178,7 +178,7 @@ const FundingRateBigNumDeserializationFn = (val: string) =>
 		? BigNum.from(
 				typeof val === 'string' ? val.replace('.', '') : val,
 				PRICE_PRECISION_EXP
-			)
+		  )
 		: undefined;
 const FundingRateBigNumSerializeAndDeserializeFns = {
 	Serialize: FundingRateBigNumSerializationFn,
@@ -196,7 +196,7 @@ const BankCumulativeInterestBigNumDeserializationFn = (val: string) =>
 		? BigNum.from(
 				typeof val === 'string' ? val.replace('.', '') : val,
 				PRICE_PRECISION_EXP
-			)
+		  )
 		: undefined;
 const BankCumulativeInterestBigNumSerializeAndDeserializeFns = {
 	Serialize: BankCumulativeInterestBigNumSerializationFn,
