@@ -22,8 +22,8 @@ export const TableRowWrapper = ({
 	const borderClass = noBorder
 		? ''
 		: strongBottomBorder
-			? 'border-b-3 border-container-border'
-			: 'border-b border-container-border';
+		? 'border-b-3 border-container-border'
+		: 'border-b border-container-border';
 
 	const topBorderClass = topBorder ? 'border-t border-container-border' : '';
 	const lastChildClass = lastChildNoBorder ? 'last:border-b-0' : '';
@@ -33,7 +33,11 @@ export const TableRowWrapper = ({
 			className={twMerge(
 				'grid auto-rows-auto grid-flow-row [&>*]:text-left [&>*]:items-left [&>*]:justify-self-start',
 				'[&>*]:text-left [&>*]:items-left [&>*]:justify-self-start first-of-type:[&>]:pl-4',
-				`[&>*]:last:pr-4 [&>*]:last:text-left [&>*]:last:items-left ${lastColumnJustify ? `[&>*]:last:justify-self-${lastColumnJustify}` : '[&>*]:last:justify-self-end'}`,
+				`[&>*]:last:pr-4 [&>*]:last:text-left [&>*]:last:items-left ${
+					lastColumnJustify
+						? `[&>*]:last:justify-self-${lastColumnJustify}`
+						: '[&>*]:last:justify-self-end'
+				}`,
 				borderClass,
 				topBorderClass,
 				lastChildClass,
