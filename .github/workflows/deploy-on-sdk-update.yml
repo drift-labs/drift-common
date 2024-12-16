@@ -36,7 +36,8 @@ jobs:
         repo:
           [
             "dlob-server",
-            "internal-keeper-bot"
+            "internal-keeper-bot",
+            "history-server"
           ]
     steps:
       - name: Checkout code with new updated version
