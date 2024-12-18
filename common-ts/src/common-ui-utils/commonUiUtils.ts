@@ -388,12 +388,14 @@ const getMarketAuctionParams = ({
 
 		constrainedBySlippage = limitPrice.lt(auctionEndPrice);
 
-		if (additionalEndPriceBuffer) {
-			auctionEndPrice = auctionEndPrice.add(additionalEndPriceBuffer);
-		}
-
 		// use BEST (limit price, auction end price) as end price
 		auctionEndPrice = BN.min(limitPrice, auctionEndPrice);
+
+		// apply additional buffer if provided
+		if (additionalEndPriceBuffer) {
+			auctionEndPrice = auctionEndPrice.add(additionalEndPriceBuffer);
+			constrainedBySlippage = limitPrice.lt(auctionEndPrice);
+		}
 
 		auctionStartPrice = BN.min(auctionStartPrice, auctionEndPrice);
 	} else {
@@ -410,12 +412,14 @@ const getMarketAuctionParams = ({
 
 		constrainedBySlippage = limitPrice.gt(auctionEndPrice);
 
-		if (additionalEndPriceBuffer) {
-			auctionEndPrice = auctionEndPrice.sub(additionalEndPriceBuffer);
-		}
-
 		// use BEST (limit price, auction end price) as end price
 		auctionEndPrice = BN.max(limitPrice, auctionEndPrice);
+
+		// apply additional buffer if provided
+		if (additionalEndPriceBuffer) {
+			auctionEndPrice = auctionEndPrice.sub(additionalEndPriceBuffer);
+			constrainedBySlippage = limitPrice.gt(auctionEndPrice);
+		}
 
 		auctionStartPrice = BN.max(auctionStartPrice, auctionEndPrice);
 	}
