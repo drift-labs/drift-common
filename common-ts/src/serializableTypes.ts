@@ -110,6 +110,29 @@ const QuoteBigNumSerializeAndDeserializeFns = {
 	Deserialize: QuoteBigNumDeserializationFn,
 };
 
+const RawBigNumberSerializationFn = (target: BigNum | BN) =>
+	target
+		? target instanceof BigNum
+			? target.print()
+			: target.toString()
+		: undefined;
+
+const SUFFICIENTLY_LARGE_PRECISION_EXP = new BN(12);
+const RawBigNumberDeserializationFn = (val: string | number) =>
+	val
+		? typeof val === 'string'
+			? BigNum.from(val.replace('.', ''), SUFFICIENTLY_LARGE_PRECISION_EXP)
+			: BigNum.fromPrint(val.toString(), SUFFICIENTLY_LARGE_PRECISION_EXP)
+		: undefined;
+/**
+ * Inputs the number as a BN string value, with a precision of 12.
+ * Actual precision needs to be set manually during deserialization.
+ */
+const RawBigNumberSerializeAndDeserializeFns = {
+	Serialize: RawBigNumberSerializationFn,
+	Deserialize: RawBigNumberDeserializationFn,
+};
+
 const PctBigNumSerializationFn = (target: BigNum | BN) =>
 	target
 		? target instanceof BigNum
@@ -540,7 +563,7 @@ export class SerializableDepositRecord implements DepositRecordEvent {
 @inheritSerialization(SerializableDepositRecord)
 export class UISerializableDepositRecord extends SerializableDepositRecord {
 	//@ts-ignore
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) amount: BigNum;
+	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns) amount: BigNum;
 
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
@@ -575,8 +598,9 @@ export class UISerializableDepositRecord extends SerializableDepositRecord {
 		instance: UISerializableDepositRecord
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		instance.amount.precision =
-			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
+		instance.amount = instance.amount.shiftTo(
+			Config.spotMarketsLookup[instance.marketIndex].precisionExp
+		);
 
 		instance.marketDepositBalance.precision =
 			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
