@@ -99,12 +99,11 @@ const QuoteBigNumSerializationFn = (target: BigNum | BN) =>
 			? target.print()
 			: target.toString()
 		: undefined;
-const QuoteBigNumDeserializationFn = (val: string) =>
+const QuoteBigNumDeserializationFn = (val: string | number) =>
 	val
-		? BigNum.from(
-				typeof val === 'string' ? val.replace('.', '') : val,
-				QUOTE_PRECISION_EXP
-		  )
+		? typeof val === 'string'
+			? BigNum.from(val.replace('.', ''), QUOTE_PRECISION_EXP)
+			: BigNum.fromPrint(val.toString(), QUOTE_PRECISION_EXP)
 		: undefined;
 const QuoteBigNumSerializeAndDeserializeFns = {
 	Serialize: QuoteBigNumSerializationFn,
@@ -118,12 +117,11 @@ const PctBigNumSerializationFn = (target: BigNum | BN) =>
 			: target.toString()
 		: undefined;
 
-const PctBigNumDeserializationFn = (val: string) =>
+const PctBigNumDeserializationFn = (val: string | number) =>
 	val
-		? BigNum.from(
-				typeof val === 'string' ? val.replace('.', '') : val,
-				PERCENTAGE_PRECISION_EXP
-		  )
+		? typeof val === 'string'
+			? BigNum.from(val.replace('.', ''), PERCENTAGE_PRECISION_EXP)
+			: BigNum.fromPrint(val.toString(), PERCENTAGE_PRECISION_EXP)
 		: undefined;
 
 const PctBigNumSerializeAndDeserializeFns = {
@@ -137,12 +135,11 @@ const BaseBigNumSerializationFn = (target: BigNum | BN) =>
 			? target.print()
 			: target.toString()
 		: undefined;
-const BaseBigNumDeserializationFn = (val: string) =>
+const BaseBigNumDeserializationFn = (val: string | number) =>
 	val
-		? BigNum.from(
-				typeof val === 'string' ? val.replace('.', '') : val,
-				BASE_PRECISION_EXP
-		  )
+		? typeof val === 'string'
+			? BigNum.from(val.replace('.', ''), BASE_PRECISION_EXP)
+			: BigNum.fromPrint(val.toString(), BASE_PRECISION_EXP)
 		: undefined;
 const BaseBigNumSerializeAndDeserializeFns = {
 	Serialize: BaseBigNumSerializationFn,
@@ -155,12 +152,11 @@ const PriceBigNumSerializationFn = (target: BigNum | BN) =>
 			? target.print()
 			: target.toString()
 		: undefined;
-const PriceBigNumDeserializationFn = (val: string) =>
+const PriceBigNumDeserializationFn = (val: string | number) =>
 	val
-		? BigNum.from(
-				typeof val === 'string' ? val.replace('.', '') : val,
-				PRICE_PRECISION_EXP
-		  )
+		? typeof val === 'string'
+			? BigNum.from(val.replace('.', ''), PRICE_PRECISION_EXP)
+			: BigNum.fromPrint(val.toString(), PRICE_PRECISION_EXP)
 		: undefined;
 const PriceBigNumSerializeAndDeserializeFns = {
 	Serialize: PriceBigNumSerializationFn,
@@ -173,12 +169,11 @@ const FundingRateBigNumSerializationFn = (target: BigNum | BN) =>
 			? target.print()
 			: target.toString()
 		: undefined;
-const FundingRateBigNumDeserializationFn = (val: string) =>
+const FundingRateBigNumDeserializationFn = (val: string | number) =>
 	val
-		? BigNum.from(
-				typeof val === 'string' ? val.replace('.', '') : val,
-				PRICE_PRECISION_EXP
-		  )
+		? typeof val === 'string'
+			? BigNum.from(val.replace('.', ''), PRICE_PRECISION_EXP)
+			: BigNum.fromPrint(val.toString(), PRICE_PRECISION_EXP)
 		: undefined;
 const FundingRateBigNumSerializeAndDeserializeFns = {
 	Serialize: FundingRateBigNumSerializationFn,
@@ -191,12 +186,11 @@ const BankCumulativeInterestBigNumSerializationFn = (target: BigNum | BN) =>
 			? target.print()
 			: target.toString()
 		: undefined;
-const BankCumulativeInterestBigNumDeserializationFn = (val: string) =>
+const BankCumulativeInterestBigNumDeserializationFn = (val: string | number) =>
 	val
-		? BigNum.from(
-				typeof val === 'string' ? val.replace('.', '') : val,
-				PRICE_PRECISION_EXP
-		  )
+		? typeof val === 'string'
+			? BigNum.from(val.replace('.', ''), PRICE_PRECISION_EXP)
+			: BigNum.fromPrint(val.toString(), PRICE_PRECISION_EXP)
 		: undefined;
 const BankCumulativeInterestBigNumSerializeAndDeserializeFns = {
 	Serialize: BankCumulativeInterestBigNumSerializationFn,
@@ -209,9 +203,11 @@ const ReferralVolumeBigNumSerializationFn = (target: BigNum | BN) =>
 			? target.print()
 			: target.toString()
 		: undefined;
-const ReferralVolumeBigNumDeserializationFn = (val: string) =>
+const ReferralVolumeBigNumDeserializationFn = (val: string | number) =>
 	val
-		? BigNum.from(typeof val === 'string' ? val.replace('.', '') : val, TEN)
+		? typeof val === 'string'
+			? BigNum.from(val.replace('.', ''), TEN)
+			: BigNum.fromPrint(val.toString(), TEN)
 		: undefined;
 const ReferralVolumeBigNumSerializeAndDeserializeFns = {
 	Serialize: ReferralVolumeBigNumSerializationFn,
