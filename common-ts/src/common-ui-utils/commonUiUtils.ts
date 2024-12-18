@@ -497,11 +497,17 @@ const deriveMarketOrderParams = ({
 	});
 
 	// max slippage price
-	const limitPrice = getMarketOrderLimitPrice({
+	let limitPrice = getMarketOrderLimitPrice({
 		direction,
 		baselinePrice: priceObject[auctionStartPriceOffsetFrom],
 		slippageTolerance: allowInfSlippage ? undefined : slippageTolerance,
 	});
+
+	if (additionalEndPriceBuffer) {
+		limitPrice = isVariant(direction, 'long')
+			? limitPrice.add(additionalEndPriceBuffer)
+			: limitPrice.sub(additionalEndPriceBuffer);
+	}
 
 	const auctionParams = getMarketAuctionParams({
 		direction,
