@@ -349,6 +349,7 @@ const getMarketAuctionParams = ({
 	duration,
 	auctionStartPriceOffset,
 	auctionEndPriceOffset,
+	additionalEndPriceBuffer,
 }: {
 	direction: PositionDirection;
 	startPriceFromSettings: BN;
@@ -357,13 +358,14 @@ const getMarketAuctionParams = ({
 	duration: number;
 	auctionStartPriceOffset: number;
 	auctionEndPriceOffset: number;
+	additionalEndPriceBuffer?: BN;
 }): AuctionParams => {
 	let auctionStartPrice: BN;
 	let auctionEndPrice: BN;
 	let constrainedBySlippage: boolean;
 
 	const auctionEndPriceBuffer = BigNum.from(PRICE_PRECISION).scale(
-		auctionEndPriceOffset * 100,
+		Math.abs(auctionEndPriceOffset * 100),
 		10000
 	).val;
 
@@ -386,6 +388,10 @@ const getMarketAuctionParams = ({
 
 		constrainedBySlippage = limitPrice.lt(auctionEndPrice);
 
+		if (additionalEndPriceBuffer) {
+			auctionEndPrice = auctionEndPrice.add(additionalEndPriceBuffer);
+		}
+
 		// use BEST (limit price, auction end price) as end price
 		auctionEndPrice = BN.min(limitPrice, auctionEndPrice);
 
@@ -403,6 +409,10 @@ const getMarketAuctionParams = ({
 			.div(PRICE_PRECISION);
 
 		constrainedBySlippage = limitPrice.gt(auctionEndPrice);
+
+		if (additionalEndPriceBuffer) {
+			auctionEndPrice = auctionEndPrice.sub(additionalEndPriceBuffer);
+		}
 
 		// use BEST (limit price, auction end price) as end price
 		auctionEndPrice = BN.max(limitPrice, auctionEndPrice);
@@ -445,6 +455,7 @@ const deriveMarketOrderParams = ({
 	auctionPriceCaps,
 	slippageTolerance,
 	isOracleOrder,
+	additionalEndPriceBuffer,
 }: {
 	marketType: MarketType;
 	marketIndex: number;
@@ -470,6 +481,7 @@ const deriveMarketOrderParams = ({
 	auctionEndPriceOffsetFrom: TradeOffsetPrice;
 	slippageTolerance: number;
 	isOracleOrder?: boolean;
+	additionalEndPriceBuffer?: BN;
 }): OptionalOrderParams & { constrainedBySlippage?: boolean } => {
 	const priceObject = getPriceObject({
 		oraclePrice,
@@ -495,6 +507,7 @@ const deriveMarketOrderParams = ({
 		duration: auctionDuration,
 		auctionStartPriceOffset: auctionStartPriceOffset,
 		auctionEndPriceOffset: auctionEndPriceOffset,
+		additionalEndPriceBuffer,
 	});
 
 	let orderParams = getMarketOrderParams({
