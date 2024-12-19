@@ -527,6 +527,70 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	}
 }
 
+export class UISerializableOrderRecordV2 extends Event {
+	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
+	@autoserializeAs(String) txSig: string;
+	@autoserializeAs(Number) txSigIndex: number;
+	@autoserializeAs(Number) slot: number;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
+	@autoserializeAs(String) status: string;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) orderType: OrderType;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
+	@autoserializeAs(Number) orderId: number;
+	@autoserializeAs(Number) userOrderId: number;
+	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns) price: BigNum;
+	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	baseAssetAmount: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	quoteAssetAmount: BigNum;
+	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	baseAssetAmountFilled: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	quoteAssetAmountFilled: BigNum;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	direction: PositionDirection;
+	@autoserializeAs(Boolean) reduceOnly: boolean;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	triggerPrice: BigNum;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	triggerCondition: OrderTriggerCondition;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	existingPositionDirection: PositionDirection;
+	@autoserializeAs(Boolean) postOnly: boolean;
+	@autoserializeAs(Boolean) immediateOrCancel: boolean;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	oraclePriceOffset: BigNum;
+	@autoserializeAs(Number) auctionDuration: number;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	auctionStartPrice: BigNum;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	auctionEndPrice: BigNum;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) maxTs: BN;
+	@autoserializeAs(String) symbol: string;
+
+	static onDeserialized(
+		data: JsonObject,
+		instance: UISerializableOrderRecordV2
+	) {
+		assert(Config.initialized, 'Common Config Not Initialised');
+		if (isVariant(instance.marketType, 'spot')) {
+			const precisionToUse =
+				Config.spotMarketsLookup[instance.marketIndex].precisionExp;
+
+			instance.baseAssetAmount =
+				instance.baseAssetAmount.shiftTo(precisionToUse);
+			instance.baseAssetAmountFilled =
+				instance.baseAssetAmountFilled.shiftTo(precisionToUse);
+		} else if (isVariant(instance.marketType, 'perp')) {
+			instance.baseAssetAmount =
+				instance.baseAssetAmount.shiftTo(BASE_PRECISION_EXP);
+			instance.baseAssetAmountFilled =
+				instance.baseAssetAmountFilled.shiftTo(BASE_PRECISION_EXP);
+		}
+	}
+}
+
 export type DepositRecordEvent = Event<DepositRecord>;
 
 export class SerializableDepositRecord implements DepositRecordEvent {
@@ -1670,6 +1734,7 @@ export const Serializer = {
 		SettlePnl: (cls: any) => Serialize(cls, SerializableSettlePnlRecord),
 		UISettlePnl: (cls: any) => Serialize(cls, UISerializableSettlePnlRecord),
 		UIOrderRecord: (cls: any) => Serialize(cls, UISerializableOrderRecord),
+		UIOrderRecordV2: (cls: any) => Serialize(cls, UISerializableOrderRecordV2),
 		SpotInterestRecord: (cls: any) =>
 			Serialize(cls, SerializableSpotInterestRecord),
 		CurveRecord: (cls: any) => Serialize(cls, SerializableCurveRecord),
@@ -1732,6 +1797,11 @@ export const Serializer = {
 				cls as JsonObject,
 				UISerializableOrderRecord
 			) as UISerializableOrderRecord,
+		UIOrderRecordV2: (cls: Record<string, unknown>) =>
+			Deserialize(
+				cls as JsonObject,
+				UISerializableOrderRecordV2
+			) as UISerializableOrderRecordV2,
 		Deposit: (cls: Record<string, unknown>) =>
 			Deserialize(
 				cls as JsonObject,
