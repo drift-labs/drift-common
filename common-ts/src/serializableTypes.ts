@@ -119,7 +119,7 @@ const RawBigNumberSerializationFn = (target: BigNum | BN) =>
 
 const SUFFICIENTLY_LARGE_PRECISION_EXP = new BN(12);
 const RawBigNumberDeserializationFn = (val: string | number) =>
-	val
+	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), SUFFICIENTLY_LARGE_PRECISION_EXP)
 			: BigNum.fromPrint(val.toString(), SUFFICIENTLY_LARGE_PRECISION_EXP)
@@ -527,7 +527,7 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	}
 }
 
-export class UISerializableOrderRecordV2 extends Event {
+export class UISerializableOrderRecordV2 {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) txSigIndex: number;
