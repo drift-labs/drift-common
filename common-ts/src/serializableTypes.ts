@@ -568,6 +568,9 @@ export class UISerializableOrderRecordV2 {
 	auctionEndPrice: BigNum;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) maxTs: BN;
 	@autoserializeAs(String) symbol: string;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) lastUpdatedTs: BN;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	lastActionExplanation: OrderActionExplanation;
 
 	static onDeserialized(
 		data: JsonObject,
