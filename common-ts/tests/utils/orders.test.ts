@@ -377,6 +377,40 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 			//@ts-ignore
 			expect(result.constrainedBySlippage).to.equal(false);
 		});
+
+		it('should correctly generate params for LONG non-oracle market order with auction end price NOT capped by slippage AND an additional offset', () => {
+			const result = COMMON_UI_UTILS.deriveMarketOrderParams({
+				marketType: MarketType.PERP,
+				marketIndex: 0,
+				direction: PositionDirection.LONG,
+				maxLeverageSelected: false,
+				maxLeverageOrderSize: new BN(1000).mul(BASE_PRECISION),
+				baseAmount: new BN(1).mul(BASE_PRECISION),
+				reduceOnly: false,
+				allowInfSlippage: true,
+				bestPrice: new BN(99).mul(PRICE_PRECISION),
+				entryPrice: new BN(101).mul(PRICE_PRECISION),
+				oraclePrice: new BN(104).mul(PRICE_PRECISION),
+				worstPrice: new BN(108).mul(PRICE_PRECISION),
+				markPrice: new BN(100).mul(PRICE_PRECISION),
+				auctionDuration: 20,
+				auctionStartPriceOffset: 0,
+				auctionEndPriceOffset: 0,
+				auctionStartPriceOffsetFrom: 'mark',
+				auctionEndPriceOffsetFrom: 'worst',
+				slippageTolerance: 50,
+				isOracleOrder: false,
+				additionalEndPriceBuffer: new BN(100),
+			});
+
+			expect(ENUM_UTILS.toStr(result.orderType)).to.equal(
+				ENUM_UTILS.toStr(OrderType.MARKET)
+			);
+			expect(result.auctionStartPrice?.toString()).to.equal('100000000');
+			expect(result.auctionEndPrice?.toString()).to.equal('108000100');
+			//@ts-ignore
+			expect(result.constrainedBySlippage).to.equal(false);
+		});
 	});
 	describe('getMarketOrderLimitPrice', () => {
 		it('should use the correct price for a LONG with 5% max slippage', () => {
