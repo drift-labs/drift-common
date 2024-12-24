@@ -120,12 +120,14 @@ const RawBigNumberSerializationFn = (target: BigNum | BN) =>
 const SUFFICIENTLY_LARGE_PRECISION_EXP = new BN(12);
 const RawBigNumberDeserializationFn = (val: string | number) =>
 	val !== undefined
-		? typeof val === 'string'
-			? BigNum.from(val.replace('.', ''), SUFFICIENTLY_LARGE_PRECISION_EXP)
-			: BigNum.fromPrint(val.toString(), SUFFICIENTLY_LARGE_PRECISION_EXP)
+		? BigNum.from(
+				typeof val === 'string' ? val.replace('.', '') : val,
+				SUFFICIENTLY_LARGE_PRECISION_EXP
+		  )
 		: undefined;
 /**
  * Inputs the number as a BN string value, with a precision of 12.
+ * 12 is a sufficiently large precision to prevent precision loss.
  * Actual precision needs to be set manually during deserialization.
  */
 const RawBigNumberSerializeAndDeserializeFns = {
@@ -581,15 +583,11 @@ export class UISerializableOrderRecordV2 {
 			const precisionToUse =
 				Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 
-			instance.baseAssetAmount =
-				instance.baseAssetAmount.shiftTo(precisionToUse);
-			instance.baseAssetAmountFilled =
-				instance.baseAssetAmountFilled.shiftTo(precisionToUse);
+			instance.baseAssetAmount.precision = precisionToUse;
+			instance.baseAssetAmountFilled.precision = precisionToUse;
 		} else if (isVariant(instance.marketType, 'perp')) {
-			instance.baseAssetAmount =
-				instance.baseAssetAmount.shiftTo(BASE_PRECISION_EXP);
-			instance.baseAssetAmountFilled =
-				instance.baseAssetAmountFilled.shiftTo(BASE_PRECISION_EXP);
+			instance.baseAssetAmount.precision = BASE_PRECISION_EXP;
+			instance.baseAssetAmountFilled.precision = BASE_PRECISION_EXP;
 		}
 	}
 }
@@ -655,38 +653,24 @@ export class UISerializableOrderActionRecordV2 {
 			try {
 				const precisionToUse =
 					Config.spotMarketsLookup[instance.marketIndex].precisionExp;
-				instance.baseAssetAmountFilled =
-					instance.baseAssetAmountFilled.shiftTo(precisionToUse);
-				instance.takerOrderBaseAssetAmount =
-					instance.takerOrderBaseAssetAmount.shiftTo(precisionToUse);
-				instance.takerOrderCumulativeBaseAssetAmountFilled =
-					instance.takerOrderCumulativeBaseAssetAmountFilled.shiftTo(
-						precisionToUse
-					);
-				instance.makerOrderBaseAssetAmount =
-					instance.makerOrderBaseAssetAmount.shiftTo(precisionToUse);
-				instance.makerOrderCumulativeBaseAssetAmountFilled =
-					instance.makerOrderCumulativeBaseAssetAmountFilled.shiftTo(
-						precisionToUse
-					);
+				instance.baseAssetAmountFilled.precision = precisionToUse;
+				instance.takerOrderBaseAssetAmount.precision = precisionToUse;
+				instance.takerOrderCumulativeBaseAssetAmountFilled.precision =
+					precisionToUse;
+				instance.makerOrderBaseAssetAmount.precision = precisionToUse;
+				instance.makerOrderCumulativeBaseAssetAmountFilled.precision =
+					precisionToUse;
 			} catch (e) {
 				//console.error('Error in order action serializer', e);
 			}
 		} else if (isVariant(instance.marketType, 'perp')) {
-			instance.baseAssetAmountFilled =
-				instance.baseAssetAmountFilled.shiftTo(BASE_PRECISION_EXP);
-			instance.takerOrderBaseAssetAmount =
-				instance.takerOrderBaseAssetAmount.shiftTo(BASE_PRECISION_EXP);
-			instance.takerOrderCumulativeBaseAssetAmountFilled =
-				instance.takerOrderCumulativeBaseAssetAmountFilled.shiftTo(
-					BASE_PRECISION_EXP
-				);
-			instance.makerOrderBaseAssetAmount =
-				instance.makerOrderBaseAssetAmount.shiftTo(BASE_PRECISION_EXP);
-			instance.makerOrderCumulativeBaseAssetAmountFilled =
-				instance.makerOrderCumulativeBaseAssetAmountFilled.shiftTo(
-					BASE_PRECISION_EXP
-				);
+			instance.baseAssetAmountFilled.precision = BASE_PRECISION_EXP;
+			instance.takerOrderBaseAssetAmount.precision = BASE_PRECISION_EXP;
+			instance.takerOrderCumulativeBaseAssetAmountFilled.precision =
+				BASE_PRECISION_EXP;
+			instance.makerOrderBaseAssetAmount.precision = BASE_PRECISION_EXP;
+			instance.makerOrderCumulativeBaseAssetAmountFilled.precision =
+				BASE_PRECISION_EXP;
 		}
 	}
 }
@@ -762,14 +746,12 @@ export class UISerializableDepositRecord extends SerializableDepositRecord {
 		instance: UISerializableDepositRecord
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		instance.amount = instance.amount.shiftTo(
-			Config.spotMarketsLookup[instance.marketIndex].precisionExp
-		);
+		const precisionToUse =
+			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 
-		instance.marketDepositBalance.precision =
-			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
-		instance.marketWithdrawBalance.precision =
-			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
+		instance.amount.precision = precisionToUse;
+		instance.marketDepositBalance.precision = precisionToUse;
+		instance.marketWithdrawBalance.precision = precisionToUse;
 	}
 }
 
