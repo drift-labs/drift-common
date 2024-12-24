@@ -9,7 +9,14 @@ import { UISerializableOrder } from '../serializableTypes';
 import { matchEnum } from '../utils';
 
 export const getOrderLabelFromOrderDetails = (
-	orderDetails: UISerializableOrder
+	orderDetails: Pick<
+		UISerializableOrder,
+		| 'orderType'
+		| 'oraclePriceOffset'
+		| 'direction'
+		| 'triggerCondition'
+		| 'existingPositionDirection'
+	>
 ) => {
 	if (matchEnum(orderDetails.orderType, OrderType.MARKET))
 		return UI_ORDER_TYPES.market.label;
