@@ -110,7 +110,7 @@ const QuoteBigNumSerializeAndDeserializeFns = {
 	Deserialize: QuoteBigNumDeserializationFn,
 };
 
-const RawBigNumberSerializationFn = (target: BigNum | BN) =>
+const RawBigNumSerializationFn = (target: BigNum | BN) =>
 	target
 		? target instanceof BigNum
 			? target.print()
@@ -119,17 +119,19 @@ const RawBigNumberSerializationFn = (target: BigNum | BN) =>
 
 const SUFFICIENTLY_LARGE_PRECISION_EXP = new BN(12);
 const RawBigNumberDeserializationFn = (val: string | number) =>
-	val
-		? typeof val === 'string'
-			? BigNum.from(val.replace('.', ''), SUFFICIENTLY_LARGE_PRECISION_EXP)
-			: BigNum.fromPrint(val.toString(), SUFFICIENTLY_LARGE_PRECISION_EXP)
+	val !== undefined
+		? BigNum.from(
+				typeof val === 'string' ? val.replace('.', '') : val,
+				SUFFICIENTLY_LARGE_PRECISION_EXP
+		  )
 		: undefined;
 /**
  * Inputs the number as a BN string value, with a precision of 12.
+ * 12 is a sufficiently large precision to prevent precision loss.
  * Actual precision needs to be set manually during deserialization.
  */
 const RawBigNumberSerializeAndDeserializeFns = {
-	Serialize: RawBigNumberSerializationFn,
+	Serialize: RawBigNumSerializationFn,
 	Deserialize: RawBigNumberDeserializationFn,
 };
 
@@ -527,6 +529,148 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	}
 }
 
+export class UISerializableOrderRecordV2 {
+	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
+	@autoserializeAs(String) txSig: string;
+	@autoserializeAs(Number) txSigIndex: number;
+	@autoserializeAs(Number) slot: number;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
+	@autoserializeAs(String) status: string;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) orderType: OrderType;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
+	@autoserializeAs(Number) orderId: number;
+	@autoserializeAs(Number) userOrderId: number;
+	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns) price: BigNum;
+	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	baseAssetAmount: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	quoteAssetAmount: BigNum;
+	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	baseAssetAmountFilled: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	quoteAssetAmountFilled: BigNum;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	direction: PositionDirection;
+	@autoserializeAs(Boolean) reduceOnly: boolean;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	triggerPrice: BigNum;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	triggerCondition: OrderTriggerCondition;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	existingPositionDirection: PositionDirection;
+	@autoserializeAs(Boolean) postOnly: boolean;
+	@autoserializeAs(Boolean) immediateOrCancel: boolean;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	oraclePriceOffset: BigNum;
+	@autoserializeAs(Number) auctionDuration: number;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	auctionStartPrice: BigNum;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	auctionEndPrice: BigNum;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) maxTs: BN;
+	@autoserializeAs(String) symbol: string;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) lastUpdatedTs: BN;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	lastActionExplanation: OrderActionExplanation;
+
+	static onDeserialized(
+		data: JsonObject,
+		instance: UISerializableOrderRecordV2
+	) {
+		assert(Config.initialized, 'Common Config Not Initialised');
+		if (isVariant(instance.marketType, 'spot')) {
+			const precisionToUse =
+				Config.spotMarketsLookup[instance.marketIndex].precisionExp;
+
+			instance.baseAssetAmount.precision = precisionToUse;
+			instance.baseAssetAmountFilled.precision = precisionToUse;
+		} else if (isVariant(instance.marketType, 'perp')) {
+			instance.baseAssetAmount.precision = BASE_PRECISION_EXP;
+			instance.baseAssetAmountFilled.precision = BASE_PRECISION_EXP;
+		}
+	}
+}
+
+export class UISerializableOrderActionRecordV2 {
+	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
+	@autoserializeAs(String) txSig: string;
+	@autoserializeAs(Number) txSigIndex: number;
+	@autoserializeAs(Number) slot: number;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	fillerReward: BigNum;
+	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	baseAssetAmountFilled: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	quoteAssetAmountFilled: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) takerFee: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	makerRebate: BigNum;
+	@autoserializeAs(Number) referrerReward: number;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	quoteAssetAmountSurplus: BigNum;
+	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	takerOrderBaseAssetAmount: BigNum;
+	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	takerOrderCumulativeBaseAssetAmountFilled: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	takerOrderCumulativeQuoteAssetAmountFilled: BigNum;
+	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	makerOrderBaseAssetAmount: BigNum;
+	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	makerOrderCumulativeBaseAssetAmountFilled: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	makerOrderCumulativeQuoteAssetAmountFilled: BigNum;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	oraclePrice: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) makerFee: BigNum;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) action: OrderAction;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	actionExplanation: OrderActionExplanation;
+	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) filler: PublicKey;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) fillRecordId: BN; //
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) taker: PublicKey;
+	@autoserializeAs(Number) takerOrderId: number;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	takerOrderDirection: PositionDirection;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) maker: PublicKey;
+	@autoserializeAs(Number) makerOrderId: number;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	makerOrderDirection: PositionDirection;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	spotFulfillmentMethodFee: number;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
+	@autoserializeAs(String) symbol: string;
+
+	static onDeserialized(
+		data: JsonObject,
+		instance: UISerializableOrderActionRecordV2
+	) {
+		assert(Config.initialized, 'Common Config Not Initialised');
+		if (isVariant(instance.marketType, 'spot')) {
+			const precisionToUse =
+				Config.spotMarketsLookup[instance.marketIndex].precisionExp;
+			instance.baseAssetAmountFilled.precision = precisionToUse;
+			instance.takerOrderBaseAssetAmount.precision = precisionToUse;
+			instance.takerOrderCumulativeBaseAssetAmountFilled.precision =
+				precisionToUse;
+			instance.makerOrderBaseAssetAmount.precision = precisionToUse;
+			instance.makerOrderCumulativeBaseAssetAmountFilled.precision =
+				precisionToUse;
+		} else if (isVariant(instance.marketType, 'perp')) {
+			instance.baseAssetAmountFilled.precision = BASE_PRECISION_EXP;
+			instance.takerOrderBaseAssetAmount.precision = BASE_PRECISION_EXP;
+			instance.takerOrderCumulativeBaseAssetAmountFilled.precision =
+				BASE_PRECISION_EXP;
+			instance.makerOrderBaseAssetAmount.precision = BASE_PRECISION_EXP;
+			instance.makerOrderCumulativeBaseAssetAmountFilled.precision =
+				BASE_PRECISION_EXP;
+		}
+	}
+}
+
 export type DepositRecordEvent = Event<DepositRecord>;
 
 export class SerializableDepositRecord implements DepositRecordEvent {
@@ -598,14 +742,12 @@ export class UISerializableDepositRecord extends SerializableDepositRecord {
 		instance: UISerializableDepositRecord
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		instance.amount = instance.amount.shiftTo(
-			Config.spotMarketsLookup[instance.marketIndex].precisionExp
-		);
+		const precisionToUse =
+			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 
-		instance.marketDepositBalance.precision =
-			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
-		instance.marketWithdrawBalance.precision =
-			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
+		instance.amount.precision = precisionToUse;
+		instance.marketDepositBalance.precision = precisionToUse;
+		instance.marketWithdrawBalance.precision = precisionToUse;
 	}
 }
 
@@ -1670,6 +1812,9 @@ export const Serializer = {
 		SettlePnl: (cls: any) => Serialize(cls, SerializableSettlePnlRecord),
 		UISettlePnl: (cls: any) => Serialize(cls, UISerializableSettlePnlRecord),
 		UIOrderRecord: (cls: any) => Serialize(cls, UISerializableOrderRecord),
+		UIOrderRecordV2: (cls: any) => Serialize(cls, UISerializableOrderRecordV2),
+		UIOrderActionRecordV2: (cls: any) =>
+			Serialize(cls, UISerializableOrderActionRecordV2),
 		SpotInterestRecord: (cls: any) =>
 			Serialize(cls, SerializableSpotInterestRecord),
 		CurveRecord: (cls: any) => Serialize(cls, SerializableCurveRecord),
@@ -1732,6 +1877,16 @@ export const Serializer = {
 				cls as JsonObject,
 				UISerializableOrderRecord
 			) as UISerializableOrderRecord,
+		UIOrderRecordV2: (cls: Record<string, unknown>) =>
+			Deserialize(
+				cls as JsonObject,
+				UISerializableOrderRecordV2
+			) as UISerializableOrderRecordV2,
+		UIOrderActionRecordV2: (cls: Record<string, unknown>) =>
+			Deserialize(
+				cls as JsonObject,
+				UISerializableOrderActionRecordV2
+			) as UISerializableOrderActionRecordV2,
 		Deposit: (cls: Record<string, unknown>) =>
 			Deserialize(
 				cls as JsonObject,
