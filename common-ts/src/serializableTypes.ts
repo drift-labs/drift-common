@@ -118,7 +118,7 @@ const RawBigNumSerializationFn = (target: BigNum | BN) =>
 		: undefined;
 
 const SUFFICIENTLY_LARGE_PRECISION_EXP = new BN(12);
-const RawBigNumberDeserializationFn = (val: string | number) =>
+const RawBigNumDeserializationFn = (val: string | number) =>
 	val !== undefined
 		? BigNum.from(
 				typeof val === 'string' ? val.replace('.', '') : val,
@@ -130,9 +130,9 @@ const RawBigNumberDeserializationFn = (val: string | number) =>
  * 12 is a sufficiently large precision to prevent precision loss.
  * Actual precision needs to be set manually during deserialization.
  */
-const RawBigNumberSerializeAndDeserializeFns = {
+const RawBigNumSerializeAndDeserializeFns = {
 	Serialize: RawBigNumSerializationFn,
-	Deserialize: RawBigNumberDeserializationFn,
+	Deserialize: RawBigNumDeserializationFn,
 };
 
 const PctBigNumSerializationFn = (target: BigNum | BN) =>
@@ -542,11 +542,11 @@ export class UISerializableOrderRecordV2 {
 	@autoserializeAs(Number) userOrderId: number;
 	@autoserializeAs(Number) marketIndex: number;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns) price: BigNum;
-	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
 	baseAssetAmount: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	quoteAssetAmount: BigNum;
-	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
 	baseAssetAmountFilled: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	quoteAssetAmountFilled: BigNum;
@@ -599,7 +599,7 @@ export class UISerializableOrderActionRecordV2 {
 	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	fillerReward: BigNum;
-	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
 	baseAssetAmountFilled: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	quoteAssetAmountFilled: BigNum;
@@ -609,15 +609,15 @@ export class UISerializableOrderActionRecordV2 {
 	@autoserializeAs(Number) referrerReward: number;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	quoteAssetAmountSurplus: BigNum;
-	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
 	takerOrderBaseAssetAmount: BigNum;
-	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
 	takerOrderCumulativeBaseAssetAmountFilled: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	takerOrderCumulativeQuoteAssetAmountFilled: BigNum;
-	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
 	makerOrderBaseAssetAmount: BigNum;
-	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns)
+	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
 	makerOrderCumulativeBaseAssetAmountFilled: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	makerOrderCumulativeQuoteAssetAmountFilled: BigNum;
@@ -707,7 +707,7 @@ export class SerializableDepositRecord implements DepositRecordEvent {
 @inheritSerialization(SerializableDepositRecord)
 export class UISerializableDepositRecord extends SerializableDepositRecord {
 	//@ts-ignore
-	@autoserializeUsing(RawBigNumberSerializeAndDeserializeFns) amount: BigNum;
+	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns) amount: BigNum;
 
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
@@ -1651,7 +1651,7 @@ export class SerializableInsuranceFundStakeRecord
 
 @inheritSerialization(SerializableInsuranceFundStakeRecord)
 export class UISerializableInsuranceFundStakeRecord extends SerializableInsuranceFundStakeRecord {
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	amount: BigNum;
 
