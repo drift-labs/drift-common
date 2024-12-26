@@ -110,7 +110,7 @@ const QuoteBigNumSerializeAndDeserializeFns = {
 	Deserialize: QuoteBigNumDeserializationFn,
 };
 
-const RawBigNumberSerializationFn = (target: BigNum | BN) =>
+const RawBigNumSerializationFn = (target: BigNum | BN) =>
 	target
 		? target instanceof BigNum
 			? target.print()
@@ -131,7 +131,7 @@ const RawBigNumberDeserializationFn = (val: string | number) =>
  * Actual precision needs to be set manually during deserialization.
  */
 const RawBigNumberSerializeAndDeserializeFns = {
-	Serialize: RawBigNumberSerializationFn,
+	Serialize: RawBigNumSerializationFn,
 	Deserialize: RawBigNumberDeserializationFn,
 };
 
@@ -650,19 +650,15 @@ export class UISerializableOrderActionRecordV2 {
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
 		if (isVariant(instance.marketType, 'spot')) {
-			try {
-				const precisionToUse =
-					Config.spotMarketsLookup[instance.marketIndex].precisionExp;
-				instance.baseAssetAmountFilled.precision = precisionToUse;
-				instance.takerOrderBaseAssetAmount.precision = precisionToUse;
-				instance.takerOrderCumulativeBaseAssetAmountFilled.precision =
-					precisionToUse;
-				instance.makerOrderBaseAssetAmount.precision = precisionToUse;
-				instance.makerOrderCumulativeBaseAssetAmountFilled.precision =
-					precisionToUse;
-			} catch (e) {
-				//console.error('Error in order action serializer', e);
-			}
+			const precisionToUse =
+				Config.spotMarketsLookup[instance.marketIndex].precisionExp;
+			instance.baseAssetAmountFilled.precision = precisionToUse;
+			instance.takerOrderBaseAssetAmount.precision = precisionToUse;
+			instance.takerOrderCumulativeBaseAssetAmountFilled.precision =
+				precisionToUse;
+			instance.makerOrderBaseAssetAmount.precision = precisionToUse;
+			instance.makerOrderCumulativeBaseAssetAmountFilled.precision =
+				precisionToUse;
 		} else if (isVariant(instance.marketType, 'perp')) {
 			instance.baseAssetAmountFilled.precision = BASE_PRECISION_EXP;
 			instance.takerOrderBaseAssetAmount.precision = BASE_PRECISION_EXP;
