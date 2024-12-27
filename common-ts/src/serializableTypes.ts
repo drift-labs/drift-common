@@ -100,7 +100,7 @@ const QuoteBigNumSerializationFn = (target: BigNum | BN) =>
 			: target.toString()
 		: undefined;
 const QuoteBigNumDeserializationFn = (val: string | number) =>
-	val
+	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), QUOTE_PRECISION_EXP)
 			: BigNum.fromPrint(val.toString(), QUOTE_PRECISION_EXP)
@@ -161,7 +161,7 @@ const BaseBigNumSerializationFn = (target: BigNum | BN) =>
 			: target.toString()
 		: undefined;
 const BaseBigNumDeserializationFn = (val: string | number) =>
-	val
+	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), BASE_PRECISION_EXP)
 			: BigNum.fromPrint(val.toString(), BASE_PRECISION_EXP)
@@ -989,9 +989,6 @@ export class UISerializableLiquidatePerpRecord extends SerializableLiquidatePerp
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	canceledOrdersFee: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	canceledOrdersFee: BigNum;
 	//@ts-ignore
 	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns) lpShares: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
@@ -1215,6 +1212,128 @@ export class UISerializableLiquidationRecord extends SerializableLiquidationReco
 	@autoserializeAs(UISerializableLiquidatePerpPnlForDepositRecord)
 	//@ts-ignore
 	liquidatePerpPnlForDeposit: UISerializableLiquidatePerpPnlForDepositRecord;
+}
+
+export class UISerializableLiquidationRecordV2 {
+	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
+	@autoserializeAs(String) txSig: string;
+	@autoserializeAs(Number) txSigIndex: number;
+	@autoserializeAs(Number) slot: number;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	liquidationType: LiquidationType;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
+	user: PublicKey;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
+	liquidator: PublicKey;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	marginRequirement: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	totalCollateral: BigNum;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) marginFreed: BN;
+	@autoserializeAs(Number) liquidationId: number;
+	@autoserializeAs(Boolean) bankrupt: boolean;
+	@autoserializeUsing(BNArraySerializeAndDeserializeFns)
+	canceledOrderIds: BN[];
+
+	// Liquidate Perp
+	@autoserializeAs(Number) liquidatePerp_marketIndex: number;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	liquidatePerp_oraclePrice: BigNum;
+	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
+	liquidatePerp_baseAssetAmount: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	liquidatePerp_quoteAssetAmount: BigNum;
+	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
+	liquidatePerp_lpShares: BigNum;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	liquidatePerp_fillRecordId: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	liquidatePerp_userOrderId: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	liquidatePerp_liquidatorOrderId: BN;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	liquidatePerp_liquidatorFee: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	liquidatePerp_ifFee: BigNum;
+
+	// Liquidate Spot
+	@autoserializeAs(Number) liquidateSpot_assetMarketIndex: number;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	liquidateSpot_assetPrice: BigNum;
+	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
+	liquidateSpot_assetTransfer: BigNum;
+	@autoserializeAs(Number) liquidateSpot_liabilityMarketIndex: number;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	liquidateSpot_liabilityPrice: BigNum;
+	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
+	liquidateSpot_liabilityTransfer: BigNum;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	liquidateSpot_ifFee: BN;
+
+	// Liquidate Borrow For Perp PnL
+	@autoserializeAs(Number) liquidateBorrowForPerpPnl_perpMarketIndex: number;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	liquidateBorrowForPerpPnl_marketOraclePrice: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	liquidateBorrowForPerpPnl_pnlTransfer: BigNum;
+	@autoserializeAs(Number)
+	liquidateBorrowForPerpPnl_liabilityMarketIndex: number;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	liquidateBorrowForPerpPnl_liabilityPrice: BigNum;
+	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
+	liquidateBorrowForPerpPnl_liabilityTransfer: BigNum;
+
+	// Liquidate Perp PnL For Deposit
+	@autoserializeAs(Number) liquidatePerpPnlForDeposit_perpMarketIndex: number;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	liquidatePerpPnlForDeposit_marketOraclePrice: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	liquidatePerpPnlForDeposit_pnlTransfer: BigNum;
+	@autoserializeAs(Number)
+	liquidatePerpPnlForDeposit_assetMarketIndex: number;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	liquidatePerpPnlForDeposit_assetPrice: BigNum;
+	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
+	liquidatePerpPnlForDeposit_assetTransfer: BigNum;
+
+	// Perp Bankruptcy
+	@autoserializeAs(Number) perpBankruptcy_marketIndex: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	perpBankruptcy_pnl: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	perpBankruptcy_ifPayment: BN;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
+	perpBankruptcy_clawbackUser: PublicKey;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	perpBankruptcy_clawbackUserPayment: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	perpBankruptcy_cumulativeFundingRateDelta: BN;
+
+	// Spot Bankruptcy
+	@autoserializeAs(Number) spotBankruptcy_marketIndex: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	spotBankruptcy_borrowAmount: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	spotBankruptcy_ifPayment: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	spotBankruptcy_cumulativeDepositInterestDelta: BN;
+
+	static onDeserialized(
+		data: JsonObject,
+		instance: UISerializableLiquidationRecordV2
+	) {
+		assert(Config.initialized, 'Common Config Not Initialised');
+		const precisionToUse =
+			Config.spotMarketsLookup[instance.liquidateSpot_assetMarketIndex]
+				.precisionExp;
+
+		instance.liquidateSpot_assetTransfer.precision = precisionToUse;
+		instance.liquidateSpot_liabilityTransfer.precision = precisionToUse;
+		instance.liquidateBorrowForPerpPnl_liabilityTransfer.precision =
+			precisionToUse;
+		instance.liquidatePerpPnlForDeposit_assetTransfer.precision =
+			precisionToUse;
+	}
 }
 
 class SerializableUserPerpPositionSnapshot implements UserPerpPositionSnapshot {
@@ -1771,7 +1890,7 @@ export class UISerializableSwapRecord extends SerializableSwapRecord {
 	// @ts-ignore
 	inOraclePrice: BigNum;
 	// @ts-ignore
-	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns) fee: BigNum;
+	// @autoserializeUsing(BaseBigNumSerializeAndDeserializeFns) fee: BigNum;
 
 	static onDeserialized(_data: JsonObject, instance: UISerializableSwapRecord) {
 		assert(Config.initialized, 'Common Config Not Initialised');
@@ -1785,7 +1904,7 @@ export class UISerializableSwapRecord extends SerializableSwapRecord {
 			instance.amountOut.precision = outPrecision;
 			instance.inOraclePrice.precision = inPrecision;
 			instance.outOraclePrice.precision = outPrecision;
-			instance.fee.precision = outPrecision;
+			// instance.fee.precision = outPrecision;
 		} catch (e) {
 			console.error('Error in swap serializer', e);
 		}
@@ -1809,6 +1928,8 @@ export const Serializer = {
 		Liquidation: (cls: any) => Serialize(cls, SerializableLiquidationRecord),
 		UILiquidation: (cls: any) =>
 			Serialize(cls, UISerializableLiquidationRecord),
+		UILiquidationV2: (cls: any) =>
+			Serialize(cls, UISerializableLiquidationRecordV2),
 		SettlePnl: (cls: any) => Serialize(cls, SerializableSettlePnlRecord),
 		UISettlePnl: (cls: any) => Serialize(cls, UISerializableSettlePnlRecord),
 		UIOrderRecord: (cls: any) => Serialize(cls, UISerializableOrderRecord),
@@ -1915,6 +2036,8 @@ export const Serializer = {
 			) as LiquidationRecordEvent,
 		UILiquidation: (cls: Record<string, unknown>) =>
 			Deserialize(cls as JsonObject, UISerializableLiquidationRecord),
+		UILiquidationV2: (cls: Record<string, unknown>) =>
+			Deserialize(cls as JsonObject, UISerializableLiquidationRecordV2),
 		SettlePnl: (cls: Record<string, unknown>) =>
 			Deserialize(
 				cls as JsonObject,
