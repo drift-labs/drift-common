@@ -143,7 +143,7 @@ const PctBigNumSerializationFn = (target: BigNum | BN) =>
 		: undefined;
 
 const PctBigNumDeserializationFn = (val: string | number) =>
-	val
+	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), PERCENTAGE_PRECISION_EXP)
 			: BigNum.fromPrint(val.toString(), PERCENTAGE_PRECISION_EXP)
@@ -178,7 +178,7 @@ const PriceBigNumSerializationFn = (target: BigNum | BN) =>
 			: target.toString()
 		: undefined;
 const PriceBigNumDeserializationFn = (val: string | number) =>
-	val
+	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), PRICE_PRECISION_EXP)
 			: BigNum.fromPrint(val.toString(), PRICE_PRECISION_EXP)
@@ -195,7 +195,7 @@ const FundingRateBigNumSerializationFn = (target: BigNum | BN) =>
 			: target.toString()
 		: undefined;
 const FundingRateBigNumDeserializationFn = (val: string | number) =>
-	val
+	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), PRICE_PRECISION_EXP)
 			: BigNum.fromPrint(val.toString(), PRICE_PRECISION_EXP)
@@ -212,7 +212,7 @@ const BankCumulativeInterestBigNumSerializationFn = (target: BigNum | BN) =>
 			: target.toString()
 		: undefined;
 const BankCumulativeInterestBigNumDeserializationFn = (val: string | number) =>
-	val
+	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), PRICE_PRECISION_EXP)
 			: BigNum.fromPrint(val.toString(), PRICE_PRECISION_EXP)
@@ -229,7 +229,7 @@ const ReferralVolumeBigNumSerializationFn = (target: BigNum | BN) =>
 			: target.toString()
 		: undefined;
 const ReferralVolumeBigNumDeserializationFn = (val: string | number) =>
-	val
+	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), TEN)
 			: BigNum.fromPrint(val.toString(), TEN)
