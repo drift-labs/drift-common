@@ -640,7 +640,7 @@ export class UISerializableOrderActionRecordV2 {
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
 	makerOrderDirection: PositionDirection;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	spotFulfillmentMethodFee: number;
+	spotFulfillmentMethodFee: BigNum;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
 	@autoserializeAs(String) symbol: string;
 
