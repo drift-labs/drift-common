@@ -168,8 +168,8 @@ const getChronologicalValueForOrderAction = (action: OrderAction) => {
  * @returns
  */
 export const getSortScoreForOrderRecords = (
-	orderA: UISerializableOrderRecord | Event<OrderRecord>,
-	orderB: UISerializableOrderRecord | Event<OrderRecord>
+	orderA: { slot: number },
+	orderB: { slot: number }
 ) => {
 	if (orderA.slot !== orderB.slot) {
 		return orderA.slot > orderB.slot ? 1 : -1;
