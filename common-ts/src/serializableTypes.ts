@@ -44,6 +44,7 @@ import {
 	StakeAction,
 	SwapRecord,
 	TEN,
+	ZERO,
 } from '@drift-labs/sdk';
 import {
 	autoserializeAs,
@@ -53,6 +54,7 @@ import {
 	Deserialize,
 	inheritSerialization,
 	JsonObject,
+	JsonType,
 	Serialize,
 	SetDeserializeKeyTransform,
 	SetSerializeKeyTransform,
@@ -110,29 +112,37 @@ const QuoteBigNumSerializeAndDeserializeFns = {
 	Deserialize: QuoteBigNumDeserializationFn,
 };
 
-const RawBigNumSerializationFn = (target: BigNum | BN) =>
+const MarketBasedBigNumSerializationFn = (target: BigNum | BN) =>
 	target
 		? target instanceof BigNum
 			? target.print()
 			: target.toString()
 		: undefined;
 
-const SUFFICIENTLY_LARGE_PRECISION_EXP = new BN(12);
-const RawBigNumDeserializationFn = (val: string | number) =>
-	val !== undefined
-		? BigNum.from(
-				typeof val === 'string' ? val.replace('.', '') : val,
-				SUFFICIENTLY_LARGE_PRECISION_EXP
-		  )
+const MarketBasedBigNumDeserializationFn = (
+	val: JsonType,
+	marketIndex: number
+) => {
+	const precisionToUse = Config.spotMarketsLookup[marketIndex].precisionExp;
+	return val !== undefined &&
+		(typeof val === 'string' || typeof val === 'number')
+		? typeof val === 'string'
+			? BigNum.from(val.replace('.', ''), precisionToUse)
+			: BigNum.fromPrint(val.toString(), precisionToUse)
 		: undefined;
-/**
- * Inputs the number as a BN string value, with a precision of 12.
- * 12 is a sufficiently large precision to prevent precision loss.
- * Actual precision needs to be set manually during deserialization.
- */
-const RawBigNumSerializeAndDeserializeFns = {
-	Serialize: RawBigNumSerializationFn,
-	Deserialize: RawBigNumDeserializationFn,
+};
+
+// Main purpose of defer deserialization is to defer the precision setting until onDeserialized
+const DeferBigNumDeserializationFn = (val: string | number) => {
+	return val !== undefined
+		? typeof val === 'string'
+			? BigNum.from(0, ZERO)
+			: BigNum.fromPrint('0', ZERO)
+		: undefined;
+};
+const MarketBasedBigNumSerializeAndDeserializeFns = {
+	Serialize: MarketBasedBigNumSerializationFn,
+	Deserialize: DeferBigNumDeserializationFn,
 };
 
 const PctBigNumSerializationFn = (target: BigNum | BN) =>
@@ -542,11 +552,11 @@ export class UISerializableOrderRecordV2 {
 	@autoserializeAs(Number) userOrderId: number;
 	@autoserializeAs(Number) marketIndex: number;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns) price: BigNum;
-	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	baseAssetAmount: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	quoteAssetAmount: BigNum;
-	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	baseAssetAmountFilled: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	quoteAssetAmountFilled: BigNum;
@@ -580,11 +590,14 @@ export class UISerializableOrderRecordV2 {
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
 		if (isVariant(instance.marketType, 'spot')) {
-			const precisionToUse =
-				Config.spotMarketsLookup[instance.marketIndex].precisionExp;
-
-			instance.baseAssetAmount.precision = precisionToUse;
-			instance.baseAssetAmountFilled.precision = precisionToUse;
+			instance.baseAssetAmount = MarketBasedBigNumDeserializationFn(
+				data.baseAssetAmount,
+				instance.marketIndex
+			);
+			instance.baseAssetAmountFilled = MarketBasedBigNumDeserializationFn(
+				data.baseAssetAmountFilled,
+				instance.marketIndex
+			);
 		} else if (isVariant(instance.marketType, 'perp')) {
 			instance.baseAssetAmount.precision = BASE_PRECISION_EXP;
 			instance.baseAssetAmountFilled.precision = BASE_PRECISION_EXP;
@@ -599,7 +612,7 @@ export class UISerializableOrderActionRecordV2 {
 	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	fillerReward: BigNum;
-	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	baseAssetAmountFilled: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	quoteAssetAmountFilled: BigNum;
@@ -609,15 +622,15 @@ export class UISerializableOrderActionRecordV2 {
 	@autoserializeAs(Number) referrerReward: number;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	quoteAssetAmountSurplus: BigNum;
-	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	takerOrderBaseAssetAmount: BigNum;
-	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	takerOrderCumulativeBaseAssetAmountFilled: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	takerOrderCumulativeQuoteAssetAmountFilled: BigNum;
-	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	makerOrderBaseAssetAmount: BigNum;
-	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	makerOrderCumulativeBaseAssetAmountFilled: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	makerOrderCumulativeQuoteAssetAmountFilled: BigNum;
@@ -650,15 +663,28 @@ export class UISerializableOrderActionRecordV2 {
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
 		if (isVariant(instance.marketType, 'spot')) {
-			const precisionToUse =
-				Config.spotMarketsLookup[instance.marketIndex].precisionExp;
-			instance.baseAssetAmountFilled.precision = precisionToUse;
-			instance.takerOrderBaseAssetAmount.precision = precisionToUse;
-			instance.takerOrderCumulativeBaseAssetAmountFilled.precision =
-				precisionToUse;
-			instance.makerOrderBaseAssetAmount.precision = precisionToUse;
-			instance.makerOrderCumulativeBaseAssetAmountFilled.precision =
-				precisionToUse;
+			instance.baseAssetAmountFilled = MarketBasedBigNumDeserializationFn(
+				data.baseAssetAmountFilled,
+				instance.marketIndex
+			);
+			instance.takerOrderBaseAssetAmount = MarketBasedBigNumDeserializationFn(
+				data.takerOrderBaseAssetAmount,
+				instance.marketIndex
+			);
+			instance.takerOrderCumulativeBaseAssetAmountFilled =
+				MarketBasedBigNumDeserializationFn(
+					data.takerOrderCumulativeBaseAssetAmountFilled,
+					instance.marketIndex
+				);
+			instance.makerOrderBaseAssetAmount = MarketBasedBigNumDeserializationFn(
+				data.makerOrderBaseAssetAmount,
+				instance.marketIndex
+			);
+			instance.makerOrderCumulativeBaseAssetAmountFilled =
+				MarketBasedBigNumDeserializationFn(
+					data.makerOrderCumulativeBaseAssetAmountFilled,
+					instance.marketIndex
+				);
 		} else if (isVariant(instance.marketType, 'perp')) {
 			instance.baseAssetAmountFilled.precision = BASE_PRECISION_EXP;
 			instance.takerOrderBaseAssetAmount.precision = BASE_PRECISION_EXP;
@@ -706,8 +732,9 @@ export class SerializableDepositRecord implements DepositRecordEvent {
 
 @inheritSerialization(SerializableDepositRecord)
 export class UISerializableDepositRecord extends SerializableDepositRecord {
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
-	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns) amount: BigNum;
+	amount: BigNum;
 
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
@@ -745,7 +772,10 @@ export class UISerializableDepositRecord extends SerializableDepositRecord {
 		const precisionToUse =
 			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 
-		instance.amount.precision = precisionToUse;
+		instance.amount = MarketBasedBigNumDeserializationFn(
+			data.amount,
+			instance.marketIndex
+		);
 		instance.marketDepositBalance.precision = precisionToUse;
 		instance.marketWithdrawBalance.precision = precisionToUse;
 	}
@@ -1770,11 +1800,11 @@ export class SerializableInsuranceFundStakeRecord
 
 @inheritSerialization(SerializableInsuranceFundStakeRecord)
 export class UISerializableInsuranceFundStakeRecord extends SerializableInsuranceFundStakeRecord {
-	@autoserializeUsing(RawBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	amount: BigNum;
 
-	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	insuranceVaultAmountBefore: BigNum;
 
@@ -1803,16 +1833,19 @@ export class UISerializableInsuranceFundStakeRecord extends SerializableInsuranc
 	totalIfSharesAfter: BigNum;
 
 	static onDeserialized(
-		_data: JsonObject,
+		data: JsonObject,
 		instance: UISerializableInsuranceFundStakeRecord
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
 		try {
-			const precisionToUse =
-				Config.spotMarketsLookup[instance.marketIndex].precisionExp;
-
-			instance.amount.precision = precisionToUse;
-			instance.insuranceVaultAmountBefore.precision = precisionToUse;
+			instance.amount = MarketBasedBigNumDeserializationFn(
+				data.amount,
+				instance.marketIndex
+			);
+			instance.insuranceVaultAmountBefore = MarketBasedBigNumDeserializationFn(
+				data.insuranceVaultAmountBefore,
+				instance.marketIndex
+			);
 		} catch (e) {
 			//console.error('Error in insurance fund stake serializer', e);
 		}
