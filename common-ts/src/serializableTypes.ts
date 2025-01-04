@@ -119,16 +119,15 @@ const MarketBasedBigNumSerializationFn = (target: BigNum | BN) =>
 			: target.toString()
 		: undefined;
 
-const MarketBasedBigNumDeserializationFn = (
+const targetPrecisionBigNumDeserializationFn = (
 	val: JsonType,
-	marketIndex: number
+	precision: BN
 ) => {
-	const precisionToUse = Config.spotMarketsLookup[marketIndex].precisionExp;
 	return val !== undefined &&
 		(typeof val === 'string' || typeof val === 'number')
 		? typeof val === 'string'
-			? BigNum.from(val.replace('.', ''), precisionToUse)
-			: BigNum.fromPrint(val.toString(), precisionToUse)
+			? BigNum.from(val.replace('.', ''), precision)
+			: BigNum.fromPrint(val.toString(), precision)
 		: undefined;
 };
 
@@ -275,6 +274,31 @@ const EnumDeserializationFn = (val: any) => {
 const EnumSerializeAndDeserializeFns = {
 	Serialize: EnumSerializationFn,
 	Deserialize: EnumDeserializationFn,
+};
+
+const getPrecisionToUse = (marketType: MarketType, marketIndex: number) => {
+	if (isVariant(marketType, 'spot')) {
+		return Config.spotMarketsLookup[marketIndex].precisionExp;
+	}
+	return BASE_PRECISION_EXP;
+};
+
+/**
+ * Handles correctly deserializing precision for spot records where we don't know the precision until the onDeserialized hook is called
+ */
+const handleOnDeserializedPrecision = <T>(
+	data: JsonObject,
+	instance: T,
+	precision: BN,
+	keysToUse: (keyof T)[]
+) => {
+	keysToUse.forEach((key) => {
+		// @ts-ignore :: Don't know how to correctly type this because it doesn't know the key corresponds to a BigNum, but it should always be a BigNum
+		instance[key] = targetPrecisionBigNumDeserializationFn(
+			data[key],
+			precision
+		);
+	});
 };
 
 // Serializable classes
@@ -520,22 +544,19 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 		instance: UISerializableOrderActionRecord
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		if (isVariant(instance.marketType, 'spot')) {
-			try {
-				const precisionToUse =
-					Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 
-				instance.baseAssetAmountFilled.precision = precisionToUse;
-				instance.takerOrderBaseAssetAmount.precision = precisionToUse;
-				instance.takerOrderCumulativeBaseAssetAmountFilled.precision =
-					precisionToUse;
-				instance.makerOrderBaseAssetAmount.precision = precisionToUse;
-				instance.makerOrderCumulativeBaseAssetAmountFilled.precision =
-					precisionToUse;
-			} catch (e) {
-				//console.error('Error in order action serializer', e);
-			}
-		}
+		handleOnDeserializedPrecision(
+			data,
+			instance,
+			getPrecisionToUse(instance.marketType, instance.marketIndex),
+			[
+				'baseAssetAmountFilled',
+				'takerOrderBaseAssetAmount',
+				'takerOrderCumulativeBaseAssetAmountFilled',
+				'makerOrderBaseAssetAmount',
+				'makerOrderCumulativeBaseAssetAmountFilled',
+			]
+		);
 	}
 }
 
@@ -589,19 +610,13 @@ export class UISerializableOrderRecordV2 {
 		instance: UISerializableOrderRecordV2
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		if (isVariant(instance.marketType, 'spot')) {
-			instance.baseAssetAmount = MarketBasedBigNumDeserializationFn(
-				data.baseAssetAmount,
-				instance.marketIndex
-			);
-			instance.baseAssetAmountFilled = MarketBasedBigNumDeserializationFn(
-				data.baseAssetAmountFilled,
-				instance.marketIndex
-			);
-		} else if (isVariant(instance.marketType, 'perp')) {
-			instance.baseAssetAmount.precision = BASE_PRECISION_EXP;
-			instance.baseAssetAmountFilled.precision = BASE_PRECISION_EXP;
-		}
+
+		handleOnDeserializedPrecision(
+			data,
+			instance,
+			getPrecisionToUse(instance.marketType, instance.marketIndex),
+			['baseAssetAmount', 'baseAssetAmountFilled']
+		);
 	}
 }
 
@@ -662,38 +677,21 @@ export class UISerializableOrderActionRecordV2 {
 		instance: UISerializableOrderActionRecordV2
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		if (isVariant(instance.marketType, 'spot')) {
-			instance.baseAssetAmountFilled = MarketBasedBigNumDeserializationFn(
-				data.baseAssetAmountFilled,
-				instance.marketIndex
-			);
-			instance.takerOrderBaseAssetAmount = MarketBasedBigNumDeserializationFn(
-				data.takerOrderBaseAssetAmount,
-				instance.marketIndex
-			);
-			instance.takerOrderCumulativeBaseAssetAmountFilled =
-				MarketBasedBigNumDeserializationFn(
-					data.takerOrderCumulativeBaseAssetAmountFilled,
-					instance.marketIndex
-				);
-			instance.makerOrderBaseAssetAmount = MarketBasedBigNumDeserializationFn(
-				data.makerOrderBaseAssetAmount,
-				instance.marketIndex
-			);
-			instance.makerOrderCumulativeBaseAssetAmountFilled =
-				MarketBasedBigNumDeserializationFn(
-					data.makerOrderCumulativeBaseAssetAmountFilled,
-					instance.marketIndex
-				);
-		} else if (isVariant(instance.marketType, 'perp')) {
-			instance.baseAssetAmountFilled.precision = BASE_PRECISION_EXP;
-			instance.takerOrderBaseAssetAmount.precision = BASE_PRECISION_EXP;
-			instance.takerOrderCumulativeBaseAssetAmountFilled.precision =
-				BASE_PRECISION_EXP;
-			instance.makerOrderBaseAssetAmount.precision = BASE_PRECISION_EXP;
-			instance.makerOrderCumulativeBaseAssetAmountFilled.precision =
-				BASE_PRECISION_EXP;
-		}
+
+		const keysToUse: (keyof UISerializableOrderActionRecordV2)[] = [
+			'baseAssetAmountFilled',
+			'takerOrderBaseAssetAmount',
+			'takerOrderCumulativeBaseAssetAmountFilled',
+			'makerOrderBaseAssetAmount',
+			'makerOrderCumulativeBaseAssetAmountFilled',
+		];
+
+		handleOnDeserializedPrecision(
+			data,
+			instance,
+			getPrecisionToUse(instance.marketType, instance.marketIndex),
+			keysToUse
+		);
 	}
 }
 
@@ -769,15 +767,13 @@ export class UISerializableDepositRecord extends SerializableDepositRecord {
 		instance: UISerializableDepositRecord
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		const precisionToUse =
-			Config.spotMarketsLookup[instance.marketIndex].precisionExp;
 
-		instance.amount = MarketBasedBigNumDeserializationFn(
-			data.amount,
-			instance.marketIndex
+		handleOnDeserializedPrecision(
+			data,
+			instance,
+			getPrecisionToUse(MarketType.SPOT, instance.marketIndex),
+			['amount', 'marketDepositBalance', 'marketWithdrawBalance']
 		);
-		instance.marketDepositBalance.precision = precisionToUse;
-		instance.marketWithdrawBalance.precision = precisionToUse;
 	}
 }
 
@@ -1837,18 +1833,13 @@ export class UISerializableInsuranceFundStakeRecord extends SerializableInsuranc
 		instance: UISerializableInsuranceFundStakeRecord
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		try {
-			instance.amount = MarketBasedBigNumDeserializationFn(
-				data.amount,
-				instance.marketIndex
-			);
-			instance.insuranceVaultAmountBefore = MarketBasedBigNumDeserializationFn(
-				data.insuranceVaultAmountBefore,
-				instance.marketIndex
-			);
-		} catch (e) {
-			//console.error('Error in insurance fund stake serializer', e);
-		}
+
+		handleOnDeserializedPrecision(
+			data,
+			instance,
+			getPrecisionToUse(MarketType.SPOT, instance.marketIndex),
+			['amount', 'insuranceVaultAmountBefore']
+		);
 	}
 }
 
