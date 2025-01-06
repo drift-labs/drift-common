@@ -566,7 +566,6 @@ export class UISerializableOrderRecordV2 {
 	@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
-	@autoserializeAs(String) status: string;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns) orderType: OrderType;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
 	@autoserializeAs(Number) orderId: number;
@@ -604,6 +603,7 @@ export class UISerializableOrderRecordV2 {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) lastUpdatedTs: BN;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
 	lastActionExplanation: OrderActionExplanation;
+	@autoserializeAs(String) lastActionStatus: string;
 
 	static onDeserialized(
 		data: JsonObject,
@@ -1255,7 +1255,7 @@ export class UISerializableLiquidationRecordV2 {
 	marginRequirement: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	totalCollateral: BigNum;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) marginFreed: BN;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) marginFreed: BN;
 	@autoserializeAs(Number) liquidationId: number;
 	@autoserializeAs(Boolean) bankrupt: boolean;
 	@autoserializeUsing(BNArraySerializeAndDeserializeFns)
@@ -1286,15 +1286,15 @@ export class UISerializableLiquidationRecordV2 {
 	@autoserializeAs(Number) liquidateSpot_assetMarketIndex: number;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
 	liquidateSpot_assetPrice: BigNum;
-	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	liquidateSpot_assetTransfer: BigNum;
 	@autoserializeAs(Number) liquidateSpot_liabilityMarketIndex: number;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
 	liquidateSpot_liabilityPrice: BigNum;
-	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	liquidateSpot_liabilityTransfer: BigNum;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	liquidateSpot_ifFee: BN;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	liquidateSpot_ifFee: BigNum;
 
 	// Liquidate Borrow For Perp PnL
 	@autoserializeAs(Number) liquidateBorrowForPerpPnl_perpMarketIndex: number;
@@ -1319,46 +1319,92 @@ export class UISerializableLiquidationRecordV2 {
 	liquidatePerpPnlForDeposit_assetMarketIndex: number;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
 	liquidatePerpPnlForDeposit_assetPrice: BigNum;
-	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	liquidatePerpPnlForDeposit_assetTransfer: BigNum;
 
 	// Perp Bankruptcy
 	@autoserializeAs(Number) perpBankruptcy_marketIndex: number;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	perpBankruptcy_pnl: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	perpBankruptcy_ifPayment: BN;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	perpBankruptcy_pnl: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	perpBankruptcy_ifPayment: BigNum;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
 	perpBankruptcy_clawbackUser: PublicKey;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	perpBankruptcy_clawbackUserPayment: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	perpBankruptcy_cumulativeFundingRateDelta: BN;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	perpBankruptcy_clawbackUserPayment: BigNum;
+	@autoserializeUsing(FundingRateBigNumSerializeAndDeserializeFns)
+	perpBankruptcy_cumulativeFundingRateDelta: BigNum;
 
 	// Spot Bankruptcy
 	@autoserializeAs(Number) spotBankruptcy_marketIndex: number;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	spotBankruptcy_borrowAmount: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	spotBankruptcy_ifPayment: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	spotBankruptcy_cumulativeDepositInterestDelta: BN;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	spotBankruptcy_borrowAmount: BigNum;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	spotBankruptcy_ifPayment: BigNum;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	spotBankruptcy_cumulativeDepositInterestDelta: BigNum;
 
 	static onDeserialized(
 		data: JsonObject,
 		instance: UISerializableLiquidationRecordV2
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		const precisionToUse =
-			Config.spotMarketsLookup[instance.liquidateSpot_assetMarketIndex]
-				.precisionExp;
 
-		instance.liquidateSpot_assetTransfer.precision = precisionToUse;
-		instance.liquidateSpot_liabilityTransfer.precision = precisionToUse;
-		instance.liquidateBorrowForPerpPnl_liabilityTransfer.precision =
-			precisionToUse;
-		instance.liquidatePerpPnlForDeposit_assetTransfer.precision =
-			precisionToUse;
+		// handle spot liquidation
+		const spotLiquidationPrecisionToUse = getPrecisionToUse(
+			MarketType.SPOT,
+			instance.liquidateSpot_assetMarketIndex
+		);
+		handleOnDeserializedPrecision(
+			data,
+			instance,
+			spotLiquidationPrecisionToUse,
+			[
+				'liquidateSpot_assetTransfer',
+				'liquidateSpot_liabilityTransfer',
+				'liquidateSpot_ifFee',
+			]
+		);
+
+		// handle spot bankruptcy
+		const spotBankruptcyPrecisionToUse = getPrecisionToUse(
+			MarketType.SPOT,
+			instance.spotBankruptcy_marketIndex
+		);
+		handleOnDeserializedPrecision(
+			data,
+			instance,
+			spotBankruptcyPrecisionToUse,
+			[
+				'spotBankruptcy_borrowAmount',
+				'spotBankruptcy_ifPayment',
+				'spotBankruptcy_cumulativeDepositInterestDelta',
+			]
+		);
+
+		// handle liquidate borrow for perp pnl
+		const liquidateBorrowForPerpPnlPrecisionToUse = getPrecisionToUse(
+			MarketType.PERP,
+			instance.liquidateBorrowForPerpPnl_perpMarketIndex
+		);
+		handleOnDeserializedPrecision(
+			data,
+			instance,
+			liquidateBorrowForPerpPnlPrecisionToUse,
+			['liquidateBorrowForPerpPnl_liabilityTransfer']
+		);
+
+		// handle liquidate perp pnl for deposit
+		const liquidatePerpPnlForDepositPrecisionToUse = getPrecisionToUse(
+			MarketType.PERP,
+			instance.liquidatePerpPnlForDeposit_perpMarketIndex
+		);
+		handleOnDeserializedPrecision(
+			data,
+			instance,
+			liquidatePerpPnlForDepositPrecisionToUse,
+			['liquidatePerpPnlForDeposit_assetTransfer']
+		);
 	}
 }
 
