@@ -7,6 +7,7 @@ import {
 	DriftClient,
 	IWallet,
 	MarketType,
+	OptionalOrderParams,
 	OrderType,
 	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
@@ -31,7 +32,7 @@ import {
 import bcrypt from 'bcryptjs-react';
 import nacl, { sign } from 'tweetnacl';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
-import { AuctionParams } from 'src/types';
+import { AuctionParams, TradeOffsetPrice } from 'src/types';
 import { USER_COMMON_UTILS } from './user';
 import { TRADING_COMMON_UTILS } from './trading';
 import { MARKET_COMMON_UTILS } from './market';
@@ -314,6 +315,8 @@ const getMarketOrderLimitPrice = ({
 }): BN => {
 	let limitPrice;
 
+	if (!baselinePrice) return ZERO;
+
 	if (slippageTolerance === 0) return baselinePrice;
 
 	// infinite slippage capped at 15% currently
@@ -341,27 +344,28 @@ const getMarketOrderLimitPrice = ({
 const getMarketAuctionParams = ({
 	direction,
 	startPriceFromSettings,
-	worstPrice,
+	endPriceFromSettings,
 	limitPrice,
 	duration,
-	marketTickSize: _marketTickSize,
 	auctionStartPriceOffset,
 	auctionEndPriceOffset,
+	additionalEndPriceBuffer,
 }: {
 	direction: PositionDirection;
 	startPriceFromSettings: BN;
-	worstPrice: BN;
+	endPriceFromSettings: BN;
 	limitPrice: BN;
 	duration: number;
-	marketTickSize: BN;
 	auctionStartPriceOffset: number;
 	auctionEndPriceOffset: number;
+	additionalEndPriceBuffer?: BN;
 }): AuctionParams => {
 	let auctionStartPrice: BN;
 	let auctionEndPrice: BN;
+	let constrainedBySlippage: boolean;
 
 	const auctionEndPriceBuffer = BigNum.from(PRICE_PRECISION).scale(
-		auctionEndPriceOffset * 100,
+		Math.abs(auctionEndPriceOffset * 100),
 		10000
 	).val;
 
@@ -373,25 +377,49 @@ const getMarketAuctionParams = ({
 	if (isVariant(direction, 'long')) {
 		auctionStartPrice = startPriceFromSettings.sub(auctionStartPriceBuffer);
 
-		const worstPriceToUse = BN.max(worstPrice, startPriceFromSettings); // Handles edge cases like if the worst price on the book was better than the oracle price, and the settings are asking to be relative to the oracle price
+		const worstPriceToUse = BN.max(
+			endPriceFromSettings,
+			startPriceFromSettings
+		); // Handles edge cases like if the worst price on the book was better than the oracle price, and the settings are asking to be relative to the oracle price
 
 		auctionEndPrice = PRICE_PRECISION.add(auctionEndPriceBuffer)
 			.mul(worstPriceToUse)
 			.div(PRICE_PRECISION);
 
+		constrainedBySlippage = limitPrice.lt(auctionEndPrice);
+
+		// use BEST (limit price, auction end price) as end price
 		auctionEndPrice = BN.min(limitPrice, auctionEndPrice);
+
+		// apply additional buffer if provided
+		if (additionalEndPriceBuffer) {
+			auctionEndPrice = auctionEndPrice.add(additionalEndPriceBuffer);
+			constrainedBySlippage = limitPrice.lt(auctionEndPrice);
+		}
 
 		auctionStartPrice = BN.min(auctionStartPrice, auctionEndPrice);
 	} else {
 		auctionStartPrice = startPriceFromSettings.add(auctionStartPriceBuffer);
 
-		const worstPriceToUse = BN.min(worstPrice, startPriceFromSettings); // Handles edge cases like if the worst price on the book was better than the oracle price, and the settings are asking to be relative to the oracle price
+		const worstPriceToUse = BN.min(
+			endPriceFromSettings,
+			startPriceFromSettings
+		); // Handles edge cases like if the worst price on the book was better than the oracle price, and the settings are asking to be relative to the oracle price
 
 		auctionEndPrice = PRICE_PRECISION.sub(auctionEndPriceBuffer)
 			.mul(worstPriceToUse)
 			.div(PRICE_PRECISION);
 
+		constrainedBySlippage = limitPrice.gt(auctionEndPrice);
+
+		// use BEST (limit price, auction end price) as end price
 		auctionEndPrice = BN.max(limitPrice, auctionEndPrice);
+
+		// apply additional buffer if provided
+		if (additionalEndPriceBuffer) {
+			auctionEndPrice = auctionEndPrice.sub(additionalEndPriceBuffer);
+			constrainedBySlippage = limitPrice.gt(auctionEndPrice);
+		}
 
 		auctionStartPrice = BN.max(auctionStartPrice, auctionEndPrice);
 	}
@@ -400,6 +428,7 @@ const getMarketAuctionParams = ({
 		auctionStartPrice,
 		auctionEndPrice,
 		auctionDuration: duration,
+		constrainedBySlippage,
 	};
 };
 
@@ -417,19 +446,20 @@ const deriveMarketOrderParams = ({
 	baseAmount,
 	reduceOnly,
 	allowInfSlippage,
-	limitPrice,
 	oraclePrice,
 	bestPrice,
 	entryPrice,
 	worstPrice,
-	marketTickSize,
+	markPrice,
 	auctionDuration,
 	auctionStartPriceOffset,
 	auctionEndPriceOffset,
 	auctionStartPriceOffsetFrom,
+	auctionEndPriceOffsetFrom,
 	auctionPriceCaps,
 	slippageTolerance,
 	isOracleOrder,
+	additionalEndPriceBuffer,
 }: {
 	marketType: MarketType;
 	marketIndex: number;
@@ -439,12 +469,11 @@ const deriveMarketOrderParams = ({
 	baseAmount: BN;
 	reduceOnly: boolean;
 	allowInfSlippage: boolean;
-	limitPrice: BN;
 	oraclePrice: BN;
 	bestPrice: BN;
 	entryPrice: BN;
 	worstPrice: BN;
-	marketTickSize: BN;
+	markPrice: BN;
 	auctionDuration: number;
 	auctionStartPriceOffset: number;
 	auctionEndPriceOffset: number;
@@ -452,26 +481,43 @@ const deriveMarketOrderParams = ({
 		min: BN;
 		max: BN;
 	};
-	auctionStartPriceOffsetFrom: 'oracle' | 'bestOffer' | 'entry' | 'best';
+	auctionStartPriceOffsetFrom: TradeOffsetPrice;
+	auctionEndPriceOffsetFrom: TradeOffsetPrice;
 	slippageTolerance: number;
 	isOracleOrder?: boolean;
-}) => {
-	const startPrices = getPriceObject({
+	additionalEndPriceBuffer?: BN;
+}): OptionalOrderParams & { constrainedBySlippage?: boolean } => {
+	const priceObject = getPriceObject({
 		oraclePrice,
+		markPrice,
 		bestOffer: bestPrice,
 		entryPrice,
+		worstPrice,
 		direction,
 	});
 
+	// max slippage price
+	let limitPrice = getMarketOrderLimitPrice({
+		direction,
+		baselinePrice: priceObject[auctionStartPriceOffsetFrom],
+		slippageTolerance: allowInfSlippage ? undefined : slippageTolerance,
+	});
+
+	if (additionalEndPriceBuffer) {
+		limitPrice = isVariant(direction, 'long')
+			? limitPrice.add(additionalEndPriceBuffer)
+			: limitPrice.sub(additionalEndPriceBuffer);
+	}
+
 	const auctionParams = getMarketAuctionParams({
 		direction,
-		startPriceFromSettings: startPrices[auctionStartPriceOffsetFrom],
-		worstPrice,
+		startPriceFromSettings: priceObject[auctionStartPriceOffsetFrom],
+		endPriceFromSettings: priceObject[auctionEndPriceOffsetFrom],
 		limitPrice,
 		duration: auctionDuration,
-		marketTickSize,
 		auctionStartPriceOffset: auctionStartPriceOffset,
 		auctionEndPriceOffset: auctionEndPriceOffset,
+		additionalEndPriceBuffer,
 	});
 
 	let orderParams = getMarketOrderParams({
@@ -487,25 +533,10 @@ const deriveMarketOrderParams = ({
 	if (isOracleOrder) {
 		// wont work if oracle is zero
 		if (!oraclePrice.eq(ZERO)) {
-			// oracle auction max slippage = regular auction start price + slippage tolerance
-			const oracleAuctionSlippageLimitPrice = allowInfSlippage
-				? limitPrice
-				: getMarketOrderLimitPrice({
-						direction,
-						// baselinePrice should fallback to oracle if this is somehow 0
-						baselinePrice: auctionParams.auctionStartPrice?.eq(ZERO)
-							? oraclePrice
-							: auctionParams.auctionStartPrice,
-						slippageTolerance,
-				  });
-
-			// worst (slippageLimitPrice, auctionEndPrice)
+			// BEST (slippageLimitPrice, auctionEndPrice)
 			const oracleAuctionEndPrice = isVariant(direction, 'long')
-				? BN.max(oracleAuctionSlippageLimitPrice, auctionParams.auctionEndPrice)
-				: BN.min(
-						oracleAuctionSlippageLimitPrice,
-						auctionParams.auctionEndPrice
-				  );
+				? BN.min(limitPrice, auctionParams.auctionEndPrice)
+				: BN.max(limitPrice, auctionParams.auctionEndPrice);
 
 			const oracleAuctionParams = deriveOracleAuctionParams({
 				direction: direction,
@@ -596,20 +627,49 @@ const getPriceObject = ({
 	oraclePrice,
 	bestOffer,
 	entryPrice,
+	worstPrice,
+	markPrice,
 	direction,
 }: {
 	oraclePrice: BN;
 	bestOffer: BN;
 	entryPrice: BN;
+	worstPrice: BN;
+	markPrice: BN;
 	direction: PositionDirection;
 }) => {
+	let best;
+
+	const nonZeroOptions = [oraclePrice, bestOffer, markPrice].filter(
+		(price) => price !== undefined && price?.gt(ZERO)
+	);
+
+	if (nonZeroOptions.length === 0) {
+		console.error('Unable to create valid auction params');
+		return {
+			oraclePrice: ZERO,
+			bestOffer: ZERO,
+			entryPrice: ZERO,
+			worstPrice: ZERO,
+			markPrice: ZERO,
+			direction,
+		};
+	}
+
+	if (isVariant(direction, 'long')) {
+		best = nonZeroOptions.reduce((a, b) => (a.lt(b) ? a : b)); // lowest price
+	} else {
+		best = nonZeroOptions.reduce((a, b) => (a.gt(b) ? a : b)); // highest price
+	}
+
+	// if zero values come through, fallback to nonzero value
 	return {
-		oracle: oraclePrice,
-		bestOffer,
+		oracle: oraclePrice?.gt(ZERO) ? oraclePrice : best,
+		bestOffer: bestOffer?.gt(ZERO) ? bestOffer : best,
 		entry: entryPrice,
-		best: isVariant(direction, 'long')
-			? BN.min(oraclePrice, bestOffer)
-			: BN.max(oraclePrice, bestOffer),
+		best,
+		worst: worstPrice,
+		mark: markPrice?.gt(ZERO) ? markPrice : best,
 	};
 };
 

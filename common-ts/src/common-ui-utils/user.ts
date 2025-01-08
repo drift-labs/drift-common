@@ -3,6 +3,9 @@ import {
 	BN,
 	BigNum,
 	DriftClient,
+	MarketStatus,
+	ONE,
+	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
 	PerpMarketConfig,
 	PerpPosition,
@@ -14,12 +17,14 @@ import {
 	calculateClaimablePnl,
 	calculateCostBasis,
 	calculateEntryPrice,
+	calculateFeesAndFundingPnl,
 	calculatePositionFundingPNL,
 	calculatePositionPNL,
 	isOracleValid,
 } from '@drift-labs/sdk';
-import { OpenPosition } from 'src/types';
+import { OpenPosition, UIMarket } from '../types';
 import { TRADING_COMMON_UTILS } from './trading';
+import { ENUM_UTILS } from '..';
 
 const getOpenPositionData = (
 	driftClient: DriftClient,
@@ -49,8 +54,10 @@ const getOpenPositionData = (
 				position.marketIndex
 			);
 
+			let oraclePrice = oraclePriceData.price;
+
 			// mark price fetched with a callback so we don't need extra dlob server calls. fallback to oracle
-			const markPrice = markPriceCallback
+			let markPrice = markPriceCallback
 				? markPriceCallback(position.marketIndex) ?? oraclePriceData.price
 				: oraclePriceData.price;
 
@@ -68,7 +75,7 @@ const getOpenPositionData = (
 					true
 				)[0];
 
-			const estExitPrice = user.getPositionEstimatedExitPriceAndPnl(
+			let estExitPrice = user.getPositionEstimatedExitPriceAndPnl(
 				perpPositionWithRemainderBaseAdded,
 				perpPositionWithRemainderBaseAdded.baseAssetAmount
 			)[0];
@@ -79,6 +86,35 @@ const getOpenPositionData = (
 
 			const isShort =
 				perpPositionWithRemainderBaseAdded.baseAssetAmount.isNeg();
+
+			if (UIMarket.checkIsPredictionMarket(perpMarketConfig)) {
+				const isResolved =
+					ENUM_UTILS.match(perpMarket?.status, MarketStatus.SETTLEMENT) ||
+					ENUM_UTILS.match(perpMarket?.status, MarketStatus.DELISTED);
+
+				if (isResolved) {
+					const resolvedToNo = perpMarket.expiryPrice.lte(
+						ZERO.add(perpMarket.amm.orderTickSize)
+					);
+
+					const price = resolvedToNo
+						? ZERO.mul(PRICE_PRECISION)
+						: ONE.mul(PRICE_PRECISION);
+
+					estExitPrice = price;
+					markPrice = price;
+					oraclePrice = price;
+				}
+			}
+
+			// if for any reason oracle or mark price blips to 0, fallback to the other one so we don't show a crazy pnl
+			if (markPrice.lte(ZERO) && oraclePrice.gt(ZERO)) {
+				markPrice = oraclePrice;
+			}
+
+			if (oraclePrice.lte(ZERO) && markPrice.gt(ZERO)) {
+				oraclePrice = markPrice;
+			}
 
 			const pnlVsMark = TRADING_COMMON_UTILS.calculatePotentialProfit({
 				currentPositionSize: BigNum.from(
@@ -117,7 +153,7 @@ const getOpenPositionData = (
 					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
-				exitPrice: BigNum.from(oraclePriceData.price, PRICE_PRECISION_EXP),
+				exitPrice: BigNum.from(oraclePrice, PRICE_PRECISION_EXP),
 				slippageTolerance: 0,
 				takerFeeBps: 0,
 			}).estimatedProfit.shiftTo(QUOTE_PRECISION_EXP).val;
@@ -148,6 +184,11 @@ const getOpenPositionData = (
 					oraclePriceData
 				),
 				unsettledFundingPnl: calculatePositionFundingPNL(
+					perpMarket,
+					perpPositionWithLpSettle
+				),
+				// Includes both settled and unsettled funding as well as fees
+				feesAndFundingPnl: calculateFeesAndFundingPnl(
 					perpMarket,
 					perpPositionWithLpSettle
 				),

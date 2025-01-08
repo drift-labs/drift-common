@@ -9,7 +9,7 @@
     "@drift-labs/sdk": "file:../protocol/sdk",
     "@jest/globals": "^29.3.1",
     "@slack/web-api": "^6.4.0",
-    "@solana/spl-token": "^0.3.8",
+    "@solana/spl-token": "0.3.8",
     "@solana/web3.js": "1.66.2",
     "bcryptjs-react": "^2.4.6",
     "cerializr": "^3.1.4",
@@ -36,6 +36,10 @@
   },
   "directories": {
     "lib": "lib"
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./clients": "./lib/clients/index.js"
   },
   "engines": {
     "node": ">=14"

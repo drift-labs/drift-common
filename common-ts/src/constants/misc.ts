@@ -2,6 +2,9 @@ import { BASE_PRECISION_EXP, BigNum, LAMPORTS_EXP } from '@drift-labs/sdk';
 
 export const USDC_SPOT_MARKET_INDEX = 0;
 
+export const MAIN_POOL_ID = 0;
+export const JLP_POOL_ID = 1;
+
 /**
  * Equal to 0.01
  */
