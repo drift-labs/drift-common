@@ -2050,140 +2050,112 @@ export const Serializer = {
 		UISwapRecord: (cls: any) => Serialize(cls, UISerializableSwapRecord),
 	},
 	Deserialize: {
-		Order: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableOrder) as Order,
-		OrderRecord: (cls: Record<string, unknown>) =>
+		Order: (cls: JsonObject) => Deserialize(cls, SerializableOrder) as Order,
+		OrderRecord: (cls: JsonObject) =>
 			// @ts-ignore
 			Deserialize(
 				cls as JsonObject,
 				SerializableOrderRecord
 			) as OrderRecordEvent,
-		UIOrder: (cls: Record<string, unknown>) =>
+		UIOrder: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableOrder) as UISerializableOrder,
+		UIOrderRecord: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableOrderRecord) as UISerializableOrderRecord,
+		UIOrderRecordV2: (cls: JsonObject) =>
 			Deserialize(
-				cls as JsonObject,
-				UISerializableOrder
-			) as UISerializableOrder,
-		UIOrderRecord: (cls: Record<string, unknown>) =>
-			Deserialize(
-				cls as JsonObject,
-				UISerializableOrderRecord
-			) as UISerializableOrderRecord,
-		UIOrderRecordV2: (cls: Record<string, unknown>) =>
-			Deserialize(
-				cls as JsonObject,
+				cls,
 				UISerializableOrderRecordV2
 			) as UISerializableOrderRecordV2,
-		UIOrderActionRecordV2: (cls: Record<string, unknown>) =>
+		UIOrderActionRecordV2: (cls: JsonObject) =>
 			Deserialize(
-				cls as JsonObject,
+				cls,
 				UISerializableOrderActionRecordV2
 			) as UISerializableOrderActionRecordV2,
-		Deposit: (cls: Record<string, unknown>) =>
+		Deposit: (cls: JsonObject) =>
+			Deserialize(cls, SerializableDepositRecord) as DepositRecordEvent,
+		UIDeposit: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableDepositRecord),
+		FundingRate: (cls: JsonObject) =>
+			Deserialize(cls, SerializableFundingRateRecord) as FundingRateRecordEvent,
+		UIFundingRate: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableFundingRateRecord),
+		FundingPayment: (cls: JsonObject) =>
 			Deserialize(
-				cls as JsonObject,
-				SerializableDepositRecord
-			) as DepositRecordEvent,
-		UIDeposit: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableDepositRecord),
-		FundingRate: (cls: Record<string, unknown>) =>
-			Deserialize(
-				cls as JsonObject,
-				SerializableFundingRateRecord
-			) as FundingRateRecordEvent,
-		UIFundingRate: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableFundingRateRecord),
-		FundingPayment: (cls: Record<string, unknown>) =>
-			Deserialize(
-				cls as JsonObject,
+				cls,
 				SerializableFundingPaymentRecord
 			) as FundingPaymentRecordEvent,
-		UIFundingPayment: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableFundingPaymentRecord),
-		Liquidation: (cls: Record<string, unknown>) =>
+		UIFundingPayment: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableFundingPaymentRecord),
+		Liquidation: (cls: JsonObject) =>
+			Deserialize(cls, SerializableLiquidationRecord) as LiquidationRecordEvent,
+		UILiquidation: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableLiquidationRecord),
+		UILiquidationV2: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableLiquidationRecordV2),
+		SettlePnl: (cls: JsonObject) =>
+			Deserialize(cls, SerializableSettlePnlRecord) as SettlePnlRecordEvent,
+		SpotInterest: (cls: JsonObject) =>
 			Deserialize(
-				cls as JsonObject,
-				SerializableLiquidationRecord
-			) as LiquidationRecordEvent,
-		UILiquidation: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableLiquidationRecord),
-		UILiquidationV2: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableLiquidationRecordV2),
-		SettlePnl: (cls: Record<string, unknown>) =>
-			Deserialize(
-				cls as JsonObject,
-				SerializableSettlePnlRecord
-			) as SettlePnlRecordEvent,
-		SpotInterest: (cls: Record<string, unknown>) =>
-			Deserialize(
-				cls as JsonObject,
+				cls,
 				SerializableSpotInterestRecord
 			) as SpotInterestRecordEvent,
-		CurveRecord: (cls: Record<string, unknown>) =>
-			Deserialize(
-				cls as JsonObject,
-				SerializableCurveRecord
-			) as SerializableCurveRecord,
-		UISettlePnl: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableSettlePnlRecord),
-		Candle: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableCandle),
-		UICandle: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableCandle),
-		OrderActionRecord: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableOrderActionRecord),
-		UIOrderActionRecord: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableOrderActionRecord),
-		UIMatchedOrderAction: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UIMatchedOrderRecordAndAction),
-		UserSnapshot: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableUserSnapshotRecord),
-		UIUserSnapshot: (cls: Record<string, unknown>) =>
+		CurveRecord: (cls: JsonObject) =>
+			Deserialize(cls, SerializableCurveRecord) as SerializableCurveRecord,
+		UISettlePnl: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableSettlePnlRecord),
+		Candle: (cls: JsonObject) => Deserialize(cls, SerializableCandle),
+		UICandle: (cls: JsonObject) => Deserialize(cls, UISerializableCandle),
+		OrderActionRecord: (cls: JsonObject) =>
+			Deserialize(cls, SerializableOrderActionRecord),
+		UIOrderActionRecord: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableOrderActionRecord),
+		UIMatchedOrderAction: (cls: JsonObject) =>
+			Deserialize(cls, UIMatchedOrderRecordAndAction),
+		UserSnapshot: (cls: JsonObject) =>
+			Deserialize(cls, SerializableUserSnapshotRecord),
+		UIUserSnapshot: (cls: JsonObject) =>
 			// @ts-ignore
-			Deserialize(cls as JsonObject, UISerializableUserSnapshotRecord),
-		UserSnapshotPerpPositions: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableUserPerpPositionSnapshot),
-		UserSnapshotSpotPositions: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableUserSpotPositionSnapshot),
-		LeaderboardResult: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableLeaderboardResult),
-		UISerializableLeaderboardResult: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableLeaderboardResult),
-		UIAccountSnapshotHistory: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableAccountSnapshot),
-		NewUser: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableNewUserRecord),
-		DLOBState: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableDLOBState),
-		CompetitionResult: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, CompetitionResult),
-		CompetitionResultEntry: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, CompetitionResultEntry),
-		InsuranceFundRecord: (cls: Record<string, unknown>) =>
+			Deserialize(cls, UISerializableUserSnapshotRecord),
+		UserSnapshotPerpPositions: (cls: JsonObject) =>
+			Deserialize(cls, SerializableUserPerpPositionSnapshot),
+		UserSnapshotSpotPositions: (cls: JsonObject) =>
+			Deserialize(cls, SerializableUserSpotPositionSnapshot),
+		LeaderboardResult: (cls: JsonObject) =>
+			Deserialize(cls, SerializableLeaderboardResult),
+		UISerializableLeaderboardResult: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableLeaderboardResult),
+		UIAccountSnapshotHistory: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableAccountSnapshot),
+		NewUser: (cls: JsonObject) => Deserialize(cls, SerializableNewUserRecord),
+		DLOBState: (cls: JsonObject) => Deserialize(cls, SerializableDLOBState),
+		CompetitionResult: (cls: JsonObject) => Deserialize(cls, CompetitionResult),
+		CompetitionResultEntry: (cls: JsonObject) =>
+			Deserialize(cls, CompetitionResultEntry),
+		InsuranceFundRecord: (cls: JsonObject) =>
 			Deserialize(
-				cls as JsonObject,
+				cls,
 				SerializableInsuranceFundRecord
 			) as InsuranceFundRecordEvent,
-		UIInsuranceFundRecord: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableInsuranceFundRecord),
-		InsuranceFundStakeRecord: (cls: Record<string, unknown>) =>
+		UIInsuranceFundRecord: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableInsuranceFundRecord),
+		InsuranceFundStakeRecord: (cls: JsonObject) =>
 			Deserialize(
-				cls as JsonObject,
+				cls,
 				SerializableInsuranceFundStakeRecord
 			) as InsuranceFundStakeRecordEvent,
-		UIInsuranceFundStakeRecord: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableInsuranceFundStakeRecord),
-		AllTimePnlData: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableAllTimePnlData),
-		UIAllTimePnlData: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableAllTimePnlData),
-		LPRecord: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableLPRecord) as LPRecordEvent,
-		UILPRecord: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableLPRecord),
-		SwapRecord: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, SerializableSwapRecord) as SwapRecordEvent,
-		UISwapRecord: (cls: Record<string, unknown>) =>
-			Deserialize(cls as JsonObject, UISerializableSwapRecord),
+		UIInsuranceFundStakeRecord: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableInsuranceFundStakeRecord),
+		AllTimePnlData: (cls: JsonObject) =>
+			Deserialize(cls, SerializableAllTimePnlData),
+		UIAllTimePnlData: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableAllTimePnlData),
+		LPRecord: (cls: JsonObject) =>
+			Deserialize(cls, SerializableLPRecord) as LPRecordEvent,
+		UILPRecord: (cls: JsonObject) => Deserialize(cls, UISerializableLPRecord),
+		SwapRecord: (cls: JsonObject) =>
+			Deserialize(cls, SerializableSwapRecord) as SwapRecordEvent,
+		UISwapRecord: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableSwapRecord),
 	},
 	setDeserializeFromSnakeCase: () => {
 		SetDeserializeKeyTransform(SnakeCase);
