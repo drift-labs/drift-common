@@ -327,7 +327,7 @@ export class SerializableOrder implements Order {
 	triggerCondition: OrderTriggerCondition;
 	@autoserializeAs(Boolean) postOnly: boolean;
 	@autoserializeAs(Boolean) immediateOrCancel: boolean;
-	@autoserializeAs(Number) oraclePriceOffset: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) oraclePriceOffset: number; // actually a number but serializes correctly as a BN
 	@autoserializeUsing(BNSerializeAndDeserializeFns) auctionStartPrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) auctionEndPrice: BN;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
