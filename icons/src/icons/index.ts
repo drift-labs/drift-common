@@ -57,6 +57,7 @@ export { default as Form } from './components/Form';
 export { default as Fuel } from './components/Fuel';
 export { default as FuelFilled } from './components/FuelFilled';
 export { default as FuelMini } from './components/FuelMini';
+export { default as Gas } from './components/Gas';
 export { default as Github } from './components/Github';
 export { default as Google } from './components/Google';
 export { default as Grafana } from './components/Grafana';
