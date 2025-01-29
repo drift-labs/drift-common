@@ -34,8 +34,8 @@ export const EnvironmentConstants = {
 			},
 			{
 				label: 'Helius 1',
-				value: 'https://cold-hanni-fast-mainnet.helius-rpc.com/',
-				wsValue: 'wss://cold-hanni-fast-mainnet.helius-rpc.com/',
+				value: 'https://morna-skm1k6-fast-mainnet.helius-rpc.com/',
+				wsValue: 'wss://morna-skm1k6-fast-mainnet.helius-rpc.com/',
 				allowAdditionalConnection: true,
 			},
 		] as RpcEndpoint[],
