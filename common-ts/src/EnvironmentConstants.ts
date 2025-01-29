@@ -11,9 +11,9 @@ export const EnvironmentConstants = {
 			{
 				label: 'Helius',
 				value:
-					'https://devnet.helius-rpc.com/?api-key=f6657e98-1af2-4fac-bc58-18f5667b10c9',
+					'https://drift-drift-a827.devnet.rpcpool.com/3639271b-6f0e-47c6-a643-1aaa0e498f58',
 				wsValue:
-					'wss://devnet.helius-rpc.com/?api-key=f6657e98-1af2-4fac-bc58-18f5667b10c9',
+					'wss://drift-drift-a827.devnet.rpcpool.com/3639271b-6f0e-47c6-a643-1aaa0e498f58',
 				allowAdditionalConnection: true,
 			},
 			{
@@ -58,5 +58,9 @@ export const EnvironmentConstants = {
 	eventsServerUrl: {
 		mainnet: 'wss://events.drift.trade/ws',
 		staging: 'wss://events.drift.trade/ws',
+	},
+	swiftServerUrl: {
+		mainnet: 'https://swift.drift.trade',
+		staging: 'https://master.swift.drift.trade',
 	},
 };
