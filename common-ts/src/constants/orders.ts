@@ -63,6 +63,13 @@ export const UI_ORDER_TYPES: UIOrderTypeLookup = {
 		description:
 			'A scaled order automatically generates multiple limit orders within a specified price range. It splits the order amount into several suborders and places them separately without significantly impacting the market.',
 	},
+	auction: {
+		label: 'Auction',
+		value: 'auction',
+		orderType: OrderType.MARKET,
+		description:
+			'An auction order allows you to individually customize the auction parameters of your market order.',
+	},
 };
 
 export const UI_ORDER_TYPES_LIST = Object.values(UI_ORDER_TYPES);
