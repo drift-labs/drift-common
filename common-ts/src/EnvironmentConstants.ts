@@ -10,10 +10,8 @@ export const EnvironmentConstants = {
 		dev: [
 			{
 				label: 'Helius',
-				value:
-					'https://drift-drift-a827.devnet.rpcpool.com/3639271b-6f0e-47c6-a643-1aaa0e498f58',
-				wsValue:
-					'wss://drift-drift-a827.devnet.rpcpool.com/3639271b-6f0e-47c6-a643-1aaa0e498f58',
+				value: 'https://detailed-sharleen-fast-devnet.helius-rpc.com',
+				wsValue: 'wss://detailed-sharleen-fast-devnet.helius-rpc.com',
 				allowAdditionalConnection: true,
 			},
 			{
@@ -21,7 +19,7 @@ export const EnvironmentConstants = {
 				value:
 					'https://drift-drift-a827.devnet.rpcpool.com/3639271b-6f0e-47c6-a643-1aaa0e498f58',
 				wsValue:
-					'wss://drift-drift-a827.devnet.rpcpool.com/3639271b-6f0e-47c6-a643-1aaa0e498f58',
+					'wss://drift-drift-a827.devnet.rpcpool.com/3639271b-6f0e-47c6-a643-1aaa0e498f58/whirligig',
 				allowAdditionalConnection: false,
 			},
 		] as RpcEndpoint[],
