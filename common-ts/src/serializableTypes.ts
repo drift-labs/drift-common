@@ -338,6 +338,7 @@ export class SerializableOrder implements Order {
 	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
 	@autoserializeAs(Number) timeInForce: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) maxTs: BN;
+	@autoserializeAs(Number) postedSlotTail: number;
 }
 
 @inheritSerialization(SerializableOrder)
