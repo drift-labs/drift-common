@@ -350,6 +350,7 @@ const getMarketAuctionParams = ({
 	auctionStartPriceOffset,
 	auctionEndPriceOffset,
 	additionalEndPriceBuffer,
+	forceUpToSlippage,
 }: {
 	direction: PositionDirection;
 	startPriceFromSettings: BN;
@@ -359,6 +360,7 @@ const getMarketAuctionParams = ({
 	auctionStartPriceOffset: number;
 	auctionEndPriceOffset: number;
 	additionalEndPriceBuffer?: BN;
+	forceUpToSlippage?: boolean;
 }): AuctionParams => {
 	let auctionStartPrice: BN;
 	let auctionEndPrice: BN;
@@ -388,8 +390,14 @@ const getMarketAuctionParams = ({
 
 		constrainedBySlippage = limitPrice.lt(auctionEndPrice);
 
-		// use BEST (limit price, auction end price) as end price
-		auctionEndPrice = BN.min(limitPrice, auctionEndPrice);
+		// if forceUpToSlippage is passed, use max slippage price as end price
+		if (forceUpToSlippage) {
+			auctionEndPrice = limitPrice;
+			constrainedBySlippage = false;
+		} else {
+			// use BEST (limit price, auction end price) as end price
+			auctionEndPrice = BN.min(limitPrice, auctionEndPrice);
+		}
 
 		// apply additional buffer if provided
 		if (additionalEndPriceBuffer) {
@@ -412,8 +420,14 @@ const getMarketAuctionParams = ({
 
 		constrainedBySlippage = limitPrice.gt(auctionEndPrice);
 
-		// use BEST (limit price, auction end price) as end price
-		auctionEndPrice = BN.max(limitPrice, auctionEndPrice);
+		// if forceUpToSlippage is passed, use max slippage price as end price
+		if (forceUpToSlippage) {
+			auctionEndPrice = limitPrice;
+			constrainedBySlippage = false;
+		} else {
+			// use BEST (limit price, auction end price) as end price
+			auctionEndPrice = BN.max(limitPrice, auctionEndPrice);
+		}
 
 		// apply additional buffer if provided
 		if (additionalEndPriceBuffer) {
@@ -460,6 +474,7 @@ const deriveMarketOrderParams = ({
 	slippageTolerance,
 	isOracleOrder,
 	additionalEndPriceBuffer,
+	forceUpToSlippage,
 }: {
 	marketType: MarketType;
 	marketIndex: number;
@@ -486,6 +501,7 @@ const deriveMarketOrderParams = ({
 	slippageTolerance: number;
 	isOracleOrder?: boolean;
 	additionalEndPriceBuffer?: BN;
+	forceUpToSlippage?: boolean;
 }): OptionalOrderParams & { constrainedBySlippage?: boolean } => {
 	const priceObject = getPriceObject({
 		oraclePrice,
@@ -518,6 +534,7 @@ const deriveMarketOrderParams = ({
 		auctionStartPriceOffset: auctionStartPriceOffset,
 		auctionEndPriceOffset: auctionEndPriceOffset,
 		additionalEndPriceBuffer,
+		forceUpToSlippage,
 	});
 
 	let orderParams = getMarketOrderParams({
