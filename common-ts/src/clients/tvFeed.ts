@@ -451,7 +451,7 @@ export class DriftTvFeed {
 		symbolInfo,
 		resolution,
 		onTick,
-		_subscriberGuid,
+		subscriberGuid: string,
 		_resetHistory
 	) {
 		const targetResolution =
@@ -462,23 +462,32 @@ export class DriftTvFeed {
 				? MarketId.createPerpMarket(targetMarket.config.marketIndex)
 				: MarketId.createSpotMarket(targetMarket.config.marketIndex);
 
-		this.candleClient.on('candle-update', (newCandle) => {
+		// First create the subscription and wait for it to be ready
+		await this.candleClient.subscribe(
+			{
+				resolution: targetResolution,
+				marketId: targetMarketId,
+				env: this.env,
+			},
+			subscriberGuid
+		);
+
+		// Then set up the event listener once the eventBus exists
+		this.candleClient.on(subscriberGuid, 'candle-update', (newCandle) => {
 			const newBar = candleToTvBar(newCandle, this.candleType);
+
+			console.debug(
+				`candlesv2:: TV_FEED UPDATE for ${subscriberGuid} :: ${newBar.close}`
+			);
 
 			if (targetMarketId.key === this.chartMarketMutex.current) {
 				onTick(newBar);
 			}
 		});
-
-		this.candleClient.subscribe({
-			resolution: targetResolution,
-			marketId: targetMarketId,
-			env: this.env,
-		});
 	}
 
-	unsubscribeBars(_listenerGuid: string): void {
-		this.candleClient.unsubscribe();
+	unsubscribeBars(listenerGuid: string): void {
+		this.candleClient.unsubscribe(listenerGuid);
 	}
 
 	getServerTime?(_callback): void {

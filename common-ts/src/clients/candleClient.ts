@@ -339,21 +339,38 @@ class CandleFetcher {
 }
 
 export class CandleClient {
-	private activeSubscriber: CandleSubscriber | null = null;
-	private readonly eventBus: CandleEventBus;
+	private activeSubscriptions: Map<
+		string,
+		{
+			subscriber: CandleSubscriber;
+			eventBus: CandleEventBus;
+		}
+	> = new Map();
 
-	constructor() {
-		this.eventBus = new CandleEventBus();
-	}
+	constructor() {}
 
-	public subscribe = async (config: CandleSubscriptionConfig) => {
-		// Kill any existing subscription before creating a new one
-		if (this.activeSubscriber) {
-			this.activeSubscriber.killWs();
+	public subscribe = async (
+		config: CandleSubscriptionConfig,
+		subscriptionKey: string
+	) => {
+		console.debug(
+			`candlesv2:: CANDLE_CLIENT SUBSCRIBING for ${subscriptionKey}`
+		);
+
+		// Kill any existing subscription with the same key before creating a new one
+		if (this.activeSubscriptions.has(subscriptionKey)) {
+			this.unsubscribe(subscriptionKey);
 		}
 
-		this.activeSubscriber = new CandleSubscriber(config, this.eventBus);
-		await this.activeSubscriber.subscribeToCandles();
+		const eventBus = new CandleEventBus();
+		const subscriber = new CandleSubscriber(config, eventBus);
+		await subscriber.subscribeToCandles();
+
+		this.activeSubscriptions.set(subscriptionKey, {
+			subscriber,
+			eventBus,
+		});
+
 		return;
 	};
 
@@ -363,17 +380,36 @@ export class CandleClient {
 		return candles;
 	};
 
-	public unsubscribe = () => {
-		if (this.activeSubscriber) {
-			this.activeSubscriber.killWs();
-			this.activeSubscriber = null;
+	public unsubscribe = (subscriptionKey: string) => {
+		console.debug(
+			`candlesv2:: CANDLE_CLIENT UNSUBSCRIBING for ${subscriptionKey}`
+		);
+		const subscription = this.activeSubscriptions.get(subscriptionKey);
+		if (subscription) {
+			subscription.subscriber.killWs();
+			subscription.eventBus.removeAllListeners();
+			this.activeSubscriptions.delete(subscriptionKey);
+		}
+	};
+
+	public unsubscribeAll = () => {
+		console.debug(`candlesv2:: CANDLE_CLIENT UNSUBSCRIBING ALL`);
+		for (const subscriptionKey of this.activeSubscriptions.keys()) {
+			this.unsubscribe(subscriptionKey);
 		}
 	};
 
 	public on(
+		subscriptionKey: string,
 		event: keyof CandleSubscriberEvents,
 		listener: (candle: JsonCandle) => void
 	) {
-		this.eventBus.on(event, listener);
+		console.debug(`candlesv2:: CANDLE_CLIENT ON for ${subscriptionKey}`);
+		const subscription = this.activeSubscriptions.get(subscriptionKey);
+		if (subscription) {
+			subscription.eventBus.on(event, listener);
+		} else {
+			console.warn(`No active subscription found for key: ${subscriptionKey}`);
+		}
 	}
 }
