@@ -12,6 +12,7 @@ export type TagColor =
 export type TagProps = {
 	children: React.ReactNode;
 	color: TagColor;
+	className?: string;
 };
 
 const TAG_COLORS: Record<TagColor, { text: string; bg: string }> = {
@@ -32,13 +33,14 @@ const TAG_COLORS: Record<TagColor, { text: string; bg: string }> = {
 	},
 };
 
-export const Tag: React.FC<TagProps> = ({ children, color }) => {
+export const Tag: React.FC<TagProps> = ({ children, color, className }) => {
 	return (
 		<Typo.B5
 			className={twMerge(
 				'px-1 py-0.5 rounded-sm inline-block',
 				TAG_COLORS[color].text,
-				TAG_COLORS[color].bg
+				TAG_COLORS[color].bg,
+				className
 			)}
 		>
 			{children}
