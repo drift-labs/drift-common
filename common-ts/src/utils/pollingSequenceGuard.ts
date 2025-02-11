@@ -1,7 +1,7 @@
 export const LATE_POLLING_RESPONSE = Symbol('Late polling response');
 
 /**
- * Utility class which makes sure that asyncronous responses get rejected if they arrive later than a response we've already received
+ * Utility class which makes sure that asyncronous responses get rejected when we expect them to return in the same sequence that we request them but they don't
  */
 export class PollingSequenceGuard {
 	static pollingCounts = new Map<string | symbol, number>();
