@@ -320,6 +320,12 @@ export class DriftTvFeed {
 		onError(`Couldn't find market for symbol ${symbolName}`);
 	}
 
+	/**
+	 * TradingView sometimes asks for a FROM timestamp halfway between two candles, this isn't compatible with the new candles API so we round these down the nearest candle - which should be the exact same candle!!
+	 * @param timestamp
+	 * @param resolution
+	 * @returns
+	 */
 	private roundFromTimestampToExactCandleTs = (
 		timestamp: number,
 		resolution: CandleResolution
@@ -361,7 +367,8 @@ export class DriftTvFeed {
 
 	async getBars(
 		symbolInfo: {
-			ticker: string;
+			name: string;
+			ticker?: string;
 		},
 		resolution: string,
 		periodParams: {
@@ -377,6 +384,8 @@ export class DriftTvFeed {
 		) => void,
 		_onError
 	) {
+		console.debug(`candlesv2:: symbolInfo`, symbolInfo);
+
 		if (periodParams.to < 1668470400 || periodParams.from < 1668470400) {
 			onResult([], {
 				noData: true,
@@ -384,9 +393,11 @@ export class DriftTvFeed {
 			return;
 		}
 
+		const symbolToUse = symbolInfo.ticker ?? symbolInfo.name;
+
 		const targetResolution =
 			tvResolutionStringToStandardResolutionString(resolution);
-		const targetMarket = findMarketBySymbol(symbolInfo.ticker, this.env);
+		const targetMarket = findMarketBySymbol(symbolToUse, this.env);
 		const targetMarketId =
 			targetMarket.type === 'perp'
 				? MarketId.createPerpMarket(targetMarket.config.marketIndex)
@@ -488,23 +499,5 @@ export class DriftTvFeed {
 
 	unsubscribeBars(listenerGuid: string): void {
 		this.candleClient.unsubscribe(listenerGuid);
-	}
-
-	getServerTime?(_callback): void {
-		return;
-	}
-
-	getMarks?(_symbolInfo, _from, _to, _onDataCallback, _resolution): void {
-		return;
-	}
-
-	getTimescaleMarks?(
-		_symbolInfo,
-		_from,
-		_to,
-		_onDataCallback,
-		_resolution
-	): void {
-		return;
 	}
 }
