@@ -17,7 +17,7 @@ import { useCommonDriftStore } from '../stores';
 import { useWallet } from '../hooks/useWalletContext';
 
 const DEFAULT_AUTOCONNECT_DELAY_MS = 4000;
-const PREFERRED_WALLET_LOCALSTORAGE_KEY = 'walletName';
+const PREFERRED_WALLET_LOCALSTORAGE_KEY = 'walletName_drift';
 
 const DEFAULT_CONTEXT = {
 	autoConnect: false,
