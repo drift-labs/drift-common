@@ -251,6 +251,7 @@ const EnumSerializeAndDeserializeFns = {
 
 export type OrderRecordEvent = Event<OrderRecord>;
 
+// @ts-ignore
 export class SerializableOrder implements Order {
 	@autoserializeUsing(EnumSerializeAndDeserializeFns) status: OrderStatus;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns) orderType: OrderType;
@@ -1695,6 +1696,7 @@ export const Serializer = {
 	},
 	Deserialize: {
 		Order: (cls: Record<string, unknown>) =>
+			// @ts-ignore
 			Deserialize(cls as JsonObject, SerializableOrder) as Order,
 		OrderRecord: (cls: Record<string, unknown>) =>
 			// @ts-ignore

@@ -12,6 +12,7 @@ export function useImmediateInterval(
 	delayMs: number,
 	runOnCallbackChange = false
 ) {
+	// @ts-ignore
 	const savedCallback = useRef<() => void>();
 
 	// Remember the latest callback.
