@@ -57,7 +57,7 @@ export const EnvironmentConstants = {
 		mainnet: 'wss://events.drift.trade/ws',
 		staging: 'wss://events.drift.trade/ws',
 	},
-	swiftServerUrl: {
+	fastlaneServerUrl: {
 		mainnet: 'https://swift.drift.trade',
 		staging: 'https://master.swift.drift.trade',
 	},
