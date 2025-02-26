@@ -15,8 +15,7 @@
     "icons:debug": "node --inspect-brk --inspect=2233 ./src/generate.js",
     "clean": "rm -rf dist",
     "clean-icons": "rm -rf src/icons/components/*",
-    "build": "rm -rf dist && rollup -c",
-    "build:simple": "rm -rf dist && tsc --emitDeclarationOnly --outDir lib"
+    "build": "rm -rf dist && tsc"
   },
   "private": true,
   "dependencies": {
