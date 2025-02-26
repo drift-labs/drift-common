@@ -1939,7 +1939,7 @@ export class UISerializableSwapRecord extends SerializableSwapRecord {
 	// @ts-ignore
 	inOraclePrice: BigNum;
 	// @ts-ignore
-	// @autoserializeUsing(BaseBigNumSerializeAndDeserializeFns) fee: BigNum;
+	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns) fee: BigNum;
 
 	static onDeserialized(_data: JsonObject, instance: UISerializableSwapRecord) {
 		assert(Config.initialized, 'Common Config Not Initialised');
@@ -1953,7 +1953,7 @@ export class UISerializableSwapRecord extends SerializableSwapRecord {
 			instance.amountOut.precision = outPrecision;
 			instance.inOraclePrice.precision = inPrecision;
 			instance.outOraclePrice.precision = outPrecision;
-			// instance.fee.precision = outPrecision;
+			instance.fee.precision = inPrecision;
 		} catch (e) {
 			console.error('Error in swap serializer', e);
 		}
