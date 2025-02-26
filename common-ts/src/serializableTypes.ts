@@ -25,8 +25,6 @@ import {
 	Order,
 	OrderAction,
 	OrderActionExplanation,
-	OrderActionRecord,
-	OrderRecord,
 	OrderStatus,
 	OrderTriggerCondition,
 	OrderType,
@@ -44,6 +42,7 @@ import {
 	StakeAction,
 	SwapRecord,
 	TEN,
+	WrappedEvent,
 	ZERO,
 } from '@drift-labs/sdk';
 import {
@@ -304,7 +303,7 @@ const handleOnDeserializedPrecision = <T>(
 // Serializable classes
 //// Order Records
 
-export type OrderRecordEvent = Event<OrderRecord>;
+export type OrderRecordEvent = WrappedEvent<'OrderRecord'>;
 
 export class SerializableOrder implements Order {
 	@autoserializeUsing(EnumSerializeAndDeserializeFns) status: OrderStatus;
@@ -318,7 +317,6 @@ export class SerializableOrder implements Order {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmountFilled: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetAmount: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetAmountFilled: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) fee: BN;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
 	direction: PositionDirection;
 	@autoserializeAs(Boolean) reduceOnly: boolean;
@@ -333,10 +331,8 @@ export class SerializableOrder implements Order {
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
 	existingPositionDirection: OrderStatus;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) slot: BN;
-	@autoserializeAs(Boolean) triggered: boolean;
 	@autoserializeAs(Number) auctionDuration: number;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
-	@autoserializeAs(Number) timeInForce: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) maxTs: BN;
 	@autoserializeAs(Number) postedSlotTail: number;
 }
@@ -358,7 +354,6 @@ export class UISerializableOrder extends SerializableOrder {
 	//@ts-ignore
 	quoteAssetAmountFilled: BigNum;
 	//@ts-ignore
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) fee: BigNum;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	triggerPrice: BigNum;
@@ -387,6 +382,7 @@ export class UISerializableOrder extends SerializableOrder {
 
 // @ts-ignore
 export class SerializableOrderRecord implements OrderRecordEvent {
+	eventType: 'OrderRecord';
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeAs(Number) slot: number;
@@ -401,7 +397,10 @@ export class UISerializableOrderRecord extends SerializableOrderRecord {
 	@autoserializeAs(UISerializableOrder) order: UISerializableOrder;
 }
 
-export class SerializableOrderActionRecord implements Event<OrderActionRecord> {
+export class SerializableOrderActionRecord
+	implements WrappedEvent<'OrderActionRecord'>
+{
+	eventType: 'OrderActionRecord';
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) slot: number;
 	@autoserializeAs(Number) txSigIndex: number;
@@ -417,17 +416,13 @@ export class SerializableOrderActionRecord implements Event<OrderActionRecord> {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fillerReward: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fillRecordId: BN | null;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	referrer: PublicKey | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	baseAssetAmountFilled: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	quoteAssetAmountFilled: BN | null;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) takerPnl: BN | null;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) makerPnl: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) takerFee: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) makerRebate: BN | null;
 	@autoserializeAs(Number) referrerReward: number | null;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) refereeDiscount: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	quoteAssetAmountSurplus: BN | null;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
@@ -441,7 +436,6 @@ export class SerializableOrderActionRecord implements Event<OrderActionRecord> {
 	takerOrderCumulativeBaseAssetAmountFilled: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	takerOrderCumulativeQuoteAssetAmountFilled: BN | null;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) takerOrderFee: BN | null;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
 	maker: PublicKey | null;
 	@autoserializeAs(Number) makerOrderId: number | null;
@@ -453,7 +447,6 @@ export class SerializableOrderActionRecord implements Event<OrderActionRecord> {
 	makerOrderCumulativeBaseAssetAmountFilled: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	makerOrderCumulativeQuoteAssetAmountFilled: BN | null;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) makerOrderFee: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) oraclePrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) makerFee: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
@@ -476,14 +469,6 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
-	takerPnl: BigNum | null;
-
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	makerPnl: BigNum | null;
-
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
 	takerFee: BigNum | null;
 
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
@@ -491,10 +476,6 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	makerRebate: BigNum | null;
 
 	@autoserializeAs(Number) referrerReward: number | null;
-
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	refereeDiscount: BigNum | null;
 
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
@@ -512,10 +493,6 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	//@ts-ignore
 	takerOrderCumulativeQuoteAssetAmountFilled: BigNum | null;
 
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	takerOrderFee: BigNum | null;
-
 	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	makerOrderBaseAssetAmount: BigNum | null;
@@ -528,10 +505,6 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	//@ts-ignore
 	makerOrderCumulativeQuoteAssetAmountFilled: BigNum | null;
 
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	makerOrderFee: BigNum | null;
-
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	oraclePrice: BigNum;
@@ -539,6 +512,10 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	makerFee: BigNum | null;
+
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	spotFulfillmentMethodFee: BigNum | null;
 
 	static onDeserialized(
 		data: JsonObject,
@@ -605,6 +582,7 @@ export class UISerializableOrderRecordV2 {
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
 	lastActionExplanation: OrderActionExplanation;
 	@autoserializeAs(String) lastActionStatus: string;
+	@autoserializeAs(String) status: string;
 
 	static onDeserialized(
 		data: JsonObject,
@@ -1982,6 +1960,160 @@ export class UISerializableSwapRecord extends SerializableSwapRecord {
 	}
 }
 
+export function transformDataApiOrderRecordToUISerializableOrderRecord(
+	v2Record: JsonObject
+): UISerializableOrderRecord {
+	const deserializedV2Record = Deserialize(
+		v2Record,
+		UISerializableOrderRecordV2
+	);
+
+	const transformedRecord: UISerializableOrderRecord = {
+		eventType: 'OrderRecord',
+		txSig: deserializedV2Record.txSig,
+		txSigIndex: deserializedV2Record.txSigIndex,
+		slot: deserializedV2Record.slot,
+		ts: deserializedV2Record.ts,
+		user: deserializedV2Record.user,
+		order: {
+			price: deserializedV2Record.price,
+			baseAssetAmount: deserializedV2Record.baseAssetAmount,
+			baseAssetAmountFilled: deserializedV2Record.baseAssetAmountFilled,
+			quoteAssetAmount: deserializedV2Record.quoteAssetAmount,
+			quoteAssetAmountFilled: deserializedV2Record.quoteAssetAmountFilled,
+			triggerPrice: deserializedV2Record.triggerPrice,
+			oraclePriceOffset: deserializedV2Record.oraclePriceOffset,
+			auctionStartPrice: deserializedV2Record.auctionStartPrice,
+			auctionEndPrice: deserializedV2Record.auctionEndPrice,
+			orderType: deserializedV2Record.orderType,
+			orderId: deserializedV2Record.orderId,
+			userOrderId: deserializedV2Record.userOrderId,
+			marketIndex: deserializedV2Record.marketIndex,
+			status: deserializedV2Record.status,
+			ts: deserializedV2Record.ts,
+			direction: deserializedV2Record.direction,
+			reduceOnly: deserializedV2Record.reduceOnly,
+			triggerCondition: deserializedV2Record.triggerCondition,
+			postOnly: deserializedV2Record.postOnly,
+			immediateOrCancel: deserializedV2Record.immediateOrCancel,
+			existingPositionDirection: deserializedV2Record.existingPositionDirection,
+			auctionDuration: deserializedV2Record.auctionDuration,
+			slot: new BN(deserializedV2Record.slot),
+			marketType: deserializedV2Record.marketType,
+			maxTs: new BN(deserializedV2Record.maxTs),
+			// @ts-ignore
+			postedSlotTail: deserializedV2Record.postedSlotTail,
+		},
+	};
+
+	return transformedRecord;
+}
+
+export function transformDataApiOrderRecordToSerializableOrderRecord(
+	v2Record: JsonObject
+): SerializableOrderRecord {
+	const deserializedV2Record = Deserialize(
+		v2Record,
+		UISerializableOrderRecordV2
+	);
+
+	const transformedRecord: SerializableOrderRecord = {
+		eventType: 'OrderRecord',
+		txSig: deserializedV2Record.txSig,
+		txSigIndex: deserializedV2Record.txSigIndex,
+		slot: deserializedV2Record.slot,
+		ts: deserializedV2Record.ts,
+		user: deserializedV2Record.user,
+		order: {
+			price: deserializedV2Record.price.val,
+			baseAssetAmount: deserializedV2Record.baseAssetAmount.val,
+			baseAssetAmountFilled: deserializedV2Record.baseAssetAmountFilled.val,
+			quoteAssetAmount: deserializedV2Record.quoteAssetAmount.val,
+			quoteAssetAmountFilled: deserializedV2Record.quoteAssetAmountFilled.val,
+			triggerPrice: deserializedV2Record.triggerPrice.val,
+			oraclePriceOffset: deserializedV2Record.oraclePriceOffset.toNum(),
+			auctionStartPrice: deserializedV2Record.auctionStartPrice.val,
+			auctionEndPrice: deserializedV2Record.auctionEndPrice.val,
+			orderType: deserializedV2Record.orderType,
+			orderId: deserializedV2Record.orderId,
+			userOrderId: deserializedV2Record.userOrderId,
+			marketIndex: deserializedV2Record.marketIndex,
+			status: deserializedV2Record.status,
+			direction: deserializedV2Record.direction,
+			reduceOnly: deserializedV2Record.reduceOnly,
+			triggerCondition: deserializedV2Record.triggerCondition,
+			postOnly: deserializedV2Record.postOnly,
+			immediateOrCancel: deserializedV2Record.immediateOrCancel,
+			existingPositionDirection: deserializedV2Record.existingPositionDirection,
+			auctionDuration: deserializedV2Record.auctionDuration,
+			slot: new BN(deserializedV2Record.slot),
+			marketType: deserializedV2Record.marketType,
+			maxTs: new BN(deserializedV2Record.maxTs),
+			// @ts-ignore
+			postedSlotTail: deserializedV2Record.postedSlotTail,
+		},
+	};
+
+	return transformedRecord;
+}
+
+export function transformDataApiOrderActionRecordToUISerializableOrderActionRecord(
+	v2Record: JsonObject
+): UISerializableOrderActionRecord {
+	const deserializedV2Record = Deserialize(
+		v2Record,
+		UISerializableOrderActionRecordV2
+	);
+
+	const transformedRecord: UISerializableOrderActionRecord = {
+		eventType: 'OrderActionRecord',
+		...deserializedV2Record,
+	};
+
+	return transformedRecord;
+}
+
+export function transformDataApiOrderActionRecordToSerializableOrderActionRecord(
+	v2Record: JsonObject
+): SerializableOrderActionRecord {
+	const deserializedV2Record = Deserialize(
+		v2Record,
+		UISerializableOrderActionRecordV2
+	);
+
+	const transformedRecord: SerializableOrderActionRecord = {
+		eventType: 'OrderActionRecord',
+		...deserializedV2Record,
+		fillerReward: deserializedV2Record.fillerReward.val,
+		makerRebate: deserializedV2Record.makerRebate.val,
+		takerFee: deserializedV2Record.takerFee.val,
+		baseAssetAmountFilled: deserializedV2Record.baseAssetAmountFilled.val,
+		quoteAssetAmountFilled: deserializedV2Record.quoteAssetAmountFilled.val,
+		referrerReward: deserializedV2Record.referrerReward,
+		ts: new BN(deserializedV2Record.ts),
+		txSig: deserializedV2Record.txSig,
+		txSigIndex: deserializedV2Record.txSigIndex,
+		quoteAssetAmountSurplus: deserializedV2Record.quoteAssetAmountSurplus.val,
+		takerOrderBaseAssetAmount:
+			deserializedV2Record.takerOrderBaseAssetAmount.val,
+		takerOrderCumulativeBaseAssetAmountFilled:
+			deserializedV2Record.takerOrderCumulativeBaseAssetAmountFilled.val,
+		takerOrderCumulativeQuoteAssetAmountFilled:
+			deserializedV2Record.takerOrderCumulativeQuoteAssetAmountFilled.val,
+		makerOrderBaseAssetAmount:
+			deserializedV2Record.makerOrderBaseAssetAmount.val,
+		makerOrderCumulativeBaseAssetAmountFilled:
+			deserializedV2Record.makerOrderCumulativeBaseAssetAmountFilled.val,
+		makerOrderCumulativeQuoteAssetAmountFilled:
+			deserializedV2Record.makerOrderCumulativeQuoteAssetAmountFilled.val,
+		oraclePrice: deserializedV2Record.oraclePrice.val,
+		makerFee: deserializedV2Record.makerFee.val,
+		spotFulfillmentMethodFee: deserializedV2Record.spotFulfillmentMethodFee.val,
+	};
+
+	return transformedRecord;
+}
+
 // Serializer
 export const Serializer = {
 	Serialize: {
@@ -2067,11 +2199,19 @@ export const Serializer = {
 				cls,
 				UISerializableOrderRecordV2
 			) as UISerializableOrderRecordV2,
+		DataApiOrderRecord: (cls: JsonObject) =>
+			transformDataApiOrderRecordToSerializableOrderRecord(cls),
+		DataApiUIOrderRecord: (cls: JsonObject) =>
+			transformDataApiOrderRecordToUISerializableOrderRecord(cls),
 		UIOrderActionRecordV2: (cls: JsonObject) =>
 			Deserialize(
 				cls,
 				UISerializableOrderActionRecordV2
 			) as UISerializableOrderActionRecordV2,
+		DataApiOrderActionRecord: (cls: JsonObject) =>
+			transformDataApiOrderActionRecordToSerializableOrderActionRecord(cls),
+		DataApiUIOrderActionRecord: (cls: JsonObject) =>
+			transformDataApiOrderActionRecordToUISerializableOrderActionRecord(cls),
 		Deposit: (cls: JsonObject) =>
 			Deserialize(cls, SerializableDepositRecord) as DepositRecordEvent,
 		UIDeposit: (cls: JsonObject) =>
