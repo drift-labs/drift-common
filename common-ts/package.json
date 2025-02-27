@@ -28,7 +28,7 @@
     "build": "yarn clean && tsc",
     "watch": "yarn clean && tsc --watch",
     "clean": "rm -rf lib",
-    "test": "mocha -r ts-node/register tests/**/*.ts",
+    "test": "npx mocha -r ts-node/register tests/**/*.ts",
     "test:ci": "mocha -r ts-node/register tests/**/*.ts --silent",
     "test:debug": "node --inspect-brk --inspect=2234 node_modules/.bin/jest --runInBand",
     "update-jup-errors": "node src/scripts/update-jup-error-codes.js",
