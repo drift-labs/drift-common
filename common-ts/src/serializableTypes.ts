@@ -1330,20 +1330,29 @@ export class UISerializableLiquidationRecordV2 {
 		assert(Config.initialized, 'Common Config Not Initialised');
 
 		// handle spot liquidation
-		const spotLiquidationPrecisionToUse = getPrecisionToUse(
+		const spotLiquidationAssetPrecision = getPrecisionToUse(
 			MarketType.SPOT,
 			instance.liquidateSpot_assetMarketIndex
 		);
+
+		const spotLiquidationLiabilityPrecision = getPrecisionToUse(
+			MarketType.SPOT,
+			instance.liquidateSpot_liabilityMarketIndex
+		);
+
 		handleOnDeserializedPrecision(
 			data,
 			instance,
-			spotLiquidationPrecisionToUse,
-			[
-				'liquidateSpot_assetTransfer',
-				'liquidateSpot_liabilityTransfer',
-				'liquidateSpot_ifFee',
-			]
-		);
+			spotLiquidationAssetPrecision,
+			['liquidateSpot_assetTransfer']
+		); // The asset transfer uses the asset market index precision
+
+		handleOnDeserializedPrecision(
+			data,
+			instance,
+			spotLiquidationLiabilityPrecision,
+			['liquidateSpot_liabilityTransfer', 'liquidateSpot_ifFee']
+		); // the liability transfer and if fee use the liability market index precision
 
 		// handle spot bankruptcy
 		const spotBankruptcyPrecisionToUse = getPrecisionToUse(
@@ -1364,7 +1373,7 @@ export class UISerializableLiquidationRecordV2 {
 		// handle liquidate borrow for perp pnl
 		const liquidateBorrowForPerpPnlPrecisionToUse = getPrecisionToUse(
 			MarketType.PERP,
-			instance.liquidateBorrowForPerpPnl_perpMarketIndex
+			instance.liquidateBorrowForPerpPnl_liabilityMarketIndex
 		);
 		handleOnDeserializedPrecision(
 			data,
@@ -1376,7 +1385,7 @@ export class UISerializableLiquidationRecordV2 {
 		// handle liquidate perp pnl for deposit
 		const liquidatePerpPnlForDepositPrecisionToUse = getPrecisionToUse(
 			MarketType.PERP,
-			instance.liquidatePerpPnlForDeposit_perpMarketIndex
+			instance.liquidatePerpPnlForDeposit_assetMarketIndex
 		);
 		handleOnDeserializedPrecision(
 			data,
