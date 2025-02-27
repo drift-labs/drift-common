@@ -13,40 +13,81 @@ const Loader = (allProps: IconProps) => {
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
-					<circle
-						cx={12}
-						cy={12}
-						r={8.5}
-						stroke="url(#prefix__paint0_linear_53_6593)"
-						strokeWidth={3}
+					<mask id="prefix__a" fill="#fff">
+						<path d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z" />
+					</mask>
+					<path
+						d="M19 12a7 7 0 01-7 7v6c7.18 0 13-5.82 13-13h-6zm-7 7a7 7 0 01-7-7h-6c0 7.18 5.82 13 13 13v-6zm-7-7a7 7 0 017-7v-6C4.82-1-1 4.82-1 12h6zm7-7a7 7 0 017 7h6c0-7.18-5.82-13-13-13v6z"
+						fill="url(#prefix__paint0_linear_53_6593)"
+						mask="url(#prefix__a)"
 					/>
-					<circle
-						cx={12}
-						cy={12}
-						r={8.5}
-						stroke="url(#prefix__paint1_linear_53_6593)"
-						strokeWidth={3}
+					<path
+						d="M19 12a7 7 0 01-7 7v6c7.18 0 13-5.82 13-13h-6zm-7 7a7 7 0 01-7-7h-6c0 7.18 5.82 13 13 13v-6zm-7-7a7 7 0 017-7v-6C4.82-1-1 4.82-1 12h6zm7-7a7 7 0 017 7h6c0-7.18-5.82-13-13-13v6z"
+						fill="url(#prefix__paint1_linear_53_6593)"
+						mask="url(#prefix__a)"
 					/>
-					<circle
-						cx={12}
-						cy={12}
-						r={8.5}
-						stroke="url(#prefix__paint2_angular_53_6593)"
-						strokeWidth={3}
+					<g
+						clipPath="url(#prefix__paint2_angular_53_6593_clip_path)"
+						data-figma-skip-parse="true"
+						mask="url(#prefix__a)"
+					>
+						<foreignObject
+							x={-5314.19}
+							y={-5314.19}
+							width={10628.4}
+							height={10628.4}
+							transform="matrix(.00241 .00408 -.00407 .0024 2.527 9.03)"
+						>
+							<div
+								xmlns="http://www.w3.org/1999/xhtml"
+								style={{
+									background:
+										'conic-gradient(from 90deg,rgba(255,255,255,0) 0deg,rgba(255,255,255,.2) 333.31deg,rgba(255,255,255,0) 360deg)',
+									height: '100%',
+									width: '100%',
+								}}
+								opacity={1}
+							/>
+						</foreignObject>
+					</g>
+					<path
+						d="M19 12a7 7 0 01-7 7v6c7.18 0 13-5.82 13-13h-6zm-7 7a7 7 0 01-7-7h-6c0 7.18 5.82 13 13 13v-6zm-7-7a7 7 0 017-7v-6C4.82-1-1 4.82-1 12h6zm7-7a7 7 0 017 7h6c0-7.18-5.82-13-13-13v6z"
+						data-figma-gradient-fill='{"type":"GRADIENT_ANGULAR","stops":[{"color":{"r":1.0,"g":1.0,"b":1.0,"a":0.20000000298023224},"position":0.92586088180541992},{"color":{"r":1.0,"g":1.0,"b":1.0,"a":0.0},"position":1.0}],"stopsVar":[{"color":{"r":1.0,"g":1.0,"b":1.0,"a":0.20000000298023224},"position":0.92586088180541992},{"color":{"r":1.0,"g":1.0,"b":1.0,"a":0.0},"position":1.0}],"transform":{"m00":4.8196120262145996,"m01":-8.1459779739379883,"m02":4.1904721260070801,"m10":8.1591119766235352,"m11":4.8118529319763184,"m12":2.5450441837310791},"opacity":1.0,"blendMode":"NORMAL","visible":true}'
+						mask="url(#prefix__a)"
 					/>
-					<circle
-						cx={12}
-						cy={12}
-						r={8.5}
-						stroke="url(#prefix__paint3_angular_53_6593)"
-						strokeWidth={3}
+					<g
+						clipPath="url(#prefix__paint3_angular_53_6593_clip_path)"
+						data-figma-skip-parse="true"
+						mask="url(#prefix__a)"
+					>
+						<foreignObject
+							x={-8433.7}
+							y={-8433.7}
+							width={16867.4}
+							height={16867.4}
+							transform="matrix(.0019 .00244 -.00366 .00286 5.432 7.176)"
+						>
+							<div
+								xmlns="http://www.w3.org/1999/xhtml"
+								style={{
+									background:
+										'conic-gradient(from 90deg,rgba(255,255,255,.0405) 0deg,rgba(255,255,255,.1) 31.113deg,rgba(255,255,255,0) 338.814deg,rgba(255,255,255,.0405) 360deg)',
+									height: '100%',
+									width: '100%',
+								}}
+								opacity={1}
+							/>
+						</foreignObject>
+					</g>
+					<path
+						d="M19 12a7 7 0 01-7 7v6c7.18 0 13-5.82 13-13h-6zm-7 7a7 7 0 01-7-7h-6c0 7.18 5.82 13 13 13v-6zm-7-7a7 7 0 017-7v-6C4.82-1-1 4.82-1 12h6zm7-7a7 7 0 017 7h6c0-7.18-5.82-13-13-13v6z"
+						data-figma-gradient-fill='{"type":"GRADIENT_ANGULAR","stops":[{"color":{"r":1.0,"g":1.0,"b":1.0,"a":0.10000000149011612},"position":0.086425125598907471},{"color":{"r":1.0,"g":1.0,"b":1.0,"a":0.0},"position":0.94115048646926880}],"stopsVar":[{"color":{"r":1.0,"g":1.0,"b":1.0,"a":0.10000000149011612},"position":0.086425125598907471},{"color":{"r":1.0,"g":1.0,"b":1.0,"a":0.0},"position":0.94115048646926880}],"transform":{"m00":3.8112857341766357,"m01":-7.3184275627136230,"m02":7.1855783462524414,"m10":4.8751158714294434,"m11":5.7214269638061523,"m12":1.8774919509887695},"opacity":1.0,"blendMode":"NORMAL","visible":true}'
+						mask="url(#prefix__a)"
 					/>
-					<circle
-						cx={12}
-						cy={12}
-						r={8.5}
-						stroke="url(#prefix__paint4_linear_53_6593)"
-						strokeWidth={3}
+					<path
+						d="M19 12a7 7 0 01-7 7v6c7.18 0 13-5.82 13-13h-6zm-7 7a7 7 0 01-7-7h-6c0 7.18 5.82 13 13 13v-6zm-7-7a7 7 0 017-7v-6C4.82-1-1 4.82-1 12h6zm7-7a7 7 0 017 7h6c0-7.18-5.82-13-13-13v6z"
+						fill="url(#prefix__paint4_linear_53_6593)"
+						mask="url(#prefix__a)"
 					/>
 					<defs>
 						<linearGradient
@@ -83,28 +124,18 @@ const Loader = (allProps: IconProps) => {
 							<stop stopColor="#fff" stopOpacity={0.2} />
 							<stop offset={1} stopOpacity={0} />
 						</linearGradient>
-						<radialGradient
-							id="prefix__paint2_angular_53_6593"
-							cx={0}
-							cy={0}
-							r={1}
-							gradientUnits="userSpaceOnUse"
-							gradientTransform="matrix(2.4098 4.07956 -4.07299 2.40593 2.527 9.03)"
-						>
-							<stop offset={0.926} stopColor="#fff" stopOpacity={0.2} />
-							<stop offset={1} stopColor="#fff" stopOpacity={0} />
-						</radialGradient>
-						<radialGradient
-							id="prefix__paint3_angular_53_6593"
-							cx={0}
-							cy={0}
-							r={1}
-							gradientUnits="userSpaceOnUse"
-							gradientTransform="rotate(51.982 -4.643 9.159) scale(3.09405 4.64473)"
-						>
-							<stop offset={0.086} stopColor="#fff" stopOpacity={0.1} />
-							<stop offset={0.941} stopColor="#fff" stopOpacity={0} />
-						</radialGradient>
+						<clipPath id="prefix__paint2_angular_53_6593_clip_path">
+							<path
+								d="M19 12a7 7 0 01-7 7v6c7.18 0 13-5.82 13-13h-6zm-7 7a7 7 0 01-7-7h-6c0 7.18 5.82 13 13 13v-6zm-7-7a7 7 0 017-7v-6C4.82-1-1 4.82-1 12h6zm7-7a7 7 0 017 7h6c0-7.18-5.82-13-13-13v6z"
+								mask="url(#prefix__path-1-inside-1_53_6593)"
+							/>
+						</clipPath>
+						<clipPath id="prefix__paint3_angular_53_6593_clip_path">
+							<path
+								d="M19 12a7 7 0 01-7 7v6c7.18 0 13-5.82 13-13h-6zm-7 7a7 7 0 01-7-7h-6c0 7.18 5.82 13 13 13v-6zm-7-7a7 7 0 017-7v-6C4.82-1-1 4.82-1 12h6zm7-7a7 7 0 017 7h6c0-7.18-5.82-13-13-13v6z"
+								mask="url(#prefix__path-1-inside-1_53_6593)"
+							/>
+						</clipPath>
 					</defs>
 				</svg>
 			}
