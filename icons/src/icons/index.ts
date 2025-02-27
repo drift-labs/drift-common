@@ -143,6 +143,7 @@ export { default as Settings } from './components/Settings';
 export { default as SettingsOther } from './components/SettingsOther';
 export { default as SettingsTrade } from './components/SettingsTrade';
 export { default as Share } from './components/Share';
+export { default as ShieldCheck } from './components/ShieldCheck';
 export { default as Signal } from './components/Signal';
 export { default as Simple } from './components/Simple';
 export { default as Smart } from './components/Smart';
