@@ -6,29 +6,34 @@ import dts from 'rollup-plugin-dts';
 const packageJson = require('./package.json');
 
 export default [
-	{
-		input: 'src/index.ts',
-		output: [
-			{
-				file: packageJson.main,
-				format: 'cjs',
-				sourcemap: true,
-			},
-			{
-				file: packageJson.module,
-				format: 'esm',
-				sourcemap: true,
-			},
-		],
-		plugins: [
-			resolve(),
-			commonjs(),
-			typescript({ tsconfig: './tsconfig.json' }),
-		],
-	},
-	{
-		input: 'dist/esm/index.d.ts',
-		output: [{ file: 'dist/index.d.ts', format: 'esm' }],
-		plugins: [dts()],
-	},
+  {
+    input: 'src/index.ts',
+    output: [
+      {
+        file: packageJson.main,
+        format: 'cjs',
+        sourcemap: true,
+      },
+      {
+        file: packageJson.module,
+        format: 'esm',
+        sourcemap: true,
+      },
+    ],
+    plugins: [
+      resolve(),
+      commonjs(),
+      typescript({ tsconfig: './tsconfig.json' }),
+    ],
+    // for React component libraries, React should be an external dependency
+		// - to avoid duplicate React instances
+		// - smaller bundle size
+		// - version compatibility
+    external: ['react', 'react-dom']
+  },
+  {
+    input: 'dist/esm/index.d.ts',
+    output: [{ file: 'dist/index.d.ts', format: 'esm' }],
+    plugins: [dts()],
+  },
 ];
