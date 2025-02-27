@@ -1,7 +1,7 @@
 {
   "include": [
     "src/index.ts",
-    "src/types.ts",
+    "src/types.d.ts",
     "src/icons"
   ],
   "exclude": [
@@ -15,7 +15,6 @@
     "jsx": "react", 
     "module": "ESNext",  
     "declaration": true,
-    "declarationDir": "types",
     "sourceMap": true,
     "outDir": "dist",
     "moduleResolution": "node",
