@@ -19,7 +19,7 @@
   },
   "private": true,
   "dependencies": {
-    "react": "19.0.0-rc-02c0e824-20241028"
+    "react": "19.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^22.0.2",
