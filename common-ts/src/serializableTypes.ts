@@ -334,6 +334,7 @@ export class SerializableOrder implements Order {
 	@autoserializeAs(Number) auctionDuration: number;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) maxTs: BN;
+	@autoserializeAs(Number) bitFlags: number;
 	@autoserializeAs(Number) postedSlotTail: number;
 }
 
@@ -2011,6 +2012,8 @@ export function transformDataApiOrderRecordToUISerializableOrderRecord(
 			marketType: deserializedV2Record.marketType,
 			maxTs: new BN(deserializedV2Record.maxTs),
 			// @ts-ignore
+			bitFlags: deserializedV2Record.bitFlags,
+			// @ts-ignore
 			postedSlotTail: deserializedV2Record.postedSlotTail,
 		},
 	};
@@ -2058,6 +2061,8 @@ export function transformDataApiOrderRecordToSerializableOrderRecord(
 			slot: new BN(deserializedV2Record.slot),
 			marketType: deserializedV2Record.marketType,
 			maxTs: new BN(deserializedV2Record.maxTs),
+			// @ts-ignore
+			bitFlags: deserializedV2Record.bitFlags,
 			// @ts-ignore
 			postedSlotTail: deserializedV2Record.postedSlotTail,
 		},
