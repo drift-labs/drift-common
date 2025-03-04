@@ -416,7 +416,6 @@ export class SerializableOrderActionRecord
 	filler: PublicKey | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fillerReward: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fillRecordId: BN | null;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	baseAssetAmountFilled: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
