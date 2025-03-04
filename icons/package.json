@@ -15,7 +15,7 @@
     "icons:debug": "node --inspect-brk --inspect=2233 ./src/generate.js",
     "clean": "rm -rf dist",
     "clean-icons": "rm -rf src/icons/components/*",
-    "build": "rm -rf dist && tsc -v && tsc"
+    "build": "rm -rf dist && tsc -v && tsc -p ./tsconfig.json"
   },
   "private": true,
   "dependencies": {
