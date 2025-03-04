@@ -5,7 +5,8 @@
     "src/icons"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "../../node_modules"
   ],
   "compilerOptions": {
     "target": "es5", 
@@ -19,7 +20,7 @@
     "outDir": "dist",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "strict": false,
+    "strict": false
   }
     
   // "compilerOptions": {
