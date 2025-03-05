@@ -15,7 +15,8 @@
     "icons:debug": "node --inspect-brk --inspect=2233 ./src/generate.js",
     "clean": "rm -rf dist",
     "clean-icons": "rm -rf src/icons/components/*",
-    "build": "rm -rf dist && tsc"
+    "build": "rm -rf dist && tsc -v && tsc",
+    "build:rollup": "rm -rf dist && tsc -v && rollup -c"
   },
   "private": true,
   "dependencies": {
@@ -36,7 +37,6 @@
     "dotenv": "10.0.0",
     "figma-api-exporter": "0.0.2",
     "fs-extra": "10.0.0",
-    "light-server": "2.9.1",
     "nodemon": "1.18.4",
     "rollup": "2.79.0",
     "rollup-plugin-dts": "4.2.2",
