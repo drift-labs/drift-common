@@ -56,7 +56,6 @@ export { default as ExitPosition } from './components/ExitPosition';
 export { default as Expand } from './components/Expand';
 export { default as EyeHide } from './components/EyeHide';
 export { default as EyeShow } from './components/EyeShow';
-export { default as Fastlane } from './components/Fastlane';
 export { default as Filter } from './components/Filter';
 export { default as Form } from './components/Form';
 export { default as Fuel } from './components/Fuel';
