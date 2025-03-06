@@ -3,7 +3,6 @@ import { PerpMarketConfig, SpotMarketConfig } from '@drift-labs/sdk';
 export interface IPredictionMarketConfig {
 	title: string;
 	shortTitle: string;
-	resolutionDateUnix: number;
 	category?: string;
 	symbol: string;
 	imgSrc: string;
@@ -13,7 +12,16 @@ export interface IPredictionMarketConfig {
 	production?: boolean;
 	endingSoonThresholdDays?: number;
 	resolutionDateUnknown?: boolean;
+	resolutionDate: Date;
+	newUntilTs?: number;
 }
+
+export type SerializedPredictionMarketConfig = Omit<
+	IPredictionMarketConfig,
+	'resolutionDate'
+> & {
+	resolutionDateUnix: number;
+};
 
 export type SerializedSpotMarketConfig = Omit<
 	SpotMarketConfig,
@@ -55,6 +63,20 @@ export type SerializedRemoteConfigs = {
 		mainnet: {
 			spot: SerializedSpotMarketConfig[];
 			perp: SerializedPerpMarketConfig[];
+		};
+	};
+	predictionMarkets: SerializedPredictionMarketConfig[];
+};
+
+export type RemoteConfigs = {
+	marketConfigs: {
+		devnet: {
+			spot: SpotMarketConfig[];
+			perp: PerpMarketConfig[];
+		};
+		mainnet: {
+			spot: SpotMarketConfig[];
+			perp: PerpMarketConfig[];
 		};
 	};
 	predictionMarkets: IPredictionMarketConfig[];
