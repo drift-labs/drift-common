@@ -12,12 +12,12 @@ import { USDC_SPOT_MARKET_INDEX } from '../constants';
 import { ENUM_UTILS } from '../utils';
 
 export class UIMarket {
-	static perpMarkets = PerpMarkets['devnet'];
-	static spotMarkets = SpotMarkets['devnet'];
-	static perpMarketIds = PerpMarkets['devnet'].map((m) =>
+	static perpMarkets = PerpMarkets['mainnet-beta'];
+	static spotMarkets = SpotMarkets['mainnet-beta'];
+	static perpMarketIds = PerpMarkets['mainnet-beta'].map((m) =>
 		MarketId.createPerpMarket(m.marketIndex)
 	);
-	static spotMarketIds = SpotMarkets['devnet'].map((m) =>
+	static spotMarketIds = SpotMarkets['mainnet-beta'].map((m) =>
 		MarketId.createSpotMarket(m.marketIndex)
 	);
 
