@@ -50,7 +50,6 @@ export interface CommonDriftStore {
 	connection: Connection | undefined;
 	env: {
 		driftEnv: DriftEnv;
-		historyServerUrl: string;
 		basePollingRateMs: number;
 		priorityFeePollingMultiplier: number;
 		rpcOverride: string | undefined;
