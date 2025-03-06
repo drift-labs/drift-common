@@ -32,7 +32,7 @@ type CandleFetchUrlConfig = {
 	env: DriftEnv;
 	marketId: MarketId;
 	resolution: CandleResolution;
-	startTs: number; // Seconds
+	startTs?: number; // Seconds - now optional
 	countToFetch: number;
 };
 
@@ -91,15 +91,19 @@ const getCandleFetchUrl = ({
 	startTs,
 	countToFetch,
 }: CandleFetchUrlConfig) => {
-	const fetchUrl = `https://${
+	// Base URL without startTs parameter
+	let fetchUrl = `https://${
 		DATA_API_URLS[env]
 	}/market/${getMarketSymbolForMarketId(
 		marketId,
 		env
-	)}/candles/${resolution}?startTs=${startTs}&limit=${Math.min(
-		countToFetch,
-		CANDLE_FETCH_LIMIT
-	)}`;
+	)}/candles/${resolution}?limit=${Math.min(countToFetch, CANDLE_FETCH_LIMIT)}`;
+
+	// Only add startTs parameter if it's provided
+	if (startTs !== undefined) {
+		fetchUrl += `&startTs=${startTs}`;
+	}
+
 	return fetchUrl;
 };
 
@@ -201,6 +205,31 @@ class CandleSubscriber {
 class CandleFetcher {
 	private readonly config: CandleFetchConfig;
 
+	// Cache for storing recent candles by market ID and resolution
+	public static recentCandlesCache: Map<
+		string, // key: `${marketId.key}-${resolution}`
+		{
+			candles: JsonCandle[];
+			earliestTs: number;
+			latestTs: number;
+			fetchTime: number;
+		}
+	> = new Map();
+
+	// Helper method to generate a cache key from market ID and resolution
+	public static getCacheKey(
+		marketId: MarketId,
+		resolution: CandleResolution
+	): string {
+		return `${marketId.key}-${resolution}`;
+	}
+
+	// Public method to clear the entire cache
+	public static clearCache() {
+		CandleFetcher.recentCandlesCache.clear();
+		console.debug('candlesv2:: CANDLE_CLIENT CACHE CLEARED');
+	}
+
 	constructor(config: CandleFetchConfig) {
 		this.config = config;
 	}
@@ -238,12 +267,129 @@ class CandleFetcher {
 	 * This class needs to fetch candles based on the config.
 	 *
 	 * If the number of candles requested exceeds the maximum number of candles that can be fetched in a single GET request, then it needs to loop multiple get requests, using the last candle's timestamp as the offset startTs for each subsequent request. If the number of candles returned is less than the requested number of candles, then we have fetched all the candles available.
+	 *
+	 * For recent candles (ones where fromTs > now - candleLength*1000), we avoid using startTs in the URL to improve caching,
+	 * and instead fetch the most recent 1000 candles and then trim the result.
 	 */
 	public fetchCandles = async () => {
+		// Check cache first
+		// Generate cache key for the current request
+		const cacheKey = CandleFetcher.getCacheKey(
+			this.config.marketId,
+			this.config.resolution
+		);
+		const cachedCandles = CandleFetcher.recentCandlesCache.get(cacheKey);
+
+		// Check if we have cached candles for this market and resolution
+		if (cachedCandles) {
+			// Check if the requested time range is within the bounds of cached candles
+			if (
+				this.config.fromTs >= cachedCandles.earliestTs &&
+				this.config.toTs <= cachedCandles.latestTs
+			) {
+				console.debug(
+					`candlesv2:: CANDLE_CLIENT USING CACHED CANDLES for ${this.config.marketId.key}-${this.config.resolution} (${this.config.fromTs}-${this.config.toTs})`
+				);
+
+				// Filter cached candles to the requested time range
+				const filteredCandles = cachedCandles.candles.filter(
+					(candle) =>
+						candle.ts >= this.config.fromTs && candle.ts <= this.config.toTs
+				);
+
+				return filteredCandles;
+			}
+		}
+
+		// Calculate the candle length in seconds for the current resolution
+		const candleLengthMs = CANDLE_UTILS.resolutionStringToCandleLengthMs(
+			this.config.resolution
+		);
+		const candleLengthSeconds = candleLengthMs / 1000;
+
+		// Get current time in seconds
+		const nowSeconds = Math.floor(Date.now() / 1000);
+
+		// Calculate cutoff time for "recent" candles (now - 1000 candles worth of time)
+		const recentCandlesCutoffTs =
+			nowSeconds - candleLengthSeconds * CANDLE_FETCH_LIMIT;
+
+		// Check if we're fetching recent candles based on the fromTs
+		const isRequestingRecentCandles =
+			this.config.fromTs >= recentCandlesCutoffTs;
+
+		// If requesting recent candles, fetch without startTs for better caching
+		if (isRequestingRecentCandles) {
+			console.debug(
+				`candlesv2:: CANDLE_CLIENT FETCHING RECENT CANDLES without startTs (fromTs=${this.config.fromTs}, cutoff=${recentCandlesCutoffTs}, cacheable=true)`
+			);
+
+			// Fetch recent candles without specifying startTs
+			const fetchUrl = getCandleFetchUrl({
+				env: this.config.env,
+				marketId: this.config.marketId,
+				resolution: this.config.resolution,
+				countToFetch: CANDLE_FETCH_LIMIT, // Ask for max candles to ensure we get enough
+			});
+
+			// Get the candles and reverse them (into ascending order)
+			const fetchedCandles = await this.fetchCandlesFromApi(fetchUrl);
+			fetchedCandles.reverse();
+
+			if (fetchedCandles.length === 0) {
+				return [];
+			}
+
+			console.debug(
+				`candlesv2:: CANDLE_CLIENT RECEIVED ${
+					fetchedCandles.length
+				} RECENT CANDLES between\n${new Date(
+					fetchedCandles[0].ts * 1000
+				).toISOString()} =>\n${new Date(
+					fetchedCandles[fetchedCandles.length - 1].ts * 1000
+				).toISOString()}`
+			);
+
+			// Store the full fetchedCandles in cache before filtering
+			if (fetchedCandles.length > 0) {
+				// Sort candles by timestamp to find earliest and latest
+				const sortedCandles = [...fetchedCandles].sort((a, b) => a.ts - b.ts);
+				const earliestTs = sortedCandles[0].ts;
+				const latestTs = sortedCandles[sortedCandles.length - 1].ts;
+
+				// Update or add to cache
+				CandleFetcher.recentCandlesCache.set(cacheKey, {
+					candles: sortedCandles,
+					earliestTs,
+					latestTs,
+					fetchTime: nowSeconds,
+				});
+
+				console.debug(
+					`candlesv2:: CANDLE_CLIENT CACHING ${sortedCandles.length} FULL CANDLES for ${this.config.marketId.key}-${this.config.resolution}`
+				);
+			}
+
+			// Filter to only include candles in the requested time range
+			const filteredCandles = fetchedCandles.filter(
+				(candle) =>
+					candle.ts >= this.config.fromTs && candle.ts <= this.config.toTs
+			);
+
+			console.debug(
+				`candlesv2:: CANDLE_CLIENT RETURNING ${filteredCandles.length} FILTERED RECENT CANDLES`
+			);
+
+			return filteredCandles;
+		}
+
+		// For historical candles (older than the last 1000 candles), use the previous approach
+		// with startTs for pagination
 		let candlesRemainingToFetch = this.getCountOfCandlesBetweenStartAndEndTs(
 			this.config.fromTs,
 			this.config.toTs
 		);
+
 		let currentStartTs = this.config.toTs; // The data API takes "startTs" as the "first timestamp you want going backwards in time" e.g. all candles will be returned with descending time backwards from the startTs
 		let hitEndTsCutoff = false;
 		let loopCount = 0;
@@ -251,7 +397,7 @@ class CandleFetcher {
 		const candles: JsonCandle[] = [];
 
 		console.debug(
-			`candlesv2:: CANDLE_CLIENT TOTAL CANDLES TO FETCH: ${candlesRemainingToFetch}`
+			`candlesv2:: CANDLE_CLIENT TOTAL HISTORICAL CANDLES TO FETCH: ${candlesRemainingToFetch}`
 		);
 
 		while (candlesRemainingToFetch > 0) {
@@ -264,7 +410,7 @@ class CandleFetcher {
 				env: this.config.env,
 				marketId: this.config.marketId,
 				resolution: this.config.resolution,
-				startTs: currentStartTs,
+				startTs: currentStartTs, // Include startTs for historical candles
 				countToFetch: candlesToFetch,
 			});
 
