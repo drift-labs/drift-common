@@ -36,6 +36,10 @@ const filterOrderActionsForCandles = (
 		ENUM_UTILS.match(
 			tradeEvent.actionExplanation,
 			OrderActionExplanation.LIQUIDATION
+		) ||
+		ENUM_UTILS.match(
+			tradeEvent.actionExplanation,
+			OrderActionExplanation.TRANSFER_PERP_POSITION
 		)
 	) {
 		// Don't include liquidations in candle prices
