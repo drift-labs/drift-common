@@ -18,6 +18,7 @@ import { OrderType } from '@drift-labs/sdk';
 export * from './MarketId';
 export * from './UIMarket';
 export * from './Superstake';
+export * from './remote-configs';
 
 // Opaque type pattern
 export type Opaque<K, T> = T & { __TYPE__: K };
