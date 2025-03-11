@@ -2,23 +2,33 @@ import {
 	MarketType,
 	OracleSource,
 	PerpMarketConfig,
+	PerpMarkets,
 	SpotMarketConfig,
+	SpotMarkets,
 } from '@drift-labs/sdk';
 import { MarketId } from './MarketId';
-import { Config } from '../Config';
 import invariant from 'tiny-invariant';
 import { USDC_SPOT_MARKET_INDEX } from '../constants';
 import { ENUM_UTILS } from '../utils';
 
 export class UIMarket {
+	static perpMarkets = PerpMarkets['mainnet-beta'];
+	static spotMarkets = SpotMarkets['mainnet-beta'];
+	static perpMarketIds = PerpMarkets['mainnet-beta'].map((m) =>
+		MarketId.createPerpMarket(m.marketIndex)
+	);
+	static spotMarketIds = SpotMarkets['mainnet-beta'].map((m) =>
+		MarketId.createSpotMarket(m.marketIndex)
+	);
+
 	readonly market: SpotMarketConfig | PerpMarketConfig;
 	readonly marketId: MarketId;
 
 	constructor(readonly marketIndex: number, readonly marketType: MarketType) {
 		const marketId = new MarketId(marketIndex, marketType);
 		const markets = marketId.isPerp
-			? Config.perpMarketsLookup
-			: Config.spotMarketsLookup;
+			? UIMarket.perpMarkets
+			: UIMarket.spotMarkets;
 
 		const market = markets[marketIndex];
 
@@ -29,6 +39,20 @@ export class UIMarket {
 
 		this.marketId = marketId;
 		this.market = markets[marketIndex];
+	}
+
+	static setPerpMarkets(perpMarkets: PerpMarketConfig[]) {
+		this.perpMarkets = perpMarkets;
+		this.perpMarketIds = perpMarkets.map((m) =>
+			MarketId.createPerpMarket(m.marketIndex)
+		);
+	}
+
+	static setSpotMarkets(spotMarkets: SpotMarketConfig[]) {
+		this.spotMarkets = spotMarkets;
+		this.spotMarketIds = spotMarkets.map((m) =>
+			MarketId.createSpotMarket(m.marketIndex)
+		);
 	}
 
 	static createSpotMarket(marketIndex: number) {
