@@ -2,10 +2,18 @@ import { MarketType, OraclePriceData, L2OrderBook, BN } from '@drift-labs/sdk';
 
 export type L2WithOracle = L2OrderBook & { oracleData: OraclePriceData };
 
+export type L2WithOracleAndMarketData = L2WithOracle & {
+	marketSlot: number;
+	marketIndex: number;
+	marketName: string;
+	marketType?: MarketType;
+};
+
 export type RawL2Output = {
 	marketIndex: number;
 	marketType: MarketType;
 	marketName: string;
+	marketSlot: number;
 	asks: {
 		price: string;
 		size: string;
@@ -39,7 +47,7 @@ export type RawL2Output = {
  */
 export const deserializeL2Response = (
 	serializedOrderbook: RawL2Output
-): L2WithOracle => {
+): L2WithOracleAndMarketData => {
 	return {
 		asks: serializedOrderbook.asks.map((ask) => ({
 			price: new BN(ask.price),
@@ -84,5 +92,9 @@ export const deserializeL2Response = (
 				: undefined,
 		},
 		slot: serializedOrderbook.slot,
+		marketSlot: serializedOrderbook.marketSlot,
+		marketType: serializedOrderbook.marketType,
+		marketIndex: serializedOrderbook.marketIndex,
+		marketName: serializedOrderbook.marketName,
 	};
 };
