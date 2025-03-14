@@ -43,4 +43,6 @@ export const Initialize = (env: DriftEnv) => {
 	Config.perpMarketsLookup = markets;
 
 	Config.initialized = true;
+
+	return SDKConfig;
 };

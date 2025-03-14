@@ -40,6 +40,8 @@ export type RawL2Output = {
 	slot?: number;
 };
 
+export type LiquidityType = 'vamm' | 'dlob' | 'serum' | 'phoenix' | 'openbook';
+
 /**
  * Helper function to deserialize the response from the dlob server. (See https://drift-labs.github.io/v2-teacher/#get-l2-l3)
  * @param serializedOrderbook
