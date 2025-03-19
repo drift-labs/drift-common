@@ -88,9 +88,9 @@ const fetchCurrentSubaccounts = (driftClient: DriftClient): UserAccount[] => {
 	return driftClient.getUsers().map((user) => user.getUserAccount());
 };
 
-const fetchUserClientsAndAccounts = async (
+const fetchUserClientsAndAccounts = (
 	driftClient: DriftClient
-): Promise<{ user: User; userAccount: UserAccount }[]> => {
+): { user: User; userAccount: UserAccount }[] => {
 	const accounts = fetchCurrentSubaccounts(driftClient);
 	const allUsersAndUserAccounts = accounts.map((acct) => {
 		return {
