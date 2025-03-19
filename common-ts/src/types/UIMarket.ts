@@ -21,6 +21,16 @@ export class UIMarket {
 		MarketId.createSpotMarket(m.marketIndex)
 	);
 
+	static perpMarketLookup = PerpMarkets['mainnet-beta'].reduce((acc, m) => {
+		acc[m.marketIndex] = m;
+		return acc;
+	}, {} as Record<number, PerpMarketConfig>);
+
+	static spotMarketLookup = SpotMarkets['mainnet-beta'].reduce((acc, m) => {
+		acc[m.marketIndex] = m;
+		return acc;
+	}, {} as Record<number, SpotMarketConfig>);
+
 	readonly market: SpotMarketConfig | PerpMarketConfig;
 	readonly marketId: MarketId;
 
@@ -46,6 +56,10 @@ export class UIMarket {
 		this.perpMarketIds = perpMarkets.map((m) =>
 			MarketId.createPerpMarket(m.marketIndex)
 		);
+		this.perpMarketLookup = perpMarkets.reduce((acc, m) => {
+			acc[m.marketIndex] = m;
+			return acc;
+		}, {} as Record<number, PerpMarketConfig>);
 	}
 
 	static setSpotMarkets(spotMarkets: SpotMarketConfig[]) {
@@ -53,6 +67,10 @@ export class UIMarket {
 		this.spotMarketIds = spotMarkets.map((m) =>
 			MarketId.createSpotMarket(m.marketIndex)
 		);
+		this.spotMarketLookup = spotMarkets.reduce((acc, m) => {
+			acc[m.marketIndex] = m;
+			return acc;
+		}, {} as Record<number, SpotMarketConfig>);
 	}
 
 	static createSpotMarket(marketIndex: number) {
