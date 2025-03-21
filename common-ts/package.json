@@ -10,7 +10,7 @@
 		"@jest/globals": "29.3.1",
 		"@slack/web-api": "6.4.0",
 		"@solana/spl-token": "0.3.8",
-		"@solana/web3.js": "1.66.2",
+		"@solana/web3.js": "1.98.0",
 		"bcryptjs-react": "2.4.6",
 		"cerializr": "3.1.4",
 		"immer": "10.0.3",
