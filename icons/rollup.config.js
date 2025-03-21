@@ -9,11 +9,6 @@ export default [
 	{
 		input: 'src/index.ts',
 		output: [
-			// {
-			// 	file: packageJson.main,
-			// 	format: 'cjs',
-			// 	sourcemap: true,
-			// },
 			{
 				file: packageJson.module,
 				format: 'esm',
@@ -25,6 +20,7 @@ export default [
 			commonjs(),
 			typescript({ tsconfig: './tsconfig.json' }),
 		],
+		external: ['react', 'react-dom'],
 	},
 	{
 		input: 'dist/esm/index.d.ts',
