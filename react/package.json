@@ -26,7 +26,7 @@
 		"lokijs": "1.5.12",
 		"pino-pretty": "10.2.3",
 		"react": "19.0.0",
-		"react-dom": "19.0.4",
+		"react-dom": "19.0.0",
 		"typescript": "5.1.6"
 	},
 	"peerDependencies": {
@@ -34,7 +34,7 @@
 		"@solana/spl-token": "0.3.8",
 		"@solana/web3.js": "1.92.3",
 		"react": "19.0.0",
-		"react-dom": "19.0.4"
+		"react-dom": "19.0.0"
 	},
 	"dependencies": {
 		"@drift/common": "file:../common-ts",
