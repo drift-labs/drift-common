@@ -17,7 +17,7 @@
 		"lib": "lib"
 	},
 	"devDependencies": {
-		"@solana/spl-token": "0.3.8",
+		"@solana/spl-token": "0.3.7",
 		"@solana/web3.js": "1.92.3",
 		"@types/react": "npm:types-react@19.0.0-rc.1",
 		"copyfiles": "2.4.1",
@@ -31,7 +31,7 @@
 	},
 	"peerDependencies": {
 		"@drift-labs/sdk": "2.32.1-beta.12",
-		"@solana/spl-token": "0.3.8",
+		"@solana/spl-token": "0.3.7",
 		"@solana/web3.js": "1.92.3",
 		"react": "19.0.0-rc-02c0e824-20241028",
 		"react-dom": "19.0.0-rc-02c0e824-20241028"
