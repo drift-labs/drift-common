@@ -19,22 +19,22 @@
 	"devDependencies": {
 		"@solana/spl-token": "0.3.8",
 		"@solana/web3.js": "1.92.3",
-		"@types/react": "npm:types-react@19.0.0-rc.1",
+		"@types/react": "19.0.12",
 		"copyfiles": "2.4.1",
 		"encoding": "0.1.13",
 		"eslint": "8.43.0",
 		"lokijs": "1.5.12",
 		"pino-pretty": "10.2.3",
-		"react": "19.0.0-rc-02c0e824-20241028",
-		"react-dom": "19.0.0-rc-02c0e824-20241028",
+		"react": "19.0.0",
+		"react-dom": "19.0.4",
 		"typescript": "5.1.6"
 	},
 	"peerDependencies": {
 		"@drift-labs/sdk": "2.32.1-beta.12",
 		"@solana/spl-token": "0.3.8",
 		"@solana/web3.js": "1.92.3",
-		"react": "19.0.0-rc-02c0e824-20241028",
-		"react-dom": "19.0.0-rc-02c0e824-20241028"
+		"react": "19.0.0",
+		"react-dom": "19.0.4"
 	},
 	"dependencies": {
 		"@drift/common": "file:../common-ts",
@@ -50,13 +50,13 @@
 		"zustand": "4.3.8"
 	},
 	"overrides": {
-		"@types/react": "npm:types-react@19.0.0-rc.1",
-		"@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
+		"@types/react": "19.0.12",
+		"@types/react-dom": "19.0.4",
 		"@ledgerhq/errors": "6.16.3"
 	},
 	"resolutions": {
-		"@types/react": "npm:types-react@19.0.0-rc.1",
-		"@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
+		"@types/react": "19.0.12",
+		"@types/react-dom": "19.0.4",
 		"@ledgerhq/errors": "6.16.3"
 	}
 }
