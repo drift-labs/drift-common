@@ -4,12 +4,14 @@ import {
 	calculateInitUserFee,
 } from '@drift-labs/sdk';
 import { useEffect, useState } from 'react';
-import { singletonHook } from 'react-singleton-hook';
 import { useCommonDriftStore } from '../stores';
 import { useDriftClientIsReady } from './useDriftClientIsReady';
 import { NEW_ACCOUNT_BASE_COST } from '@drift/common';
 
-const _useAccountCreationCost = () => {
+/**
+ * Cost of subaccount creation. Includes both base rent, donation (if any), and account creation rent.
+ */
+export const useAccountCreationCost = () => {
 	const driftClient = useCommonDriftStore((s) => s.driftClient.client);
 	const driftClientIsReady = useDriftClientIsReady();
 	const [loaded, setLoaded] = useState(false);
@@ -34,14 +36,3 @@ const _useAccountCreationCost = () => {
 		accountCreationCostLoaded: loaded,
 	};
 };
-
-/**
- * Cost of subaccount creation. Includes both base rent, donation (if any), and account creation rent.
- */
-export const useAccountCreationCost = singletonHook(
-	{
-		accountCreationCost: NEW_ACCOUNT_BASE_COST,
-		accountCreationCostLoaded: false,
-	},
-	_useAccountCreationCost
-);

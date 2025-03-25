@@ -1,5 +1,4 @@
 import { EnvironmentConstants, RpcEndpoint } from '@drift/common';
-import { singletonHook } from 'react-singleton-hook';
 import { useCommonDriftStore } from '../stores';
 import { useSyncLocalStorage } from './useSyncLocalStorage';
 
@@ -9,7 +8,7 @@ export const DEVNET_RPCS = EnvironmentConstants.rpcs.dev;
 const DEFAULT_MAINNET_RPC =
 	MAINNET_RPCS[Math.floor(Math.random() * MAINNET_RPCS.length)];
 
-const _useCurrentRpc = () => {
+export const useCurrentRpc = () => {
 	const Env = useCommonDriftStore((s) => s.env);
 
 	const rpcToUse =
@@ -30,11 +29,3 @@ const _useCurrentRpc = () => {
 		(savedRpc: RpcEndpoint) => void
 	];
 };
-
-export const useCurrentRpc = singletonHook(
-	[DEFAULT_MAINNET_RPC, () => {}] as [
-		RpcEndpoint,
-		(savedRpc: RpcEndpoint) => void
-	],
-	_useCurrentRpc
-);

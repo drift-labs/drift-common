@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useDriftClientIsReady } from './useDriftClientIsReady';
-import { singletonHook } from 'react-singleton-hook';
 import { useCommonDriftStore } from '../stores';
 import { useWalletContext } from './useWalletContext';
 
@@ -43,4 +42,4 @@ export const useAccountExists = () => {
 	return accountExists;
 };
 
-export default singletonHook(false, useAccountExists);
+export default useAccountExists;

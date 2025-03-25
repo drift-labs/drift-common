@@ -1,4 +1,3 @@
-import { singletonHook } from 'react-singleton-hook';
 import { useLocalStorage } from 'react-use';
 
 /**
@@ -6,9 +5,7 @@ import { useLocalStorage } from 'react-use';
  *
  * Timestamp is stored in local storage.
  */
-export const useLastAcknowledgedTerms = singletonHook(
-	{ lastAcknowledgedTerms: 0, updateLastAcknowledgedTerms: () => {} },
-	() => {
+export const useLastAcknowledgedTerms = () => {
 		const [lastAcknowledgedTerms, setLastAcknowledgedTerms] =
 			useLocalStorage<number>('lastAcknowledgedTerms', 0, {
 				raw: false,
@@ -22,4 +19,3 @@ export const useLastAcknowledgedTerms = singletonHook(
 
 		return { lastAcknowledgedTerms, updateLastAcknowledgedTerms };
 	}
-);

@@ -1,6 +1,5 @@
 import { EnvironmentConstants, RpcEndpoint } from '@drift/common';
 import { useEffect, useMemo, useState } from 'react';
-import { singletonHook } from 'react-singleton-hook';
 import { getResponseTimes } from '@drift/common';
 import { useCommonDriftStore } from '../stores';
 import { useCurrentRpc } from './useCurrentRpc';
@@ -63,7 +62,7 @@ const useRpcLatencies = (rpcOptions: RpcEndpoint[]) => {
 	return avgLatencies;
 };
 
-const useAllRpcLatencies_ = () => {
+export const useAllRpcLatencies = () => {
 	const isMainnet = useCommonDriftStore(
 		(s) => s.env.driftEnv === 'mainnet-beta'
 	);
@@ -77,9 +76,7 @@ const useAllRpcLatencies_ = () => {
 	return latencies;
 };
 
-export const useAllRpcLatencies = singletonHook({}, useAllRpcLatencies_);
-
-const useCurrentRpcLatency_ = () => {
+export const useCurrentRpcLatency = () => {
 	const [currentRpc] = useCurrentRpc();
 
 	const currentRpcSpec = useMemo(() => {
@@ -104,8 +101,3 @@ const useCurrentRpcLatency_ = () => {
 
 	return latencies[currentRpcSpec[0]?.value];
 };
-
-export const useCurrentRpcLatency = singletonHook(
-	{ avg: -1, lastFiveLatencies: [] },
-	useCurrentRpcLatency_
-);
