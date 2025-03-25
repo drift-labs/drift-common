@@ -17,6 +17,7 @@
 		"lib": "lib"
 	},
 	"devDependencies": {
+		"@solana/spl-token": "0.4.13",
 		"@solana/web3.js": "1.98.0",
 		"@types/react": "19.0.0",
 		"copyfiles": "2.4.1",
@@ -29,6 +30,7 @@
 		"typescript": "5.1.6"
 	},
 	"peerDependencies": {
+		"@solana/spl-token": "0.4.13",
 		"@solana/web3.js": "1.98.0",
 		"react": "19.0.0",
 		"react-dom": "19.0.0"
