@@ -41,10 +41,10 @@
 		"dayjs": "1.11.13",
 		"immer": "10.1.1",
 		"react-singleton-hook": "4.0.1",
+		"zustand": "4.3.8"
 		"react-use": "17.6.0",
 		"tailwind-merge": "3.0.2",
 		"use-immer": "0.11.0",
-		"zustand": "5.0.3"
 	},
 	"overrides": {
 		"@types/react": "19.0.0",
