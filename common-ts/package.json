@@ -13,7 +13,7 @@
 		"@solana/web3.js": "1.66.2",
 		"bcryptjs-react": "2.4.6",
 		"cerializr": "3.1.4",
-		"immer": "10.0.3",
+		"immer": "10.1.1",
 		"ioredis": "5.4.1",
 		"isomorphic-ws": "^5.0.0",
 		"localstorage-memory": "1.0.3",
