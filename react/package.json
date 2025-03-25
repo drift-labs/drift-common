@@ -17,8 +17,7 @@
 		"lib": "lib"
 	},
 	"devDependencies": {
-		"@solana/spl-token": "0.3.8",
-		"@solana/web3.js": "1.92.3",
+		"@solana/web3.js": "1.98.0",
 		"@types/react": "19.0.0",
 		"copyfiles": "2.4.1",
 		"encoding": "0.1.13",
@@ -30,14 +29,13 @@
 		"typescript": "5.1.6"
 	},
 	"peerDependencies": {
-		"@drift-labs/sdk": "2.32.1-beta.12",
-		"@solana/spl-token": "0.3.8",
-		"@solana/web3.js": "1.92.3",
+		"@solana/web3.js": "1.98.0",
 		"react": "19.0.0",
 		"react-dom": "19.0.0"
 	},
 	"dependencies": {
 		"@drift/common": "file:../common-ts",
+		"@drift-labs/sdk": "file:../protocol/sdk",
 		"@solana/wallet-adapter-base": "0.9.23",
 		"@solana/wallet-adapter-react": "0.15.35",
 		"@solana/wallet-adapter-wallets": "0.19.32",
