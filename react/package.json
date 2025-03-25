@@ -19,7 +19,7 @@
 	"devDependencies": {
 		"@solana/spl-token": "0.3.8",
 		"@solana/web3.js": "1.92.3",
-		"@types/react": "npm:types-react@19.0.0",
+		"@types/react": "19.0.0",
 		"copyfiles": "2.4.1",
 		"encoding": "0.1.13",
 		"eslint": "8.43.0",
@@ -50,13 +50,13 @@
 		"zustand": "4.3.8"
 	},
 	"overrides": {
-		"@types/react": "npm:types-react@19.0.0",
-		"@types/react-dom": "npm:types-react-dom@19.0.0",
+		"@types/react": "19.0.0",
+		"@types/react-dom": "19.0.0",
 		"@ledgerhq/errors": "6.16.3"
 	},
 	"resolutions": {
-		"@types/react": "npm:types-react@19.0.0",
-		"@types/react-dom": "npm:types-react-dom@19.0.0",
+		"@types/react": "19.0.0",
+		"@types/react-dom": "19.0.0",
 		"@ledgerhq/errors": "6.16.3"
 	}
 }
