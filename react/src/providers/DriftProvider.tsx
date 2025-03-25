@@ -66,9 +66,7 @@ const DriftProviderInner = (props: DriftAppHooksProps) => {
 	return <>{props.children}</>;
 };
 
-const DriftProvider = (
-	props: DriftProviderProps & { children: React.ReactNode }
-) => {
+const DriftProvider: React.FC<DriftProviderProps> = (props) => {
 	return (
 		<>
 			<DriftWalletProvider
