@@ -462,5 +462,3 @@ export class SwiftClient {
 		return response.status === 200;
 	}
 }
-
-export default SwiftClient;
