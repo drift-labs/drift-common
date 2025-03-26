@@ -1,4 +1,2 @@
 export * from './redisClient';
-export * from './swiftClient';
-export * from './tvFeed';
-export * from './candleClient';
+// do not add other clients here, since this is meant to be imported by nodejs servers (has browser incompatible code)
