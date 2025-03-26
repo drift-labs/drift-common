@@ -171,7 +171,7 @@ class CandleEventBus extends StrictEventEmitter<CandleSubscriberEvents> {
 
 // This class is responsible for subscribing to the candles websocket endpoint and forwarding events to the event bus
 class CandleSubscriber {
-	private readonly config: CandleSubscriptionConfig;
+	public readonly config: CandleSubscriptionConfig;
 	private readonly eventBus: CandleEventBus;
 	private ws: WS;
 
@@ -249,9 +249,18 @@ class CandleFetcher {
 	}
 
 	// Public method to clear the entire cache
-	public static clearCache() {
+	public static clearWholeCache() {
 		CandleFetcher.recentCandlesCache.clear();
 		console.debug('candlesv2:: CANDLE_CLIENT CACHE CLEARED');
+	}
+
+	public static clearCacheForMarketAndResolution(
+		marketId: MarketId,
+		resolution: CandleResolution
+	) {
+		CandleFetcher.recentCandlesCache.delete(
+			CandleFetcher.getCacheKey(marketId, resolution)
+		);
 	}
 
 	constructor(config: CandleFetchConfig) {
@@ -345,14 +354,11 @@ class CandleFetcher {
 		nowSeconds: number
 	): Promise<JsonCandle[]> => {
 		console.debug(
-			`candlesv2:: CANDLE_CLIENT FETCHING RECENT CANDLES without startTs (fromTs=${
-				this.config.fromTs
-			}, cutoff=${
-				nowSeconds -
-				(CANDLE_UTILS.resolutionStringToCandleLengthMs(this.config.resolution) /
-					1000) *
-					CANDLE_FETCH_LIMIT
-			}, cacheable=true)`
+			`candlesv2:: CANDLE_CLIENT FETCHING RECENT CANDLES (fromTs=${new Date(
+				this.config.fromTs * 1000
+			).toISOString()}, toTs=${new Date(
+				this.config.toTs * 1000
+			).toISOString()}, cacheable=true)`
 		);
 
 		// Fetch recent candles without specifying startTs
@@ -663,6 +669,10 @@ export class CandleClient {
 		);
 		const subscription = this.activeSubscriptions.get(subscriptionKey);
 		if (subscription) {
+			CandleFetcher.clearCacheForMarketAndResolution(
+				subscription.subscriber.config.marketId,
+				subscription.subscriber.config.resolution
+			);
 			subscription.subscriber.killWs();
 			subscription.eventBus.removeAllListeners();
 			this.activeSubscriptions.delete(subscriptionKey);

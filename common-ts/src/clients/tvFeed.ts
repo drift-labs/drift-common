@@ -13,6 +13,8 @@ import { CandleClient, JsonCandle } from './candleClient';
 import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
 import { CANDLE_UTILS } from '../utils/candleUtils';
 
+const DRIFT_V2_START_TS = 1668470400; // 15th November 2022 ... 2022-11-15T00:00:00.000Z
+
 const resolutions = [
 	'1',
 	'3',
@@ -160,6 +162,7 @@ const candleToTvBar = (candle: JsonCandle, candleType: CandleType): TVBar => {
 		high: useOraclePrice ? candle.oracleHigh : candle.fillHigh,
 		low: useOraclePrice ? candle.oracleLow : candle.fillLow,
 		close: useOraclePrice ? candle.oracleClose : candle.fillClose,
+		volume: candle.quoteVolume,
 	};
 };
 
@@ -386,7 +389,11 @@ export class DriftTvFeed {
 	) {
 		console.debug(`candlesv2:: symbolInfo`, symbolInfo);
 
-		if (periodParams.to < 1668470400 || periodParams.from < 1668470400) {
+		// Can automatically return no data if the requested range is before the Drift V2 launch
+		if (
+			periodParams.to < DRIFT_V2_START_TS ||
+			periodParams.from < DRIFT_V2_START_TS
+		) {
 			onResult([], {
 				noData: true,
 			});
@@ -431,6 +438,16 @@ export class DriftTvFeed {
 			candleFetchingPollKey,
 			fetchCandles
 		);
+
+		if (candlesResult.length === 0) {
+			console.debug(
+				`candlesv2:: TV_FEED NO CANDLES FOUND for ${targetMarketId.key}-${targetResolution}::${periodParams.from}=>${periodParams.to}`
+			);
+			onResult([], {
+				noData: true,
+			});
+			return;
+		}
 
 		// Protect against user switching between UI faster than candle client responds, by checking that market and resoltion mutexes match
 		if (
