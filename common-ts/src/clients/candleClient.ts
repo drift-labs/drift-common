@@ -254,7 +254,7 @@ class CandleFetcher {
 		console.debug('candlesv2:: CANDLE_CLIENT CACHE CLEARED');
 	}
 
-	public static clearCacheForMarketAndResolution(
+	public static clearCacheForSubscription(
 		marketId: MarketId,
 		resolution: CandleResolution
 	) {
@@ -669,7 +669,7 @@ export class CandleClient {
 		);
 		const subscription = this.activeSubscriptions.get(subscriptionKey);
 		if (subscription) {
-			CandleFetcher.clearCacheForMarketAndResolution(
+			CandleFetcher.clearCacheForSubscription(
 				subscription.subscriber.config.marketId,
 				subscription.subscriber.config.resolution
 			);
