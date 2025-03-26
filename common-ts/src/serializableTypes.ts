@@ -451,6 +451,7 @@ export class SerializableOrderActionRecord
 	@autoserializeUsing(BNSerializeAndDeserializeFns) makerFee: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	spotFulfillmentMethodFee: BN | null;
+	@autoserializeAs(Number) bitFlags: number;
 }
 
 @inheritSerialization(SerializableOrderActionRecord)
@@ -650,6 +651,7 @@ export class UISerializableOrderActionRecordV2 {
 	spotFulfillmentMethodFee: BigNum;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
 	@autoserializeAs(String) symbol: string;
+	@autoserializeAs(Number) bitFlags: number;
 
 	static onDeserialized(
 		data: JsonObject,
@@ -2122,6 +2124,7 @@ export function transformDataApiOrderActionRecordToSerializableOrderActionRecord
 		oraclePrice: deserializedV2Record.oraclePrice.val,
 		makerFee: deserializedV2Record.makerFee.val,
 		spotFulfillmentMethodFee: deserializedV2Record.spotFulfillmentMethodFee.val,
+		bitFlags: deserializedV2Record.bitFlags,
 	};
 
 	return transformedRecord;
