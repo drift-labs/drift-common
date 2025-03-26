@@ -6,7 +6,7 @@ on:
     branches: [master]
 
 jobs:
-  update-drift-common:
+  update-sdk:
     runs-on: ubicloud
     outputs:
       commit_hash: ${{ steps.get_commit.outputs.commit_hash }}
@@ -35,7 +35,7 @@ jobs:
 
   emit-dispatch-events:
     runs-on: ubicloud
-    needs: [update-drift-common]
+    needs: [update-sdk]
     if: ${{ github.ref == 'refs/heads/master' }}
     strategy:
       matrix:
@@ -54,7 +54,7 @@ jobs:
             "https://api.github.com/repos/drift-labs/${{ matrix.repo }}/dispatches" \
             -d "{\"event_type\": \"drift-common-update\", \"client_payload\": {
               \"version\": \"$VERSION\",
-              \"commit\": \"${{ needs.update-drift-common.outputs.commit_hash }}\"
+              \"commit\": \"${{ needs.update-sdk.outputs.commit_hash }}\"
             }}"
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
