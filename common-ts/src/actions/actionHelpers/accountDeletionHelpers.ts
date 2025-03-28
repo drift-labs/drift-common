@@ -64,13 +64,7 @@ const accountHasOpenSpotPositions = (user: User) => {
 
 const accountHasOpenOrders = (user: User) => {
 	const userAccount = user.getUserAccount();
-	for (const order of userAccount.orders) {
-		if (!isVariant(order.status, 'init')) {
-			return true;
-		}
-	}
-
-	return false;
+	return userAccount.orders.some((order) => isVariant(order.status, 'open'));
 };
 
 const accountHasOpenPositionsOrOrders = (user: User) => {
