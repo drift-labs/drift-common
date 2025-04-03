@@ -2,24 +2,23 @@ import {
 	MarketType,
 	OracleSource,
 	PerpMarketConfig,
-	PerpMarkets,
 	SpotMarketConfig,
-	SpotMarkets,
 } from '@drift-labs/sdk';
 import { MarketId } from './MarketId';
 import invariant from 'tiny-invariant';
 import { USDC_SPOT_MARKET_INDEX } from '../constants';
 import { ENUM_UTILS } from '../utils';
+import { Config } from '../Config';
 
 export class UIMarket {
-	static perpMarkets = PerpMarkets['mainnet-beta'];
-	static spotMarkets = SpotMarkets['mainnet-beta'];
-	static perpMarketIds = PerpMarkets['mainnet-beta'].map((m) =>
-		MarketId.createPerpMarket(m.marketIndex)
-	);
-	static spotMarketIds = SpotMarkets['mainnet-beta'].map((m) =>
-		MarketId.createSpotMarket(m.marketIndex)
-	);
+	// static perpMarkets = PerpMarkets['mainnet-beta'];
+	// static spotMarkets = SpotMarkets['mainnet-beta'];
+	// static perpMarketIds = PerpMarkets['mainnet-beta'].map((m) =>
+	// 	MarketId.createPerpMarket(m.marketIndex)
+	// );
+	// static spotMarketIds = SpotMarkets['mainnet-beta'].map((m) =>
+	// 	MarketId.createSpotMarket(m.marketIndex)
+	// );
 
 	readonly market: SpotMarketConfig | PerpMarketConfig;
 	readonly marketId: MarketId;
@@ -27,8 +26,8 @@ export class UIMarket {
 	constructor(readonly marketIndex: number, readonly marketType: MarketType) {
 		const marketId = new MarketId(marketIndex, marketType);
 		const markets = marketId.isPerp
-			? UIMarket.perpMarkets
-			: UIMarket.spotMarkets;
+			? Config.perpMarketsLookup
+			: Config.spotMarketsLookup;
 
 		const market = markets[marketIndex];
 
@@ -41,19 +40,19 @@ export class UIMarket {
 		this.market = markets[marketIndex];
 	}
 
-	static setPerpMarkets(perpMarkets: PerpMarketConfig[]) {
-		this.perpMarkets = perpMarkets;
-		this.perpMarketIds = perpMarkets.map((m) =>
-			MarketId.createPerpMarket(m.marketIndex)
-		);
-	}
+	// static setPerpMarkets(perpMarkets: PerpMarketConfig[]) {
+	// 	this.perpMarkets = perpMarkets;
+	// 	this.perpMarketIds = perpMarkets.map((m) =>
+	// 		MarketId.createPerpMarket(m.marketIndex)
+	// 	);
+	// }
 
-	static setSpotMarkets(spotMarkets: SpotMarketConfig[]) {
-		this.spotMarkets = spotMarkets;
-		this.spotMarketIds = spotMarkets.map((m) =>
-			MarketId.createSpotMarket(m.marketIndex)
-		);
-	}
+	// static setSpotMarkets(spotMarkets: SpotMarketConfig[]) {
+	// 	this.spotMarkets = spotMarkets;
+	// 	this.spotMarketIds = spotMarkets.map((m) =>
+	// 		MarketId.createSpotMarket(m.marketIndex)
+	// 	);
+	// }
 
 	static createSpotMarket(marketIndex: number) {
 		return new UIMarket(marketIndex, MarketType.SPOT);
