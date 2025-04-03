@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const SuccessFilled = (allProps: IconProps) => {
+const ChevronsUp = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
@@ -16,8 +16,8 @@ const SuccessFilled = (allProps: IconProps) => {
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
-						d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm5.197-12.97a.75.75 0 00-1.06-1.06l-5.887 5.886-2.386-2.386a.75.75 0 00-1.06 1.06l2.916 2.917a.75.75 0 001.06 0l6.417-6.417z"
-						fill="#5DD5A0"
+						d="M5.462 19.523a.75.75 0 01.015-1.06l6-5.834a.75.75 0 011.046 0l6 5.833a.75.75 0 11-1.046 1.076L12 14.213l-5.477 5.325a.75.75 0 01-1.06-.015zm0-8.167a.75.75 0 01.015-1.06l6-5.834a.75.75 0 011.046 0l6 5.834a.75.75 0 11-1.046 1.075L12 6.046l-5.477 5.325a.75.75 0 01-1.06-.015z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
 			}
@@ -25,4 +25,4 @@ const SuccessFilled = (allProps: IconProps) => {
 		/>
 	);
 };
-export default SuccessFilled;
+export default ChevronsUp;

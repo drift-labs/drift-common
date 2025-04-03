@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const SuccessFilled = (allProps: IconProps) => {
+const Fastlane = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
@@ -14,10 +14,8 @@ const SuccessFilled = (allProps: IconProps) => {
 					{...props}
 				>
 					<path
-						fillRule="evenodd"
-						clipRule="evenodd"
-						d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm5.197-12.97a.75.75 0 00-1.06-1.06l-5.887 5.886-2.386-2.386a.75.75 0 00-1.06 1.06l2.916 2.917a.75.75 0 001.06 0l6.417-6.417z"
-						fill="#5DD5A0"
+						d="M6.873 21.03c-.153.17-.425-.01-.33-.217l3.77-8.247A.4.4 0 009.948 12H6.656a.4.4 0 01-.356-.583l4.731-9.2A.4.4 0 0111.387 2h5.386a.4.4 0 01.356.583l-2.83 5.5a.4.4 0 00.357.584h2.446a.4.4 0 01.297.667L6.873 21.03z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
 			}
@@ -25,4 +23,4 @@ const SuccessFilled = (allProps: IconProps) => {
 		/>
 	);
 };
-export default SuccessFilled;
+export default Fastlane;
