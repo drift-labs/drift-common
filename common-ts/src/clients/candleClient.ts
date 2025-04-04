@@ -2,7 +2,6 @@ import {
 	CandleResolution,
 	DevnetPerpMarkets,
 	DevnetSpotMarkets,
-	DriftEnv,
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
 } from '@drift-labs/sdk';
@@ -10,6 +9,8 @@ import { MarketId } from '../types';
 import WS from 'isomorphic-ws';
 import { CANDLE_UTILS } from '../utils/candleUtils';
 import { StrictEventEmitter } from '../utils/StrictEventEmitter';
+import { EnvironmentConstants } from '../EnvironmentConstants';
+import { UIEnv } from '../types/UIEnv';
 
 /**
  * # CANDLE CLIENT HIGH LEVEL EXPLANATION:
@@ -37,7 +38,7 @@ import { StrictEventEmitter } from '../utils/StrictEventEmitter';
 
 // Used by the subscriber client to fetch candles from the data API
 type CandleFetchConfig = {
-	env: DriftEnv;
+	env: UIEnv;
 	marketId: MarketId;
 	resolution: CandleResolution;
 	fromTs: number; // Seconds
@@ -48,12 +49,12 @@ type CandleFetchConfig = {
 type CandleSubscriptionConfig = {
 	resolution: CandleResolution;
 	marketId: MarketId;
-	env: DriftEnv;
+	env: UIEnv;
 };
 
 // This is what the client subscriber uses internally to fetch the candles from the data API
 type CandleFetchUrlConfig = {
-	env: DriftEnv;
+	env: UIEnv;
 	marketId: MarketId;
 	resolution: CandleResolution;
 	startTs?: number; // Seconds - now optional
@@ -80,24 +81,21 @@ type CandleFetchResponseJson = {
 	records: JsonCandle[];
 };
 
-const DATA_API_URLS: Record<DriftEnv, string> = {
-	devnet: 'data-master.api.drift.trade',
-	'mainnet-beta': 'data.api.drift.trade',
-};
-
-const getMarketSymbolForMarketId = (marketId: MarketId, env: DriftEnv) => {
+const getMarketSymbolForMarketId = (marketId: MarketId, uiEnv: UIEnv) => {
 	const isPerp = marketId.isPerp;
+
+	const sdkEnv = uiEnv.sdkEnv;
 
 	if (isPerp) {
 		const marketConfigs =
-			env === 'mainnet-beta' ? MainnetPerpMarkets : DevnetPerpMarkets;
+			sdkEnv === 'mainnet-beta' ? MainnetPerpMarkets : DevnetPerpMarkets;
 		const targetMarketConfig = marketConfigs.find(
 			(config) => config.marketIndex === marketId.marketIndex
 		);
 		return targetMarketConfig.symbol;
 	} else {
 		const marketConfigs =
-			env === 'mainnet-beta' ? MainnetSpotMarkets : DevnetSpotMarkets;
+			sdkEnv === 'mainnet-beta' ? MainnetSpotMarkets : DevnetSpotMarkets;
 		const targetMarketConfig = marketConfigs.find(
 			(config) => config.marketIndex === marketId.marketIndex
 		);
@@ -108,6 +106,13 @@ const getMarketSymbolForMarketId = (marketId: MarketId, env: DriftEnv) => {
 // This is the maximum number of candles that can be fetched in a single GET request
 const CANDLE_FETCH_LIMIT = 1000;
 
+const getBaseDataApiUrl = (env: UIEnv) => {
+	const constantEnv: keyof typeof EnvironmentConstants.dataServerUrl =
+		env.isStaging ? 'staging' : env.isDevnet ? 'dev' : 'mainnet';
+	const dataApiUrl = EnvironmentConstants.dataServerUrl[constantEnv];
+	return dataApiUrl.replace('https://', '');
+};
+
 const getCandleFetchUrl = ({
 	env,
 	marketId,
@@ -115,10 +120,10 @@ const getCandleFetchUrl = ({
 	startTs,
 	countToFetch,
 }: CandleFetchUrlConfig) => {
+	const baseDataApiUrl = getBaseDataApiUrl(env);
+
 	// Base URL without startTs parameter
-	let fetchUrl = `https://${
-		DATA_API_URLS[env]
-	}/market/${getMarketSymbolForMarketId(
+	let fetchUrl = `https://${baseDataApiUrl}/market/${getMarketSymbolForMarketId(
 		marketId,
 		env
 	)}/candles/${resolution}?limit=${Math.min(countToFetch, CANDLE_FETCH_LIMIT)}`;
@@ -132,7 +137,8 @@ const getCandleFetchUrl = ({
 };
 
 const getCandleWsSubscriptionPath = (config: CandleSubscriptionConfig) => {
-	return `wss://${DATA_API_URLS[config.env]}/ws`;
+	const baseDataApiUrl = getBaseDataApiUrl(config.env);
+	return `wss://${baseDataApiUrl}/ws`;
 };
 
 const getCandleWsSubscriptionMessage = (config: CandleSubscriptionConfig) => {
