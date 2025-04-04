@@ -27,6 +27,7 @@ export * from './utils/priority-fees';
 export * from './utils/orderbook';
 export * from './clients/candleClient';
 export * from './clients/tvFeed';
+export * from './clients/swiftClient';
 export * from './utils/pollingSequenceGuard';
 export * from './utils/driftEvents';
 export * from './utils/MultiplexWebSocket';

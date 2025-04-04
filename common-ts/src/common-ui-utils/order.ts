@@ -33,6 +33,19 @@ export const getOrderLabelFromOrderDetails = (
 		return UI_ORDER_TYPES.oracle.label;
 
 	if (matchEnum(orderDetails.orderType, OrderType.TRIGGER_MARKET)) {
+		if (
+			matchEnum(
+				orderDetails.triggerCondition,
+				OrderTriggerCondition.TRIGGERED_ABOVE
+			) ||
+			matchEnum(
+				orderDetails.triggerCondition,
+				OrderTriggerCondition.TRIGGERED_BELOW
+			)
+		) {
+			return 'Market (Triggered)';
+		}
+
 		if (matchEnum(orderDetails.triggerCondition, OrderTriggerCondition.ABOVE)) {
 			return matchEnum(
 				orderDetails.existingPositionDirection,
@@ -59,6 +72,19 @@ export const getOrderLabelFromOrderDetails = (
 	}
 
 	if (matchEnum(orderDetails.orderType, OrderType.TRIGGER_LIMIT)) {
+		if (
+			matchEnum(
+				orderDetails.triggerCondition,
+				OrderTriggerCondition.TRIGGERED_ABOVE
+			) ||
+			matchEnum(
+				orderDetails.triggerCondition,
+				OrderTriggerCondition.TRIGGERED_BELOW
+			)
+		) {
+			return 'Limit (Triggered)';
+		}
+
 		if (matchEnum(orderDetails.triggerCondition, OrderTriggerCondition.ABOVE)) {
 			return matchEnum(
 				orderDetails.existingPositionDirection,

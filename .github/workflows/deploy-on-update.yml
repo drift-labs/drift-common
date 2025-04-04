@@ -2,9 +2,11 @@ name: Deploy on sdk update
 on:
   repository_dispatch:
     types: [sdk-update]
+  push:
+    branches: [master]
 
 jobs:
-  update-sdk:
+  update-drift-common:
     runs-on: ubicloud
     outputs:
       commit_hash: ${{ steps.get_commit.outputs.commit_hash }}
@@ -12,16 +14,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
-          submodules: 'recursive'
+          submodules: "recursive"
 
       - name: Bump protocol sdk
         run: |
-          git submodule update --remote
-          git config user.name "GitHub Actions"
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add protocol
-          git commit --allow-empty -m "Bumping protocol sdk to ${{ github.event.client_payload.version }}"
-          git push
+          if [ -n "${{ github.event.client_payload.version }}" ]; then
+            git submodule update --remote
+            git config user.name "GitHub Actions"
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add protocol
+            git commit --allow-empty -m "Bumping protocol sdk to ${{ github.event.client_payload.version }}"
+            git push
+          else
+            echo "No version provided, skipping commit"
+          fi
 
       - name: Get latest commit hash
         id: get_commit
@@ -29,21 +35,16 @@ jobs:
 
   emit-dispatch-events:
     runs-on: ubicloud
-    needs: [update-sdk]
+    needs: [update-drift-common]
     if: ${{ github.ref == 'refs/heads/master' }}
     strategy:
       matrix:
-        repo:
-          [
-            "dlob-server",
-            "internal-keeper-bot",
-            "history-server"
-          ]
+        repo: ["dlob-server", "internal-keeper-bot", "history-server"]
     steps:
       - name: Checkout code with new updated version
         uses: actions/checkout@v2
         with:
-          submodules: 'recursive'
+          submodules: "recursive"
       - name: Emit dispatch event
         run: |
           curl -X POST \
@@ -53,7 +54,7 @@ jobs:
             "https://api.github.com/repos/drift-labs/${{ matrix.repo }}/dispatches" \
             -d "{\"event_type\": \"drift-common-update\", \"client_payload\": {
               \"version\": \"$VERSION\",
-              \"commit\": \"${{ needs.update-sdk.outputs.commit_hash }}\"
+              \"commit\": \"${{ needs.update-drift-common.outputs.commit_hash }}\"
             }}"
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
