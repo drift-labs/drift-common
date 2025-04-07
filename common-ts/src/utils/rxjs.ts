@@ -1,6 +1,6 @@
 import { Subject, Observable } from 'rxjs';
 import { filter, share } from 'rxjs/operators';
-import { UniqueCircularBuffer } from '@drift/common';
+import { UniqueCircularBuffer } from './CircularBuffers/UniqueCircularBuffer';
 
 /**
  * Deduplicated subject, using UniqueCircularBuffer to dedupe the input subject.
