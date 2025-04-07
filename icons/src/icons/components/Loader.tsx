@@ -39,14 +39,12 @@ const Loader = (allProps: IconProps) => {
 							transform="matrix(.00241 .00408 -.00407 .0024 2.527 9.03)"
 						>
 							<div
-								xmlns="http://www.w3.org/1999/xhtml"
 								style={{
 									background:
 										'conic-gradient(from 90deg,rgba(255,255,255,0) 0deg,rgba(255,255,255,.2) 333.31deg,rgba(255,255,255,0) 360deg)',
 									height: '100%',
 									width: '100%',
 								}}
-								opacity={1}
 							/>
 						</foreignObject>
 					</g>
@@ -68,14 +66,12 @@ const Loader = (allProps: IconProps) => {
 							transform="matrix(.0019 .00244 -.00366 .00286 5.432 7.176)"
 						>
 							<div
-								xmlns="http://www.w3.org/1999/xhtml"
 								style={{
 									background:
 										'conic-gradient(from 90deg,rgba(255,255,255,.0405) 0deg,rgba(255,255,255,.1) 31.113deg,rgba(255,255,255,0) 338.814deg,rgba(255,255,255,.0405) 360deg)',
 									height: '100%',
 									width: '100%',
 								}}
-								opacity={1}
 							/>
 						</foreignObject>
 					</g>
