@@ -401,7 +401,7 @@ export class UISerializableOrderRecord extends SerializableOrderRecord {
 export class SerializableOrderActionRecord
 	implements WrappedEvent<'OrderActionRecord'>
 {
-	eventType: 'OrderActionRecord';
+	@autoserializeAs(String) eventType: 'OrderActionRecord';
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) slot: number;
 	@autoserializeAs(Number) txSigIndex: number;
@@ -523,10 +523,13 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 		instance: UISerializableOrderActionRecord
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		assert(
-			instance.eventType === 'OrderActionRecord',
-			'no eventType when deserializing UISerializableOrderActionRecord'
-		);
+
+		if (instance.eventType !== 'OrderActionRecord') {
+			instance.eventType = 'OrderActionRecord';
+			console.warn(
+				'caught incorrect eventType when deserializing UISerializableOrderActionRecord'
+			);
+		}
 
 		handleOnDeserializedPrecision(
 			data,
