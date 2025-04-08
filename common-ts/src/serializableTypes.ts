@@ -392,12 +392,10 @@ export class SerializableOrderRecord implements OrderRecordEvent {
 	@autoserializeAs(SerializableOrder) order: Order;
 
 	static onDeserialized(data: JsonObject, instance: SerializableOrderRecord) {
-		if (instance.eventType !== 'OrderRecord') {
-			console.warn(
-				'caught incorrect eventType when deserializing SerializableOrderRecord'
-			);
-			instance.eventType = 'OrderRecord';
-		}
+		assert(
+			instance.eventType === 'OrderRecord',
+			'eventType!==OrderRecord when deserializing SerializableOrderRecord'
+		);
 	}
 }
 
@@ -407,12 +405,10 @@ export class UISerializableOrderRecord extends SerializableOrderRecord {
 	@autoserializeAs(UISerializableOrder) order: UISerializableOrder;
 
 	static onDeserialized(data: JsonObject, instance: UISerializableOrderRecord) {
-		if (instance.eventType !== 'OrderRecord') {
-			console.warn(
-				'caught incorrect eventType when deserializing UISerializableOrderRecord'
-			);
-			instance.eventType = 'OrderRecord';
-		}
+		assert(
+			instance.eventType === 'OrderRecord',
+			'eventType!==OrderRecord when deserializing UISerializableOrderRecord'
+		);
 	}
 }
 
@@ -475,12 +471,10 @@ export class SerializableOrderActionRecord
 		data: JsonObject,
 		instance: SerializableOrderActionRecord
 	) {
-		if (instance.eventType !== 'OrderActionRecord') {
-			console.warn(
-				'caught incorrect eventType when deserializing SerializableOrderActionRecord'
-			);
-			instance.eventType = 'OrderActionRecord';
-		}
+		assert(
+			instance.eventType === 'OrderActionRecord',
+			'eventType!==OrderActionRecord when deserializing SerializableOrderActionRecord'
+		);
 	}
 }
 
@@ -553,12 +547,10 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 		instance: UISerializableOrderActionRecord
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		if (instance.eventType !== 'OrderActionRecord') {
-			console.warn(
-				'caught incorrect eventType when deserializing UISerializableOrderActionRecord'
-			);
-			instance.eventType = 'OrderActionRecord';
-		}
+		assert(
+			instance.eventType === 'OrderActionRecord',
+			'eventType!==OrderActionRecord when deserializing UISerializableOrderActionRecord'
+		);
 
 		handleOnDeserializedPrecision(
 			data,
@@ -697,12 +689,10 @@ export class UISerializableOrderActionRecordV2
 		instance: UISerializableOrderActionRecordV2
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		if (instance.eventType !== 'OrderActionRecord') {
-			console.warn(
-				'caught incorrect eventType when deserializing UISerializableOrderActionRecordV2'
-			);
-			instance.eventType = 'OrderActionRecord';
-		}
+		assert(
+			instance.eventType === 'OrderActionRecord',
+			'eventType!==OrderActionRecord when deserializing UISerializableOrderActionRecordV2'
+		);
 
 		const keysToUse: (keyof UISerializableOrderActionRecordV2)[] = [
 			'baseAssetAmountFilled',
