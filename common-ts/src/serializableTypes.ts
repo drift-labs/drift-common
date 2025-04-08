@@ -383,19 +383,37 @@ export class UISerializableOrder extends SerializableOrder {
 
 // @ts-ignore
 export class SerializableOrderRecord implements OrderRecordEvent {
-	eventType: 'OrderRecord';
+	@autoserializeAs(String) eventType: 'OrderRecord';
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
 	@autoserializeAs(SerializableOrder) order: Order;
+
+	static onDeserialized(data: JsonObject, instance: SerializableOrderRecord) {
+		if (instance.eventType !== 'OrderRecord') {
+			console.warn(
+				'caught incorrect eventType when deserializing SerializableOrderRecord'
+			);
+			instance.eventType = 'OrderRecord';
+		}
+	}
 }
 
 @inheritSerialization(SerializableOrderRecord)
 export class UISerializableOrderRecord extends SerializableOrderRecord {
 	//@ts-ignore
 	@autoserializeAs(UISerializableOrder) order: UISerializableOrder;
+
+	static onDeserialized(data: JsonObject, instance: UISerializableOrderRecord) {
+		if (instance.eventType !== 'OrderRecord') {
+			console.warn(
+				'caught incorrect eventType when deserializing UISerializableOrderRecord'
+			);
+			instance.eventType = 'OrderRecord';
+		}
+	}
 }
 
 export class SerializableOrderActionRecord
@@ -452,6 +470,18 @@ export class SerializableOrderActionRecord
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	spotFulfillmentMethodFee: BN | null;
 	@autoserializeAs(Number) bitFlags: number;
+
+	static onDeserialized(
+		data: JsonObject,
+		instance: SerializableOrderActionRecord
+	) {
+		if (instance.eventType !== 'OrderActionRecord') {
+			console.warn(
+				'caught incorrect eventType when deserializing SerializableOrderActionRecord'
+			);
+			instance.eventType = 'OrderActionRecord';
+		}
+	}
 }
 
 @inheritSerialization(SerializableOrderActionRecord)
@@ -523,12 +553,11 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 		instance: UISerializableOrderActionRecord
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-
 		if (instance.eventType !== 'OrderActionRecord') {
-			instance.eventType = 'OrderActionRecord';
 			console.warn(
 				'caught incorrect eventType when deserializing UISerializableOrderActionRecord'
 			);
+			instance.eventType = 'OrderActionRecord';
 		}
 
 		handleOnDeserializedPrecision(
@@ -607,7 +636,10 @@ export class UISerializableOrderRecordV2 {
 	}
 }
 
-export class UISerializableOrderActionRecordV2 {
+export class UISerializableOrderActionRecordV2
+	implements UISerializableOrderActionRecord
+{
+	@autoserializeAs(String) eventType: 'OrderActionRecord';
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) txSigIndex: number;
@@ -665,6 +697,12 @@ export class UISerializableOrderActionRecordV2 {
 		instance: UISerializableOrderActionRecordV2
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
+		if (instance.eventType !== 'OrderActionRecord') {
+			console.warn(
+				'caught incorrect eventType when deserializing UISerializableOrderActionRecordV2'
+			);
+			instance.eventType = 'OrderActionRecord';
+		}
 
 		const keysToUse: (keyof UISerializableOrderActionRecordV2)[] = [
 			'baseAssetAmountFilled',
