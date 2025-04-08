@@ -1,13 +1,33 @@
 import { EventType, WrappedEvent } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '.';
 
+// Pick the relevant fields from OrderActionRecord that we care about for getDriftEventKey. This enables us to use UISerializableOrderActionRecord and OrderActionRecord interchangeably.
+type UniqableOrderActionRecord = Pick<
+	WrappedEvent<'OrderActionRecord'>,
+	| 'eventType'
+	| 'action'
+	| 'marketIndex'
+	| 'takerOrderId'
+	| 'makerOrderId'
+	| 'txSig'
+	| 'fillRecordId'
+	| 'taker'
+	| 'maker'
+>;
+
+// Create a generic type using typescript transforms that allows any relevant order types to be used in getDriftEventKey.
+type UniqableDriftEvent =
+	| WrappedEvent<Exclude<EventType, 'OrderActionRecord'>>
+	| UniqableOrderActionRecord;
+
 /**
  * Utility method to get a unique key for any drift event.
  * @param event
  * @returns
  */
-export const getDriftEventKey = (event: WrappedEvent<EventType>) => {
-	switch (event.eventType) {
+export const getDriftEventKey = (event: UniqableDriftEvent) => {
+	const _eventType = event.eventType;
+	switch (_eventType) {
 		case 'SwapRecord': {
 			const _typedEvent = event as WrappedEvent<'SwapRecord'>;
 			return `${_typedEvent.eventType}_${_typedEvent.user.toString()}_${
@@ -107,7 +127,7 @@ export const getDriftEventKey = (event: WrappedEvent<EventType>) => {
 			return `${_typedEvent.eventType}_${_typedEvent.hash}`;
 		}
 		case 'OrderActionRecord': {
-			const _typedEvent = event as WrappedEvent<'OrderActionRecord'>;
+			const _typedEvent = event as UniqableOrderActionRecord;
 			const _actionStr = ENUM_UTILS.toStr(_typedEvent.action);
 			switch (_actionStr) {
 				case 'trigger': {
@@ -153,7 +173,7 @@ export const getDriftEventKey = (event: WrappedEvent<EventType>) => {
 			}
 		}
 		default: {
-			const _unhandledEvent: never = event.eventType;
+			const _unhandledEvent: never = _eventType;
 			throw new Error(`Unhandled event type: ${_unhandledEvent}`);
 		}
 	}

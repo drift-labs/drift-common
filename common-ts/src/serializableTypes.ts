@@ -523,6 +523,10 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 		instance: UISerializableOrderActionRecord
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
+		assert(
+			instance.eventType === 'OrderActionRecord',
+			'no eventType when deserializing UISerializableOrderActionRecord'
+		);
 
 		handleOnDeserializedPrecision(
 			data,
