@@ -2111,12 +2111,11 @@ export function transformDataApiOrderActionRecordToUISerializableOrderActionReco
 	v2Record: JsonObject
 ): UISerializableOrderActionRecord {
 	const deserializedV2Record = Deserialize(
-		v2Record,
+		{ ...v2Record, eventType: 'OrderActionRecord' },
 		UISerializableOrderActionRecordV2
 	);
 
 	const transformedRecord: UISerializableOrderActionRecord = {
-		eventType: 'OrderActionRecord',
 		...deserializedV2Record,
 	};
 
@@ -2127,12 +2126,14 @@ export function transformDataApiOrderActionRecordToSerializableOrderActionRecord
 	v2Record: JsonObject
 ): SerializableOrderActionRecord {
 	const deserializedV2Record = Deserialize(
-		v2Record,
+		{
+			...v2Record,
+			eventType: 'OrderActionRecord',
+		},
 		UISerializableOrderActionRecordV2
 	);
 
 	const transformedRecord: SerializableOrderActionRecord = {
-		eventType: 'OrderActionRecord',
 		...deserializedV2Record,
 		fillerReward: deserializedV2Record.fillerReward.val,
 		makerRebate: deserializedV2Record.makerRebate.val,
