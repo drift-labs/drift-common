@@ -40,7 +40,8 @@ const getOpenPositionData = (
 			(position) =>
 				!position.baseAssetAmount.eq(ZERO) ||
 				!position.quoteAssetAmount.eq(ZERO) ||
-				!position.lpShares.eq(ZERO)
+				!position.lpShares.eq(ZERO) ||
+				!perpMarketLookup[position.marketIndex]
 		)
 		.map((position) => {
 			const perpMarketConfig = perpMarketLookup[position.marketIndex];
@@ -160,7 +161,7 @@ const getOpenPositionData = (
 
 			return {
 				marketIndex: perpPositionWithLpSettle.marketIndex,
-				marketSymbol: perpMarketConfig.symbol,
+				marketSymbol: perpMarketConfig?.symbol ?? '',
 				direction: isShort ? 'short' : 'long',
 				notional: user
 					.getPerpPositionValue(position.marketIndex, oraclePriceData)

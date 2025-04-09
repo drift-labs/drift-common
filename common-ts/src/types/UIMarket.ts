@@ -1,4 +1,5 @@
 import {
+	DriftEnv,
 	MarketType,
 	OracleSource,
 	PerpMarketConfig,
@@ -11,14 +12,14 @@ import { ENUM_UTILS } from '../utils';
 import { Config } from '../Config';
 
 export class UIMarket {
-	// static perpMarkets = PerpMarkets['mainnet-beta'];
-	// static spotMarkets = SpotMarkets['mainnet-beta'];
-	// static perpMarketIds = PerpMarkets['mainnet-beta'].map((m) =>
-	// 	MarketId.createPerpMarket(m.marketIndex)
-	// );
-	// static spotMarketIds = SpotMarkets['mainnet-beta'].map((m) =>
-	// 	MarketId.createSpotMarket(m.marketIndex)
-	// );
+	static perpMarkets: PerpMarketConfig[] = [];
+	static spotMarkets: SpotMarketConfig[] = [];
+	static perpMarketIds = Config.perpMarketsLookup.map((m) =>
+		MarketId.createPerpMarket(m.marketIndex)
+	);
+	static spotMarketIds = Config.spotMarketsLookup.map((m) =>
+		MarketId.createSpotMarket(m.marketIndex)
+	);
 
 	readonly market: SpotMarketConfig | PerpMarketConfig;
 	readonly marketId: MarketId;
@@ -26,33 +27,34 @@ export class UIMarket {
 	constructor(readonly marketIndex: number, readonly marketType: MarketType) {
 		const marketId = new MarketId(marketIndex, marketType);
 		const markets = marketId.isPerp
-			? Config.perpMarketsLookup
-			: Config.spotMarketsLookup;
+			? UIMarket.perpMarkets
+			: UIMarket.spotMarkets;
 
 		const market = markets[marketIndex];
 
-		invariant(
-			market,
-			`Market not found for type: ${marketId.marketTypeStr}, market index: ${marketIndex}`
-		);
+		if (!market) {
+			console.error(
+				`Market not found for type: ${marketId.marketTypeStr}, market index: ${marketIndex}`
+			);
+		}
 
 		this.marketId = marketId;
 		this.market = markets[marketIndex];
 	}
 
-	// static setPerpMarkets(perpMarkets: PerpMarketConfig[]) {
-	// 	this.perpMarkets = perpMarkets;
-	// 	this.perpMarketIds = perpMarkets.map((m) =>
-	// 		MarketId.createPerpMarket(m.marketIndex)
-	// 	);
-	// }
+	static setPerpMarkets(perpMarkets: PerpMarketConfig[]) {
+		this.perpMarkets = perpMarkets;
+		this.perpMarketIds = perpMarkets.map((m) =>
+			MarketId.createPerpMarket(m.marketIndex)
+		);
+	}
 
-	// static setSpotMarkets(spotMarkets: SpotMarketConfig[]) {
-	// 	this.spotMarkets = spotMarkets;
-	// 	this.spotMarketIds = spotMarkets.map((m) =>
-	// 		MarketId.createSpotMarket(m.marketIndex)
-	// 	);
-	// }
+	static setSpotMarkets(spotMarkets: SpotMarketConfig[]) {
+		this.spotMarkets = spotMarkets;
+		this.spotMarketIds = spotMarkets.map((m) =>
+			MarketId.createSpotMarket(m.marketIndex)
+		);
+	}
 
 	static createSpotMarket(marketIndex: number) {
 		return new UIMarket(marketIndex, MarketType.SPOT);
@@ -67,6 +69,7 @@ export class UIMarket {
 	}
 
 	static checkIsPredictionMarket(marketConfig: PerpMarketConfig) {
+		if (!marketConfig) return false;
 		if (!(marketConfig as PerpMarketConfig).category) {
 			return false;
 		}
