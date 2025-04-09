@@ -345,13 +345,15 @@ function validateEventTypeOnSerialize<
 ): void {
 	if (json.eventType !== expectedEventType) {
 		// Check that eventType is not defined but incorrect because then something has gone bad
-		if (json.eventType) {
-			console.warn(
-				`eventType is ${json.eventType} but expected ${expectedEventType} when serializing ${className}`
-			);
-		}
+		assert(
+			!json.eventType,
+			`eventType is truthy but not ${expectedEventType} when serializing ${className}`
+		);
 
 		// If it's just undefined then we're happy to set it for them
+		console.warn(
+			`eventType!==${expectedEventType} when deserializing ${className}`
+		);
 		json.eventType = expectedEventType;
 	}
 }
