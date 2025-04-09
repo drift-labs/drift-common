@@ -300,6 +300,62 @@ const handleOnDeserializedPrecision = <T>(
 	});
 };
 
+/**
+ * Generic utility function to validate event types during deserialization
+ * @param instance The instance being deserialized
+ * @param expectedEventType The expected event type
+ * @param className The name of the class being deserialized (for error messages)
+ */
+function validateEventTypeOnDeserialize<
+	InstanceType extends { eventType?: string }
+>(
+	instance: InstanceType,
+	expectedEventType: InstanceType extends { eventType: infer EventType }
+		? EventType
+		: never,
+	className: string
+): void {
+	if (instance.eventType !== expectedEventType) {
+		// Check that eventType is not defined but incorrect because then something has gone bad
+		assert(
+			!instance.eventType,
+			`eventType is truthy but not ${expectedEventType} when deserializing ${className}`
+		);
+
+		// If it's just undefined then we're happy to set it for them
+		console.warn(
+			`eventType!==${expectedEventType} when deserializing ${className}`
+		);
+		instance.eventType = expectedEventType;
+	}
+}
+
+/**
+ * Generic utility function to validate and set event types during serialization
+ * @param json The JSON object being serialized
+ * @param expectedEventType The expected event type
+ * @param className The name of the class being serialized (for error messages)
+ */
+function validateEventTypeOnSerialize<
+	InstanceType extends { eventType?: string }
+>(
+	json: JsonObject,
+	expectedEventType: InstanceType extends { eventType: infer E } ? E : never,
+	className: string
+): void {
+	if (json.eventType !== expectedEventType) {
+		// Check that eventType is not defined but incorrect because then something has gone bad
+		if (json.eventType) {
+			console.warn(
+				`eventType is ${json.eventType} but expected ${expectedEventType} when serializing ${className}`
+			);
+		}
+
+		// If it's just undefined then we're happy to set it for them
+		json.eventType = expectedEventType;
+	}
+}
+
 // Serializable classes
 //// Order Records
 
@@ -392,9 +448,18 @@ export class SerializableOrderRecord implements OrderRecordEvent {
 	@autoserializeAs(SerializableOrder) order: Order;
 
 	static onDeserialized(data: JsonObject, instance: SerializableOrderRecord) {
-		assert(
-			instance.eventType === 'OrderRecord',
-			'eventType!==OrderRecord when deserializing SerializableOrderRecord'
+		validateEventTypeOnDeserialize(
+			instance,
+			'OrderRecord',
+			'SerializableOrderRecord'
+		);
+	}
+
+	static onSerialized(json: JsonObject) {
+		validateEventTypeOnSerialize<SerializableOrderRecord>(
+			json,
+			'OrderRecord',
+			'SerializableOrderRecord'
 		);
 	}
 }
@@ -405,9 +470,18 @@ export class UISerializableOrderRecord extends SerializableOrderRecord {
 	@autoserializeAs(UISerializableOrder) order: UISerializableOrder;
 
 	static onDeserialized(data: JsonObject, instance: UISerializableOrderRecord) {
-		assert(
-			instance.eventType === 'OrderRecord',
-			'eventType!==OrderRecord when deserializing UISerializableOrderRecord'
+		validateEventTypeOnDeserialize(
+			instance,
+			'OrderRecord',
+			'UISerializableOrderRecord'
+		);
+	}
+
+	static onSerialized(json: JsonObject) {
+		validateEventTypeOnSerialize<UISerializableOrderRecord>(
+			json,
+			'OrderRecord',
+			'UISerializableOrderRecord'
 		);
 	}
 }
@@ -471,9 +545,18 @@ export class SerializableOrderActionRecord
 		data: JsonObject,
 		instance: SerializableOrderActionRecord
 	) {
-		assert(
-			instance.eventType === 'OrderActionRecord',
-			'eventType!==OrderActionRecord when deserializing SerializableOrderActionRecord'
+		validateEventTypeOnDeserialize(
+			instance,
+			'OrderActionRecord',
+			'SerializableOrderActionRecord'
+		);
+	}
+
+	static onSerialized(json: JsonObject) {
+		validateEventTypeOnSerialize<SerializableOrderActionRecord>(
+			json,
+			'OrderActionRecord',
+			'SerializableOrderActionRecord'
 		);
 	}
 }
@@ -547,9 +630,11 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 		instance: UISerializableOrderActionRecord
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		assert(
-			instance.eventType === 'OrderActionRecord',
-			'eventType!==OrderActionRecord when deserializing UISerializableOrderActionRecord'
+
+		validateEventTypeOnDeserialize<UISerializableOrderActionRecord>(
+			instance,
+			'OrderActionRecord',
+			'UISerializableOrderActionRecord'
 		);
 
 		handleOnDeserializedPrecision(
@@ -563,6 +648,14 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 				'makerOrderBaseAssetAmount',
 				'makerOrderCumulativeBaseAssetAmountFilled',
 			]
+		);
+	}
+
+	static onSerialized(json: JsonObject) {
+		validateEventTypeOnSerialize<UISerializableOrderActionRecord>(
+			json,
+			'OrderActionRecord',
+			'UISerializableOrderActionRecord'
 		);
 	}
 }
@@ -689,9 +782,11 @@ export class UISerializableOrderActionRecordV2
 		instance: UISerializableOrderActionRecordV2
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
-		assert(
-			instance.eventType === 'OrderActionRecord',
-			'eventType!==OrderActionRecord when deserializing UISerializableOrderActionRecordV2'
+
+		validateEventTypeOnDeserialize<UISerializableOrderActionRecordV2>(
+			instance,
+			'OrderActionRecord',
+			'UISerializableOrderActionRecordV2'
 		);
 
 		const keysToUse: (keyof UISerializableOrderActionRecordV2)[] = [
@@ -707,6 +802,14 @@ export class UISerializableOrderActionRecordV2
 			instance,
 			getPrecisionToUse(instance.marketType, instance.marketIndex),
 			keysToUse
+		);
+	}
+
+	static onSerialized(json: JsonObject) {
+		validateEventTypeOnSerialize<UISerializableOrderActionRecordV2>(
+			json,
+			'OrderActionRecord',
+			'UISerializableOrderActionRecordV2'
 		);
 	}
 }
@@ -1856,8 +1959,7 @@ export class SerializableInsuranceFundStakeRecord
 	@autoserializeAs(Number) marketIndex: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	insuranceVaultAmountBefore: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	ifSharesBefore: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) ifSharesBefore: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) userIfSharesBefore: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) totalIfSharesBefore: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ifSharesAfter: BN;
