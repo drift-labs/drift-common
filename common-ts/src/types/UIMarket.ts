@@ -1,12 +1,10 @@
 import {
-	DriftEnv,
 	MarketType,
 	OracleSource,
 	PerpMarketConfig,
 	SpotMarketConfig,
 } from '@drift-labs/sdk';
 import { MarketId } from './MarketId';
-import invariant from 'tiny-invariant';
 import { USDC_SPOT_MARKET_INDEX } from '../constants';
 import { ENUM_UTILS } from '../utils';
 import { Config } from '../Config';
