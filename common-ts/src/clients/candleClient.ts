@@ -26,6 +26,7 @@ import { StrictEventEmitter } from '../utils/StrictEventEmitter';
  * - We want to avoid using high cardinality parameters in the fetch because otherwise we will miss the cache in the infra.
  * 	- A concrete example of this is that we don't attach a startTs parameter when we are fetching candles within recent history (past 1000 candles)
  * - We cache the recent candles in memory so that any subsequent fetches within recent history after the first one will be served from cache.
+ * 	- e.g. moving back to a further timeframe on TradingView - the required candles could potentially be in the cache, so we don't need to refetch them.
  *
  * ## Subscribing to Candles:
  * - We subscribe to a websocket endpoint for a given market and resolution.
