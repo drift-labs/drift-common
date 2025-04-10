@@ -323,9 +323,6 @@ function validateEventTypeOnDeserialize<
 		);
 
 		// If it's just undefined then we're happy to set it for them
-		console.warn(
-			`eventType!==${expectedEventType} when deserializing ${className}`
-		);
 		instance.eventType = expectedEventType;
 	}
 }
@@ -351,9 +348,6 @@ function validateEventTypeOnSerialize<
 		);
 
 		// If it's just undefined then we're happy to set it for them
-		console.warn(
-			`eventType!==${expectedEventType} when deserializing ${className}`
-		);
 		json.eventType = expectedEventType;
 	}
 }
