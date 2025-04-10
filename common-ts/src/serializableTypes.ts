@@ -300,6 +300,58 @@ const handleOnDeserializedPrecision = <T>(
 	});
 };
 
+/**
+ * Generic utility function to validate event types during deserialization
+ * @param instance The instance being deserialized
+ * @param expectedEventType The expected event type
+ * @param className The name of the class being deserialized (for error messages)
+ */
+function validateEventTypeOnDeserialize<
+	InstanceType extends { eventType?: string }
+>(
+	instance: InstanceType,
+	expectedEventType: InstanceType extends { eventType: infer EventType }
+		? EventType
+		: never,
+	className: string
+): void {
+	if (instance.eventType !== expectedEventType) {
+		// Check that eventType is not defined but incorrect because then something has gone bad
+		assert(
+			!instance.eventType,
+			`eventType is truthy but not ${expectedEventType} when deserializing ${className}`
+		);
+
+		// If it's just undefined then we're happy to set it for them
+		instance.eventType = expectedEventType;
+	}
+}
+
+/**
+ * Generic utility function to validate and set event types during serialization
+ * @param json The JSON object being serialized
+ * @param expectedEventType The expected event type
+ * @param className The name of the class being serialized (for error messages)
+ */
+function validateEventTypeOnSerialize<
+	InstanceType extends { eventType?: string }
+>(
+	json: JsonObject,
+	expectedEventType: InstanceType extends { eventType: infer E } ? E : never,
+	className: string
+): void {
+	if (json.eventType !== expectedEventType) {
+		// Check that eventType is not defined but incorrect because then something has gone bad
+		assert(
+			!json.eventType,
+			`eventType is truthy but not ${expectedEventType} when serializing ${className}`
+		);
+
+		// If it's just undefined then we're happy to set it for them
+		json.eventType = expectedEventType;
+	}
+}
+
 // Serializable classes
 //// Order Records
 
@@ -383,25 +435,57 @@ export class UISerializableOrder extends SerializableOrder {
 
 // @ts-ignore
 export class SerializableOrderRecord implements OrderRecordEvent {
-	eventType: 'OrderRecord';
+	@autoserializeAs(String) eventType: 'OrderRecord';
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
 	@autoserializeAs(SerializableOrder) order: Order;
+
+	static onDeserialized(data: JsonObject, instance: SerializableOrderRecord) {
+		validateEventTypeOnDeserialize(
+			instance,
+			'OrderRecord',
+			'SerializableOrderRecord'
+		);
+	}
+
+	static onSerialized(json: JsonObject) {
+		validateEventTypeOnSerialize<SerializableOrderRecord>(
+			json,
+			'OrderRecord',
+			'SerializableOrderRecord'
+		);
+	}
 }
 
 @inheritSerialization(SerializableOrderRecord)
 export class UISerializableOrderRecord extends SerializableOrderRecord {
 	//@ts-ignore
 	@autoserializeAs(UISerializableOrder) order: UISerializableOrder;
+
+	static onDeserialized(data: JsonObject, instance: UISerializableOrderRecord) {
+		validateEventTypeOnDeserialize(
+			instance,
+			'OrderRecord',
+			'UISerializableOrderRecord'
+		);
+	}
+
+	static onSerialized(json: JsonObject) {
+		validateEventTypeOnSerialize<UISerializableOrderRecord>(
+			json,
+			'OrderRecord',
+			'UISerializableOrderRecord'
+		);
+	}
 }
 
 export class SerializableOrderActionRecord
 	implements WrappedEvent<'OrderActionRecord'>
 {
-	eventType: 'OrderActionRecord';
+	@autoserializeAs(String) eventType: 'OrderActionRecord';
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) slot: number;
 	@autoserializeAs(Number) txSigIndex: number;
@@ -452,6 +536,25 @@ export class SerializableOrderActionRecord
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	spotFulfillmentMethodFee: BN | null;
 	@autoserializeAs(Number) bitFlags: number;
+
+	static onDeserialized(
+		data: JsonObject,
+		instance: SerializableOrderActionRecord
+	) {
+		validateEventTypeOnDeserialize(
+			instance,
+			'OrderActionRecord',
+			'SerializableOrderActionRecord'
+		);
+	}
+
+	static onSerialized(json: JsonObject) {
+		validateEventTypeOnSerialize<SerializableOrderActionRecord>(
+			json,
+			'OrderActionRecord',
+			'SerializableOrderActionRecord'
+		);
+	}
 }
 
 @inheritSerialization(SerializableOrderActionRecord)
@@ -524,6 +627,12 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
 
+		validateEventTypeOnDeserialize<UISerializableOrderActionRecord>(
+			instance,
+			'OrderActionRecord',
+			'UISerializableOrderActionRecord'
+		);
+
 		handleOnDeserializedPrecision(
 			data,
 			instance,
@@ -535,6 +644,14 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 				'makerOrderBaseAssetAmount',
 				'makerOrderCumulativeBaseAssetAmountFilled',
 			]
+		);
+	}
+
+	static onSerialized(json: JsonObject) {
+		validateEventTypeOnSerialize<UISerializableOrderActionRecord>(
+			json,
+			'OrderActionRecord',
+			'UISerializableOrderActionRecord'
 		);
 	}
 }
@@ -600,7 +717,10 @@ export class UISerializableOrderRecordV2 {
 	}
 }
 
-export class UISerializableOrderActionRecordV2 {
+export class UISerializableOrderActionRecordV2
+	implements UISerializableOrderActionRecord
+{
+	@autoserializeAs(String) eventType: 'OrderActionRecord';
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) txSigIndex: number;
@@ -659,6 +779,12 @@ export class UISerializableOrderActionRecordV2 {
 	) {
 		assert(Config.initialized, 'Common Config Not Initialised');
 
+		validateEventTypeOnDeserialize<UISerializableOrderActionRecordV2>(
+			instance,
+			'OrderActionRecord',
+			'UISerializableOrderActionRecordV2'
+		);
+
 		const keysToUse: (keyof UISerializableOrderActionRecordV2)[] = [
 			'baseAssetAmountFilled',
 			'takerOrderBaseAssetAmount',
@@ -672,6 +798,14 @@ export class UISerializableOrderActionRecordV2 {
 			instance,
 			getPrecisionToUse(instance.marketType, instance.marketIndex),
 			keysToUse
+		);
+	}
+
+	static onSerialized(json: JsonObject) {
+		validateEventTypeOnSerialize<UISerializableOrderActionRecordV2>(
+			json,
+			'OrderActionRecord',
+			'UISerializableOrderActionRecordV2'
 		);
 	}
 }
@@ -1821,8 +1955,7 @@ export class SerializableInsuranceFundStakeRecord
 	@autoserializeAs(Number) marketIndex: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	insuranceVaultAmountBefore: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	ifSharesBefore: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) ifSharesBefore: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) userIfSharesBefore: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) totalIfSharesBefore: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ifSharesAfter: BN;
@@ -2076,12 +2209,11 @@ export function transformDataApiOrderActionRecordToUISerializableOrderActionReco
 	v2Record: JsonObject
 ): UISerializableOrderActionRecord {
 	const deserializedV2Record = Deserialize(
-		v2Record,
+		{ ...v2Record, eventType: 'OrderActionRecord' },
 		UISerializableOrderActionRecordV2
 	);
 
 	const transformedRecord: UISerializableOrderActionRecord = {
-		eventType: 'OrderActionRecord',
 		...deserializedV2Record,
 	};
 
@@ -2092,12 +2224,14 @@ export function transformDataApiOrderActionRecordToSerializableOrderActionRecord
 	v2Record: JsonObject
 ): SerializableOrderActionRecord {
 	const deserializedV2Record = Deserialize(
-		v2Record,
+		{
+			...v2Record,
+			eventType: 'OrderActionRecord',
+		},
 		UISerializableOrderActionRecordV2
 	);
 
 	const transformedRecord: SerializableOrderActionRecord = {
-		eventType: 'OrderActionRecord',
 		...deserializedV2Record,
 		fillerReward: deserializedV2Record.fillerReward.val,
 		makerRebate: deserializedV2Record.makerRebate.val,
