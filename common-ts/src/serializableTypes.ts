@@ -312,7 +312,7 @@ function validateEventTypeOnDeserialize<
 	instance: InstanceType,
 	expectedEventType: InstanceType extends { eventType: infer EventType }
 		? EventType
-		: never,
+		: string,
 	className: string
 ): void {
 	if (instance.eventType !== expectedEventType) {
@@ -337,7 +337,7 @@ function validateEventTypeOnSerialize<
 	InstanceType extends { eventType?: string }
 >(
 	json: JsonObject,
-	expectedEventType: InstanceType extends { eventType: infer E } ? E : never,
+	expectedEventType: InstanceType extends { eventType: infer E } ? E : string,
 	className: string
 ): void {
 	if (json.eventType !== expectedEventType) {

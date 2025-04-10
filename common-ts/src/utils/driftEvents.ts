@@ -16,7 +16,7 @@ type UniqableOrderActionRecord = Pick<
 >;
 
 // Create a generic type using typescript transforms that allows any relevant order types to be used in getDriftEventKey.
-type UniqableDriftEvent =
+export type UniqableDriftEvent =
 	| WrappedEvent<Exclude<EventType, 'OrderActionRecord'>>
 	| UniqableOrderActionRecord;
 
