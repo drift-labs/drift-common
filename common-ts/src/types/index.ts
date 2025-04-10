@@ -19,6 +19,7 @@ export * from './MarketId';
 export * from './UIMarket';
 export * from './Superstake';
 export * from './remote-configs';
+export * from './UIEnv';
 
 // Opaque type pattern
 export type Opaque<K, T> = T & { __TYPE__: K };
