@@ -312,7 +312,7 @@ function validateEventTypeOnDeserialize<
 	instance: InstanceType,
 	expectedEventType: InstanceType extends { eventType: infer EventType }
 		? EventType
-		: string,
+		: never,
 	className: string
 ): void {
 	if (instance.eventType !== expectedEventType) {
@@ -323,7 +323,7 @@ function validateEventTypeOnDeserialize<
 		);
 
 		// If it's just undefined then we're happy to set it for them
-		instance.eventType = expectedEventType;
+		instance.eventType = expectedEventType as string; // added 'as string' to accommodate older typescript version errors
 	}
 }
 
@@ -337,7 +337,7 @@ function validateEventTypeOnSerialize<
 	InstanceType extends { eventType?: string }
 >(
 	json: JsonObject,
-	expectedEventType: InstanceType extends { eventType: infer E } ? E : string,
+	expectedEventType: InstanceType extends { eventType: infer E } ? E : never,
 	className: string
 ): void {
 	if (json.eventType !== expectedEventType) {
@@ -348,7 +348,7 @@ function validateEventTypeOnSerialize<
 		);
 
 		// If it's just undefined then we're happy to set it for them
-		json.eventType = expectedEventType;
+		json.eventType = expectedEventType as string; // added 'as string' to accommodate older typescript version errors
 	}
 }
 
