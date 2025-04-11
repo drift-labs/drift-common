@@ -2,6 +2,31 @@ import { MarketId } from 'src/types';
 
 const FEE_ENDPOINT = 'https://dlob.drift.trade/batchPriorityFees';
 
+export const getPriorityFeeLevelFromPercentile = (percentile: number) => {
+	if (percentile < 0 || percentile > 100) {
+		throw new Error('Percentile must be between 0 and 100');
+	}
+
+	if (percentile === 0) {
+		return 'min';
+	}
+
+	if (percentile <= 25) {
+		return 'low';
+	}
+	if (percentile <= 50) {
+		return 'medium';
+	}
+	if (percentile <= 75) {
+		return 'high';
+	}
+	if (percentile <= 95) {
+		return 'veryHigh';
+	}
+
+	return 'unsafeMax';
+};
+
 /**
  * Helius fee buckets are as follows:
  *
