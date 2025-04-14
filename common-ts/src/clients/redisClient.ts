@@ -435,6 +435,13 @@ export class RedisClient {
 
 		return parsedValues;
 	}
+
+	@isRead
+	async smembers(key: string) {
+		const resp = await this.client.smembers(key);
+		return resp;
+	}
+
 	@isRead
 	async zRange(key: string, min: number, max: number) {
 		const resp = await this.client.zrange(key, min, max);
