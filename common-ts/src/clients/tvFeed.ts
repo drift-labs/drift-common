@@ -2,7 +2,6 @@ import { CandleType, MarketId } from '../types';
 import {
 	CandleResolution,
 	DriftClient,
-	DriftEnv,
 	PerpMarketConfig,
 	PerpMarkets,
 	PRICE_PRECISION_EXP,
@@ -12,6 +11,7 @@ import {
 import { CandleClient, JsonCandle } from './candleClient';
 import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
 import { CANDLE_UTILS } from '../utils/candleUtils';
+import { UIEnv } from '../types/UIEnv';
 
 const DRIFT_V2_START_TS = 1668470400; // 15th November 2022 ... 2022-11-15T00:00:00.000Z
 
@@ -97,7 +97,7 @@ type TVBar = {
 
 const findMarketBySymbol = (
 	symbol: string,
-	env: DriftEnv
+	uiEnv: UIEnv
 ):
 	| {
 			type: 'perp';
@@ -107,12 +107,15 @@ const findMarketBySymbol = (
 			type: 'spot';
 			config: SpotMarketConfig;
 	  } => {
+	const sdkEnv = uiEnv.sdkEnv;
+
 	const perpMarketConfigs =
-		env === 'mainnet-beta'
+		sdkEnv === 'mainnet-beta'
 			? PerpMarkets['mainnet-beta']
 			: PerpMarkets['devnet'];
+
 	const spotMarketConfigs =
-		env === 'mainnet-beta'
+		sdkEnv === 'mainnet-beta'
 			? SpotMarkets['mainnet-beta']
 			: SpotMarkets['devnet'];
 
@@ -193,7 +196,7 @@ const SpotMarketConfigToTVMarketInfo = (
 };
 
 export class DriftTvFeed {
-	private env: DriftEnv;
+	private env: UIEnv;
 	private candleType: CandleType;
 	private candleClient: CandleClient;
 	private driftClient: DriftClient;
@@ -202,7 +205,7 @@ export class DriftTvFeed {
 		current: undefined,
 	};
 
-	constructor(env: DriftEnv, candleType: CandleType, driftClient: DriftClient) {
+	constructor(env: UIEnv, candleType: CandleType, driftClient: DriftClient) {
 		this.env = env;
 		this.candleType = candleType;
 		this.candleClient = new CandleClient();
@@ -220,12 +223,12 @@ export class DriftTvFeed {
 		>[] = [];
 
 		const CurrentPerpMarkets =
-			this.env === 'mainnet-beta'
+			this.env.sdkEnv === 'mainnet-beta'
 				? PerpMarkets['mainnet-beta']
 				: PerpMarkets['devnet'];
 
 		const CurrentSpotMarkets =
-			this.env === 'mainnet-beta'
+			this.env.sdkEnv === 'mainnet-beta'
 				? SpotMarkets['mainnet-beta']
 				: SpotMarkets['devnet'];
 
