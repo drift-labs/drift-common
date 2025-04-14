@@ -134,11 +134,20 @@ export const getDriftEventKey = (event: UniqableDriftEvent) => {
 					return `${_typedEvent.eventType}_${_actionStr}_${_typedEvent.marketIndex}_${_typedEvent.takerOrderId}_${_typedEvent.makerOrderId}_${_typedEvent.txSig}`;
 				}
 				case 'fill': {
-					return `${_typedEvent.eventType}_${_actionStr}_${
-						_typedEvent.marketIndex
-					}_${_typedEvent.takerOrderId}_${
-						_typedEvent.makerOrderId
-					}_${_typedEvent.fillRecordId.toString()}`;
+					const orderId = _typedEvent.taker
+						? _typedEvent.takerOrderId
+						: _typedEvent.makerOrderId;
+					const pubkey = _typedEvent.taker
+						? _typedEvent.taker
+						: _typedEvent.maker;
+
+					return `${
+						_typedEvent.eventType
+					}_${pubkey.toString()}_${_typedEvent.marketIndex.toString()}_${orderId.toString()}_${
+						_typedEvent.fillRecordId
+					}_${ENUM_UTILS.toStr(
+						_typedEvent.action
+					)}_${_typedEvent.txSig.toString()}`;
 				}
 				case 'expire': {
 					return `${_typedEvent.eventType}_${_actionStr}_${
