@@ -11,6 +11,7 @@ import { CANDLE_UTILS } from '../utils/candleUtils';
 import { StrictEventEmitter } from '../utils/StrictEventEmitter';
 import { EnvironmentConstants } from '../EnvironmentConstants';
 import { UIEnv } from '../types/UIEnv';
+import { assert } from '../utils/assert';
 
 /**
  * # CANDLE CLIENT HIGH LEVEL EXPLANATION:
@@ -508,7 +509,13 @@ class CandleFetcher {
 	};
 
 	/**
-	 * Fetch a batch of historical candles as part of the pagination process.
+	 * Fetch historical candles with pagination, backwards from the toTs value given in the config.
+	 *
+	 * This method works by looping backwards from the LATEST (toTs) timestamp to the OLDEST (fromTs) timestamp.
+	 *
+	 * Things to note:
+	 * - There is a limit to how many candles can be fetched in a single request (see CANDLE_FETCH_LIMIT)
+	 * - We have implemented this to minimise the cardinality in the API request because that helps with caching
 	 */
 	private fetchHistoricalCandlesBatch = async (
 		candlesRemainingToFetch: number,
@@ -565,7 +572,7 @@ class CandleFetcher {
 			};
 		}
 
-		const lastCandle = fetchedCandles[fetchedCandles.length - 1];
+		const lastCandle = fetchedCandles[fetchedCandles.length - 1]; // This is the LATEST candle .. (they are sorted ascending by time right now)
 
 		const hitPageSizeCutoff = fetchedCandles.length === CANDLE_FETCH_LIMIT;
 		const hitEndTsCutoff = lastCandle.ts < this.config.fromTs;
@@ -578,7 +585,7 @@ class CandleFetcher {
 		if (requiresAnotherFetch) {
 			// If we need to do another fetch, trim any candles with the same timestamp as the last candle in the previous fetch, because that is the pointer for our next fetch and we don't want to duplicate candles
 			candlesToAdd = candlesToAdd.filter((candle) => {
-				return candle.ts > lastCandle.ts;
+				return candle.ts < lastCandle.ts;
 			});
 
 			nextStartTs = lastCandle.ts; // If we are doing another loop, then the trimmed candles have all the candles except for ones with the last candle's timestamp. For the next loop we want to fetch from that timestamp;
@@ -664,7 +671,25 @@ export class CandleClient {
 		return;
 	};
 
+	/**
+	 *
+	 * @param config {
+	 *
+	 *   env: UIEnv;
+	 *
+	 *   marketId: MarketId;
+	 *
+	 *   resolution: CandleResolution;
+	 *
+	 *   fromTs: number;      // Seconds :: This should be the START (oldest) timestamp of the candles to fetch
+	 *
+	 *   toTs: number;        // Seconds :: This should be the END (newest) timestamp of the candles to fetch
+	 *
+	 * }
+	 * @returns
+	 */
 	public fetch = async (config: CandleFetchConfig): Promise<JsonCandle[]> => {
+		assert(config.fromTs < config.toTs, 'fromTs must be less than toTs');
 		const candleFetcher = new CandleFetcher(config);
 		const candles = await candleFetcher.fetchCandles();
 		return candles;
