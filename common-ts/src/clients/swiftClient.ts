@@ -128,7 +128,7 @@ export class SwiftClient {
 			message,
 			signature: signature.toString('base64'),
 			signing_authority: signingAuthority?.toBase58() ?? '',
-			taker_pubkey: takerPubkey.toBase58(),
+			taker_authority: takerPubkey.toBase58(),
 		});
 
 		if (response.status !== 200) {
