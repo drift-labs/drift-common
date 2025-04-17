@@ -489,13 +489,11 @@ class CandleFetcher {
 			if (result.requiresAnotherFetch) {
 				currentStartTs = result.nextStartTs;
 			} else if (candlesRemainingToFetch > 0) {
-				throw new Error(
-					`Candles remaining to fetch is greater than 0 but we didn't expect another fetch to be necessary`
+				// This means we have fetched all the candles available for this time range and we can stop fetching
+				console.debug(
+					`candlesv2:: Asked to fetch more candles but no more remaining`
 				);
-			} else if (candlesRemainingToFetch !== 0) {
-				throw new Error(
-					`Expect candlesRemainingToFetch to be exactly 0 if another fetch is not necessary`
-				);
+				candlesRemainingToFetch = 0;
 			}
 
 			loopCount++;

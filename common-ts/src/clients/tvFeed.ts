@@ -390,13 +390,13 @@ export class DriftTvFeed {
 		) => void,
 		_onError
 	) {
-		console.debug(`candlesv2:: symbolInfo`, symbolInfo);
+		console.debug(
+			`candlesv2:: getBars::${symbolInfo.name},resolution:${resolution},from:${periodParams.from},to:${periodParams.to}`
+		);
 
 		// Can automatically return no data if the requested range is before the Drift V2 launch
-		if (
-			periodParams.to < DRIFT_V2_START_TS ||
-			periodParams.from < DRIFT_V2_START_TS
-		) {
+		if (periodParams.to < DRIFT_V2_START_TS) {
+			console.debug(`candlesv2:: skipping_request_before_v2_launch`);
 			onResult([], {
 				noData: true,
 			});
