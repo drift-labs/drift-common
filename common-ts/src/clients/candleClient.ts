@@ -688,6 +688,17 @@ export class CandleClient {
 	 */
 	public fetch = async (config: CandleFetchConfig): Promise<JsonCandle[]> => {
 		assert(config.fromTs < config.toTs, 'fromTs must be less than toTs');
+		const nowSeconds = Math.floor(Date.now() / 1000);
+		assert(
+			config.fromTs <= nowSeconds && config.toTs <= nowSeconds,
+			`fromTs and toTs cannot be in the future (Requested fromTs: ${new Date(
+				config.fromTs * 1000
+			).toISOString()} and toTs: ${new Date(
+				config.toTs * 1000
+			).toISOString()}, Current time: ${new Date(
+				nowSeconds * 1000
+			).toISOString()})`
+		);
 		const candleFetcher = new CandleFetcher(config);
 		const candles = await candleFetcher.fetchCandles();
 		return candles;
