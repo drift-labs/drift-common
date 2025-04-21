@@ -655,7 +655,7 @@ const getPriceObject = ({
 	markPrice: BN;
 	direction: PositionDirection;
 }) => {
-	let best;
+	let best: BN;
 
 	const nonZeroOptions = [oraclePrice, bestOffer, markPrice].filter(
 		(price) => price !== undefined && price?.gt(ZERO)
@@ -664,12 +664,12 @@ const getPriceObject = ({
 	if (nonZeroOptions.length === 0) {
 		console.error('Unable to create valid auction params');
 		return {
-			oraclePrice: ZERO,
+			oracle: ZERO,
 			bestOffer: ZERO,
-			entryPrice: ZERO,
-			worstPrice: ZERO,
-			markPrice: ZERO,
-			direction,
+			entry: ZERO,
+			best: ZERO,
+			worst: ZERO,
+			mark: ZERO,
 		};
 	}
 
