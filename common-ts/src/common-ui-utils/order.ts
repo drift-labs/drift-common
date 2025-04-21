@@ -7,6 +7,8 @@ import {
 import { UI_ORDER_TYPES } from '../constants/orders';
 import { UISerializableOrder } from '../serializableTypes';
 import { matchEnum } from '../utils';
+import { AuctionParams } from 'src/types';
+import { EMPTY_AUCTION_PARAMS } from 'src';
 
 export const getOrderLabelFromOrderDetails = (
 	orderDetails: Pick<
@@ -125,7 +127,17 @@ const getLimitPriceFromOracleOffset = (
 	return oraclePrice.add(order.oraclePriceOffset);
 };
 
+function isAuctionEmpty(auctionParams: AuctionParams) {
+	return (
+		auctionParams.auctionStartPrice ===
+			EMPTY_AUCTION_PARAMS.auctionStartPrice &&
+		auctionParams.auctionEndPrice === EMPTY_AUCTION_PARAMS.auctionEndPrice &&
+		auctionParams.auctionDuration === EMPTY_AUCTION_PARAMS.auctionDuration
+	);
+}
+
 export const ORDER_COMMON_UTILS = {
 	getOrderLabelFromOrderDetails,
 	getLimitPriceFromOracleOffset,
+	isAuctionEmpty,
 };
