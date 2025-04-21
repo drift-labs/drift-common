@@ -7,8 +7,8 @@ import {
 import { UI_ORDER_TYPES } from '../constants/orders';
 import { UISerializableOrder } from '../serializableTypes';
 import { matchEnum } from '../utils';
-import { AuctionParams } from 'src/types';
-import { EMPTY_AUCTION_PARAMS } from 'src';
+import { AuctionParams } from '../types';
+import { EMPTY_AUCTION_PARAMS } from '..';
 
 export const getOrderLabelFromOrderDetails = (
 	orderDetails: Pick<
