@@ -10,8 +10,8 @@ import { ENUM_UTILS } from '../utils';
 import { Config } from '../Config';
 
 export class UIMarket {
-	static perpMarkets: PerpMarketConfig[] = [];
-	static spotMarkets: SpotMarketConfig[] = [];
+	static perpMarkets: PerpMarketConfig[] = Config.perpMarketsLookup;
+	static spotMarkets: SpotMarketConfig[] = Config.spotMarketsLookup;
 	static perpMarketIds = Config.perpMarketsLookup.map((m) =>
 		MarketId.createPerpMarket(m.marketIndex)
 	);
