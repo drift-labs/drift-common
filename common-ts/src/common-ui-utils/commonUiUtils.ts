@@ -355,6 +355,10 @@ const getMarketAuctionParams = ({
 	direction: PositionDirection;
 	startPriceFromSettings: BN;
 	endPriceFromSettings: BN;
+	/**
+	 * Limit price is the oracle limit price - market orders use the oracle order type under the hood on Drift UI
+	 * So oracle limit price is the oracle price + oracle offset
+	 */
 	limitPrice: BN;
 	duration: number;
 	auctionStartPriceOffset: number;
