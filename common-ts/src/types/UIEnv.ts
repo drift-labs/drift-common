@@ -11,11 +11,11 @@ export class UIEnv {
 	constructor(readonly env: DriftEnv | 'staging') {}
 
 	static createMainnet() {
-		return new UIEnv('mainnet' as DriftEnv);
+		return new UIEnv('mainnet-beta');
 	}
 
 	static createDevnet() {
-		return new UIEnv('devnet' as DriftEnv);
+		return new UIEnv('devnet');
 	}
 
 	static createStaging() {
@@ -27,11 +27,11 @@ export class UIEnv {
 	}
 
 	get isMainnet() {
-		return this.env === ('mainnet' as DriftEnv);
+		return this.env === 'mainnet-beta';
 	}
 
 	get isDevnet() {
-		return this.env === ('devnet' as DriftEnv);
+		return this.env === 'devnet';
 	}
 
 	get isStaging() {
