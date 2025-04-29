@@ -1,7 +1,7 @@
 import { PerpMarketConfig, SpotMarketConfig } from '@drift-labs/sdk';
 import { MarketId } from './MarketId';
 import { EXPONENT_POOL_ID, JLP_POOL_ID, MAIN_POOL_ID } from '../constants/misc';
-import { Opaque } from '@drift/common';
+import { Opaque } from '..';
 
 type CommonMarketConfig = Pick<
 	PerpMarketConfig,
