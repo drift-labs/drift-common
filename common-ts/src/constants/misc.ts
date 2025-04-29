@@ -4,6 +4,7 @@ export const USDC_SPOT_MARKET_INDEX = 0;
 
 export const MAIN_POOL_ID = 0;
 export const JLP_POOL_ID = 1;
+export const EXPONENT_POOL_ID = 3;
 
 /**
  * Equal to 0.01
