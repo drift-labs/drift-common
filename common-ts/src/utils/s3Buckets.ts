@@ -33,7 +33,8 @@ export type DownloadRecordType =
 	| 'settle-pnl-records'
 	| 'lp-records'
 	| 'if-stake-records'
-	| 'swap-records';
+	| 'swap-records'
+	| 'rewards';
 
 export type DownloadPeriod =
 	| 'week'
