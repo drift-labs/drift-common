@@ -39,21 +39,21 @@ export type BaseAssetDisplaySymbol = Opaque<string, 'BaseAssetDisplaySymbol'>;
  *
  * - 1KWEN-PERP => 1KWEN-PERP
  * - JitoSOL-3 => JitoSOL
- * - PT-fragSOL-15JUN25-3 => PT-fragSOL
+ * - PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25
  *
  * ## BaseAssetDisplaySymbol:
  * This is the symbol we use to communicate "what asset they are holding". For SPOT markets it should be the same as the MarketDisplaySymbol, but for PERP markets it may be different, for example we show open interest denominated in "1KWEN", while the market is "1KWEN-PERP".
  *
  * - 1KWEN-PERP => 1KWEN
  * - JitoSOL-3 => JitoSOL
- * - PT-fragSOL-15JUN25-3 => PT-fragSOL
+ * - PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25
  *
  * ## BaseAssetSymbol:
  * This is the symbol for the underlying asset for a market. I don't believe we will display this anywhere but we use these for example when looking up the market icon to use.
  *
  * - 1KWEN-PERP => WEN
  * - JitoSOL-3 => JitoSOL
- * - PT-fragSOL-15JUN25-3 => PT-fragSOL (note: PT-fragSOL has an icon different to regular fragSOL, otherwise we would use 'fragSOL' for the base asset symbol)
+ * - PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25 (note: PT-fragSOL has an icon different to regular fragSOL, otherwise we would use 'fragSOL' for the base asset symbol)
  */
 
 export class UIMarketConfig {
@@ -160,8 +160,8 @@ export class UISpotMarketConfig
 			case EXPONENT_POOL_ID: {
 				/*
 					Example market symbol conversions:
-					PT-fragSOL-15JUN25-3 => PT-fragSOL
-					PT-kySOL-10JUL25-3 => PT-kySOL
+					PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25
+					PT-kySOL-10JUL25-3 => PT-kySOL-10JUL25
 					JitoSOL-3 => JitoSOL
 					JTO-3 => JTO
 				*/
@@ -169,7 +169,7 @@ export class UISpotMarketConfig
 					this.baseMarketConfig.symbol.startsWith('PT-')
 						? this.baseMarketConfig.symbol.slice(
 								0,
-								this.baseMarketConfig.symbol.indexOf('-', 3)
+								this.baseMarketConfig.symbol.lastIndexOf('-')
 						  )
 						: this.baseMarketConfig.symbol.split('-')[0]
 				) as MarketDisplaySymbol;
