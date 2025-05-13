@@ -1,9 +1,20 @@
-import { BN, QUOTE_PRECISION, AMM_RESERVE_PRECISION } from '@drift-labs/sdk';
+import {
+	BN,
+	QUOTE_PRECISION,
+	AMM_RESERVE_PRECISION,
+	BigNum,
+} from '@drift-labs/sdk';
 
 /**
  * Utilities to convert numbers and BigNumbers (BN) to different formats for the UI.
  */
-class NumLibCommon {
+export class NumLib {
+	private static locale = 'en';
+
+	static setLocale = (locale: string) => {
+		this.locale = locale;
+	};
+
 	/**
 	 * Converts a Big Number to its regular number representation.
 	 *
@@ -46,14 +57,32 @@ class NumLibCommon {
 			return parseFloat(num.toPrecision(6));
 		},
 		toTradePrecisionString: (num: number, toLocaleString?: boolean) => {
-			const tradePrecisionString = num.toPrecision(6);
+			if (num === 0)
+				return Number(0).toLocaleString(this.locale, {
+					minimumSignificantDigits: 6,
+					maximumSignificantDigits: 6,
+				});
+
+			// slice numbers which have leading 0s so that numbers are only 6 digits long.
+			//// trimAmount will be 1 for 0.1 -> 0.999, 2 for 0.01 -> 0.0999, etc.
+			//// Handle num = 0 edge case .. (log10(0) = infinity)
+			const trimAmount = Math.abs(
+				num >= 1 || num == 0
+					? 0
+					: Math.min(0, Math.floor(Math.log10(Math.abs(num))))
+			);
+
+			// max sigFigs = 6, min = 1
+			const sigFigs = Math.max(Math.min(6 - trimAmount, 6), 1);
+
+			const tradePrecisionString = num.toPrecision(sigFigs);
 
 			if (toLocaleString)
-				return NumLibCommon.formatNum
+				return NumLib.formatNum
 					.toTradePrecision(num)
-					.toLocaleString(undefined, {
-						minimumSignificantDigits: 6,
-						maximumSignificantDigits: 6,
+					.toLocaleString(this.locale, {
+						minimumSignificantDigits: sigFigs,
+						maximumSignificantDigits: sigFigs,
 					});
 
 			return tradePrecisionString;
@@ -66,7 +95,7 @@ class NumLibCommon {
 		toNotionalDisplay: (num: number) => {
 			return `${num < 0 ? `-` : ``}$${(
 				Math.round(Math.abs(num) * 100) / 100
-			).toLocaleString(undefined, {
+			).toLocaleString(this.locale, {
 				maximumFractionDigits: 2,
 				minimumFractionDigits: 2,
 			})}`;
@@ -107,39 +136,10 @@ class NumLibCommon {
 				);
 			}
 
-			return baseAmount.toLocaleString([], {
+			return baseAmount.toLocaleString(this.locale, {
 				minimumSignificantDigits: customSigFigs,
 				maximumSignificantDigits: customSigFigs,
 			});
-
-			// if (
-			// 	assetPrice === 0 ||
-			// 	assetPrice === undefined ||
-			// 	Number(assetPrice) === undefined
-			// ) {
-			// 	if (skipLocaleFormatting) {
-			// 		return baseAmount.toFixed(6);
-			// 	}
-
-			// 	return baseAmount.toLocaleString([], {
-			// 		minimumFractionDigits: 6,
-			// 		maximumFractionDigits: 6,
-			// 	});
-			// }
-
-			// if (skipLocaleFormatting) {
-			// 	return baseAmount.toFixed(
-			// 		Math.min(Math.max(0, Math.floor(Math.log10(assetPrice))) + 2, 6)
-			// 	);
-			// }
-			// const decimalDigits = Math.min(
-			// 	Math.max(0, Math.floor(Math.log10(assetPrice))) + 2,
-			// 	6
-			// );
-			// return baseAmount.toLocaleString([], {
-			// 	minimumFractionDigits: decimalDigits,
-			// 	maximumFractionDigits: decimalDigits,
-			// });
 		},
 		/**
 		 * This function prints the base amount of an asset with a number of decimals relative to the price of the asset, because for high priced assets we care about more accuracy in the base amount. Number of decimals corresponds to accuracy to ~ 1 cent
@@ -164,6 +164,10 @@ class NumLibCommon {
 
 			return parseFloat(baseAmount.toFixed(decimalDigits));
 		},
+		toBaseBN: (baseAmount: number) =>
+			this.formatNum.toRawBn(baseAmount, AMM_RESERVE_PRECISION),
+		toQuoteBN: (quoteAmount: number) =>
+			this.formatNum.toRawBn(quoteAmount, QUOTE_PRECISION),
 		/**
 		 * Formats to price in locale style
 		 * @param assetPrice
@@ -173,11 +177,7 @@ class NumLibCommon {
 			if (assetPrice === undefined) return '';
 			if (assetPrice === 0) return assetPrice.toFixed(2);
 
-			// const numFractionDigits = 6 - Math.floor(Math.log10(assetPrice));
-
-			return assetPrice.toLocaleString([], {
-				// minimumFractionDigits: numFractionDigits,
-				// maximumFractionDigits: numFractionDigits,
+			return assetPrice.toLocaleString(this.locale, {
 				maximumSignificantDigits: 6,
 				minimumSignificantDigits: 6,
 			});
@@ -224,15 +224,38 @@ class NumLibCommon {
 
 			return numericalAsBn;
 		},
+		/**
+		 * Truncates a number to a certain number of decimal places. This differs from .toFixed() in that it rounds down, whereas .toFixed() rounds to the nearest number.
+		 * @param num
+		 * @param decimalPlaces
+		 * @returns
+		 */
+		toDecimalPlaces: (
+			num: number,
+			decimalPlaces: number,
+			noPadding?: boolean
+		): string => {
+			const truncatedNum =
+				Math.floor(num * Math.pow(10, decimalPlaces)) /
+				Math.pow(10, decimalPlaces);
+			if (noPadding) {
+				return truncatedNum.toString();
+			}
+
+			const paddedNum = truncatedNum.toString();
+			const [integerPart, decimalPart = ''] = paddedNum.split('.');
+			const paddedDecimal = decimalPart.padEnd(decimalPlaces, '0');
+			return `${integerPart}.${paddedDecimal}`;
+		},
 	};
 
 	static formatBn = {
-		toRawNum: NumLibCommon.toRawNum,
+		toRawNum: NumLib.toRawNum,
 		fromQuote: (bn: BN) => {
-			return NumLibCommon.toRawNum(bn, QUOTE_PRECISION);
+			return NumLib.toRawNum(bn, QUOTE_PRECISION);
 		},
 		fromBase: (bn: BN) => {
-			return NumLibCommon.toRawNum(bn, AMM_RESERVE_PRECISION);
+			return NumLib.toRawNum(bn, AMM_RESERVE_PRECISION);
 		},
 	};
 
@@ -259,11 +282,11 @@ class NumLibCommon {
 				displayString: '0',
 			};
 
-		const volLog10 = Math.log10(value === 0 ? 1 : value);
+		const valueLog10 = Math.log10(value === 0 ? 1 : value);
 
-		const metricAmount = Math.floor(volLog10 / 3);
+		const metricAmount = Math.floor(valueLog10 / 3);
 
-		const sigFigs = 3 + (volLog10 % 3);
+		const sigFigs = Math.max(3 + (valueLog10 % 3), 1);
 
 		let symbol = '';
 		let mantissa = 1;
@@ -293,12 +316,12 @@ class NumLibCommon {
 		}
 
 		const displayValue = parseFloat(
-			(value / mantissa).toLocaleString(undefined, {
+			(value / mantissa).toLocaleString(this.locale, {
 				maximumSignificantDigits: sigFigs,
 			})
 		);
 
-		const displayString = `${(value / mantissa).toLocaleString(undefined, {
+		const displayString = `${(value / mantissa).toLocaleString(this.locale, {
 			maximumSignificantDigits: sigFigs,
 		})}${symbol}`;
 
@@ -310,6 +333,38 @@ class NumLibCommon {
 			displayString,
 		};
 	};
-}
 
-export default NumLibCommon;
+	/**
+	 * Get the precision to use for an asset so that base asset amounts are on the same scale as USD cents
+	 * @param assetPrice
+	 * @returns
+	 */
+	static getDisplayPrecision = (assetPrice: BigNum) => {
+		if (assetPrice.eqZero() || !assetPrice) {
+			return 6;
+		}
+
+		const exponent =
+			assetPrice.toString().length - 1 - assetPrice.precision.toNumber();
+
+		if (exponent < 1) return 2;
+
+		return exponent + 2;
+	};
+
+	static bp = (num: number) => num * 10 ** -4;
+
+	static isInvalid = (num: number) => !isFinite(num) || typeof num !== 'number';
+
+	static sumBigNums = (nums: BigNum[], precision: BN) => {
+		return nums.reduce((previousValue, currentValue) => {
+			return previousValue.add(currentValue);
+		}, BigNum.zero(precision));
+	};
+
+	static averageBigNums = (nums: BigNum[], precision: BN) => {
+		if (!nums || !nums.length) return;
+		const total = this.sumBigNums(nums, precision);
+		return total.scale(1, nums.length);
+	};
+}
