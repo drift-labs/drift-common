@@ -184,6 +184,26 @@ export class UISpotMarketConfig
 	}
 
 	get baseAssetDisplaySymbol(): BaseAssetDisplaySymbol {
-		return this.marketDisplaySymbol as unknown as BaseAssetDisplaySymbol; // Currently no cases where SPOT baseAssetDisplaySymbol is different from marketDisplaySymbol
+		switch (this.baseMarketConfig.poolId) {
+			case EXPONENT_POOL_ID: {
+				/*
+					Example market symbol conversions:
+					PT-fragSOL-15JUN25-3 => PT-fragSOL
+					PT-kySOL-10JUL25-3 => PT-kySOL
+					JitoSOL-3 => JitoSOL
+					JTO-3 => JTO
+				*/
+				return (
+					this.baseMarketConfig.symbol.startsWith('PT-')
+						? this.baseMarketConfig.symbol.slice(
+								0,
+								this.baseMarketConfig.symbol.indexOf('-', 3)
+						  )
+						: this.baseMarketConfig.symbol.split('-')[0]
+				) as BaseAssetDisplaySymbol;
+			}
+			default:
+				return this.baseMarketConfig.symbol as BaseAssetDisplaySymbol;
+		}
 	}
 }
