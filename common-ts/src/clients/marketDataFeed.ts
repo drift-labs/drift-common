@@ -1,17 +1,43 @@
-/**
- * This class will handle subscribing to market data from the Drift Data API's websocket.
- *
- * Currently only supports subscribing to candles and to trades.
- *
- * Implemented as a singleton to ensure that we don't have multiple open connections to the same market data feed.
- */
-
 import { CandleResolution } from '@drift-labs/sdk';
 import { MarketSymbol, Opaque } from '@drift/common';
 import { Subject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { DataApiWsClient, JsonCandle, JsonTrade } from './dataApiWsClient';
 import { UIEnv } from '../types';
+import assert from 'assert';
+
+/*
+
+# Internal explanation of the MarketDataFeed class
+
+This class was implmented as a singleton so that we can avoid making duplicate websockets where they are not necessary.
+
+One key thing to understand about the logic is that on the API side, there is only a "single" websocket available which is to subscribe to CANDLES.
+
+Each of these "candles" websockets also returns the TRADES which resulted in the updated candle.
+
+To ensure that trades and candles are in sync, we want to make sure that subscriptions for these things (which is done seperately) actually use the same websocket connection. Which is why this class is necessary.
+
+## Explanation of terminology:
+- A "subscription" is an actual underlying websocket connection to the Drift Data API. A subscription may have multiple subscribers attached to it, where the data coming through that subscription is sufficient for the subsciption config. A Subscription can have the data for both CANDLES and TRADES subscribers.
+- A "subscriber" is a specific instance of an external party making a subscription. It is either a TRADE or CANDLE subscriber.
+- A "subscriber subscription" represents the subscription information that we return to an external subscriber. It contains the subscription ID they can use to unsubscriber, an an observable to listen to the data.
+
+## Explanation for tradeSubscriptionLookup and candleSubscriptionLookup:
+This class supports subscribing to multiple arbitrary markets (and candle resolutions) at the same time. It also supports sharing a single websocket connection between multiple subscribers where possible. This creates one bit of complexity where we need to search for existing "compatible" subscriptions whenever a new subscriber comes through. Example:
+- Imagine a CANDLE subscription for SOL-PERP-Resolution-1 (Subscription A).
+- When a TRADE subscription comes through for SOL-PERP (Subscription B) we want it to use the same websocket connection as Subscription A, because they are for the same market - even though they are different subscription types. We use the `tradeSubscriptionLookup` to see that there is an existing subscription for this market and then attach the new trade subscriber to it.
+- When another CANDLE subscription comes through for SOL-PERP-Resolution-5 (Subscription C), there is no existing subscription in the `candleSubscriptionsLookup`, because the resolution is different. Hence we create a new subscription.
+- TO SUMMARISE :: A trade subscription can share any subscription with the same market. But a candle subscription must share the same market AND resolution. We use seperate lookup tables to index into compatible subscriptions.
+
+There is a minor inefficiency remaining in this implementation, where to be optimal we may want to "re-organise" subscriptions when they close. E.g.:
+- <open> SOL-PERP-Resolution-1 (Subscriber A) => will create new Subscription A
+- <open> SOL-PERP-Resolution-5 (Subscriber B) => will create new Subscription B
+- <open> SOL-PERP-TRADE (Subscriber C) => will use existing Subscription A
+- <close> SOL-PERP-Resolution-1 (Subscriber A) => will keep Subscription A open because Subscriber C is still listening
+- * We could more optimally close Subscription A and make Subscriber C use Subscription B
+- * We're not doing this for the same of simplicity. In the future we could add this optimisation if it becomes necessary.
+*/
 
 type SubscriptionType = 'candles' | 'trades';
 
@@ -224,6 +250,11 @@ class ApiSubscription {
 	}
 }
 
+/**
+ * This class will handle subscribing to market data from the Drift Data API's websocket. See https://data.api.drift.trade/playground for more information about the API.
+ *
+ * It currently supports subscribing to candles and to trades.
+ */
 export class MarketDataFeed {
 	constructor() {}
 
@@ -233,27 +264,25 @@ export class MarketDataFeed {
 	// Stores all current subscriptions :: subscribers:subscriptions is N:M (Subscribers may share a subscription but not vice versa)
 	private static subscriptions = new Map<SubscriptionId, ApiSubscription>();
 
-	// Lookup table for trade subscriptions
-	private static tradeSubscriptionLookup = new Map<
+	// Lookup table for any trade subscriptions which can share an underlying subscription
+	private static compatibleTradeSubscriptionLookup = new Map<
 		TradeSubscriptionLookupKey,
 		ApiSubscription
 	>();
 
-	// Lookup table for candle subscriptions
-	private static candleSubscriptionLookup = new Map<
+	// Lookup table for any candle subscriptions which can share an underlying subscription
+	private static compatibleCandleSubscriptionLookup = new Map<
 		CandleSubscriptionLookupKey,
 		ApiSubscription
 	>();
 
-	// Generate ID to lookup a subscription for a given candle subscription config
-	private static getCandleSubscriptionLookupKey(
+	private static getCompatibleCandleSubscriptionLookupKey(
 		config: Pick<CandleSubscriptionConfig, 'marketSymbol' | 'resolution'>
 	): CandleSubscriptionLookupKey {
 		return `${config.marketSymbol}:${config.resolution}` as CandleSubscriptionLookupKey;
 	}
 
-	// Generate ID to lookup a subscription for a given trade subscription config
-	private static getTradeSubscriptionLookupKey(
+	private static getCompatibleTradeSubscriptionLookupKey(
 		config: Pick<CandleSubscriptionConfig, 'marketSymbol'>
 	): TradeSubscriptionLookupKey {
 		return `${config.marketSymbol}` as TradeSubscriptionLookupKey;
@@ -263,26 +292,29 @@ export class MarketDataFeed {
 	 * Handles a new subscription by  adding it to the necessary lookup tables
 	 * @param subscription
 	 */
-	private static handleNewSubscription(subscription: ApiSubscription) {
-		const tradeSubscriptionLookupKey = this.getTradeSubscriptionLookupKey(
-			subscription.config
-		);
-
-		const candleSubscriptionLookupKey = this.getCandleSubscriptionLookupKey(
-			subscription.config
-		);
+	private static handleNewApiSubscription(subscription: ApiSubscription) {
+		const tradeSubscriptionLookupKey =
+			this.getCompatibleTradeSubscriptionLookupKey(subscription.config);
+		const candleSubscriptionLookupKey =
+			this.getCompatibleCandleSubscriptionLookupKey(subscription.config);
 
 		this.subscriptions.set(subscription.id, subscription);
 
-		if (!this.tradeSubscriptionLookup.has(tradeSubscriptionLookupKey)) {
-			this.tradeSubscriptionLookup.set(
+		// Add to the trade subscription compatibility lookup if a previous one suiting this subscription doesn't already exist
+		if (
+			!this.compatibleTradeSubscriptionLookup.has(tradeSubscriptionLookupKey)
+		) {
+			this.compatibleTradeSubscriptionLookup.set(
 				tradeSubscriptionLookupKey,
 				subscription
 			);
 		}
 
-		if (!this.candleSubscriptionLookup.has(candleSubscriptionLookupKey)) {
-			this.candleSubscriptionLookup.set(
+		// Add to the candle subscription compatibility lookup if a previous one suiting this subscription doesn't already exist
+		if (
+			!this.compatibleCandleSubscriptionLookup.has(candleSubscriptionLookupKey)
+		) {
+			this.compatibleCandleSubscriptionLookup.set(
 				candleSubscriptionLookupKey,
 				subscription
 			);
@@ -290,15 +322,13 @@ export class MarketDataFeed {
 	}
 
 	private static handleNewCandleSubscriber(subscriber: CandleSubscriber) {
-		const candleSubscriptionLookupKey = this.getCandleSubscriptionLookupKey(
-			subscriber.config
-		);
-		const hasExistingSuitableSubscription = this.candleSubscriptionLookup.has(
-			candleSubscriptionLookupKey
-		);
+		const candleSubscriptionLookupKey =
+			this.getCompatibleCandleSubscriptionLookupKey(subscriber.config);
+		const hasExistingSuitableSubscription =
+			this.compatibleCandleSubscriptionLookup.has(candleSubscriptionLookupKey);
 
 		if (hasExistingSuitableSubscription) {
-			const existingSubscription = this.candleSubscriptionLookup.get(
+			const existingSubscription = this.compatibleCandleSubscriptionLookup.get(
 				candleSubscriptionLookupKey
 			);
 			existingSubscription.attachNewCandleSubscriberToExistingSubscription(
@@ -311,21 +341,24 @@ export class MarketDataFeed {
 				subscriber.config.env,
 				subscriber
 			);
-			this.handleNewSubscription(newSubscription);
+			this.handleNewApiSubscription(newSubscription);
 		}
+
+		assert(
+			this.subscribers.has(subscriber.id),
+			'Subscriber should be added to subscribers map'
+		);
 	}
 
 	private static handleNewTradeSubscriber(subscriber: TradeSubscriber) {
 		// Check if any existing subscriptions already suit the new subscriber
-		const tradeSubscriptionLookupKey = this.getTradeSubscriptionLookupKey(
-			subscriber.config
-		);
-		const hasExistingSuitableSubscription = this.tradeSubscriptionLookup.has(
-			tradeSubscriptionLookupKey
-		);
+		const tradeSubscriptionLookupKey =
+			this.getCompatibleTradeSubscriptionLookupKey(subscriber.config);
+		const hasExistingSuitableSubscription =
+			this.compatibleTradeSubscriptionLookup.has(tradeSubscriptionLookupKey);
 
 		if (hasExistingSuitableSubscription) {
-			const existingSubscription = this.tradeSubscriptionLookup.get(
+			const existingSubscription = this.compatibleTradeSubscriptionLookup.get(
 				tradeSubscriptionLookupKey
 			);
 			existingSubscription.attachNewTradeSubscriberToExistingSubscription(
@@ -338,23 +371,22 @@ export class MarketDataFeed {
 				subscriber.config.env,
 				subscriber
 			);
-			this.handleNewSubscription(newSubscription);
+			this.handleNewApiSubscription(newSubscription);
 		}
+
+		assert(
+			this.subscribers.has(subscriber.id),
+			'Subscriber should be added to subscribers map'
+		);
 	}
 
-	// This is an example of function overloading in TypeScript
-	// The first two declarations are the function signatures, specifying:
-	// 1. When passed a CandleSubscriptionConfig, returns CandleSubscriberSubscription
-	// 2. When passed a TradeSubscriptionConfig, returns TradeSubscriberSubscription
+	// Function overload, ensures the correct type is returned based on the config type
 	public static subscribe(
 		config: CandleSubscriptionConfig
 	): CandleSubscriberSubscription;
 	public static subscribe(
 		config: TradeSubscriptionConfig
 	): TradeSubscriberSubscription;
-	// This is the actual implementation that handles both cases
-	// The parameter type is the union of both config types
-	// The return type is the union of both subscription types
 	public static subscribe(
 		config: SubscriptionConfig
 	): CandleSubscriberSubscription | TradeSubscriberSubscription {
@@ -395,15 +427,18 @@ export class MarketDataFeed {
 		}
 	}
 
-	private static cleanupSubscription(
+	private static cleanupApiSubscription(
 		apiSubscription: Readonly<ApiSubscription>
 	) {
+		// We can delete the subscription from the lookup table when we're cleaning up an ApiSubscription
 		this.subscriptions.delete(apiSubscription.id);
-		this.tradeSubscriptionLookup.delete(
-			this.getTradeSubscriptionLookupKey(apiSubscription.config)
+
+		// Need to delete the compatible lookup entries using this ApiSubscription so following subscriptions don't try to reuse it
+		this.compatibleTradeSubscriptionLookup.delete(
+			this.getCompatibleTradeSubscriptionLookupKey(apiSubscription.config)
 		);
-		this.candleSubscriptionLookup.delete(
-			this.getCandleSubscriptionLookupKey(apiSubscription.config)
+		this.compatibleCandleSubscriptionLookup.delete(
+			this.getCompatibleCandleSubscriptionLookupKey(apiSubscription.config)
 		);
 	}
 
@@ -420,7 +455,7 @@ export class MarketDataFeed {
 			apiSubscription.removeSubscriber(subscriberId);
 
 		if (noMoreSubscribers) {
-			this.cleanupSubscription(apiSubscription);
+			this.cleanupApiSubscription(apiSubscription);
 		}
 	}
 }
