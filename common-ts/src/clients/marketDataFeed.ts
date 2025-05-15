@@ -37,38 +37,39 @@ type TradeSubscriptionLookupKey = Opaque<string, 'TradeSubscriptionLookupKey'>;
 
 const DEFAULT_CANDLE_RESOLUTION_FOR_TRADE_SUBSCRIPTIONS: CandleResolution = '1';
 
-export class CandleSubscriberSubscription {
+abstract class SubscriberSubscription<T> {
 	public readonly id: SubscriberId;
-	private readonly _subject: Subject<JsonCandle>;
+	private readonly _subject: Subject<T>;
 
 	public get observable() {
 		return this._subject.asObservable();
 	}
 
-	constructor(id: SubscriberId) {
+	constructor(id: SubscriberId, subject: Subject<T>) {
 		this.id = id;
-		this._subject = new Subject<JsonCandle>();
+		this._subject = subject;
 	}
 }
 
-export class TradeSubscriberSubscription {
-	public readonly id: SubscriberId;
-	private readonly _subject: Subject<JsonTrade[]>;
-
-	public get observable() {
-		return this._subject.asObservable();
-	}
-
-	constructor(id: SubscriberId) {
-		this.id = id;
-		this._subject = new Subject<JsonTrade[]>();
+export class CandleSubscriberSubscription extends SubscriberSubscription<JsonCandle> {
+	constructor(id: SubscriberId, subject: Subject<JsonCandle>) {
+		super(id, subject);
 	}
 }
 
-abstract class Subscriber {
+export class TradeSubscriberSubscription extends SubscriberSubscription<
+	JsonTrade[]
+> {
+	constructor(id: SubscriberId, subject: Subject<JsonTrade[]>) {
+		super(id, subject);
+	}
+}
+
+abstract class _Subscriber<T> {
 	public readonly id: SubscriberId;
 	public readonly config: SubscriptionConfig;
 	protected _apiSubscription: ApiSubscription;
+	protected subject: Subject<T>;
 
 	public get subscription(): Readonly<ApiSubscription> {
 		return this._apiSubscription;
@@ -86,39 +87,41 @@ abstract class Subscriber {
 	setSubscription(subscription: ApiSubscription) {
 		this._apiSubscription = subscription;
 	}
+
+	next(data: T) {
+		this.subject.next(data);
+	}
 }
 
-class CandleSubscriber extends Subscriber {
+class CandleSubscriber extends _Subscriber<JsonCandle> {
 	public readonly config: CandleSubscriptionConfig;
 	public readonly subscriberSubscription: CandleSubscriberSubscription;
-	private readonly _subject: Subject<JsonCandle>;
-
-	public get subject() {
-		return this._subject;
-	}
 
 	constructor(config: CandleSubscriptionConfig) {
 		super(config);
-		this._subject = new Subject<JsonCandle>();
-		this.subscriberSubscription = new CandleSubscriberSubscription(this.id);
+		this.subject = new Subject<JsonCandle>();
+		this.subscriberSubscription = new CandleSubscriberSubscription(
+			this.id,
+			this.subject
+		);
 	}
 }
 
-class TradeSubscriber extends Subscriber {
+class TradeSubscriber extends _Subscriber<JsonTrade[]> {
 	public readonly config: TradeSubscriptionConfig;
 	public readonly subscriberSubscription: TradeSubscriberSubscription;
-	private readonly _subject: Subject<JsonTrade[]>;
-
-	public get subject() {
-		return this._subject;
-	}
 
 	constructor(config: TradeSubscriptionConfig) {
 		super(config);
-		this._subject = new Subject<JsonTrade[]>();
-		this.subscriberSubscription = new TradeSubscriberSubscription(this.id);
+		this.subject = new Subject<JsonTrade[]>();
+		this.subscriberSubscription = new TradeSubscriberSubscription(
+			this.id,
+			this.subject
+		);
 	}
 }
+
+type Subscriber = CandleSubscriber | TradeSubscriber;
 
 class ApiSubscription {
 	public readonly id: SubscriptionId;
@@ -179,12 +182,12 @@ class ApiSubscription {
 		await this.apiClient.subscribe();
 		this.apiClient.candlesObservable.subscribe((candle) => {
 			this.candleSubscribers.forEach((subscriber) => {
-				subscriber.subject.next(candle);
+				subscriber.next(candle);
 			});
 		});
 		this.apiClient.tradesObservable.subscribe((trades) => {
 			this.tradeSubscribers.forEach((subscriber) => {
-				subscriber.subject.next(trades);
+				subscriber.next(trades);
 			});
 		});
 	}
