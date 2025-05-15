@@ -7,15 +7,18 @@
  */
 
 import { CandleResolution } from '@drift-labs/sdk';
-import { MarketId, Opaque } from '@drift/common';
-import assert from 'assert';
+import { MarketSymbol, Opaque } from '@drift/common';
+import { Subject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
+import { DataApiWsClient, JsonCandle, JsonTrade } from './dataApiWsClient';
+import { UIEnv } from '../types';
 
 type SubscriptionType = 'candles' | 'trades';
 
 interface ISubscriptionConfig<T extends SubscriptionType> {
 	readonly type: T;
-	marketId: MarketId;
+	readonly env: UIEnv;
+	marketSymbol: MarketSymbol;
 }
 type CandleSubscriptionConfig = ISubscriptionConfig<'candles'> & {
 	resolution: CandleResolution;
@@ -32,40 +35,191 @@ type CandleSubscriptionLookupKey = Opaque<
 >;
 type TradeSubscriptionLookupKey = Opaque<string, 'TradeSubscriptionLookupKey'>;
 
-interface Subscriber {
-	id: SubscriberId;
-	config: SubscriptionConfig;
-}
-
-interface Subscription {
-	id: SubscriptionId;
-	marketId: MarketId;
-	resolution: CandleResolution;
-	candleSubscribers: SubscriberId[];
-	tradeSubscribers: SubscriberId[];
-}
-
-function generateSubscriberId(): SubscriberId {
-	return uuidv4() as SubscriberId;
-}
-
-function generateSubscriptionId(): SubscriptionId {
-	return uuidv4() as SubscriptionId;
-}
-
-function generateCandleSubscriptionId(
-	props: Pick<CandleSubscriptionConfig, 'marketId' | 'resolution'>
-): CandleSubscriptionLookupKey {
-	return `${props.marketId.key}:${props.resolution}` as CandleSubscriptionLookupKey;
-}
-
-function generateTradeSubscriptionId(
-	props: Pick<SubscriptionConfig, 'marketId'>
-): TradeSubscriptionLookupKey {
-	return `${props.marketId.key}` as TradeSubscriptionLookupKey;
-}
-
 const DEFAULT_CANDLE_RESOLUTION_FOR_TRADE_SUBSCRIPTIONS: CandleResolution = '1';
+
+export class CandleSubscriberSubscription {
+	public readonly id: SubscriberId;
+	private readonly _subject: Subject<JsonCandle>;
+
+	public get observable() {
+		return this._subject.asObservable();
+	}
+
+	constructor(id: SubscriberId) {
+		this.id = id;
+		this._subject = new Subject<JsonCandle>();
+	}
+}
+
+export class TradeSubscriberSubscription {
+	public readonly id: SubscriberId;
+	private readonly _subject: Subject<JsonTrade[]>;
+
+	public get observable() {
+		return this._subject.asObservable();
+	}
+
+	constructor(id: SubscriberId) {
+		this.id = id;
+		this._subject = new Subject<JsonTrade[]>();
+	}
+}
+
+abstract class Subscriber {
+	public readonly id: SubscriberId;
+	public readonly config: SubscriptionConfig;
+	protected _apiSubscription: ApiSubscription;
+
+	public get subscription(): Readonly<ApiSubscription> {
+		return this._apiSubscription;
+	}
+
+	private generateSubscriberId(): SubscriberId {
+		return uuidv4() as SubscriberId;
+	}
+
+	constructor(config: SubscriptionConfig) {
+		this.id = this.generateSubscriberId();
+		this.config = { ...config }; // Make a copy of the config to avoid mutability issues
+	}
+
+	setSubscription(subscription: ApiSubscription) {
+		this._apiSubscription = subscription;
+	}
+}
+
+class CandleSubscriber extends Subscriber {
+	public readonly config: CandleSubscriptionConfig;
+	public readonly subscriberSubscription: CandleSubscriberSubscription;
+	private readonly _subject: Subject<JsonCandle>;
+
+	public get subject() {
+		return this._subject;
+	}
+
+	constructor(config: CandleSubscriptionConfig) {
+		super(config);
+		this._subject = new Subject<JsonCandle>();
+		this.subscriberSubscription = new CandleSubscriberSubscription(this.id);
+	}
+}
+
+class TradeSubscriber extends Subscriber {
+	public readonly config: TradeSubscriptionConfig;
+	public readonly subscriberSubscription: TradeSubscriberSubscription;
+	private readonly _subject: Subject<JsonTrade[]>;
+
+	public get subject() {
+		return this._subject;
+	}
+
+	constructor(config: TradeSubscriptionConfig) {
+		super(config);
+		this._subject = new Subject<JsonTrade[]>();
+		this.subscriberSubscription = new TradeSubscriberSubscription(this.id);
+	}
+}
+
+class ApiSubscription {
+	public readonly id: SubscriptionId;
+	public readonly candleSubscribers: Map<SubscriberId, CandleSubscriber>;
+	public readonly tradeSubscribers: Map<SubscriberId, TradeSubscriber>;
+	public readonly config: Pick<
+		CandleSubscriptionConfig,
+		'marketSymbol' | 'resolution' | 'env'
+	>;
+	private apiClient: DataApiWsClient;
+
+	private generateSubscriptionId(): SubscriptionId {
+		return uuidv4() as SubscriptionId;
+	}
+
+	constructor(
+		marketSymbol: MarketSymbol,
+		resolution: CandleResolution,
+		env: UIEnv,
+		initialSubscriber: Subscriber
+	) {
+		this.id = this.generateSubscriptionId();
+		this.config = { marketSymbol, resolution, env };
+
+		const initialSubscriberType = initialSubscriber.config.type;
+
+		this.apiClient = new DataApiWsClient({
+			marketSymbol: this.config.marketSymbol,
+			resolution: this.config.resolution,
+			env: this.config.env,
+		});
+
+		switch (initialSubscriberType) {
+			case 'candles': {
+				this.candleSubscribers = new Map([
+					[initialSubscriber.id, initialSubscriber as CandleSubscriber],
+				]);
+				this.tradeSubscribers = new Map();
+				break;
+			}
+			case 'trades': {
+				this.candleSubscribers = new Map();
+				this.tradeSubscribers = new Map([
+					[initialSubscriber.id, initialSubscriber as TradeSubscriber],
+				]);
+				break;
+			}
+			default: {
+				const _never: never = initialSubscriberType;
+				throw new Error(`Unknown subscription type: ${_never}`);
+			}
+		}
+
+		this.subscribeToApi();
+	}
+
+	private async subscribeToApi() {
+		await this.apiClient.subscribe();
+		this.apiClient.candlesObservable.subscribe((candle) => {
+			this.candleSubscribers.forEach((subscriber) => {
+				subscriber.subject.next(candle);
+			});
+		});
+		this.apiClient.tradesObservable.subscribe((trades) => {
+			this.tradeSubscribers.forEach((subscriber) => {
+				subscriber.subject.next(trades);
+			});
+		});
+	}
+
+	public attachNewCandleSubscriberToExistingSubscription(
+		subscriber: CandleSubscriber
+	) {
+		this.candleSubscribers.set(subscriber.id, subscriber);
+	}
+
+	public attachNewTradeSubscriberToExistingSubscription(
+		subscriber: TradeSubscriber
+	) {
+		this.tradeSubscribers.set(subscriber.id, subscriber);
+	}
+
+	private unsubscribeFromApi() {
+		this.apiClient.kill();
+	}
+
+	public removeSubscriber(subscriberId: SubscriberId): {
+		noMoreSubscribers: boolean;
+	} {
+		this.candleSubscribers.delete(subscriberId);
+		this.tradeSubscribers.delete(subscriberId);
+
+		// Handle the case where there are no more subscribers for this subscription
+		if (this.candleSubscribers.size === 0 && this.tradeSubscribers.size === 0) {
+			this.unsubscribeFromApi();
+			return { noMoreSubscribers: true };
+		}
+
+		return { noMoreSubscribers: false };
+	}
+}
 
 export class MarketDataFeed {
 	constructor() {}
@@ -74,166 +228,162 @@ export class MarketDataFeed {
 	private static subscribers = new Map<SubscriberId, Subscriber>();
 
 	// Stores all current subscriptions :: subscribers:subscriptions is N:M (Subscribers may share a subscription but not vice versa)
-	private static subscriptions = new Map<SubscriptionId, Subscription>();
+	private static subscriptions = new Map<SubscriptionId, ApiSubscription>();
 
 	// Lookup table for trade subscriptions
 	private static tradeSubscriptionLookup = new Map<
 		TradeSubscriptionLookupKey,
-		SubscriptionId
+		ApiSubscription
 	>();
 
 	// Lookup table for candle subscriptions
 	private static candleSubscriptionLookup = new Map<
 		CandleSubscriptionLookupKey,
-		SubscriptionId
+		ApiSubscription
 	>();
 
-	private static attachNewCandleSubscriberToExistingSubscription(
-		subscriberId: SubscriberId,
-		config: CandleSubscriptionConfig
-	) {
-		const candleSubscriptionLookupKey = generateCandleSubscriptionId(config);
-		const existingSubscriptionId = this.candleSubscriptionLookup.get(
+	// Generate ID to lookup a subscription for a given candle subscription config
+	private static getCandleSubscriptionLookupKey(
+		config: Pick<CandleSubscriptionConfig, 'marketSymbol' | 'resolution'>
+	): CandleSubscriptionLookupKey {
+		return `${config.marketSymbol}:${config.resolution}` as CandleSubscriptionLookupKey;
+	}
+
+	// Generate ID to lookup a subscription for a given trade subscription config
+	private static getTradeSubscriptionLookupKey(
+		config: Pick<CandleSubscriptionConfig, 'marketSymbol'>
+	): TradeSubscriptionLookupKey {
+		return `${config.marketSymbol}` as TradeSubscriptionLookupKey;
+	}
+
+	/**
+	 * Handles a new subscription by  adding it to the necessary lookup tables
+	 * @param subscription
+	 */
+	private static handleNewSubscription(subscription: ApiSubscription) {
+		const tradeSubscriptionLookupKey = this.getTradeSubscriptionLookupKey(
+			subscription.config
+		);
+
+		const candleSubscriptionLookupKey = this.getCandleSubscriptionLookupKey(
+			subscription.config
+		);
+
+		this.subscriptions.set(subscription.id, subscription);
+
+		if (!this.tradeSubscriptionLookup.has(tradeSubscriptionLookupKey)) {
+			this.tradeSubscriptionLookup.set(
+				tradeSubscriptionLookupKey,
+				subscription
+			);
+		}
+
+		if (!this.candleSubscriptionLookup.has(candleSubscriptionLookupKey)) {
+			this.candleSubscriptionLookup.set(
+				candleSubscriptionLookupKey,
+				subscription
+			);
+		}
+	}
+
+	private static handleNewCandleSubscriber(subscriber: CandleSubscriber) {
+		const candleSubscriptionLookupKey = this.getCandleSubscriptionLookupKey(
+			subscriber.config
+		);
+		const hasExistingSuitableSubscription = this.candleSubscriptionLookup.has(
 			candleSubscriptionLookupKey
 		);
-		assert(
-			existingSubscriptionId,
-			'No existing subscription found when attaching new candle subscriber'
-		);
 
-		const existingSubscription = this.subscriptions.get(existingSubscriptionId);
-		assert(
-			existingSubscription,
-			'Existing subscription not found when attaching new candle subscriber'
-		);
-
-		existingSubscription.candleSubscribers.push(subscriberId);
+		if (hasExistingSuitableSubscription) {
+			const existingSubscription = this.candleSubscriptionLookup.get(
+				candleSubscriptionLookupKey
+			);
+			existingSubscription.attachNewCandleSubscriberToExistingSubscription(
+				subscriber
+			);
+		} else {
+			const newSubscription = new ApiSubscription(
+				subscriber.config.marketSymbol,
+				subscriber.config.resolution,
+				subscriber.config.env,
+				subscriber
+			);
+			this.handleNewSubscription(newSubscription);
+		}
 	}
 
-	private static createNewCandleSubscription(
-		subscriberId: SubscriberId,
-		config: CandleSubscriptionConfig
-	) {
-		const newSubscriptionId = generateSubscriptionId();
-		this.subscriptions.set(newSubscriptionId, {
-			id: newSubscriptionId,
-			marketId: config.marketId,
-			resolution: config.resolution,
-			candleSubscribers: [subscriberId],
-			tradeSubscribers: [],
-		});
-
-		this.candleSubscriptionLookup.set(
-			generateCandleSubscriptionId(config),
-			newSubscriptionId
+	private static handleNewTradeSubscriber(subscriber: TradeSubscriber) {
+		// Check if any existing subscriptions already suit the new subscriber
+		const tradeSubscriptionLookupKey = this.getTradeSubscriptionLookupKey(
+			subscriber.config
 		);
-
-		// Even though this is for a candle subscription, we still add it to the trade lookup because the marketId may match that of a following trade subscription, which will need to connect to the matching existing subscription
-		this.tradeSubscriptionLookup.set(
-			generateTradeSubscriptionId(config),
-			newSubscriptionId
-		);
-	}
-
-	private static attachNewTradeSubscriberToExistingSubscription(
-		subscriberId: SubscriberId,
-		config: TradeSubscriptionConfig
-	) {
-		const tradeSubscriptionLookupKey = generateTradeSubscriptionId(config);
-		const existingSubscriptionId = this.tradeSubscriptionLookup.get(
+		const hasExistingSuitableSubscription = this.tradeSubscriptionLookup.has(
 			tradeSubscriptionLookupKey
 		);
-		assert(
-			existingSubscriptionId,
-			'No existing subscription found when attaching new trade subscriber'
-		);
 
-		const existingSubscription = this.subscriptions.get(existingSubscriptionId);
-		assert(
-			existingSubscription,
-			'Existing subscription not found when attaching new trade subscriber'
-		);
-
-		existingSubscription.tradeSubscribers.push(subscriberId);
+		if (hasExistingSuitableSubscription) {
+			const existingSubscription = this.tradeSubscriptionLookup.get(
+				tradeSubscriptionLookupKey
+			);
+			existingSubscription.attachNewTradeSubscriberToExistingSubscription(
+				subscriber
+			);
+		} else {
+			const newSubscription = new ApiSubscription(
+				subscriber.config.marketSymbol,
+				DEFAULT_CANDLE_RESOLUTION_FOR_TRADE_SUBSCRIPTIONS,
+				subscriber.config.env,
+				subscriber
+			);
+			this.handleNewSubscription(newSubscription);
+		}
 	}
 
-	private static createNewTradeSubscription(
-		subscriberId: SubscriberId,
+	// This is an example of function overloading in TypeScript
+	// The first two declarations are the function signatures, specifying:
+	// 1. When passed a CandleSubscriptionConfig, returns CandleSubscriberSubscription
+	// 2. When passed a TradeSubscriptionConfig, returns TradeSubscriberSubscription
+	public static subscribe(
+		config: CandleSubscriptionConfig
+	): CandleSubscriberSubscription;
+	public static subscribe(
 		config: TradeSubscriptionConfig
-	) {
-		const newSubscriptionId = generateSubscriptionId();
-		this.subscriptions.set(newSubscriptionId, {
-			id: newSubscriptionId,
-			marketId: config.marketId,
-			resolution: DEFAULT_CANDLE_RESOLUTION_FOR_TRADE_SUBSCRIPTIONS,
-			candleSubscribers: [],
-			tradeSubscribers: [subscriberId],
-		});
-
-		this.tradeSubscriptionLookup.set(
-			generateTradeSubscriptionId(config),
-			newSubscriptionId
-		);
-
-		// Even though this is for a trade subscription, we still add it to the candle lookup because the default resolution may match that of a following candle subscription, which will need to connect to the matching existing subscription
-		this.candleSubscriptionLookup.set(
-			generateCandleSubscriptionId({
-				marketId: config.marketId,
-				resolution: DEFAULT_CANDLE_RESOLUTION_FOR_TRADE_SUBSCRIPTIONS,
-			}),
-			newSubscriptionId
-		);
+	): TradeSubscriberSubscription;
+	// This is the actual implementation that handles both cases
+	// The parameter type is the union of both config types
+	// The return type is the union of both subscription types
+	public static subscribe(
+		config: SubscriptionConfig
+	): CandleSubscriberSubscription | TradeSubscriberSubscription {
+		const subscriberSubscription = this.handleNewSubscriber(config);
+		return subscriberSubscription;
 	}
 
 	private static handleNewSubscriber(
-		subscriberId: SubscriberId,
 		config: SubscriptionConfig
-	) {
-		// Add to current subscribers
-		this.subscribers.set(subscriberId, {
-			id: subscriberId,
-			config,
-		});
-
+	): CandleSubscriberSubscription | TradeSubscriberSubscription {
 		switch (config.type) {
 			case 'candles': {
-				// Check if any existing subscriptions already suit the new subscriber
-				const candleSubscriptionLookupKey =
-					generateCandleSubscriptionId(config);
-				const hasExistingSubscription = this.candleSubscriptionLookup.has(
-					candleSubscriptionLookupKey
-				);
+				// Create the new Subscriber
+				const newSubscriber = new CandleSubscriber(config);
 
-				// Handle creating a new subscription or attaching to an existing subscription
-				if (hasExistingSubscription) {
-					// Attach to existing subscription
-					this.attachNewCandleSubscriberToExistingSubscription(
-						subscriberId,
-						config
-					);
-				} else {
-					// Create a new subscription
-					this.createNewCandleSubscription(subscriberId, config);
-				}
-				break;
+				// Add to current subscribers
+				this.subscribers.set(newSubscriber.id, newSubscriber);
+
+				this.handleNewCandleSubscriber(newSubscriber);
+
+				return newSubscriber.subscriberSubscription;
 			}
 			case 'trades': {
-				// Check if any existing subscriptions already suit the new subscriber
-				const tradeSubscriptionLookupKey = generateTradeSubscriptionId(config);
-				const hasExistingSubscription = this.tradeSubscriptionLookup.has(
-					tradeSubscriptionLookupKey
-				);
+				// Create the new Subscriber
+				const newSubscriber = new TradeSubscriber(config);
 
-				// Handle creating a new subscription or attaching to an existing subscription
-				if (hasExistingSubscription) {
-					this.attachNewTradeSubscriberToExistingSubscription(
-						subscriberId,
-						config
-					);
-				} else {
-					this.createNewTradeSubscription(subscriberId, config);
-				}
-				break;
+				// Add to current subscribers
+				this.subscribers.set(newSubscriber.id, newSubscriber);
+
+				this.handleNewTradeSubscriber(newSubscriber);
+
+				return newSubscriber.subscriberSubscription;
 			}
 			default: {
 				const _never: never = config;
@@ -242,10 +392,32 @@ export class MarketDataFeed {
 		}
 	}
 
-	// TODO :: Actually return some kind of subscription?
-	public static subscribe(config: SubscriptionConfig): SubscriberId {
-		const subscriberId = generateSubscriberId();
-		this.handleNewSubscriber(subscriberId, config);
-		return subscriberId;
+	private static cleanupSubscription(
+		apiSubscription: Readonly<ApiSubscription>
+	) {
+		this.subscriptions.delete(apiSubscription.id);
+		this.tradeSubscriptionLookup.delete(
+			this.getTradeSubscriptionLookupKey(apiSubscription.config)
+		);
+		this.candleSubscriptionLookup.delete(
+			this.getCandleSubscriptionLookupKey(apiSubscription.config)
+		);
+	}
+
+	public static unsubscribe(subscriberId: SubscriberId) {
+		const subscriber = this.subscribers.get(subscriberId);
+
+		if (!subscriber) {
+			throw new Error(`Subscriber not found: ${subscriberId}`);
+		}
+
+		const apiSubscription = subscriber.subscription;
+
+		const { noMoreSubscribers } =
+			apiSubscription.removeSubscriber(subscriberId);
+
+		if (noMoreSubscribers) {
+			this.cleanupSubscription(apiSubscription);
+		}
 	}
 }
