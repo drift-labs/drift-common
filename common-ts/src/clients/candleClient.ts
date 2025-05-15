@@ -633,6 +633,11 @@ class CandleFetcher {
 	};
 }
 
+/**
+ * This class will subscribe to candles from the Drift Data API.
+ *
+ * Note: If you are using TradingView you probably want to just use the DriftTvFeed class instead.
+ */
 export class CandleClient {
 	private activeSubscriptions: Map<
 		string,
