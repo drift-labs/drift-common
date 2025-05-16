@@ -147,7 +147,7 @@ function isAuctionEmpty(auctionParams: AuctionParams) {
 	);
 }
 
-export const getUIOrderTypeFromSdkOrderType = (
+const getUIOrderTypeFromSdkOrderType = (
 	orderType: OrderType,
 	triggerCondition: OrderTriggerCondition,
 	direction: PositionDirection,
@@ -211,4 +211,5 @@ export const ORDER_COMMON_UTILS = {
 	getOrderLabelFromOrderDetails,
 	getLimitPriceFromOracleOffset,
 	isAuctionEmpty,
+	getUIOrderTypeFromSdkOrderType,
 };
