@@ -1508,7 +1508,7 @@ export class UISerializableLiquidationRecordV2 {
 
 		// handle liquidate borrow for perp pnl
 		const liquidateBorrowForPerpPnlPrecisionToUse = getPrecisionToUse(
-			MarketType.PERP,
+			MarketType.SPOT,
 			instance.liquidateBorrowForPerpPnl_liabilityMarketIndex
 		);
 		handleOnDeserializedPrecision(
@@ -1520,7 +1520,7 @@ export class UISerializableLiquidationRecordV2 {
 
 		// handle liquidate perp pnl for deposit
 		const liquidatePerpPnlForDepositPrecisionToUse = getPrecisionToUse(
-			MarketType.PERP,
+			MarketType.SPOT,
 			instance.liquidatePerpPnlForDeposit_assetMarketIndex
 		);
 		handleOnDeserializedPrecision(
