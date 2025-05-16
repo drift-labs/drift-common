@@ -129,8 +129,8 @@ export class DataApiWsClient {
 				{
 					const candle = (parsedMessage as WsUpdateMessage).candle;
 					const trades = (parsedMessage as WsUpdateMessage).trades;
-					this.candleSubject.next(candle);
-					this.tradesSubject.next(trades);
+					if (candle) this.candleSubject.next(candle); // Candle should always be attached to update but doing this for safety
+					if (trades) this.tradesSubject.next(trades); // Trades should always be attached to update but doing this for safety
 				}
 				break;
 			default:
