@@ -14,7 +14,6 @@ import {
 	TAKE_PROFIT_LIMIT_ORDER_TYPE_CONFIG,
 	TAKE_PROFIT_MARKET_ORDER_TYPE_CONFIG,
 	UI_ORDER_TYPES,
-	UI_ORDER_TYPES_LIST,
 } from '../constants/orders';
 import { UISerializableOrder } from '../serializableTypes';
 import { ENUM_UTILS, matchEnum } from '../utils';
@@ -147,7 +146,7 @@ function isAuctionEmpty(auctionParams: AuctionParams) {
 	);
 }
 
-export const getUIOrderTypeFromSdkOrderType = (
+const getUIOrderTypeFromSdkOrderType = (
 	orderType: OrderType,
 	triggerCondition: OrderTriggerCondition,
 	direction: PositionDirection,
@@ -211,4 +210,5 @@ export const ORDER_COMMON_UTILS = {
 	getOrderLabelFromOrderDetails,
 	getLimitPriceFromOracleOffset,
 	isAuctionEmpty,
+	getUIOrderTypeFromSdkOrderType,
 };
