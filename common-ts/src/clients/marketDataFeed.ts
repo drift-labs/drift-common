@@ -2,7 +2,9 @@ import { CandleResolution } from '@drift-labs/sdk';
 import { MarketSymbol, Opaque } from '@drift/common';
 import { Subject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
-import { DataApiWsClient, JsonCandle, JsonTrade } from './dataApiWsClient';
+import { DataApiWsClient } from './dataApiWsClient';
+import { JsonCandle } from 'src/types';
+import { JsonTrade } from 'src/types';
 import { UIEnv } from '../types';
 import assert from 'assert';
 

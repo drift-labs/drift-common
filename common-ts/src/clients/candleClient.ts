@@ -5,7 +5,7 @@ import {
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
 } from '@drift-labs/sdk';
-import { MarketId, MarketSymbol } from '../types';
+import { JsonCandle, MarketId, MarketSymbol } from '../types';
 import { CANDLE_UTILS } from '../utils/candleUtils';
 import { StrictEventEmitter } from '../utils/StrictEventEmitter';
 import { EnvironmentConstants } from '../EnvironmentConstants';
@@ -61,21 +61,6 @@ type CandleFetchUrlConfig = {
 	resolution: CandleResolution;
 	startTs?: number; // Seconds - now optional
 	countToFetch: number;
-};
-
-// Type for the candles returned by the data API
-export type JsonCandle = {
-	ts: number;
-	fillOpen: number;
-	fillHigh: number;
-	fillClose: number;
-	fillLow: number;
-	oracleOpen: number;
-	oracleHigh: number;
-	oracleClose: number;
-	oracleLow: number;
-	quoteVolume: number;
-	baseVolume: number;
 };
 
 type CandleFetchResponseJson = {
