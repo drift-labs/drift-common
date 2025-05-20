@@ -1,6 +1,11 @@
 import { PerpMarketConfig, SpotMarketConfig } from '@drift-labs/sdk';
 import { MarketId } from './MarketId';
-import { EXPONENT_POOL_ID, JLP_POOL_ID, MAIN_POOL_ID } from '../constants/misc';
+import {
+	EXPONENT_POOL_ID,
+	JLP_POOL_ID,
+	MAIN_POOL_ID,
+	SACRED_POOL_ID,
+} from '../constants/misc';
 import { Opaque } from '..';
 
 type CommonMarketConfig = Pick<
@@ -174,6 +179,10 @@ export class UISpotMarketConfig
 						: this.baseMarketConfig.symbol.split('-')[0]
 				) as MarketDisplaySymbol;
 			}
+			case SACRED_POOL_ID:
+				return `${
+					this.baseMarketConfig.symbol.split('-')[0]
+				}` as MarketDisplaySymbol;
 			default:
 				return this.baseMarketConfig.symbol as MarketDisplaySymbol;
 		}
