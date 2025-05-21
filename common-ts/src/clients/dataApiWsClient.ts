@@ -103,10 +103,20 @@ export class DataApiWsClient {
 	};
 
 	public kill = () => {
-		// TODO :: Need to handle the case where the ws is not connected yet
+		// Handle different WebSocket states
 		if (this.ws) {
-			this.ws.send(JSON.stringify({ type: 'unsubscribe' }));
-			this.ws.close();
+			switch (this.ws.readyState) {
+				case this.ws.CONNECTING:
+					// If still connecting, just close without sending message
+					this.ws.close();
+					break;
+				case this.ws.OPEN:
+					// If connected, send unsubscribe message then close
+					this.ws.send(JSON.stringify({ type: 'unsubscribe' }));
+					this.ws.close();
+					break;
+				// CLOSING and CLOSED states don't need handling
+			}
 			delete this.ws;
 		}
 		this.candleSubject.complete();
