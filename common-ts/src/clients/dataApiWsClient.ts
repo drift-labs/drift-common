@@ -103,6 +103,7 @@ export class DataApiWsClient {
 	};
 
 	public kill = () => {
+		// TODO :: Need to handle the case where the ws is not connected yet
 		if (this.ws) {
 			this.ws.send(JSON.stringify({ type: 'unsubscribe' }));
 			this.ws.close();
