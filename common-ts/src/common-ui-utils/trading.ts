@@ -4,9 +4,11 @@ import {
 	PRICE_PRECISION_EXP,
 	PositionDirection,
 	QUOTE_PRECISION_EXP,
+	User,
 	ZERO,
 	isVariant,
 } from '@drift-labs/sdk';
+import { UIOrderType } from 'src/types';
 
 const calculatePnlPctFromPosition = (
 	pnl: BN,
@@ -126,7 +128,85 @@ const calculatePotentialProfit = (props: {
 	};
 };
 
+/**
+ * Check if the order type is a market order or oracle market order
+ */
+const checkIsMarketOrderType = (orderType: UIOrderType) => {
+	return orderType === 'market' || orderType === 'oracle';
+};
+
+/**
+ * Calculate the liquidation price of a position after a trade. Requires DriftClient to be subscribed.
+ * If the order type is limit order, a limit price must be provided.
+ */
+const calculateLiquidationPriceAfterPerpTrade = ({
+	estEntryPrice,
+	orderType,
+	perpMarketIndex,
+	tradeBaseSize,
+	isLong,
+	userClient,
+	limitPrice,
+	offsetCollateral,
+	precision = 2,
+	isEnteringHighLeverageMode,
+}: {
+	estEntryPrice: BN;
+	orderType: UIOrderType;
+	perpMarketIndex: number;
+	tradeBaseSize: BN;
+	isLong: boolean;
+	userClient: User;
+	limitPrice?: BN;
+	offsetCollateral?: BN;
+	precision?: number;
+	isEnteringHighLeverageMode?: boolean;
+}) => {
+	const ALLOWED_ORDER_TYPES: UIOrderType[] = ['limit', 'market', 'oracle'];
+
+	if (!ALLOWED_ORDER_TYPES.includes(orderType)) {
+		console.error(
+			'Invalid order type for perp trade liquidation price calculation',
+			orderType
+		);
+		return 0;
+	}
+
+	if (orderType === 'limit' && !limitPrice) {
+		console.error(
+			'Limit order must have a limit price for perp trade liquidation price calculation'
+		);
+		return 0;
+	}
+
+	const signedBaseSize = isLong ? tradeBaseSize : tradeBaseSize.neg();
+	const priceToUse = orderType === 'limit' ? limitPrice : estEntryPrice;
+
+	const liqPriceBn = userClient.liquidationPrice(
+		perpMarketIndex,
+		signedBaseSize,
+		priceToUse,
+		undefined,
+		undefined, // we can exclude open orders since open orders will be cancelled first (which results in reducing account leverage) before actual liquidation
+		offsetCollateral,
+		isEnteringHighLeverageMode
+	);
+
+	const liqPriceBigNum = BigNum.from(liqPriceBn, PRICE_PRECISION_EXP);
+
+	if (liqPriceBigNum.isNeg()) {
+		return 0;
+	}
+
+	const liqPriceNum =
+		Math.round(liqPriceBigNum.toNum() * 10 ** precision) / 10 ** precision;
+
+	return liqPriceNum;
+};
+
 export const TRADING_COMMON_UTILS = {
 	calculatePnlPctFromPosition,
 	calculatePotentialProfit,
+	calculateLiquidationPriceAfterPerpTrade,
+	checkIsMarketOrderType,
 };

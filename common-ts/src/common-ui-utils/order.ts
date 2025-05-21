@@ -3,14 +3,24 @@ import {
 	OrderTriggerCondition,
 	PositionDirection,
 	BigNum,
+	ZERO,
 } from '@drift-labs/sdk';
-import { UI_ORDER_TYPES } from '../constants/orders';
+import {
+	LIMIT_ORDER_TYPE_CONFIG,
+	MARKET_ORDER_TYPE_CONFIG,
+	ORACLE_LIMIT_ORDER_TYPE_CONFIG,
+	STOP_LIMIT_ORDER_TYPE_CONFIG,
+	STOP_MARKET_ORDER_TYPE_CONFIG,
+	TAKE_PROFIT_LIMIT_ORDER_TYPE_CONFIG,
+	TAKE_PROFIT_MARKET_ORDER_TYPE_CONFIG,
+	UI_ORDER_TYPES,
+} from '../constants/orders';
 import { UISerializableOrder } from '../serializableTypes';
-import { matchEnum } from '../utils';
+import { ENUM_UTILS, matchEnum } from '../utils';
 import { AuctionParams } from '../types';
 import { EMPTY_AUCTION_PARAMS } from '..';
 
-export const getOrderLabelFromOrderDetails = (
+const getOrderLabelFromOrderDetails = (
 	orderDetails: Pick<
 		UISerializableOrder,
 		| 'orderType'
@@ -136,8 +146,69 @@ function isAuctionEmpty(auctionParams: AuctionParams) {
 	);
 }
 
+const getUIOrderTypeFromSdkOrderType = (
+	orderType: OrderType,
+	triggerCondition: OrderTriggerCondition,
+	direction: PositionDirection,
+	oracleOffset: BigNum | undefined
+) => {
+	const isLong = ENUM_UTILS.match(direction, PositionDirection.LONG);
+	const triggerAbove =
+		matchEnum(triggerCondition, OrderTriggerCondition.ABOVE) ||
+		matchEnum(triggerCondition, OrderTriggerCondition.TRIGGERED_ABOVE);
+
+	const triggerBelow =
+		matchEnum(triggerCondition, OrderTriggerCondition.BELOW) ||
+		matchEnum(triggerCondition, OrderTriggerCondition.TRIGGERED_BELOW);
+
+	// Buy side + trigger below: take profit for a short position
+	// Buy side + trigger above: stop loss for a short position
+	// Sell side + trigger above: take profit for a long position
+	// Sell side + trigger below: stop loss for a long position
+
+	if (matchEnum(orderType, OrderType.MARKET)) {
+		return MARKET_ORDER_TYPE_CONFIG;
+	} else if (matchEnum(orderType, OrderType.LIMIT)) {
+		if (oracleOffset && !oracleOffset.eq(ZERO)) {
+			return ORACLE_LIMIT_ORDER_TYPE_CONFIG;
+		} else {
+			return LIMIT_ORDER_TYPE_CONFIG;
+		}
+	} else if (matchEnum(orderType, OrderType.TRIGGER_MARKET)) {
+		if (isLong) {
+			if (triggerAbove) {
+				return TAKE_PROFIT_MARKET_ORDER_TYPE_CONFIG;
+			} else if (triggerBelow) {
+				return STOP_MARKET_ORDER_TYPE_CONFIG;
+			}
+		} else {
+			if (triggerAbove) {
+				return STOP_MARKET_ORDER_TYPE_CONFIG;
+			} else if (triggerBelow) {
+				return TAKE_PROFIT_MARKET_ORDER_TYPE_CONFIG;
+			}
+		}
+	} else if (matchEnum(orderType, OrderType.TRIGGER_LIMIT)) {
+		if (isLong) {
+			if (triggerAbove) {
+				return TAKE_PROFIT_LIMIT_ORDER_TYPE_CONFIG;
+			} else if (triggerBelow) {
+				return STOP_LIMIT_ORDER_TYPE_CONFIG;
+			}
+		} else {
+			if (triggerAbove) {
+				return STOP_LIMIT_ORDER_TYPE_CONFIG;
+			} else if (triggerBelow) {
+				return TAKE_PROFIT_LIMIT_ORDER_TYPE_CONFIG;
+			}
+		}
+	}
+	throw new Error('Invalid order type');
+};
+
 export const ORDER_COMMON_UTILS = {
 	getOrderLabelFromOrderDetails,
 	getLimitPriceFromOracleOffset,
 	isAuctionEmpty,
+	getUIOrderTypeFromSdkOrderType,
 };
