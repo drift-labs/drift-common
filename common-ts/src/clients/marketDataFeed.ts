@@ -182,6 +182,8 @@ class ApiSubscription {
 			env: this.config.env,
 		});
 
+		initialSubscriber.setSubscription(this);
+
 		switch (initialSubscriberType) {
 			case 'candles': {
 				this.candleSubscribers = new Map([
@@ -223,12 +225,14 @@ class ApiSubscription {
 	public attachNewCandleSubscriberToExistingSubscription(
 		subscriber: CandleSubscriber
 	) {
+		subscriber.setSubscription(this);
 		this.candleSubscribers.set(subscriber.id, subscriber);
 	}
 
 	public attachNewTradeSubscriberToExistingSubscription(
 		subscriber: TradeSubscriber
 	) {
+		subscriber.setSubscription(this);
 		this.tradeSubscribers.set(subscriber.id, subscriber);
 	}
 
