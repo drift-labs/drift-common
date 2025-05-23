@@ -54,6 +54,8 @@ export class DataApiWsClient {
 	private readonly tradesSubject: Subject<JsonTrade[]>;
 	private readonly _candleObservable: Observable<JsonCandle>;
 	private readonly _tradesObservable: Observable<JsonTrade[]>;
+	private expectDisconnect: boolean;
+	private resetConnectionMutex = false;
 
 	constructor(config: DataApiWsSubscriptionConfig) {
 		this.config = config;
@@ -82,7 +84,37 @@ export class DataApiWsClient {
 		}
 	};
 
+	private closeConnection = (code: number, reason: string) => {
+		if (!this.ws) return;
+		this.ws.onopen = null;
+		this.ws.onmessage = null;
+		this.ws.onclose = null;
+		this.ws.onerror = null;
+		this.ws.close(code, reason);
+		delete this.ws;
+	};
+
+	/**
+	 * This class should be called when a connection issue is detected so that it can recreate the connection
+	 */
+	private resetConnection = () => {
+		if (this.resetConnectionMutex) return;
+
+		this.resetConnectionMutex = true;
+
+		this.closeConnection(1000, 'Connection reset');
+
+		this.subscribe();
+
+		this.resetConnectionMutex = false;
+	};
+
 	public subscribe = async () => {
+		this.expectDisconnect = false;
+		console.log(
+			`candlesv2:: Opening new WS for ${getWsSubscriptionPath(this.config)}`
+		);
+
 		this.ws = new WS(getWsSubscriptionPath(this.config));
 
 		this.ws.onopen = (_event) => {
@@ -95,30 +127,24 @@ export class DataApiWsClient {
 			this.handleWsMessage(message);
 		};
 
-		this.ws.onclose = (_event) => {
-			console.debug(
-				`candlesv2:: CANDLE_CLIENT WS CLOSED for ${this.config.marketSymbol}`
-			);
+		this.ws.onclose = (event) => {
+			if (!this.expectDisconnect) {
+				this.resetConnection();
+				console.info(`dataApiWsClient::unexpected_onclose`, event);
+			}
+		};
+
+		this.ws.onerror = (error) => {
+			if (!this.expectDisconnect) {
+				this.resetConnection();
+			}
+			console.info(`dataApiWsClient::onerror`, error);
 		};
 	};
 
-	public kill = () => {
-		// Handle different WebSocket states
-		if (this.ws) {
-			switch (this.ws.readyState) {
-				case this.ws.CONNECTING:
-					// If still connecting, just close without sending message
-					this.ws.close();
-					break;
-				case this.ws.OPEN:
-					// If connected, send unsubscribe message then close
-					this.ws.send(JSON.stringify({ type: 'unsubscribe' }));
-					this.ws.close();
-					break;
-				// CLOSING and CLOSED states don't need handling
-			}
-			delete this.ws;
-		}
+	public unsubscribe = () => {
+		this.expectDisconnect = true;
+		this.closeConnection(1000, 'Client unsubscribed');
 		this.candleSubject.complete();
 		this.tradesSubject.complete();
 	};

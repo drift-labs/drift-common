@@ -237,7 +237,7 @@ class ApiSubscription {
 	}
 
 	private unsubscribeFromApi() {
-		this.apiClient.kill();
+		this.apiClient.unsubscribe();
 	}
 
 	public removeSubscriber(subscriberId: SubscriberId): {
