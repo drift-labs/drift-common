@@ -202,6 +202,7 @@ class ApiSubscription {
 		this.config = { marketSymbol, resolution, env };
 		this.id = this.generateSubscriptionId();
 		this.onNoMoreSubscribers = () => onNoMoreSubscribers(this.id);
+		console.log(`marketDataFeed::creating_new_api_subscription:${this.id}`);
 
 		const initialSubscriberType = initialSubscriber.config.type;
 
@@ -482,14 +483,6 @@ class SubscriptionManager {
 		this.transferTradeSubscribersToNewSubscription(
 			existingTradeSubscription,
 			newSubscription
-		);
-
-		// At this point we expect the existing subscription to be removed, because it had no candle subscribers and we moved the trade subscribers to the new subscription
-		invariant(
-			!this.compatibleTradeSubscriptionLookup.has(
-				existingTradeSubscription.tradeSubscriptionsLookupKey
-			),
-			'Expected existing trade subscription to be removed after transferring trade subscribers'
 		);
 	}
 

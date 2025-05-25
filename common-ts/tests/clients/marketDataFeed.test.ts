@@ -75,7 +75,7 @@ describe('MarketDataFeed', () => {
 
 		mockEnv = UIEnv.createMainnet();
 		mockMarketSymbol = 'SOL-PERP' as MarketSymbol;
-		mockResolution = '1' as CandleResolution;
+		mockResolution = '60' as CandleResolution;
 	});
 
 	afterEach(() => {
@@ -876,8 +876,8 @@ describe('MarketDataFeed', () => {
 			// Check that lookup tables contain the subscriptions
 			const solTradeKey = 'SOL-PERP:mainnet-beta';
 			const btcTradeKey = 'BTC-PERP:mainnet-beta';
-			const solCandleKey = 'SOL-PERP:1:mainnet-beta';
-			const btcCandleKey = 'BTC-PERP:1:mainnet-beta';
+			const solCandleKey = `SOL-PERP:${mockResolution}:mainnet-beta`;
+			const btcCandleKey = `BTC-PERP:${mockResolution}:mainnet-beta`;
 
 			// All subscriptions should be in trade lookup (since any subscription can serve trades)
 			expect(
