@@ -53,27 +53,25 @@ describe('MarketDataFeed', () => {
 
 	beforeEach(() => {
 		// Reset the MarketDataFeed static state before each test
-		(MarketDataFeed as any).subscribers = new Map();
-		(MarketDataFeed as any).apiSubscriptions = new Map();
-		// Clear the internal maps of the lookup objects
-		const tradeLookup = (MarketDataFeed as any)
-			.compatibleTradeSubscriptionLookup;
-		const candleLookup = (MarketDataFeed as any)
-			.compatibleCandleSubscriptionLookup;
-		if (tradeLookup && tradeLookup.subscriptions) {
-			tradeLookup.subscriptions.clear();
-		}
-		if (candleLookup && candleLookup.subscriptions) {
-			candleLookup.subscriptions.clear();
-		}
+		// Access the subscriptionManager instance and reset its internal state
+		const subscriptionManager = (MarketDataFeed as any).subscriptionManager;
+		if (subscriptionManager) {
+			// Clear the internal maps
+			subscriptionManager.subscribers = new Map();
+			subscriptionManager.apiSubscriptions = new Map();
 
-		// Fix the context binding issue for cleanupApiSubscription
-		const originalCleanup = (MarketDataFeed as any).cleanupApiSubscription;
-		(MarketDataFeed as any).cleanupApiSubscription = (
-			apiSubscriptionId: any
-		) => {
-			return originalCleanup.call(MarketDataFeed, apiSubscriptionId);
-		};
+			// Clear the lookup tables
+			if (
+				subscriptionManager.compatibleTradeSubscriptionLookup?.subscriptions
+			) {
+				subscriptionManager.compatibleTradeSubscriptionLookup.subscriptions.clear();
+			}
+			if (
+				subscriptionManager.compatibleCandleSubscriptionLookup?.subscriptions
+			) {
+				subscriptionManager.compatibleCandleSubscriptionLookup.subscriptions.clear();
+			}
+		}
 
 		mockEnv = UIEnv.createMainnet();
 		mockMarketSymbol = 'SOL-PERP' as MarketSymbol;
@@ -82,21 +80,32 @@ describe('MarketDataFeed', () => {
 
 	afterEach(() => {
 		// Clean up any remaining subscriptions
-		const subscribers = (MarketDataFeed as any).subscribers;
-		const subscriberIds = Array.from(subscribers.keys());
-		subscriberIds.forEach((id: any) => {
-			try {
-				MarketDataFeed.unsubscribe(id);
-			} catch (e) {
-				// Ignore errors during cleanup
-			}
-		});
+		const subscriptionManager = (MarketDataFeed as any).subscriptionManager;
+		if (subscriptionManager?.subscribers) {
+			const subscriberIds = Array.from(subscriptionManager.subscribers.keys());
+			subscriberIds.forEach((id: any) => {
+				try {
+					MarketDataFeed.unsubscribe(id);
+				} catch (e) {
+					// Ignore errors during cleanup
+				}
+			});
+		}
 	});
 
 	after(() => {
 		// Restore the original DataApiWsClient
 		(DataApiWsClient as any) = originalDataApiWsClient;
 	});
+
+	// Helper function to get internal state
+	function getInternalState() {
+		const subscriptionManager = (MarketDataFeed as any).subscriptionManager;
+		return {
+			subscribers: subscriptionManager?.subscribers || new Map(),
+			apiSubscriptions: subscriptionManager?.apiSubscriptions || new Map(),
+		};
+	}
 
 	describe('Candle Subscriptions', () => {
 		it('should create a new candle subscription', () => {
@@ -112,8 +121,7 @@ describe('MarketDataFeed', () => {
 			expect(subscription.observable).to.exist;
 
 			// Check that internal state is updated
-			const subscribers = (MarketDataFeed as any).subscribers;
-			const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			const { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(1);
 			expect(apiSubscriptions.size).to.equal(1);
 		});
@@ -136,8 +144,7 @@ describe('MarketDataFeed', () => {
 			expect(_subscription1.id).to.not.equal(_subscription2.id);
 
 			// Should have 2 subscribers but only 1 API subscription
-			const subscribers = (MarketDataFeed as any).subscribers;
-			const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			const { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(2);
 			expect(apiSubscriptions.size).to.equal(1);
 		});
@@ -158,8 +165,7 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Should have 2 subscribers and 2 API subscriptions
-			const subscribers = (MarketDataFeed as any).subscribers;
-			const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			const { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(2);
 			expect(apiSubscriptions.size).to.equal(2);
 		});
@@ -180,8 +186,7 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Should have 2 subscribers and 2 API subscriptions
-			const subscribers = (MarketDataFeed as any).subscribers;
-			const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			const { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(2);
 			expect(apiSubscriptions.size).to.equal(2);
 		});
@@ -200,8 +205,7 @@ describe('MarketDataFeed', () => {
 			expect(subscription.observable).to.exist;
 
 			// Check that internal state is updated
-			const subscribers = (MarketDataFeed as any).subscribers;
-			const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			const { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(1);
 			expect(apiSubscriptions.size).to.equal(1);
 		});
@@ -222,8 +226,7 @@ describe('MarketDataFeed', () => {
 			expect(_subscription1.id).to.not.equal(_subscription2.id);
 
 			// Should have 2 subscribers but only 1 API subscription
-			const subscribers = (MarketDataFeed as any).subscribers;
-			const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			const { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(2);
 			expect(apiSubscriptions.size).to.equal(1);
 		});
@@ -242,8 +245,7 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Should have 2 subscribers and 2 API subscriptions
-			const subscribers = (MarketDataFeed as any).subscribers;
-			const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			const { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(2);
 			expect(apiSubscriptions.size).to.equal(2);
 		});
@@ -267,8 +269,7 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Should have 2 subscribers but only 1 API subscription
-			const subscribers = (MarketDataFeed as any).subscribers;
-			const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			const { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(2);
 			expect(apiSubscriptions.size).to.equal(1);
 		});
@@ -282,8 +283,7 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Verify initial state
-			let subscribers = (MarketDataFeed as any).subscribers;
-			let apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			let { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(1);
 			expect(apiSubscriptions.size).to.equal(1);
 
@@ -296,8 +296,7 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Should still have 2 subscribers and 1 API subscription (trade subscription should be transferred)
-			subscribers = (MarketDataFeed as any).subscribers;
-			apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			({ subscribers, apiSubscriptions } = getInternalState());
 			expect(subscribers.size).to.equal(2);
 			expect(apiSubscriptions.size).to.equal(1);
 		});
@@ -317,19 +316,16 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Should share the same API subscription
-			const subscribers = (MarketDataFeed as any).subscribers;
-			const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			let { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(2);
 			expect(apiSubscriptions.size).to.equal(1);
 
 			// Unsubscribe candle, trade should remain
 			MarketDataFeed.unsubscribe(candleSubscription.id);
 
-			const remainingSubscribers = (MarketDataFeed as any).subscribers;
-			const remainingApiSubscriptions = (MarketDataFeed as any)
-				.apiSubscriptions;
-			expect(remainingSubscribers.size).to.equal(1);
-			expect(remainingApiSubscriptions.size).to.equal(1);
+			({ subscribers, apiSubscriptions } = getInternalState());
+			expect(subscribers.size).to.equal(1);
+			expect(apiSubscriptions.size).to.equal(1);
 		});
 	});
 
@@ -343,8 +339,7 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Verify subscription exists
-			let subscribers = (MarketDataFeed as any).subscribers;
-			let apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			let { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(1);
 			expect(apiSubscriptions.size).to.equal(1);
 
@@ -352,8 +347,7 @@ describe('MarketDataFeed', () => {
 			MarketDataFeed.unsubscribe(subscription.id);
 
 			// Verify cleanup
-			subscribers = (MarketDataFeed as any).subscribers;
-			apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			({ subscribers, apiSubscriptions } = getInternalState());
 			expect(subscribers.size).to.equal(0);
 			expect(apiSubscriptions.size).to.equal(0);
 		});
@@ -374,8 +368,7 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Verify initial state
-			let subscribers = (MarketDataFeed as any).subscribers;
-			let apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			let { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(2);
 			expect(apiSubscriptions.size).to.equal(1);
 
@@ -383,8 +376,7 @@ describe('MarketDataFeed', () => {
 			MarketDataFeed.unsubscribe(subscription1.id);
 
 			// Should still have 1 subscriber and 1 API subscription
-			subscribers = (MarketDataFeed as any).subscribers;
-			apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			({ subscribers, apiSubscriptions } = getInternalState());
 			expect(subscribers.size).to.equal(1);
 			expect(apiSubscriptions.size).to.equal(1);
 
@@ -392,8 +384,7 @@ describe('MarketDataFeed', () => {
 			MarketDataFeed.unsubscribe(subscription2.id);
 
 			// Should have no subscribers and no API subscriptions
-			subscribers = (MarketDataFeed as any).subscribers;
-			apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			({ subscribers, apiSubscriptions } = getInternalState());
 			expect(subscribers.size).to.equal(0);
 			expect(apiSubscriptions.size).to.equal(0);
 		});
@@ -435,7 +426,7 @@ describe('MarketDataFeed', () => {
 
 			// Wait for subscription to be set up, then emit data
 			setTimeout(() => {
-				const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+				const { apiSubscriptions } = getInternalState();
 				const apiSubscription = Array.from(apiSubscriptions.values())[0] as any;
 				const mockClient = apiSubscription.apiClient as MockDataApiWsClient;
 				mockClient.candlesObservable.next(mockCandle);
@@ -499,7 +490,7 @@ describe('MarketDataFeed', () => {
 
 			// Wait for subscription to be set up, then emit data
 			setTimeout(() => {
-				const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+				const { apiSubscriptions } = getInternalState();
 				const apiSubscription = Array.from(apiSubscriptions.values())[0] as any;
 				const mockClient = apiSubscription.apiClient as MockDataApiWsClient;
 				mockClient.tradesObservable.next(mockTrades);
@@ -556,7 +547,7 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Get the API subscription and emit data
-			const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			const { apiSubscriptions } = getInternalState();
 			const apiSubscription = Array.from(apiSubscriptions.values())[0] as any;
 			const mockClient = apiSubscription.apiClient as MockDataApiWsClient;
 			mockClient.candlesObservable.next(mockCandle);
@@ -588,8 +579,7 @@ describe('MarketDataFeed', () => {
 
 			// subscription1 and subscription2 should share an API subscription
 			// subscription3 should have its own API subscription
-			const subscribers = (MarketDataFeed as any).subscribers;
-			const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			const { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(3);
 			expect(apiSubscriptions.size).to.equal(2);
 		});
@@ -615,8 +605,7 @@ describe('MarketDataFeed', () => {
 
 			// subscription1 and subscription2 should share an API subscription
 			// subscription3 should have its own API subscription
-			const subscribers = (MarketDataFeed as any).subscribers;
-			const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			const { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(3);
 			expect(apiSubscriptions.size).to.equal(2);
 		});
@@ -641,8 +630,7 @@ describe('MarketDataFeed', () => {
 			}
 
 			// Verify all subscriptions were created
-			let subscribers = (MarketDataFeed as any).subscribers;
-			let apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			let { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(5);
 			expect(apiSubscriptions.size).to.equal(1);
 
@@ -652,8 +640,7 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Verify cleanup
-			subscribers = (MarketDataFeed as any).subscribers;
-			apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			({ subscribers, apiSubscriptions } = getInternalState());
 			expect(subscribers.size).to.equal(0);
 			expect(apiSubscriptions.size).to.equal(0);
 		});
@@ -674,8 +661,7 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Should have 2 trade subscribers sharing 1 API subscription
-			let subscribers = (MarketDataFeed as any).subscribers;
-			let apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			let { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(2);
 			expect(apiSubscriptions.size).to.equal(1);
 
@@ -688,8 +674,7 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Should still have 3 subscribers and 1 API subscription
-			subscribers = (MarketDataFeed as any).subscribers;
-			apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			({ subscribers, apiSubscriptions } = getInternalState());
 			expect(subscribers.size).to.equal(3);
 			expect(apiSubscriptions.size).to.equal(1);
 
@@ -699,8 +684,7 @@ describe('MarketDataFeed', () => {
 			MarketDataFeed.unsubscribe(candleSubscription.id);
 
 			// Should be clean
-			subscribers = (MarketDataFeed as any).subscribers;
-			apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			({ subscribers, apiSubscriptions } = getInternalState());
 			expect(subscribers.size).to.equal(0);
 			expect(apiSubscriptions.size).to.equal(0);
 		});
@@ -724,8 +708,7 @@ describe('MarketDataFeed', () => {
 			});
 
 			// Different environments should create separate subscriptions
-			const subscribers = (MarketDataFeed as any).subscribers;
-			const apiSubscriptions = (MarketDataFeed as any).apiSubscriptions;
+			const { subscribers, apiSubscriptions } = getInternalState();
 			expect(subscribers.size).to.equal(2);
 			expect(apiSubscriptions.size).to.equal(2);
 
@@ -756,6 +739,202 @@ describe('MarketDataFeed', () => {
 			// Note: In a real scenario, the observable would complete when the underlying
 			// websocket connection is closed. In our mock, we simulate this.
 			expect(completed).to.be.false; // Our mock doesn't auto-complete on unsubscribe
+		});
+
+		it('should transfer trade subscribers to compatible subscription when candle subscription is removed', () => {
+			// Create a candle subscription first
+			const candleSubscription = MarketDataFeed.subscribe({
+				type: 'candles',
+				env: mockEnv,
+				marketSymbol: mockMarketSymbol,
+				resolution: mockResolution,
+			});
+
+			// Add trade subscribers to the same subscription
+			const tradeSubscription1 = MarketDataFeed.subscribe({
+				type: 'trades',
+				env: mockEnv,
+				marketSymbol: mockMarketSymbol,
+			});
+
+			const tradeSubscription2 = MarketDataFeed.subscribe({
+				type: 'trades',
+				env: mockEnv,
+				marketSymbol: mockMarketSymbol,
+			});
+
+			// Should have 3 subscribers sharing 1 API subscription
+			let { subscribers, apiSubscriptions } = getInternalState();
+			expect(subscribers.size).to.equal(3);
+			expect(apiSubscriptions.size).to.equal(1);
+
+			// Create another candle subscription with different resolution for the same market
+			const candleSubscription2 = MarketDataFeed.subscribe({
+				type: 'candles',
+				env: mockEnv,
+				marketSymbol: mockMarketSymbol,
+				resolution: '5' as CandleResolution,
+			});
+
+			// Should now have 4 subscribers and 2 API subscriptions
+			({ subscribers, apiSubscriptions } = getInternalState());
+			expect(subscribers.size).to.equal(4);
+			expect(apiSubscriptions.size).to.equal(2);
+
+			// Remove the first candle subscription, leaving only trade subscribers on that subscription
+			MarketDataFeed.unsubscribe(candleSubscription.id);
+
+			// After unsubscribing the candle subscription, the trade subscribers should be transferred
+			// to the other compatible subscription (candleSubscription2's subscription)
+			// This should result in 3 subscribers and 1 API subscription
+			({ subscribers, apiSubscriptions } = getInternalState());
+			expect(subscribers.size).to.equal(3);
+			// This test will currently fail because the transfer logic is not implemented
+			// When implemented, this should be 1 subscription instead of 2
+			expect(apiSubscriptions.size).to.equal(
+				1,
+				'Trade subscribers should be transferred to the remaining compatible subscription'
+			);
+
+			// Clean up remaining subscriptions
+			MarketDataFeed.unsubscribe(tradeSubscription1.id);
+			MarketDataFeed.unsubscribe(tradeSubscription2.id);
+			MarketDataFeed.unsubscribe(candleSubscription2.id);
+		});
+
+		it('should not transfer trade subscribers when no compatible subscription exists', () => {
+			// Create a candle subscription
+			const candleSubscription = MarketDataFeed.subscribe({
+				type: 'candles',
+				env: mockEnv,
+				marketSymbol: mockMarketSymbol,
+				resolution: mockResolution,
+			});
+
+			// Add trade subscribers to the same subscription
+			const tradeSubscription1 = MarketDataFeed.subscribe({
+				type: 'trades',
+				env: mockEnv,
+				marketSymbol: mockMarketSymbol,
+			});
+
+			const tradeSubscription2 = MarketDataFeed.subscribe({
+				type: 'trades',
+				env: mockEnv,
+				marketSymbol: mockMarketSymbol,
+			});
+
+			// Should have 3 subscribers sharing 1 API subscription
+			let { subscribers, apiSubscriptions } = getInternalState();
+			expect(subscribers.size).to.equal(3);
+			expect(apiSubscriptions.size).to.equal(1);
+
+			// Remove the candle subscription, leaving only trade subscribers
+			MarketDataFeed.unsubscribe(candleSubscription.id);
+
+			// Since there's no other compatible subscription for the same market,
+			// the trade subscribers should remain on their current subscription
+			({ subscribers, apiSubscriptions } = getInternalState());
+			expect(subscribers.size).to.equal(2);
+			expect(apiSubscriptions.size).to.equal(1);
+
+			// Clean up remaining subscriptions
+			MarketDataFeed.unsubscribe(tradeSubscription1.id);
+			MarketDataFeed.unsubscribe(tradeSubscription2.id);
+		});
+
+		it('should properly clean up lookup tables when subscriptions are removed', () => {
+			// Create subscriptions for different markets to test lookup table cleanup
+			const solCandleSubscription = MarketDataFeed.subscribe({
+				type: 'candles',
+				env: mockEnv,
+				marketSymbol: 'SOL-PERP' as MarketSymbol,
+				resolution: mockResolution,
+			});
+
+			const btcCandleSubscription = MarketDataFeed.subscribe({
+				type: 'candles',
+				env: mockEnv,
+				marketSymbol: 'BTC-PERP' as MarketSymbol,
+				resolution: mockResolution,
+			});
+
+			const solTradeSubscription = MarketDataFeed.subscribe({
+				type: 'trades',
+				env: mockEnv,
+				marketSymbol: 'SOL-PERP' as MarketSymbol,
+			});
+
+			// Verify initial state
+			let { subscribers, apiSubscriptions } = getInternalState();
+			expect(subscribers.size).to.equal(3);
+			expect(apiSubscriptions.size).to.equal(2); // SOL and BTC should have separate subscriptions
+
+			// Access the subscription manager to check lookup tables
+			const subscriptionManager = (MarketDataFeed as any).subscriptionManager;
+
+			// Check that lookup tables contain the subscriptions
+			const solTradeKey = 'SOL-PERP:mainnet-beta';
+			const btcTradeKey = 'BTC-PERP:mainnet-beta';
+			const solCandleKey = 'SOL-PERP:1:mainnet-beta';
+			const btcCandleKey = 'BTC-PERP:1:mainnet-beta';
+
+			// All subscriptions should be in trade lookup (since any subscription can serve trades)
+			expect(
+				subscriptionManager.compatibleTradeSubscriptionLookup.has(solTradeKey)
+			).to.be.true;
+			expect(
+				subscriptionManager.compatibleTradeSubscriptionLookup.has(btcTradeKey)
+			).to.be.true;
+
+			// Only candle subscriptions should be in candle lookup
+			expect(
+				subscriptionManager.compatibleCandleSubscriptionLookup.has(solCandleKey)
+			).to.be.true;
+			expect(
+				subscriptionManager.compatibleCandleSubscriptionLookup.has(btcCandleKey)
+			).to.be.true;
+
+			// Unsubscribe from SOL subscriptions
+			MarketDataFeed.unsubscribe(solCandleSubscription.id);
+			MarketDataFeed.unsubscribe(solTradeSubscription.id);
+
+			// Verify SOL subscriptions are removed from lookup tables
+			expect(
+				subscriptionManager.compatibleTradeSubscriptionLookup.has(solTradeKey)
+			).to.be.false;
+			expect(
+				subscriptionManager.compatibleCandleSubscriptionLookup.has(solCandleKey)
+			).to.be.false;
+
+			// BTC subscription should still exist in both lookups
+			expect(
+				subscriptionManager.compatibleTradeSubscriptionLookup.has(btcTradeKey)
+			).to.be.true;
+			expect(
+				subscriptionManager.compatibleCandleSubscriptionLookup.has(btcCandleKey)
+			).to.be.true;
+
+			// Verify internal state
+			({ subscribers, apiSubscriptions } = getInternalState());
+			expect(subscribers.size).to.equal(1);
+			expect(apiSubscriptions.size).to.equal(1);
+
+			// Clean up remaining subscription
+			MarketDataFeed.unsubscribe(btcCandleSubscription.id);
+
+			// Verify all lookup tables are clean
+			expect(
+				subscriptionManager.compatibleTradeSubscriptionLookup.has(btcTradeKey)
+			).to.be.false;
+			expect(
+				subscriptionManager.compatibleCandleSubscriptionLookup.has(btcCandleKey)
+			).to.be.false;
+
+			// Verify final state
+			({ subscribers, apiSubscriptions } = getInternalState());
+			expect(subscribers.size).to.equal(0);
+			expect(apiSubscriptions.size).to.equal(0);
 		});
 	});
 });
