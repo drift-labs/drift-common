@@ -1,7 +1,6 @@
 import { CandleResolution } from '@drift-labs/sdk';
 import { MarketSymbol, Opaque } from '@drift/common';
 import { Subject } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 import { DataApiWsClient } from './dataApiWsClient';
 import { JsonCandle } from 'src/types';
 import { JsonTrade } from 'src/types';
@@ -99,18 +98,21 @@ abstract class _Subscriber<T> {
 	public readonly config: SubscriptionConfig;
 	protected _apiSubscription: ApiSubscription;
 	protected subject: Subject<T>;
+	private static idIncrementer: number = 0;
 
 	public get subscription(): ApiSubscription {
 		return this._apiSubscription;
 	}
 
 	private generateSubscriberId(): SubscriberId {
-		return uuidv4() as SubscriberId;
+		return `${this.config?.type}:${this.config?.marketSymbol}:${
+			this.config?.env.key
+		}:(${_Subscriber.idIncrementer++})` as SubscriberId;
 	}
 
 	constructor(config: SubscriptionConfig) {
-		this.id = this.generateSubscriberId();
 		this.config = { ...config }; // Make a copy of the config to avoid mutability issues
+		this.id = this.generateSubscriberId();
 	}
 
 	setSubscription(subscription: ApiSubscription) {
@@ -153,15 +155,15 @@ class TradeSubscriber extends _Subscriber<JsonTrade[]> {
 type Subscriber = CandleSubscriber | TradeSubscriber;
 
 function getCompatibleCandleSubscriptionLookupKey(
-	config: Pick<CandleSubscriptionConfig, 'marketSymbol' | 'resolution'>
+	config: Pick<CandleSubscriptionConfig, 'marketSymbol' | 'resolution' | 'env'>
 ): CandleSubscriptionLookupKey {
-	return `${config.marketSymbol}:${config.resolution}` as CandleSubscriptionLookupKey;
+	return `${config.marketSymbol}:${config.resolution}:${config.env.key}` as CandleSubscriptionLookupKey;
 }
 
 function getCompatibleTradeSubscriptionLookupKey(
-	config: Pick<CandleSubscriptionConfig, 'marketSymbol'>
+	config: Pick<CandleSubscriptionConfig, 'marketSymbol' | 'env'>
 ): TradeSubscriptionLookupKey {
-	return `${config.marketSymbol}` as TradeSubscriptionLookupKey;
+	return `${config.marketSymbol}:${config.env.key}` as TradeSubscriptionLookupKey;
 }
 
 class ApiSubscription {
@@ -174,9 +176,12 @@ class ApiSubscription {
 	>;
 	private apiClient: DataApiWsClient;
 	private onNoMoreSubscribers: () => void;
+	private static idIncrementer: number = 0;
 
 	private generateSubscriptionId(): ApiSubscriptionId {
-		return uuidv4() as ApiSubscriptionId;
+		return `${getCompatibleCandleSubscriptionLookupKey(
+			this.config
+		)}(${ApiSubscription.idIncrementer++})` as ApiSubscriptionId;
 	}
 
 	get tradeSubscriptionsLookupKey() {
@@ -194,8 +199,8 @@ class ApiSubscription {
 		initialSubscriber: Subscriber,
 		onNoMoreSubscribers: (subscription: ApiSubscriptionId) => void
 	) {
-		this.id = this.generateSubscriptionId();
 		this.config = { marketSymbol, resolution, env };
+		this.id = this.generateSubscriptionId();
 		this.onNoMoreSubscribers = () => onNoMoreSubscribers(this.id);
 
 		const initialSubscriberType = initialSubscriber.config.type;
