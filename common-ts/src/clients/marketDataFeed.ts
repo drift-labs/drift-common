@@ -1,5 +1,5 @@
 import { CandleResolution } from '@drift-labs/sdk';
-import { MarketSymbol, Opaque } from '@drift/common';
+import { MarketSymbol, Opaque } from '../types';
 import { Subject } from 'rxjs';
 import { DataApiWsClient } from './dataApiWsClient';
 import { JsonCandle } from 'src/types';
