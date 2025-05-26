@@ -11,16 +11,72 @@ import {
 	BigNum,
 	BASE_PRECISION_EXP,
 	QUOTE_PRECISION_EXP,
+	PRICE_PRECISION_EXP,
 } from '@drift-labs/sdk';
 import { MarketId } from './MarketId';
 import invariant from 'tiny-invariant';
-import { USDC_SPOT_MARKET_INDEX } from '../constants';
+import {
+	EXPONENT_POOL_ID,
+	JLP_POOL_ID,
+	MAIN_POOL_ID,
+	SACRED_POOL_ID,
+	USDC_SPOT_MARKET_INDEX,
+} from '../constants';
 import { ENUM_UTILS } from '../utils';
 import { Config } from '../Config';
 import { MarketAccount } from '../types';
+import { Opaque } from '.';
 
 const useAsyncMarketConfigs =
 	process.env.NEXT_PUBLIC_USE_ASYNC_MARKET_CONFIGS === 'true';
+
+/**
+ * MarketSymbol will uniquely identify a market
+ */
+export type MarketSymbol = Opaque<string, 'MarketSymbol'>;
+/**
+ * MarketDisplaySymbol is the label for a market that we display to a user
+ */
+export type MarketDisplaySymbol = Opaque<string, 'MarketDisplaySymbol'>;
+/**
+ * BaseAssetSymbol is the symbol for the underlying asset for a market
+ */
+export type BaseAssetSymbol = Opaque<string, 'BaseAssetSymbol'>;
+/**
+ * BaseAssetDisplaySymbol is the label for the underlying asset for a market that we display to a user
+ */
+export type BaseAssetDisplaySymbol = Opaque<string, 'BaseAssetDisplaySymbol'>;
+
+/**
+ * # Examples and explanations of the symbol types:
+ *
+ * ## MarketSymbol:
+ * These are basically just the raw symbols in the market configs.
+ * - 1KWEN-PERP
+ * - JitoSOL-3
+ * - PT-fragSOL-15JUN25-3
+ *
+ * ## MarketDisplaySymbol:
+ * This is the symbol we use to display the market to the user. For SPOT markets it should be the exact same as the BaseAssetDisplaySymbol, but for PERP markets they might be different which is why we have this separate type.
+ *
+ * - 1KWEN-PERP => 1KWEN-PERP
+ * - JitoSOL-3 => JitoSOL
+ * - PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25
+ *
+ * ## BaseAssetDisplaySymbol:
+ * This is the symbol we use to communicate "what asset they are holding". For SPOT markets it should be the same as the MarketDisplaySymbol, but for PERP markets it may be different, for example we show open interest denominated in "1KWEN", while the market is "1KWEN-PERP".
+ *
+ * - 1KWEN-PERP => 1KWEN
+ * - JitoSOL-3 => JitoSOL
+ * - PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25
+ *
+ * ## BaseAssetSymbol:
+ * This is the symbol for the underlying asset for a market. I don't believe we will display this anywhere but we use these for example when looking up the market icon to use.
+ *
+ * - 1KWEN-PERP => WEN
+ * - JitoSOL-3 => JitoSOL
+ * - PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25 (note: PT-fragSOL has an icon different to regular fragSOL, otherwise we would use 'fragSOL' for the base asset symbol)
+ */
 
 export abstract class UIMarket {
 	static perpMarkets = PerpMarkets['mainnet-beta'];
@@ -115,11 +171,11 @@ export abstract class UIMarket {
 	}
 
 	get marketName() {
-		return `${this.market.symbol}${this.isSpot ? '/USDC' : ''}`;
+		return `${this.market.symbol}${this.isSpot ? '/USDC' : ''}`; // TODO Remove this
 	}
 
 	get symbol() {
-		return this.market.symbol;
+		return this.market.symbol; // TODO Remove this
 	}
 
 	get isUsdcMarket() {
@@ -144,18 +200,6 @@ export abstract class UIMarket {
 		return this.marketId.equals(other.marketId);
 	}
 
-	baseAssetSymbol(removePrefix = false) {
-		let baseAssetSymbol = this.isPerp
-			? (this.market as PerpMarketConfig).baseAssetSymbol
-			: this.market.symbol;
-
-		if (removePrefix) {
-			baseAssetSymbol = baseAssetSymbol.replace('1K', '').replace('1M', '');
-		}
-
-		return baseAssetSymbol;
-	}
-
 	protected geDisplayDpFromSize(size: BN, precisionExp: BN) {
 		const formattedSize = BigNum.from(size, precisionExp).prettyPrint();
 		if (formattedSize.includes('.')) {
@@ -171,60 +215,180 @@ export abstract class UIMarket {
 	abstract getStepSize(marketAccount: MarketAccount): BN;
 
 	abstract getTickSize(marketAccount: MarketAccount): BN;
+
+	getStepSizeNum(marketAccount: MarketAccount): number {
+		if (this.isSpot) {
+			return BigNum.from(
+				(marketAccount as SpotMarketAccount).orderStepSize,
+				(marketAccount as SpotMarketAccount).decimals
+			).toNum();
+		} else {
+			return BigNum.from(
+				(marketAccount as PerpMarketAccount).amm.orderStepSize,
+				BASE_PRECISION_EXP
+			).toNum();
+		}
+	}
+
+	getTickSizeNum(marketAccount: MarketAccount): number {
+		if (this.isSpot) {
+			return BigNum.from(
+				(marketAccount as SpotMarketAccount).orderTickSize,
+				PRICE_PRECISION_EXP
+			).toNum();
+		} else {
+			return BigNum.from(
+				(marketAccount as PerpMarketAccount).amm.orderTickSize,
+				PRICE_PRECISION_EXP
+			).toNum();
+		}
+	}
+
+	abstract get baseAssetSymbol(): BaseAssetSymbol;
+
+	abstract get baseAssetDisplaySymbol(): BaseAssetDisplaySymbol;
+
+	abstract get marketDisplaySymbol(): MarketDisplaySymbol;
+
+	abstract get marketSymbol(): MarketSymbol;
 }
 
 export class PerpUIMarket extends UIMarket {
+	market: PerpMarketConfig;
+
 	constructor(marketIndex: number) {
 		super(marketIndex, MarketType.PERP);
 	}
 
 	baseDisplayDp(marketAccount: PerpMarketAccount) {
 		return this.geDisplayDpFromSize(
-			(marketAccount as PerpMarketAccount).amm.orderStepSize,
+			marketAccount.amm.orderStepSize,
 			BASE_PRECISION_EXP
 		);
 	}
 
 	priceDisplayDp(marketAccount: PerpMarketAccount) {
 		return this.geDisplayDpFromSize(
-			(marketAccount as PerpMarketAccount).amm.orderTickSize,
+			marketAccount.amm.orderTickSize,
 			QUOTE_PRECISION_EXP
 		);
 	}
 
 	getStepSize(marketAccount: PerpMarketAccount) {
-		return (marketAccount as PerpMarketAccount).amm.orderStepSize;
+		return marketAccount.amm.orderStepSize;
 	}
 
 	getTickSize(marketAccount: PerpMarketAccount) {
-		return (marketAccount as PerpMarketAccount).amm.orderTickSize;
+		return marketAccount.amm.orderTickSize;
+	}
+
+	get baseAssetDisplaySymbol(): BaseAssetDisplaySymbol {
+		return this.market.baseAssetSymbol
+			.replace('1K', '')
+			.replace('1M', '') as BaseAssetDisplaySymbol;
+	}
+
+	get baseAssetSymbol(): BaseAssetSymbol {
+		return this.market.baseAssetSymbol as BaseAssetSymbol;
+	}
+
+	// TODO :: Improve performance by calculating symbols once during initialization and setting it on the instance, rather than doing this every time we access it at runtime
+	get marketDisplaySymbol(): MarketDisplaySymbol {
+		return this.market.symbol as MarketDisplaySymbol;
+	}
+
+	get marketSymbol(): MarketSymbol {
+		return this.market.symbol as MarketSymbol;
 	}
 }
 
 export class SpotUIMarket extends UIMarket {
+	market: SpotMarketConfig;
+
 	constructor(marketIndex: number) {
 		super(marketIndex, MarketType.SPOT);
 	}
 
 	baseDisplayDp(marketAccount: SpotMarketAccount) {
 		return this.geDisplayDpFromSize(
-			(marketAccount as SpotMarketAccount).orderStepSize,
-			(this.market as SpotMarketConfig).precisionExp
+			marketAccount.orderStepSize,
+			this.market.precisionExp
 		);
 	}
 
 	priceDisplayDp(marketAccount: SpotMarketAccount) {
 		return this.geDisplayDpFromSize(
-			(marketAccount as SpotMarketAccount).orderTickSize,
+			marketAccount.orderTickSize,
 			QUOTE_PRECISION_EXP
 		);
 	}
 
 	getStepSize(marketAccount: SpotMarketAccount) {
-		return (marketAccount as SpotMarketAccount).orderStepSize;
+		return marketAccount.orderStepSize;
 	}
 
 	getTickSize(marketAccount: SpotMarketAccount) {
-		return (marketAccount as SpotMarketAccount).orderTickSize;
+		return marketAccount.orderTickSize;
+	}
+
+	get baseAssetDisplaySymbol(): BaseAssetDisplaySymbol {
+		const config = this.market;
+
+		switch (config.poolId) {
+			case EXPONENT_POOL_ID: {
+				/*
+					Example market symbol conversions:
+					PT-fragSOL-15JUN25-3 => PT-fragSOL
+					PT-kySOL-10JUL25-3 => PT-kySOL
+					JitoSOL-3 => JitoSOL
+					JTO-3 => JTO
+				*/
+				return (
+					config.symbol.startsWith('PT-')
+						? config.symbol.slice(0, config.symbol.indexOf('-', 3))
+						: config.symbol.split('-')[0]
+				) as BaseAssetDisplaySymbol;
+			}
+			default:
+				return config.symbol as BaseAssetDisplaySymbol;
+		}
+	}
+
+	get baseAssetSymbol(): BaseAssetSymbol {
+		return this.marketDisplaySymbol as unknown as BaseAssetSymbol; // Currently no cases where SPOT baseAssetSymbol is different from marketDisplaySymbol
+	}
+
+	// TODO :: Improve performance by calculating symbols once during initialization and setting it on the instance, rather than doing this every time we access it at runtime
+	get marketDisplaySymbol(): MarketDisplaySymbol {
+		const config = this.market as SpotMarketConfig;
+
+		switch (config.poolId) {
+			case MAIN_POOL_ID:
+				return config.symbol as MarketDisplaySymbol;
+			case JLP_POOL_ID:
+				return `${config.symbol.split('-')[0]}` as MarketDisplaySymbol;
+			case EXPONENT_POOL_ID: {
+				/*
+					Example market symbol conversions:
+					PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25
+					PT-kySOL-10JUL25-3 => PT-kySOL-10JUL25
+					JitoSOL-3 => JitoSOL
+					JTO-3 => JTO
+				*/
+				return (
+					config.symbol.startsWith('PT-')
+						? config.symbol.slice(0, config.symbol.lastIndexOf('-'))
+						: config.symbol.split('-')[0]
+				) as MarketDisplaySymbol;
+			}
+			case SACRED_POOL_ID:
+				return `${config.symbol.split('-')[0]}` as MarketDisplaySymbol;
+			default:
+				return config.symbol as MarketDisplaySymbol;
+		}
+	}
+
+	get marketSymbol(): MarketSymbol {
+		return this.market.symbol as MarketSymbol;
 	}
 }
