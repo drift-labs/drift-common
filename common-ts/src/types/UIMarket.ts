@@ -417,7 +417,7 @@ export class SpotUIMarket extends UIMarket {
 	}
 
 	calcBaseAssetSymbol(): BaseAssetSymbol {
-		return this.marketDisplaySymbol as unknown as BaseAssetSymbol; // Currently no cases where SPOT baseAssetSymbol is different from marketDisplaySymbol
+		return this.calcMarketDisplaySymbol() as unknown as BaseAssetSymbol; // Currently no cases where SPOT baseAssetSymbol is different from marketDisplaySymbol
 	}
 
 	calcMarketDisplaySymbol(): MarketDisplaySymbol {
