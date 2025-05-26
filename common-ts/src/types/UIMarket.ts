@@ -141,7 +141,7 @@ export abstract class UIMarket {
 	}
 
 	static setPerpMarkets(perpMarkets: PerpMarketConfig[]) {
-		this.perpMarkets = perpMarkets;
+		this.perpMarkets = [...perpMarkets].map((market) => Object.freeze(market));
 		this.perpMarketIds = perpMarkets.map((m) =>
 			MarketId.createPerpMarket(m.marketIndex)
 		);
@@ -149,7 +149,7 @@ export abstract class UIMarket {
 	}
 
 	static setSpotMarkets(spotMarkets: SpotMarketConfig[]) {
-		this.spotMarkets = spotMarkets;
+		this.spotMarkets = [...spotMarkets].map((market) => Object.freeze(market));
 		this.spotMarketIds = spotMarkets.map((m) =>
 			MarketId.createSpotMarket(m.marketIndex)
 		);
