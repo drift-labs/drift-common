@@ -79,14 +79,40 @@ export type BaseAssetDisplaySymbol = Opaque<string, 'BaseAssetDisplaySymbol'>;
  */
 
 export abstract class UIMarket {
-	static perpMarkets = PerpMarkets['mainnet-beta'];
-	static spotMarkets = SpotMarkets['mainnet-beta'];
+	private static _perpMarkets = PerpMarkets['mainnet-beta'];
+	private static _spotMarkets = SpotMarkets['mainnet-beta'];
+
+	protected _baseAssetDisplaySymbol: BaseAssetDisplaySymbol;
+	protected _baseAssetSymbol: BaseAssetSymbol;
+	protected _marketDisplaySymbol: MarketDisplaySymbol;
+	protected _marketSymbol: MarketSymbol;
+
+	static get perpMarkets(): readonly PerpMarketConfig[] {
+		return this._perpMarkets;
+	}
+
+	static get spotMarkets(): readonly SpotMarketConfig[] {
+		return this._spotMarkets;
+	}
+
+	protected static set perpMarkets(value: PerpMarketConfig[]) {
+		this._perpMarkets = value;
+	}
+
+	protected static set spotMarkets(value: SpotMarketConfig[]) {
+		this._spotMarkets = value;
+	}
+
 	static perpMarketIds = PerpMarkets['mainnet-beta'].map((m) =>
 		MarketId.createPerpMarket(m.marketIndex)
 	);
 	static spotMarketIds = SpotMarkets['mainnet-beta'].map((m) =>
 		MarketId.createSpotMarket(m.marketIndex)
 	);
+
+	// Cache for market instances
+	private static perpMarketCache: Map<number, PerpUIMarket> = new Map();
+	private static spotMarketCache: Map<number, SpotUIMarket> = new Map();
 
 	readonly market: SpotMarketConfig | PerpMarketConfig;
 	readonly marketId: MarketId;
@@ -110,6 +136,8 @@ export abstract class UIMarket {
 
 		this.marketId = marketId;
 		this.market = markets[marketIndex];
+
+		this.setMarketSymbols();
 	}
 
 	static setPerpMarkets(perpMarkets: PerpMarketConfig[]) {
@@ -117,6 +145,7 @@ export abstract class UIMarket {
 		this.perpMarketIds = perpMarkets.map((m) =>
 			MarketId.createPerpMarket(m.marketIndex)
 		);
+		this.clearCaches();
 	}
 
 	static setSpotMarkets(spotMarkets: SpotMarketConfig[]) {
@@ -124,26 +153,37 @@ export abstract class UIMarket {
 		this.spotMarketIds = spotMarkets.map((m) =>
 			MarketId.createSpotMarket(m.marketIndex)
 		);
+		this.clearCaches();
 	}
 
 	static create(marketIndex: number, marketType: MarketType) {
 		return marketType === MarketType.PERP
-			? new PerpUIMarket(marketIndex)
-			: new SpotUIMarket(marketIndex);
+			? UIMarket.createPerpMarket(marketIndex)
+			: UIMarket.createSpotMarket(marketIndex);
 	}
 
 	static createSpotMarket(marketIndex: number) {
-		return new SpotUIMarket(marketIndex);
+		let market = UIMarket.spotMarketCache.get(marketIndex);
+		if (!market) {
+			market = new SpotUIMarket(marketIndex);
+			UIMarket.spotMarketCache.set(marketIndex, market);
+		}
+		return market;
 	}
 
 	static createPerpMarket(marketIndex: number) {
-		return new PerpUIMarket(marketIndex);
+		let market = UIMarket.perpMarketCache.get(marketIndex);
+		if (!market) {
+			market = new PerpUIMarket(marketIndex);
+			UIMarket.perpMarketCache.set(marketIndex, market);
+		}
+		return market;
 	}
 
 	static fromMarketId(marketId: MarketId) {
 		return marketId.isPerp
-			? new PerpUIMarket(marketId.marketIndex)
-			: new SpotUIMarket(marketId.marketIndex);
+			? UIMarket.createPerpMarket(marketId.marketIndex)
+			: UIMarket.createSpotMarket(marketId.marketIndex);
 	}
 
 	static checkIsPredictionMarket(marketConfig: PerpMarketConfig) {
@@ -244,13 +284,36 @@ export abstract class UIMarket {
 		}
 	}
 
-	abstract get baseAssetSymbol(): BaseAssetSymbol;
+	get baseAssetSymbol(): BaseAssetSymbol {
+		return this._baseAssetSymbol;
+	}
+	get baseAssetDisplaySymbol(): BaseAssetDisplaySymbol {
+		return this._baseAssetDisplaySymbol;
+	}
+	get marketDisplaySymbol(): MarketDisplaySymbol {
+		return this._marketDisplaySymbol;
+	}
+	get marketSymbol(): MarketSymbol {
+		return this._marketSymbol;
+	}
 
-	abstract get baseAssetDisplaySymbol(): BaseAssetDisplaySymbol;
+	private setMarketSymbols() {
+		this._baseAssetDisplaySymbol = this.calcBaseAssetDisplaySymbol();
+		this._baseAssetSymbol = this.calcBaseAssetSymbol();
+		this._marketDisplaySymbol = this.calcMarketDisplaySymbol();
+		this._marketSymbol = this.calcMarketSymbol();
+	}
 
-	abstract get marketDisplaySymbol(): MarketDisplaySymbol;
+	protected abstract calcBaseAssetDisplaySymbol(): BaseAssetDisplaySymbol;
+	protected abstract calcBaseAssetSymbol(): BaseAssetSymbol;
+	protected abstract calcMarketDisplaySymbol(): MarketDisplaySymbol;
+	protected abstract calcMarketSymbol(): MarketSymbol;
 
-	abstract get marketSymbol(): MarketSymbol;
+	// Make clearCaches private and only call it from setPerpMarkets and setSpotMarkets
+	private static clearCaches() {
+		UIMarket.perpMarketCache.clear();
+		UIMarket.spotMarketCache.clear();
+	}
 }
 
 export class PerpUIMarket extends UIMarket {
@@ -282,22 +345,21 @@ export class PerpUIMarket extends UIMarket {
 		return marketAccount.amm.orderTickSize;
 	}
 
-	get baseAssetDisplaySymbol(): BaseAssetDisplaySymbol {
+	calcBaseAssetDisplaySymbol(): BaseAssetDisplaySymbol {
 		return this.market.baseAssetSymbol
 			.replace('1K', '')
 			.replace('1M', '') as BaseAssetDisplaySymbol;
 	}
 
-	get baseAssetSymbol(): BaseAssetSymbol {
+	calcBaseAssetSymbol(): BaseAssetSymbol {
 		return this.market.baseAssetSymbol as BaseAssetSymbol;
 	}
 
-	// TODO :: Improve performance by calculating symbols once during initialization and setting it on the instance, rather than doing this every time we access it at runtime
-	get marketDisplaySymbol(): MarketDisplaySymbol {
+	calcMarketDisplaySymbol(): MarketDisplaySymbol {
 		return this.market.symbol as MarketDisplaySymbol;
 	}
 
-	get marketSymbol(): MarketSymbol {
+	calcMarketSymbol(): MarketSymbol {
 		return this.market.symbol as MarketSymbol;
 	}
 }
@@ -331,7 +393,7 @@ export class SpotUIMarket extends UIMarket {
 		return marketAccount.orderTickSize;
 	}
 
-	get baseAssetDisplaySymbol(): BaseAssetDisplaySymbol {
+	calcBaseAssetDisplaySymbol(): BaseAssetDisplaySymbol {
 		const config = this.market;
 
 		switch (config.poolId) {
@@ -354,12 +416,11 @@ export class SpotUIMarket extends UIMarket {
 		}
 	}
 
-	get baseAssetSymbol(): BaseAssetSymbol {
+	calcBaseAssetSymbol(): BaseAssetSymbol {
 		return this.marketDisplaySymbol as unknown as BaseAssetSymbol; // Currently no cases where SPOT baseAssetSymbol is different from marketDisplaySymbol
 	}
 
-	// TODO :: Improve performance by calculating symbols once during initialization and setting it on the instance, rather than doing this every time we access it at runtime
-	get marketDisplaySymbol(): MarketDisplaySymbol {
+	calcMarketDisplaySymbol(): MarketDisplaySymbol {
 		const config = this.market as SpotMarketConfig;
 
 		switch (config.poolId) {
@@ -388,7 +449,7 @@ export class SpotUIMarket extends UIMarket {
 		}
 	}
 
-	get marketSymbol(): MarketSymbol {
+	calcMarketSymbol(): MarketSymbol {
 		return this.market.symbol as MarketSymbol;
 	}
 }
