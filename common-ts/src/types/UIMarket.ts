@@ -114,7 +114,7 @@ export abstract class UIMarket {
 	private static perpMarketCache: Map<number, PerpUIMarket> = new Map();
 	private static spotMarketCache: Map<number, SpotUIMarket> = new Map();
 
-	readonly market: SpotMarketConfig | PerpMarketConfig;
+	readonly market: SpotMarketConfig | PerpMarketConfig; // TODO :: I reckon we should have named this `config`
 	readonly marketId: MarketId;
 
 	constructor(readonly marketIndex: number, readonly marketType: MarketType) {
