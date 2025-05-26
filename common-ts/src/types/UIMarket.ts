@@ -211,7 +211,7 @@ export abstract class UIMarket {
 	}
 
 	get marketName() {
-		return `${this.market.symbol}${this.isSpot ? '/USDC' : ''}`; // TODO Remove this
+		return `${this.market.symbol}${this.isSpot ? '/USDC' : ''}`; // TODO :: Should remove this and either swap with one of the other symbols or create a new symbol type which needs to be handled
 	}
 
 	get symbol() {
