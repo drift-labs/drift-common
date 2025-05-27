@@ -15,13 +15,7 @@ import {
 } from '@drift-labs/sdk';
 import { MarketId } from './MarketId';
 import invariant from 'tiny-invariant';
-import {
-	EXPONENT_POOL_ID,
-	JLP_POOL_ID,
-	MAIN_POOL_ID,
-	SACRED_POOL_ID,
-	USDC_SPOT_MARKET_INDEX,
-} from '../constants';
+import { MAIN_POOL_ID, USDC_SPOT_MARKET_INDEX } from '../constants';
 import { ENUM_UTILS } from '../utils';
 import { Config } from '../Config';
 import { MarketAccount } from '../types';
@@ -31,41 +25,41 @@ const useAsyncMarketConfigs =
 	process.env.NEXT_PUBLIC_USE_ASYNC_MARKET_CONFIGS === 'true';
 
 /**
- * MarketSymbol will uniquely identify a market
+ * UniqueMarketSymbol will uniquely identify a market
  */
-export type MarketSymbol = Opaque<string, 'MarketSymbol'>;
+export type UniqueMarketSymbol = Opaque<string, 'UniqueMarketSymbol'>;
 /**
- * MarketDisplaySymbol is the label for a market that we display to a user
+ * MarketDisplayName is the label for a market that we display to a user
  */
-export type MarketDisplaySymbol = Opaque<string, 'MarketDisplaySymbol'>;
+export type MarketDisplayName = Opaque<string, 'MarketDisplayName'>;
 /**
  * BaseAssetSymbol is the symbol for the underlying asset for a market
  */
 export type BaseAssetSymbol = Opaque<string, 'BaseAssetSymbol'>;
 /**
- * BaseAssetDisplaySymbol is the label for the underlying asset for a market that we display to a user
+ * BaseAssetDisplayName is the label for the underlying asset for a market that we display to a user
  */
-export type BaseAssetDisplaySymbol = Opaque<string, 'BaseAssetDisplaySymbol'>;
+export type BaseAssetDisplayName = Opaque<string, 'BaseAssetDisplayName'>;
 
 /**
  * # Examples and explanations of the symbol types:
  *
- * ## MarketSymbol:
- * These are basically just the raw symbols in the market configs.
+ * ## UniqueMarketSymbol:
+ * These are the raw symbols in the market configs that uniquely identify a market.
  * - 1KWEN-PERP
  * - JitoSOL-3
  * - PT-fragSOL-15JUN25-3
  *
- * ## MarketDisplaySymbol:
- * This is the symbol we use to display the market to the user. For SPOT markets it should be the exact same as the BaseAssetDisplaySymbol, but for PERP markets they might be different which is why we have this separate type.
+ * ## MarketDisplayName:
+ * This is the symbol we use to display the market to the user.
  *
  * - 1KWEN-PERP => 1KWEN-PERP
- * - JitoSOL-3 => JitoSOL
- * - PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25
+ * - JitoSOL-3 => JitoSOL/USDC
+ * - PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25/USDC
  *
- * ## BaseAssetDisplaySymbol:
- * This is the symbol we use to communicate "what asset they are holding". For SPOT markets it should be the same as the MarketDisplaySymbol, but for PERP markets it may be different, for example we show open interest denominated in "1KWEN", while the market is "1KWEN-PERP".
- *
+ * ## BaseAssetDisplayName:
+ * This is the symbol we use to communicate "what asset they are holding".
+ * - SOL-PERP => SOL
  * - 1KWEN-PERP => 1KWEN
  * - JitoSOL-3 => JitoSOL
  * - PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25
@@ -75,17 +69,17 @@ export type BaseAssetDisplaySymbol = Opaque<string, 'BaseAssetDisplaySymbol'>;
  *
  * - 1KWEN-PERP => WEN
  * - JitoSOL-3 => JitoSOL
- * - PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25 (note: PT-fragSOL has an icon different to regular fragSOL, otherwise we would use 'fragSOL' for the base asset symbol)
+ * - PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25
  */
 
 export abstract class UIMarket {
 	private static _perpMarkets = PerpMarkets['mainnet-beta'];
 	private static _spotMarkets = SpotMarkets['mainnet-beta'];
 
-	protected _baseAssetDisplaySymbol: BaseAssetDisplaySymbol;
+	protected _baseAssetDisplayName: BaseAssetDisplayName;
 	protected _baseAssetSymbol: BaseAssetSymbol;
-	protected _marketDisplaySymbol: MarketDisplaySymbol;
-	protected _marketSymbol: MarketSymbol;
+	protected _marketDisplayName: MarketDisplayName;
+	protected _uniqueMarketSymbol: UniqueMarketSymbol;
 
 	static get perpMarkets(): readonly PerpMarketConfig[] {
 		return this._perpMarkets;
@@ -114,7 +108,7 @@ export abstract class UIMarket {
 	private static perpMarketCache: Map<number, PerpUIMarket> = new Map();
 	private static spotMarketCache: Map<number, SpotUIMarket> = new Map();
 
-	readonly market: SpotMarketConfig | PerpMarketConfig; // TODO :: I reckon we should have named this `config`
+	readonly config: SpotMarketConfig | PerpMarketConfig;
 	readonly marketId: MarketId;
 
 	constructor(readonly marketIndex: number, readonly marketType: MarketType) {
@@ -135,9 +129,9 @@ export abstract class UIMarket {
 		);
 
 		this.marketId = marketId;
-		this.market = markets[marketIndex];
+		this.config = markets[marketIndex];
 
-		this.setMarketSymbols();
+		this.setUniqueMarketSymbols();
 	}
 
 	static setPerpMarkets(perpMarkets: PerpMarketConfig[]) {
@@ -157,7 +151,7 @@ export abstract class UIMarket {
 	}
 
 	static create(marketIndex: number, marketType: MarketType) {
-		return marketType === MarketType.PERP
+		return ENUM_UTILS.match(marketType, MarketType.PERP)
 			? UIMarket.createPerpMarket(marketIndex)
 			: UIMarket.createSpotMarket(marketIndex);
 	}
@@ -210,14 +204,6 @@ export abstract class UIMarket {
 		return this.marketId.key;
 	}
 
-	get marketName() {
-		return `${this.market.symbol}${this.isSpot ? '/USDC' : ''}`; // TODO :: Should remove this and either swap with one of the other symbols or create a new symbol type which needs to be handled
-	}
-
-	get symbol() {
-		return this.market.symbol; // TODO Remove this
-	}
-
 	get isUsdcMarket() {
 		return this.isSpot && this.marketIndex === USDC_SPOT_MARKET_INDEX;
 	}
@@ -225,14 +211,14 @@ export abstract class UIMarket {
 	get isStableCoinMarket() {
 		return (
 			this.isSpot &&
-			ENUM_UTILS.match(this.market.oracleSource, OracleSource.PYTH_STABLE_COIN)
+			ENUM_UTILS.match(this.config.oracleSource, OracleSource.PYTH_STABLE_COIN)
 		);
 	}
 
 	get isPredictionMarket() {
 		return (
 			this.isPerp &&
-			UIMarket.checkIsPredictionMarket(this.market as PerpMarketConfig)
+			UIMarket.checkIsPredictionMarket(this.config as PerpMarketConfig)
 		);
 	}
 
@@ -287,27 +273,27 @@ export abstract class UIMarket {
 	get baseAssetSymbol(): BaseAssetSymbol {
 		return this._baseAssetSymbol;
 	}
-	get baseAssetDisplaySymbol(): BaseAssetDisplaySymbol {
-		return this._baseAssetDisplaySymbol;
+	get baseAssetDisplayName(): BaseAssetDisplayName {
+		return this._baseAssetDisplayName;
 	}
-	get marketDisplaySymbol(): MarketDisplaySymbol {
-		return this._marketDisplaySymbol;
+	get marketDisplayName(): MarketDisplayName {
+		return this._marketDisplayName;
 	}
-	get marketSymbol(): MarketSymbol {
-		return this._marketSymbol;
+	get uniqueMarketSymbol(): UniqueMarketSymbol {
+		return this._uniqueMarketSymbol;
 	}
 
-	private setMarketSymbols() {
-		this._baseAssetDisplaySymbol = this.calcBaseAssetDisplaySymbol();
+	private setUniqueMarketSymbols() {
+		this._baseAssetDisplayName = this.calcBaseAssetDisplayName();
 		this._baseAssetSymbol = this.calcBaseAssetSymbol();
-		this._marketDisplaySymbol = this.calcMarketDisplaySymbol();
-		this._marketSymbol = this.calcMarketSymbol();
+		this._marketDisplayName = this.calcMarketDisplayName();
+		this._uniqueMarketSymbol = this.calcUniqueMarketSymbol();
 	}
 
-	protected abstract calcBaseAssetDisplaySymbol(): BaseAssetDisplaySymbol;
+	protected abstract calcBaseAssetDisplayName(): BaseAssetDisplayName;
 	protected abstract calcBaseAssetSymbol(): BaseAssetSymbol;
-	protected abstract calcMarketDisplaySymbol(): MarketDisplaySymbol;
-	protected abstract calcMarketSymbol(): MarketSymbol;
+	protected abstract calcMarketDisplayName(): MarketDisplayName;
+	protected abstract calcUniqueMarketSymbol(): UniqueMarketSymbol;
 
 	// Make clearCaches private and only call it from setPerpMarkets and setSpotMarkets
 	private static clearCaches() {
@@ -345,22 +331,22 @@ export class PerpUIMarket extends UIMarket {
 		return marketAccount.amm.orderTickSize;
 	}
 
-	calcBaseAssetDisplaySymbol(): BaseAssetDisplaySymbol {
-		return this.market.baseAssetSymbol
-			.replace('1K', '')
-			.replace('1M', '') as BaseAssetDisplaySymbol;
+	calcBaseAssetDisplayName(): BaseAssetDisplayName {
+		return this.market.baseAssetSymbol as BaseAssetDisplayName;
 	}
 
 	calcBaseAssetSymbol(): BaseAssetSymbol {
-		return this.market.baseAssetSymbol as BaseAssetSymbol;
+		return this.market.baseAssetSymbol
+			.replace('1K', '')
+			.replace('1M', '') as BaseAssetSymbol;
 	}
 
-	calcMarketDisplaySymbol(): MarketDisplaySymbol {
-		return this.market.symbol as MarketDisplaySymbol;
+	calcMarketDisplayName(): MarketDisplayName {
+		return this.market.symbol as MarketDisplayName;
 	}
 
-	calcMarketSymbol(): MarketSymbol {
-		return this.market.symbol as MarketSymbol;
+	calcUniqueMarketSymbol(): UniqueMarketSymbol {
+		return this.market.symbol as UniqueMarketSymbol;
 	}
 }
 
@@ -393,63 +379,53 @@ export class SpotUIMarket extends UIMarket {
 		return marketAccount.orderTickSize;
 	}
 
-	calcBaseAssetDisplaySymbol(): BaseAssetDisplaySymbol {
+	calcUniqueMarketSymbol(): UniqueMarketSymbol {
+		return this.market.symbol as UniqueMarketSymbol;
+	}
+
+	calcBaseAssetDisplayName(): BaseAssetDisplayName {
 		const config = this.market;
 
 		switch (config.poolId) {
-			case EXPONENT_POOL_ID: {
-				/*
-					Example market symbol conversions:
-					PT-fragSOL-15JUN25-3 => PT-fragSOL
-					PT-kySOL-10JUL25-3 => PT-kySOL
-					JitoSOL-3 => JitoSOL
-					JTO-3 => JTO
-				*/
-				return (
-					config.symbol.startsWith('PT-')
-						? config.symbol.slice(0, config.symbol.indexOf('-', 3))
-						: config.symbol.split('-')[0]
-				) as BaseAssetDisplaySymbol;
+			case MAIN_POOL_ID: {
+				return config.symbol as BaseAssetDisplayName;
 			}
-			default:
-				return config.symbol as BaseAssetDisplaySymbol;
+			default: {
+				// Just removing the last number from the end of the string.
+				return config.symbol.slice(
+					0,
+					config.symbol.lastIndexOf('-')
+				) as BaseAssetDisplayName;
+			}
 		}
 	}
 
 	calcBaseAssetSymbol(): BaseAssetSymbol {
-		return this.calcMarketDisplaySymbol() as unknown as BaseAssetSymbol; // Currently no cases where SPOT baseAssetSymbol is different from marketDisplaySymbol
+		const config = this.market;
+
+		switch (config.poolId) {
+			case MAIN_POOL_ID: {
+				return config.symbol as BaseAssetSymbol;
+			}
+			default: {
+				// Just removing the last number from the end of the string.
+				return config.symbol.slice(
+					0,
+					config.symbol.lastIndexOf('-')
+				) as BaseAssetSymbol;
+			}
+		}
 	}
 
-	calcMarketDisplaySymbol(): MarketDisplaySymbol {
+	calcMarketDisplayName(): MarketDisplayName {
 		const config = this.market as SpotMarketConfig;
 
 		switch (config.poolId) {
 			case MAIN_POOL_ID:
-				return config.symbol as MarketDisplaySymbol;
-			case JLP_POOL_ID:
-				return `${config.symbol.split('-')[0]}` as MarketDisplaySymbol;
-			case EXPONENT_POOL_ID: {
-				/*
-					Example market symbol conversions:
-					PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25
-					PT-kySOL-10JUL25-3 => PT-kySOL-10JUL25
-					JitoSOL-3 => JitoSOL
-					JTO-3 => JTO
-				*/
-				return (
-					config.symbol.startsWith('PT-')
-						? config.symbol.slice(0, config.symbol.lastIndexOf('-'))
-						: config.symbol.split('-')[0]
-				) as MarketDisplaySymbol;
-			}
-			case SACRED_POOL_ID:
-				return `${config.symbol.split('-')[0]}` as MarketDisplaySymbol;
+				return (config.symbol + '/USDC') as MarketDisplayName;
 			default:
-				return config.symbol as MarketDisplaySymbol;
+				return (config.symbol.slice(0, config.symbol.lastIndexOf('-')) +
+					'/USDC') as MarketDisplayName;
 		}
-	}
-
-	calcMarketSymbol(): MarketSymbol {
-		return this.market.symbol as MarketSymbol;
 	}
 }
