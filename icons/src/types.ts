@@ -10,3 +10,7 @@ export type IconProps = {
 	/** Props to pass directly to svg element */
 	svgProps?: React.SVGProps<SVGSVGElement>;
 } & Omit<React.HTMLProps<HTMLSpanElement>, 'color' | 'size'>;
+
+export type GradientIconProps = Omit<IconProps, 'color'> & {
+	gradientColors: string[];
+};

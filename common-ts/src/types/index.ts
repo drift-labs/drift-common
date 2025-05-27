@@ -18,6 +18,9 @@ import { OrderType } from '@drift-labs/sdk';
 export * from './MarketId';
 export * from './UIMarket';
 export * from './Superstake';
+export * from './remote-configs';
+export * from './UIEnv';
+export * from './MarketConfig';
 
 // Opaque type pattern
 export type Opaque<K, T> = T & { __TYPE__: K };
@@ -203,6 +206,7 @@ export type AuctionParams = {
 	auctionStartPrice: BN;
 	auctionEndPrice: BN;
 	auctionDuration: number;
+	constrainedBySlippage?: boolean; // flag to tell the UI that end price is constrained by max slippage tolerance
 };
 
 export type MarketMakerRewardRecord = {
@@ -248,14 +252,24 @@ export type UIOrderType =
 	| 'takeProfitMarket'
 	| 'takeProfitLimit'
 	| 'oracle'
-	| 'oracleLimit';
+	| 'oracleLimit'
+	| 'scaledOrders';
 
 export type UIOrderTypeValue = {
 	label: string;
 	value: UIOrderType;
 	orderType: OrderType;
+	description?: string;
 };
 
 export type UIOrderTypeLookup = {
 	[key in UIOrderType]: UIOrderTypeValue;
 };
+
+export type TradeOffsetPrice =
+	| 'worst'
+	| 'best'
+	| 'oracle'
+	| 'mark'
+	| 'entry'
+	| 'bestOffer';

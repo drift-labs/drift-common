@@ -8,7 +8,7 @@ import {
 	LiquidationType,
 	MarketStatus,
 	MarketType,
-	ModifyOrderPolicy,
+	// ModifyOrderPolicy,
 	OracleSource,
 	OrderAction,
 	OrderActionExplanation,
@@ -58,7 +58,7 @@ describe('Enum Utils', () => {
 			LPAction,
 			LiquidationType,
 			PostOnlyParams,
-			ModifyOrderPolicy,
+			// ModifyOrderPolicy, // NOTE: this has been adjusted in the SDK to use numerical values for the enum
 			SwapReduceOnly,
 		];
 

@@ -107,6 +107,15 @@ const getOpenPositionData = (
 				}
 			}
 
+			// if for any reason oracle or mark price blips to 0, fallback to the other one so we don't show a crazy pnl
+			if (markPrice.lte(ZERO) && oraclePrice.gt(ZERO)) {
+				markPrice = oraclePrice;
+			}
+
+			if (oraclePrice.lte(ZERO) && markPrice.gt(ZERO)) {
+				oraclePrice = markPrice;
+			}
+
 			const pnlVsMark = TRADING_COMMON_UTILS.calculatePotentialProfit({
 				currentPositionSize: BigNum.from(
 					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),

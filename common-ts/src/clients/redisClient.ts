@@ -213,6 +213,7 @@ export const getRedisClient = (
  */
 export class RedisClient {
 	private client: Redis | Cluster;
+	private prefix: RedisClientPrefix;
 
 	connectionPromise: Promise<void>;
 
@@ -230,6 +231,7 @@ export class RedisClient {
 		opts?: RedisOptions;
 		cluster?: boolean;
 	}) {
+		this.prefix = prefix;
 		if (cluster) {
 			this.client = getRedisClusterClient(host, port, prefix, opts);
 			return;
@@ -243,6 +245,10 @@ export class RedisClient {
 	 */
 	public forceGetClient() {
 		return this.client;
+	}
+
+	public getPrefix() {
+		return this.prefix;
 	}
 
 	public get connected() {
@@ -429,6 +435,13 @@ export class RedisClient {
 
 		return parsedValues;
 	}
+
+	@isRead
+	async smembers(key: string) {
+		const resp = await this.client.smembers(key);
+		return resp;
+	}
+
 	@isRead
 	async zRange(key: string, min: number, max: number) {
 		const resp = await this.client.zrange(key, min, max);

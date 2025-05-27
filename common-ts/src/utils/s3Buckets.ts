@@ -33,7 +33,8 @@ export type DownloadRecordType =
 	| 'settle-pnl-records'
 	| 'lp-records'
 	| 'if-stake-records'
-	| 'swap-records';
+	| 'swap-records'
+	| 'rewards';
 
 export type DownloadPeriod =
 	| 'week'
@@ -109,18 +110,21 @@ export const getDateRangeFromSelection = (
 			to = dateToS3DateString(now);
 			break;
 		case 'custom':
-			if (!customOpts || !customOpts?.year) {
+			if (!customOpts || customOpts?.year == undefined) {
 				console.error(
 					'Requested custom date range without providing customOpts'
 				);
 				break;
 			}
 
-			if (!customOpts.day && !customOpts.month) {
+			if (customOpts.day == undefined && customOpts.month == undefined) {
 				// request a full year
 				from = dateToS3DateString(new Date(customOpts.year, 0, 1));
 				to = dateToS3DateString(new Date(customOpts.year, 11, 31));
-			} else if (!customOpts.day && customOpts.month) {
+			} else if (
+				customOpts.day == undefined &&
+				customOpts.month !== undefined
+			) {
 				// request a month
 				from = dateToS3DateString(
 					new Date(customOpts.year, customOpts.month, 1)

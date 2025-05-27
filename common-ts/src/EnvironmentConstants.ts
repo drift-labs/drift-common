@@ -10,14 +10,16 @@ export const EnvironmentConstants = {
 		dev: [
 			{
 				label: 'Helius',
-				value: 'https://detailed-sharleen-fast-devnet.helius-rpc.com/',
-				wsValue: 'wss://detailed-sharleen-fast-devnet.helius-rpc.com/',
+				value: 'https://detailed-sharleen-fast-devnet.helius-rpc.com',
+				wsValue: 'wss://detailed-sharleen-fast-devnet.helius-rpc.com',
 				allowAdditionalConnection: true,
 			},
 			{
 				label: 'RPC Pool',
-				value: 'https://drift-drift-a827.devnet.rpcpool.com',
-				wsValue: 'wss://drift-drift-a827.devnet.rpcpool.com/whirligig',
+				value:
+					'https://drift-drift-a827.devnet.rpcpool.com/3639271b-6f0e-47c6-a643-1aaa0e498f58',
+				wsValue:
+					'wss://drift-drift-a827.devnet.rpcpool.com/3639271b-6f0e-47c6-a643-1aaa0e498f58/whirligig',
 				allowAdditionalConnection: false,
 			},
 		] as RpcEndpoint[],
@@ -30,8 +32,8 @@ export const EnvironmentConstants = {
 			},
 			{
 				label: 'Helius 1',
-				value: 'https://cold-hanni-fast-mainnet.helius-rpc.com/',
-				wsValue: 'wss://cold-hanni-fast-mainnet.helius-rpc.com/',
+				value: 'https://morna-skm1k6-fast-mainnet.helius-rpc.com/',
+				wsValue: 'wss://morna-skm1k6-fast-mainnet.helius-rpc.com/',
 				allowAdditionalConnection: true,
 			},
 		] as RpcEndpoint[],
@@ -40,6 +42,11 @@ export const EnvironmentConstants = {
 		dev: 'https://master.api.drift.trade',
 		mainnet: 'https://mainnet-beta.api.drift.trade',
 		staging: 'https://staging.api.drift.trade',
+	},
+	dataServerUrl: {
+		dev: 'https://data-master.api.drift.trade',
+		mainnet: 'https://data.api.drift.trade',
+		staging: 'https://data-staging.api.drift.trade',
 	},
 	dlobServerHttpUrl: {
 		dev: 'https://master.dlob.drift.trade',
@@ -54,5 +61,9 @@ export const EnvironmentConstants = {
 	eventsServerUrl: {
 		mainnet: 'wss://events.drift.trade/ws',
 		staging: 'wss://events.drift.trade/ws',
+	},
+	swiftServerUrl: {
+		mainnet: 'https://swift.drift.trade',
+		staging: 'https://master.swift.drift.trade',
 	},
 };
