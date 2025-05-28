@@ -2,7 +2,9 @@ import {
 	BN,
 	BigNum,
 	MarketType,
+	PerpMarketAccount,
 	SpotBalanceType,
+	SpotMarketAccount,
 	SpotPosition,
 	TradeSide,
 } from '@drift-labs/sdk';
@@ -273,3 +275,5 @@ export type TradeOffsetPrice =
 	| 'mark'
 	| 'entry'
 	| 'bestOffer';
+
+export type MarketAccount = PerpMarketAccount | SpotMarketAccount;
