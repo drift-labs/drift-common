@@ -16,3 +16,4 @@ export * from './useImmediateInterval';
 export * from './useSyncLocalStorage';
 export * from './useHandleBadRpc';
 export * from './charts/useGroupHistoricalPricesByAverage';
+export * from './useTargetedPopover';
