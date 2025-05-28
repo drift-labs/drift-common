@@ -156,7 +156,7 @@ export const DefaultSelect = ({
 					ref={refs.setFloating}
 					{...getFloatingProps()}
 					style={floatingStyles}
-					className={twMerge('z-[150]')}
+					className={'z-[150]'}
 					useTargetWidth={useTargetWidth}
 				>
 					<div

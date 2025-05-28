@@ -37,8 +37,9 @@
 		"react-dom": "19.0.0-rc-02c0e824-20241028"
 	},
 	"dependencies": {
-		"@drift/common": "file:../common-ts",
 		"@drift-labs/icons": "file:../icons",
+		"@drift/common": "file:../common-ts",
+		"@floating-ui/react": "^0.27.9",
 		"@solana/wallet-adapter-base": "0.9.23",
 		"@solana/wallet-adapter-react": "0.15.35",
 		"@solana/wallet-adapter-wallets": "0.19.32",
