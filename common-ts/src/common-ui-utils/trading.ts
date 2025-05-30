@@ -146,6 +146,7 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 	tradeBaseSize,
 	isLong,
 	userClient,
+	oraclePrice,
 	limitPrice,
 	offsetCollateral,
 	precision = 2,
@@ -157,6 +158,7 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 	tradeBaseSize: BN;
 	isLong: boolean;
 	userClient: User;
+	oraclePrice: BN;
 	limitPrice?: BN;
 	offsetCollateral?: BN;
 	precision?: number;
@@ -192,7 +194,13 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 		isEnteringHighLeverageMode
 	);
 
-	const liqPriceBigNum = BigNum.from(liqPriceBn, PRICE_PRECISION_EXP);
+	// cap liq price at the oracle price for ui
+	// ie: long order shouldn't have a liq price above oracle price
+	const cappedLiqPriceBn = isLong
+		? BN.min(liqPriceBn, oraclePrice)
+		: BN.max(liqPriceBn, oraclePrice);
+
+	const liqPriceBigNum = BigNum.from(cappedLiqPriceBn, PRICE_PRECISION_EXP);
 
 	if (liqPriceBigNum.isNeg()) {
 		return 0;
