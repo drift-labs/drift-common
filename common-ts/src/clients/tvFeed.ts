@@ -1,4 +1,4 @@
-import { CandleType, MarketId } from '../types';
+import { CandleType, JsonCandle, MarketId } from '../types';
 import {
 	CandleResolution,
 	DriftClient,
@@ -8,10 +8,10 @@ import {
 	SpotMarketConfig,
 	SpotMarkets,
 } from '@drift-labs/sdk';
-import { CandleClient, JsonCandle } from './candleClient';
 import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
 import { CANDLE_UTILS } from '../utils/candleUtils';
 import { UIEnv } from '../types/UIEnv';
+import { CandleClient } from './candleClient';
 
 const DRIFT_V2_START_TS = 1668470400; // 15th November 2022 ... 2022-11-15T00:00:00.000Z
 
