@@ -666,7 +666,7 @@ const getPriceObject = ({
 	);
 
 	if (nonZeroOptions.length === 0) {
-		console.error('Unable to create valid auction params');
+		// console.error('Unable to create valid auction params');
 		return {
 			oracle: ZERO,
 			bestOffer: ZERO,
