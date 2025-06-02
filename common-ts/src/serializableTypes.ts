@@ -2293,13 +2293,13 @@ export function transformDataApiOrderActionRecordToSerializableOrderActionRecord
 		spotFulfillmentMethodFee: deserializedV2Record.spotFulfillmentMethodFee.val,
 		bitFlags: deserializedV2Record.bitFlags,
 		takerExistingQuoteEntryAmount:
-			deserializedV2Record.takerExistingQuoteEntryAmount.val,
+			deserializedV2Record.takerExistingQuoteEntryAmount?.val,
 		takerExistingBaseAssetAmount:
-			deserializedV2Record.takerExistingBaseAssetAmount.val,
+			deserializedV2Record.takerExistingBaseAssetAmount?.val,
 		makerExistingQuoteEntryAmount:
-			deserializedV2Record.makerExistingQuoteEntryAmount.val,
+			deserializedV2Record.makerExistingQuoteEntryAmount?.val,
 		makerExistingBaseAssetAmount:
-			deserializedV2Record.makerExistingBaseAssetAmount.val,
+			deserializedV2Record.makerExistingBaseAssetAmount?.val,
 	};
 
 	return transformedRecord;
