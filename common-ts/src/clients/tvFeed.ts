@@ -154,8 +154,6 @@ const findMarketBySymbol = (
 
 const candleFetchingPollKey = Symbol('candleFetchingPollKey');
 
-type Mutex<T> = { current: T };
-
 const candleToTvBar = (candle: JsonCandle, candleType: CandleType): TVBar => {
 	const useOraclePrice = candleType === CandleType.ORACLE_PRICE;
 
@@ -200,20 +198,12 @@ export class DriftTvFeed {
 	private candleType: CandleType;
 	private candleClient: CandleClient;
 	private driftClient: DriftClient;
-	private chartMarketMutex: Mutex<string> = { current: undefined };
-	private chartResolutionMutex: Mutex<CandleResolution> = {
-		current: undefined,
-	};
 
 	constructor(env: UIEnv, candleType: CandleType, driftClient: DriftClient) {
 		this.env = env;
 		this.candleType = candleType;
 		this.candleClient = new CandleClient();
 		this.driftClient = driftClient;
-	}
-
-	updateMarketMutex(marketId: MarketId) {
-		this.chartMarketMutex.current = marketId.key;
 	}
 
 	private searchMarkets = (symbol: string): TVMarketInfo[] => {
@@ -357,10 +347,14 @@ export class DriftTvFeed {
 		return roundedTimestampMs / 1000;
 	};
 
-	private formatTVRequestedRange = (fromTs: number, toTs: number) => {
+	private formatTVRequestedRange = (
+		fromTs: number,
+		toTs: number,
+		resolution: CandleResolution
+	) => {
 		const formattedFromTs = this.roundFromTimestampToExactCandleTs(
 			fromTs,
-			this.chartResolutionMutex.current
+			resolution
 		); // TradingView sometimes asks for a FROM timestamp halfway between two candles, so we round down to the nearest candle
 
 		const formattedToTs = Math.floor(Math.min(toTs, Date.now() / 1000)); // TradingView sometimes asks for a TO timestamp in the future, so we cap it at the current timestamp
@@ -412,19 +406,20 @@ export class DriftTvFeed {
 			targetMarket.type === 'perp'
 				? MarketId.createPerpMarket(targetMarket.config.marketIndex)
 				: MarketId.createSpotMarket(targetMarket.config.marketIndex);
-		this.chartMarketMutex.current = targetMarketId.key;
-		this.chartResolutionMutex.current = targetResolution;
 
 		const fetchCandles = async () => {
 			console.debug(
-				`candlesv2:: TV_FEED ASKING for candles between\n${new Date(
+				`candlesv2:: TV_FEED ASKING for candles ${
+					targetMarketId.key
+				}-${targetResolution} between\n${new Date(
 					periodParams.from * 1000
 				).toISOString()} =>\n${new Date(periodParams.to * 1000).toISOString()}`
 			);
 
 			const formattedTsRange = this.formatTVRequestedRange(
 				periodParams.from,
-				periodParams.to
+				periodParams.to,
+				targetResolution
 			);
 
 			const candles = await this.candleClient.fetch({
@@ -452,30 +447,25 @@ export class DriftTvFeed {
 			return;
 		}
 
-		// Protect against user switching between UI faster than candle client responds, by checking that market and resoltion mutexes match
-		if (
-			targetMarketId.key === this.chartMarketMutex.current &&
-			targetResolution === this.chartResolutionMutex.current
-		) {
-			const bars = candlesResult.map((candle) =>
-				candleToTvBar(candle, this.candleType)
-			);
+		const bars = candlesResult.map((candle) =>
+			candleToTvBar(candle, this.candleType)
+		);
 
-			console.debug(
-				`candlesv2:: TV_FEED RETURNING candles between\n${new Date(
-					bars[0].time
-				).toISOString()} =>\n${new Date(
-					bars[bars.length - 1].time
-				).toISOString()}`
-			);
+		console.debug(
+			`candlesv2:: TV_FEED RETURNING ${
+				targetMarketId.key
+			}-${targetResolution} candles between\n${new Date(
+				bars[0].time
+			).toISOString()} =>\n${new Date(
+				bars[bars.length - 1].time
+			).toISOString()}`
+		);
 
-			onResult(bars, {
-				noData: candlesResult.length === 0,
-			});
-			return;
-		} else {
-			throw new Error('Market or resolution mutex mismatch');
-		}
+		onResult(bars, {
+			noData: candlesResult.length === 0,
+		});
+
+		return;
 	}
 
 	async subscribeBars(
@@ -511,9 +501,7 @@ export class DriftTvFeed {
 				`candlesv2:: TV_FEED UPDATE for ${subscriberGuid} :: ${newBar.close}`
 			);
 
-			if (targetMarketId.key === this.chartMarketMutex.current) {
-				onTick(newBar);
-			}
+			onTick(newBar);
 		});
 	}
 
