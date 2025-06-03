@@ -469,7 +469,7 @@ export class SwiftClient {
 	private static getSwiftHeaders(): Record<string, string> {
 		return {
 			'Content-Type': 'application/json',
-			'X-Swift-Client-Consumer': this.swiftClientConsumer ?? 'drift-ui',
+			'X-Swift-Client-Consumer': this.swiftClientConsumer ?? 'default',
 		};
 	}
 }
