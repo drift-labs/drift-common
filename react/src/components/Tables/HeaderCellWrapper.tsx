@@ -18,7 +18,7 @@ export const HeaderCellWrapper = ({
 				className
 			)}
 		>
-			<Typo.B2>{children}</Typo.B2>
+			<Typo.B4>{children}</Typo.B4>
 		</div>
 	);
 };

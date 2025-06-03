@@ -4,7 +4,7 @@
 ### quick start
 ```
 git submodule init
-git submoudle update
+git submodule update
 
 yarn
 

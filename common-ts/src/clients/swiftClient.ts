@@ -34,9 +34,11 @@ type SwiftOrderEvent =
 
 export class SwiftClient {
 	private static baseUrl = '';
+	private static swiftClientConsumer?: string;
 
-	public static init(baseUrl: string) {
+	public static init(baseUrl: string, swiftClientConsumer?: string) {
 		this.baseUrl = baseUrl;
+		this.swiftClientConsumer = swiftClientConsumer;
 	}
 
 	private static get(url: string) {
@@ -46,7 +48,9 @@ export class SwiftClient {
 
 		return new Promise<{ success: boolean; body: string; status: number }>(
 			(res) => {
-				const headers = new Headers();
+				const headers = new Headers({
+					...this.getSwiftHeaders(),
+				});
 
 				fetch(`${this.baseUrl}${url}`, {
 					headers,
@@ -80,7 +84,7 @@ export class SwiftClient {
 
 		const requestOptions = {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			headers: { ...this.getSwiftHeaders() },
 			body: JSON.stringify(bodyObject),
 		};
 
@@ -460,5 +464,12 @@ export class SwiftClient {
 	public static async isSwiftServerHealthy(): Promise<boolean> {
 		const response = await this.get('/health');
 		return response.status === 200;
+	}
+
+	private static getSwiftHeaders(): Record<string, string> {
+		return {
+			'Content-Type': 'application/json',
+			'X-Swift-Client-Consumer': this.swiftClientConsumer ?? 'drift-ui',
+		};
 	}
 }

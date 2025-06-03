@@ -6,7 +6,7 @@ import { InlineLoadingBar } from '../Loaders/InlineLoadingBar';
 
 export const TableSkeleton = (
 	props: PropsWithChildren<{
-		top: JSX.Element;
+		top: JSX.Element | null;
 		middle: JSX.Element;
 		bottom?: JSX.Element;
 		hideHeadersOnMobile?: boolean;
@@ -20,6 +20,7 @@ export const TableSkeleton = (
 		innerClassName?: string;
 		loading?: boolean;
 		setIsScrollable?: (_isScrollable: boolean) => void;
+		overflowAuto?: boolean;
 	}>
 ) => {
 	return (
@@ -35,7 +36,7 @@ export const TableSkeleton = (
 				!props.loading ? (
 					<BodyRowWrapper noBg>{props.middle}</BodyRowWrapper>
 				) : (
-					<div className="w-full flex items-center justify-center my-8">
+					<div className="flex items-center justify-center w-full my-8">
 						<InlineLoadingBar />
 					</div>
 				)
@@ -44,7 +45,7 @@ export const TableSkeleton = (
 			fillSpace={props.fillSpace}
 			autoHeight={props.autoHeight}
 			innerClassName={props.innerClassName}
-			overflowAuto
+			overflowAuto={props.overflowAuto}
 			setIsScrollable={props.setIsScrollable}
 		/>
 	);

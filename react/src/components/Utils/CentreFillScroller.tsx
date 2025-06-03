@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { twMerge } from 'tailwind-merge';
+import { twMerge, twJoin } from 'tailwind-merge';
 
 /**
  * Utility component to fill some space with top, middle and bottom content, while allowing the middle content to be larger than the space and become scrollable
@@ -91,9 +91,7 @@ const CentreFillScroller = ({
 				{useCustomMiddleWrapper ? (
 					<>{middle}</>
 				) : (
-					<div
-						className={twMerge(`w-full h-full`, !fillSpace && 'md:absolute')}
-					>
+					<div className={twJoin(`w-full h-full`, !fillSpace && 'md:absolute')}>
 						{middle}
 					</div>
 				)}

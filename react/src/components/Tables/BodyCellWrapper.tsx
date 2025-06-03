@@ -25,7 +25,7 @@ export const BodyCellWrapper = ({
 	return (
 		<div
 			className={twMerge(
-				`w-full flex flex-row py-2 px-1 items-center`,
+				`w-full flex flex-row px-1 items-center h-full`,
 				alignRight && 'justify-end',
 				onClick && 'hover:cursor-pointer',
 				className
@@ -36,7 +36,7 @@ export const BodyCellWrapper = ({
 			{label && <div className="text-xs text-text-label">{label}</div>}
 			<Typo.B2
 				className={twMerge(
-					`flex`,
+					`flex w-full`,
 					alignCenter
 						? 'items-center'
 						: alignRight

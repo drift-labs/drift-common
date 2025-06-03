@@ -36,6 +36,7 @@ export { default as Compare } from './components/Compare';
 export { default as Control } from './components/Control';
 export { default as Copy } from './components/Copy';
 export { default as CreditCard } from './components/CreditCard';
+export { default as Currency } from './components/Currency';
 export { default as Data } from './components/Data';
 export { default as Delegation } from './components/Delegation';
 export { default as Deposit } from './components/Deposit';

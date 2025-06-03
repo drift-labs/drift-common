@@ -177,15 +177,15 @@ const getUIOrderTypeFromSdkOrderType = (
 	} else if (matchEnum(orderType, OrderType.TRIGGER_MARKET)) {
 		if (isLong) {
 			if (triggerAbove) {
-				return TAKE_PROFIT_MARKET_ORDER_TYPE_CONFIG;
-			} else if (triggerBelow) {
 				return STOP_MARKET_ORDER_TYPE_CONFIG;
+			} else if (triggerBelow) {
+				return TAKE_PROFIT_MARKET_ORDER_TYPE_CONFIG;
 			}
 		} else {
 			if (triggerAbove) {
-				return STOP_MARKET_ORDER_TYPE_CONFIG;
-			} else if (triggerBelow) {
 				return TAKE_PROFIT_MARKET_ORDER_TYPE_CONFIG;
+			} else if (triggerBelow) {
+				return STOP_MARKET_ORDER_TYPE_CONFIG;
 			}
 		}
 	} else if (matchEnum(orderType, OrderType.TRIGGER_LIMIT)) {
