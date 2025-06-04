@@ -5,6 +5,7 @@ import {
 	JLP_POOL_ID,
 	MAIN_POOL_ID,
 	SACRED_POOL_ID,
+	LST_POOL_ID,
 } from '../constants/misc';
 import { Opaque } from '..';
 
@@ -159,6 +160,10 @@ export class UISpotMarketConfig
 			case MAIN_POOL_ID:
 				return this.baseMarketConfig.symbol as MarketDisplaySymbol;
 			case JLP_POOL_ID:
+				return `${
+					this.baseMarketConfig.symbol.split('-')[0]
+				}` as MarketDisplaySymbol;
+			case LST_POOL_ID:
 				return `${
 					this.baseMarketConfig.symbol.split('-')[0]
 				}` as MarketDisplaySymbol;
