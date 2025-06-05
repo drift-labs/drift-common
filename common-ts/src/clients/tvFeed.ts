@@ -499,7 +499,7 @@ export class DriftTvFeed {
 
 			console.debug(
 				`candlesv2:: TV_FEED UPDATE for ${subscriberGuid} :: ${new Date(
-					newCandle.ts
+					newCandle.ts * 1000
 				).toLocaleString()} :: close ${newBar.close}`
 			);
 
