@@ -498,7 +498,9 @@ export class DriftTvFeed {
 			const newBar = candleToTvBar(newCandle, this.candleType);
 
 			console.debug(
-				`candlesv2:: TV_FEED UPDATE for ${subscriberGuid} :: ${newBar.close}`
+				`candlesv2:: TV_FEED UPDATE for ${subscriberGuid} :: ${new Date(
+					newCandle.ts
+				).toLocaleString()} :: close ${newBar.close}`
 			);
 
 			onTick(newBar);
