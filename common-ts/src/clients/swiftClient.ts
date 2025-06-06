@@ -20,7 +20,7 @@ type ClientResponse<T = void> = Promise<{
 	status?: number;
 }>;
 
-type SwiftOrderEvent =
+type SwiftOrderEvent = (
 	| {
 			type: 'sent' | 'expired' | 'errored';
 			hash: string;
@@ -30,7 +30,8 @@ type SwiftOrderEvent =
 			type: 'confirmed';
 			orderId: string;
 			hash: string;
-	  };
+	  }
+) & { status?: number };
 
 export class SwiftClient {
 	private static baseUrl = '';
@@ -316,6 +317,7 @@ export class SwiftClient {
 				type: 'errored',
 				hash: '',
 				message: sendResponse.message,
+				status: sendResponse.status,
 			});
 			return;
 		}
@@ -330,6 +332,7 @@ export class SwiftClient {
 				type: confirmResponse.body.status as 'expired',
 				hash,
 				message: confirmResponse.message,
+				status: confirmResponse.status,
 			});
 		}
 		if (confirmResponse.body.status === 'confirmed') {
@@ -370,6 +373,7 @@ export class SwiftClient {
 				type: 'errored',
 				hash: '',
 				message: 'Error from swift node: ' + sendResponse.message,
+				status: sendResponse.status,
 			});
 			return;
 		}
@@ -389,6 +393,7 @@ export class SwiftClient {
 				type: 'expired',
 				hash,
 				message: 'Order failed to confirm',
+				status: 408,
 			});
 		});
 
@@ -397,6 +402,7 @@ export class SwiftClient {
 				type: 'expired',
 				hash,
 				message: 'Order failed to confirm',
+				status: 408,
 			});
 		} else {
 			subscriber.next({
