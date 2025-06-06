@@ -38,15 +38,17 @@ export class UIMarket {
 			: Config.spotMarketsLookup;
 		const markets = marketId.isPerp ? perpMarkets : spotMarkets;
 
-		const market = markets[marketIndex];
+		//@ts-ignore
+		const market = markets.find((m) => m.marketIndex === marketIndex);
 
+		// TODO: should we purposely throw an error here? Or construct a default market?
 		invariant(
 			market,
 			`Market not found for type: ${marketId.marketTypeStr}, market index: ${marketIndex}`
 		);
 
 		this.marketId = marketId;
-		this.market = markets[marketIndex];
+		this.market = market;
 	}
 
 	static setPerpMarkets(perpMarkets: PerpMarketConfig[]) {
