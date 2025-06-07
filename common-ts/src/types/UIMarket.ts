@@ -18,12 +18,6 @@ const useAsyncMarketConfigs =
 export class UIMarket {
 	static perpMarkets = PerpMarkets['mainnet-beta'];
 	static spotMarkets = SpotMarkets['mainnet-beta'];
-	static perpMarketIds = PerpMarkets['mainnet-beta'].map((m) =>
-		MarketId.createPerpMarket(m.marketIndex)
-	);
-	static spotMarketIds = SpotMarkets['mainnet-beta'].map((m) =>
-		MarketId.createSpotMarket(m.marketIndex)
-	);
 
 	readonly market: SpotMarketConfig | PerpMarketConfig;
 	readonly marketId: MarketId;
@@ -53,16 +47,10 @@ export class UIMarket {
 
 	static setPerpMarkets(perpMarkets: PerpMarketConfig[]) {
 		this.perpMarkets = perpMarkets;
-		this.perpMarketIds = perpMarkets.map((m) =>
-			MarketId.createPerpMarket(m.marketIndex)
-		);
 	}
 
 	static setSpotMarkets(spotMarkets: SpotMarketConfig[]) {
 		this.spotMarkets = spotMarkets;
-		this.spotMarketIds = spotMarkets.map((m) =>
-			MarketId.createSpotMarket(m.marketIndex)
-		);
 	}
 
 	static createSpotMarket(marketIndex: number) {
