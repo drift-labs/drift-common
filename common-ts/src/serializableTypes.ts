@@ -536,6 +536,14 @@ export class SerializableOrderActionRecord
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	spotFulfillmentMethodFee: BN | null;
 	@autoserializeAs(Number) bitFlags: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	takerExistingQuoteEntryAmount: BN | null;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	takerExistingBaseAssetAmount: BN | null;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	makerExistingQuoteEntryAmount: BN | null;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	makerExistingBaseAssetAmount: BN | null;
 
 	static onDeserialized(
 		data: JsonObject,
@@ -621,6 +629,22 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	// @ts-ignore
 	spotFulfillmentMethodFee: BigNum | null;
 
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	takerExistingQuoteEntryAmount: BigNum | null;
+
+	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	takerExistingBaseAssetAmount: BigNum | null;
+
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	makerExistingQuoteEntryAmount: BigNum | null;
+
+	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	makerExistingBaseAssetAmount: BigNum | null;
+
 	static onDeserialized(
 		data: JsonObject,
 		instance: UISerializableOrderActionRecord
@@ -643,6 +667,8 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 				'takerOrderCumulativeBaseAssetAmountFilled',
 				'makerOrderBaseAssetAmount',
 				'makerOrderCumulativeBaseAssetAmountFilled',
+				'takerExistingBaseAssetAmount',
+				'makerExistingBaseAssetAmount',
 			]
 		);
 	}
@@ -773,6 +799,15 @@ export class UISerializableOrderActionRecordV2
 	@autoserializeAs(String) symbol: string;
 	@autoserializeAs(Number) bitFlags: number;
 
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	takerExistingQuoteEntryAmount: BigNum | null;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	takerExistingBaseAssetAmount: BigNum | null;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	makerExistingQuoteEntryAmount: BigNum | null;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	makerExistingBaseAssetAmount: BigNum | null;
+
 	static onDeserialized(
 		data: JsonObject,
 		instance: UISerializableOrderActionRecordV2
@@ -791,6 +826,8 @@ export class UISerializableOrderActionRecordV2
 			'takerOrderCumulativeBaseAssetAmountFilled',
 			'makerOrderBaseAssetAmount',
 			'makerOrderCumulativeBaseAssetAmountFilled',
+			'takerExistingBaseAssetAmount',
+			'makerExistingBaseAssetAmount',
 		];
 
 		handleOnDeserializedPrecision(
@@ -2259,6 +2296,14 @@ export function transformDataApiOrderActionRecordToSerializableOrderActionRecord
 		makerFee: deserializedV2Record.makerFee.val,
 		spotFulfillmentMethodFee: deserializedV2Record.spotFulfillmentMethodFee.val,
 		bitFlags: deserializedV2Record.bitFlags,
+		takerExistingQuoteEntryAmount:
+			deserializedV2Record.takerExistingQuoteEntryAmount?.val,
+		takerExistingBaseAssetAmount:
+			deserializedV2Record.takerExistingBaseAssetAmount?.val,
+		makerExistingQuoteEntryAmount:
+			deserializedV2Record.makerExistingQuoteEntryAmount?.val,
+		makerExistingBaseAssetAmount:
+			deserializedV2Record.makerExistingBaseAssetAmount?.val,
 	};
 
 	return transformedRecord;
