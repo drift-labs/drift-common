@@ -633,7 +633,7 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	// @ts-ignore
 	takerExistingQuoteEntryAmount: BigNum | null;
 
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
 	// @ts-ignore
 	takerExistingBaseAssetAmount: BigNum | null;
 
@@ -641,7 +641,7 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	// @ts-ignore
 	makerExistingQuoteEntryAmount: BigNum | null;
 
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
 	// @ts-ignore
 	makerExistingBaseAssetAmount: BigNum | null;
 
@@ -667,6 +667,8 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 				'takerOrderCumulativeBaseAssetAmountFilled',
 				'makerOrderBaseAssetAmount',
 				'makerOrderCumulativeBaseAssetAmountFilled',
+				'takerExistingBaseAssetAmount',
+				'makerExistingBaseAssetAmount',
 			]
 		);
 	}
@@ -824,6 +826,8 @@ export class UISerializableOrderActionRecordV2
 			'takerOrderCumulativeBaseAssetAmountFilled',
 			'makerOrderBaseAssetAmount',
 			'makerOrderCumulativeBaseAssetAmountFilled',
+			'takerExistingBaseAssetAmount',
+			'makerExistingBaseAssetAmount',
 		];
 
 		handleOnDeserializedPrecision(
