@@ -9,6 +9,7 @@ import {
 	LIMIT_ORDER_TYPE_CONFIG,
 	MARKET_ORDER_TYPE_CONFIG,
 	ORACLE_LIMIT_ORDER_TYPE_CONFIG,
+	ORACLE_MARKET_ORDER_TYPE_CONFIG,
 	STOP_LIMIT_ORDER_TYPE_CONFIG,
 	STOP_MARKET_ORDER_TYPE_CONFIG,
 	TAKE_PROFIT_LIMIT_ORDER_TYPE_CONFIG,
@@ -202,6 +203,8 @@ const getUIOrderTypeFromSdkOrderType = (
 				return STOP_LIMIT_ORDER_TYPE_CONFIG;
 			}
 		}
+	} else if (matchEnum(orderType, OrderType.ORACLE)) {
+		return ORACLE_MARKET_ORDER_TYPE_CONFIG;
 	}
 	throw new Error('Invalid order type');
 };
