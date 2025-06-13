@@ -166,7 +166,14 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 	isEnteringHighLeverageMode?: boolean;
 	capLiqPrice?: boolean;
 }) => {
-	const ALLOWED_ORDER_TYPES: UIOrderType[] = ['limit', 'market', 'oracle'];
+	const ALLOWED_ORDER_TYPES: UIOrderType[] = [
+		'limit',
+		'market',
+		'oracle',
+		'stopMarket',
+		'stopLimit',
+		'oracleLimit',
+	];
 
 	if (!ALLOWED_ORDER_TYPES.includes(orderType)) {
 		console.error(
@@ -184,7 +191,14 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 	}
 
 	const signedBaseSize = isLong ? tradeBaseSize : tradeBaseSize.neg();
-	const priceToUse = orderType === 'limit' ? limitPrice : estEntryPrice;
+	const priceToUse = [
+		'limit',
+		'stopMarket',
+		'stopLimit',
+		'oracleLimit',
+	].includes(orderType)
+		? limitPrice
+		: estEntryPrice;
 
 	const liqPriceBn = userClient.liquidationPrice(
 		perpMarketIndex,
