@@ -5,13 +5,13 @@ import {
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
 } from '@drift-labs/sdk';
-import { MarketId } from '../types';
-import WS from 'isomorphic-ws';
+import { JsonCandle, MarketId, MarketSymbol } from '../types';
 import { CANDLE_UTILS } from '../utils/candleUtils';
 import { StrictEventEmitter } from '../utils/StrictEventEmitter';
 import { EnvironmentConstants } from '../EnvironmentConstants';
 import { UIEnv } from '../types/UIEnv';
 import { assert } from '../utils/assert';
+import { CandleSubscriberSubscription, MarketDataFeed } from './marketDataFeed';
 
 /**
  * # CANDLE CLIENT HIGH LEVEL EXPLANATION:
@@ -63,21 +63,6 @@ type CandleFetchUrlConfig = {
 	countToFetch: number;
 };
 
-// Type for the candles returned by the data API
-export type JsonCandle = {
-	ts: number;
-	fillOpen: number;
-	fillHigh: number;
-	fillClose: number;
-	fillLow: number;
-	oracleOpen: number;
-	oracleHigh: number;
-	oracleClose: number;
-	oracleLow: number;
-	quoteVolume: number;
-	baseVolume: number;
-};
-
 type CandleFetchResponseJson = {
 	success: boolean;
 	records: JsonCandle[];
@@ -94,14 +79,14 @@ const getMarketSymbolForMarketId = (marketId: MarketId, uiEnv: UIEnv) => {
 		const targetMarketConfig = marketConfigs.find(
 			(config) => config.marketIndex === marketId.marketIndex
 		);
-		return targetMarketConfig.symbol;
+		return targetMarketConfig.symbol as MarketSymbol;
 	} else {
 		const marketConfigs =
 			sdkEnv === 'mainnet-beta' ? MainnetSpotMarkets : DevnetSpotMarkets;
 		const targetMarketConfig = marketConfigs.find(
 			(config) => config.marketIndex === marketId.marketIndex
 		);
-		return targetMarketConfig.symbol;
+		return targetMarketConfig.symbol as MarketSymbol;
 	}
 };
 
@@ -138,34 +123,6 @@ const getCandleFetchUrl = ({
 	return fetchUrl;
 };
 
-const getCandleWsSubscriptionPath = (config: CandleSubscriptionConfig) => {
-	const baseDataApiUrl = getBaseDataApiUrl(config.env);
-	return `wss://${baseDataApiUrl}/ws`;
-};
-
-const getCandleWsSubscriptionMessage = (config: CandleSubscriptionConfig) => {
-	return JSON.stringify({
-		type: 'subscribe',
-		symbol: getMarketSymbolForMarketId(config.marketId, config.env),
-		resolution: `${config.resolution}`,
-	});
-};
-
-type WsSubscriptionMessageType =
-	| 'subscribe'
-	| 'init'
-	| 'subscription'
-	| 'update'
-	| 'create';
-
-type WsSubscriptionMessage<T extends WsSubscriptionMessageType> = {
-	type: T;
-};
-
-type WsCandleUpdateMessage = WsSubscriptionMessage<'update'> & {
-	candle: JsonCandle;
-};
-
 type CandleSubscriberEvents = {
 	'candle-update': JsonCandle;
 };
@@ -175,62 +132,6 @@ class CandleEventBus extends StrictEventEmitter<CandleSubscriberEvents> {
 	constructor() {
 		super();
 	}
-}
-
-// This class is responsible for subscribing to the candles websocket endpoint and forwarding events to the event bus
-class CandleSubscriber {
-	public readonly config: CandleSubscriptionConfig;
-	private readonly eventBus: CandleEventBus;
-	private ws: WS;
-
-	constructor(config: CandleSubscriptionConfig, eventBus: CandleEventBus) {
-		this.config = config;
-		this.eventBus = eventBus;
-	}
-
-	private handleWsMessage = (message: string) => {
-		const parsedMessage = JSON.parse(
-			message
-		) as WsSubscriptionMessage<WsSubscriptionMessageType>;
-
-		let candle: JsonCandle;
-		switch (parsedMessage.type) {
-			case 'update':
-				candle = (parsedMessage as WsCandleUpdateMessage).candle;
-				this.eventBus.emit('candle-update', candle);
-				break;
-			default:
-				break;
-		}
-	};
-
-	public subscribeToCandles = async () => {
-		this.ws = new WS(getCandleWsSubscriptionPath(this.config));
-
-		this.ws.onopen = (_event) => {
-			this.ws.send(getCandleWsSubscriptionMessage(this.config));
-		};
-
-		this.ws.onmessage = (incoming) => {
-			// Forward message to all observers
-			const message = incoming.data as string;
-			this.handleWsMessage(message);
-		};
-
-		this.ws.onclose = (_event) => {
-			console.debug(
-				`candlesv2:: CANDLE_CLIENT WS CLOSED for ${this.config.marketId.key}`
-			);
-		};
-	};
-
-	public killWs = () => {
-		if (this.ws) {
-			this.ws.send(JSON.stringify({ type: 'unsubscribe' }));
-			this.ws.close();
-			delete this.ws;
-		}
-	};
 }
 
 // This class is reponsible for fetching candles from the data API's GET endpoint
@@ -633,6 +534,40 @@ class CandleFetcher {
 	};
 }
 
+class CandleSubscriber {
+	private subscription: CandleSubscriberSubscription;
+
+	constructor(
+		readonly config: CandleSubscriptionConfig,
+		readonly eventBus: CandleEventBus
+	) {}
+
+	subscribeToCandles = async () => {
+		this.subscription = MarketDataFeed.subscribe({
+			type: 'candles',
+			resolution: this.config.resolution,
+			env: this.config.env,
+			marketSymbol: getMarketSymbolForMarketId(
+				this.config.marketId,
+				this.config.env
+			),
+		});
+
+		this.subscription.observable.subscribe((candle) => {
+			this.eventBus.emit('candle-update', candle);
+		});
+	};
+
+	unsubscribe = () => {
+		MarketDataFeed.unsubscribe(this.subscription.id);
+	};
+}
+
+/**
+ * This class will subscribe to candles from the Drift Data API.
+ *
+ * Note: If you are using TradingView you probably want to just use the DriftTvFeed class instead.
+ */
 export class CandleClient {
 	private activeSubscriptions: Map<
 		string,
@@ -714,7 +649,7 @@ export class CandleClient {
 				subscription.subscriber.config.marketId,
 				subscription.subscriber.config.resolution
 			);
-			subscription.subscriber.killWs();
+			subscription.subscriber.unsubscribe();
 			subscription.eventBus.removeAllListeners();
 			this.activeSubscriptions.delete(subscriptionKey);
 		}
