@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 type SetValue<T> = T | ((val: T) => T);
 
@@ -36,22 +36,25 @@ export function useSyncLocalStorage<T>(
 		}
 	});
 
-	const setValue = (value: SetValue<T>) => {
-		try {
-			const storage = safeLocalStorage();
-			if (!storage) return;
+	const setValue = useCallback(
+		(value: SetValue<T>) => {
+			try {
+				const storage = safeLocalStorage();
+				if (!storage) return;
 
-			const valueToStore =
-				value instanceof Function ? value(storedValue) : value;
-			setStoredValue(valueToStore);
-			storage.setItem(key, JSON.stringify(valueToStore));
-			if (typeof window !== 'undefined') {
-				window.dispatchEvent(new Event(LOCAL_STORAGE_EVENT_TYPE));
+				const valueToStore =
+					value instanceof Function ? value(storedValue) : value;
+				setStoredValue(valueToStore);
+				storage.setItem(key, JSON.stringify(valueToStore));
+				if (typeof window !== 'undefined') {
+					window.dispatchEvent(new Event(LOCAL_STORAGE_EVENT_TYPE));
+				}
+			} catch (error) {
+				console.log(error);
 			}
-		} catch (error) {
-			console.log(error);
-		}
-	};
+		},
+		[storedValue]
+	);
 
 	useEffect(() => {
 		const handleStorageChange = () => {
