@@ -27,7 +27,7 @@ import {
 	UIMatchedOrderRecordAndAction,
 	UISerializableOrderActionRecord,
 } from '../serializableTypes';
-import { UIMarket } from 'src/types';
+import { UIMarket } from '../types';
 
 export const matchEnum = (enum1: any, enum2) => {
 	return JSON.stringify(enum1) === JSON.stringify(enum2);
@@ -753,7 +753,7 @@ const getIfVaultBalance = async (
 };
 
 
-export const MAX_APR = 1000;
+
 
 /**
  * Calculates the next APR for insurance fund staking
@@ -764,10 +764,12 @@ export const MAX_APR = 1000;
  * @param vaultBalanceBigNum - Current vault balance as BigNum
  * @returns Next APR as a percentage (e.g., 35 means 35% APR)
  */
-export function calculateVaultNextApr(
+function calculateVaultNextApr(
 	spotMarket: SpotMarketAccount,
 	vaultBalanceBigNum: BigNum
 ): number {
+	const MAX_APR = 1000;
+
 	const { precisionExp } = UIMarket.spotMarkets[spotMarket.marketIndex];
 	
 	try {
