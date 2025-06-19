@@ -752,14 +752,11 @@ const getIfVaultBalance = async (
 	return vaultBalanceBigNum;
 };
 
-
-
-
 /**
  * Calculates the next APR for insurance fund staking
  * This function extracts the APR calculation logic from the insurance fund staking implementation
  * Reference: https://github.com/drift-labs/protocol-v2-mono/blob/ebbe7b8df7e81de59bd510a37d16f55d5c985ef5/ui/src/utils/insuranceFund.ts#L105
- * 
+ *
  * @param spotMarket - Spot market account
  * @param vaultBalanceBigNum - Current vault balance as BigNum
  * @returns Next APR as a percentage (e.g., 35 means 35% APR)
@@ -771,10 +768,10 @@ function calculateVaultNextApr(
 	const MAX_APR = 1000;
 
 	const { precisionExp } = UIMarket.spotMarkets[spotMarket.marketIndex];
-	
+
 	try {
 		const vaultBalance = vaultBalanceBigNum.toNum();
-		
+
 		// Calculate revenue pool
 		const revenuePoolBN = getTokenAmount(
 			spotMarket.revenuePool.scaledBalance,
@@ -783,7 +780,7 @@ function calculateVaultNextApr(
 		);
 		const revenuePoolBigNum = BigNum.from(revenuePoolBN, precisionExp);
 		const revenuePool = revenuePoolBigNum.toNum();
-		
+
 		// APR calculation constants and factors
 		const payoutRatio = 0.1;
 		const ratioForStakers =
@@ -792,32 +789,32 @@ function calculateVaultNextApr(
 				? spotMarket.insuranceFund.userFactor /
 				  spotMarket.insuranceFund.totalFactor
 				: 0;
-		
+
 		// Settle periods from on-chain data
 		const revSettlePeriod =
 			spotMarket.insuranceFund.revenueSettlePeriod.toNumber() * 1000;
-		
+
 		// Handle edge case where settle period is 0
 		if (revSettlePeriod === 0) {
 			return 0;
 		}
-		
+
 		// Calculate settlements per year (31536000000 ms = 1 year)
 		const settlesPerYear = 31536000000 / revSettlePeriod;
-		
+
 		// Calculate projected annual revenue
 		const projectedAnnualRev = revenuePool * settlesPerYear * payoutRatio;
-		
+
 		// Calculate uncapped APR
 		const uncappedApr =
 			vaultBalance === 0 ? 0 : (projectedAnnualRev / vaultBalance) * 100;
-		
+
 		// Apply APR cap
 		const cappedApr = Math.min(uncappedApr, MAX_APR);
-		
+
 		// Calculate final APR for stakers
 		const nextApr = cappedApr * ratioForStakers;
-	
+
 		return nextApr;
 	} catch (error) {
 		console.warn('Error calculating next APR:', error);
@@ -835,10 +832,8 @@ const getIfStakingVaultApr = async (
 	spotMarketConfig: SpotMarketConfig,
 	driftClient: DriftClient
 ) => {
-	const vaultBalance = 
-		await getIfVaultBalance(spotMarketConfig, driftClient);
-	
-	
+	const vaultBalance = await getIfVaultBalance(spotMarketConfig, driftClient);
+
 	return calculateVaultNextApr(
 		driftClient.getSpotMarketAccount(spotMarketConfig.marketIndex),
 		vaultBalance
