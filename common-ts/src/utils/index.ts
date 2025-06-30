@@ -766,6 +766,8 @@ function calculateVaultNextApr(
 	vaultBalanceBigNum: BigNum
 ): number {
 	const MAX_APR = 1000;
+	const GOV_MAX_APR = 20;
+	const DRIFT_MARKET_INDEX = 15;
 
 	const { precisionExp } = UIMarket.spotMarkets[spotMarket.marketIndex];
 
@@ -809,8 +811,9 @@ function calculateVaultNextApr(
 		const uncappedApr =
 			vaultBalance === 0 ? 0 : (projectedAnnualRev / vaultBalance) * 100;
 
-		// Apply APR cap
-		const cappedApr = Math.min(uncappedApr, MAX_APR);
+		// Apply APR cap: DRIFT token (governance) capped at 20%, others at 1000%
+		const maxApr = spotMarket.marketIndex === DRIFT_MARKET_INDEX ? GOV_MAX_APR : MAX_APR;
+		const cappedApr = Math.min(uncappedApr, maxApr);
 
 		// Calculate final APR for stakers
 		const nextApr = cappedApr * ratioForStakers;
