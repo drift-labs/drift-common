@@ -551,10 +551,7 @@ const getCurrentOpenInterestForMarket = (
 	if (ENUM_UTILS.match(marketType, MarketType.PERP)) {
 		const market = driftClient.getPerpMarketAccount(marketIndex);
 		const OI = BigNum.from(
-			BN.max(
-				market.amm.baseAssetAmountLong,
-				market.amm.baseAssetAmountShort.abs()
-			),
+			market.amm.baseAssetAmountLong.add(market.amm.baseAssetAmountShort.abs()),
 			BASE_PRECISION_EXP
 		);
 
