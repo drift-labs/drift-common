@@ -97,14 +97,14 @@ export class DataApiWsClient {
 	/**
 	 * This class should be called when a connection issue is detected so that it can recreate the connection
 	 */
-	private resetConnection = () => {
+	private resetConnection = async () => {
 		if (this.resetConnectionMutex) return;
 
 		this.resetConnectionMutex = true;
 
 		this.closeConnection(1000, 'Connection reset');
 
-		this.subscribe();
+		await this.subscribe();
 
 		this.resetConnectionMutex = false;
 	};
@@ -115,31 +115,35 @@ export class DataApiWsClient {
 			`candlesv2:: Opening new WS for ${getWsSubscriptionPath(this.config)}`
 		);
 
-		this.ws = new WS(getWsSubscriptionPath(this.config));
+		return new Promise<void>((resolve, reject) => {
+			this.ws = new WS(getWsSubscriptionPath(this.config));
 
-		this.ws.onopen = (_event) => {
-			this.ws.send(getWsSubscriptionMessage(this.config));
-		};
+			this.ws.onopen = (_event) => {
+				this.ws.send(getWsSubscriptionMessage(this.config));
+				resolve();
+			};
 
-		this.ws.onmessage = (incoming) => {
-			// Forward message to all observers
-			const message = incoming.data as string;
-			this.handleWsMessage(message);
-		};
+			this.ws.onmessage = (incoming) => {
+				// Forward message to all observers
+				const message = incoming.data as string;
+				this.handleWsMessage(message);
+			};
 
-		this.ws.onclose = (event) => {
-			if (!this.expectDisconnect) {
-				this.resetConnection();
-				console.info(`dataApiWsClient::unexpected_onclose`, event);
-			}
-		};
+			this.ws.onclose = (event) => {
+				if (!this.expectDisconnect) {
+					this.resetConnection();
+					console.info(`dataApiWsClient::unexpected_onclose`, event);
+				}
+			};
 
-		this.ws.onerror = (error) => {
-			if (!this.expectDisconnect) {
-				this.resetConnection();
-			}
-			console.info(`dataApiWsClient::onerror`, error);
-		};
+			this.ws.onerror = (error) => {
+				if (!this.expectDisconnect) {
+					this.resetConnection();
+				}
+				console.info(`dataApiWsClient::onerror`, error);
+				reject(error);
+			};
+		});
 	};
 
 	public unsubscribe = () => {
