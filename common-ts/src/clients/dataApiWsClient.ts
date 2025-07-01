@@ -1,8 +1,8 @@
 import { CandleResolution } from '@drift-labs/sdk';
-import WS from 'isomorphic-ws';
 import { EnvironmentConstants } from '../EnvironmentConstants';
 import { JsonCandle, JsonTrade, MarketSymbol, UIEnv } from '../types';
 import { Observable, Subject } from 'rxjs';
+import { MultiplexWebSocket } from '../utils/MultiplexWebSocket';
 
 const getBaseDataApiUrl = (env: UIEnv) => {
 	const constantEnv: keyof typeof EnvironmentConstants.dataServerUrl =
@@ -38,9 +38,15 @@ type WsSubscriptionMessageType =
 	| 'update'
 	| 'create';
 
+type DataApiCandleProps = {
+	resolution: string;
+	symbol: string;
+}; // There is other stuff in the candle objects but we only care about these properties
+
 type WsSubscriptionMessage<T extends WsSubscriptionMessageType> = {
 	type: T;
-};
+	candle: DataApiCandleProps;
+}; // There are more params in the various messages we can receive but we only care about these properties
 
 type WsUpdateMessage = WsSubscriptionMessage<'update'> & {
 	candle: JsonCandle;
@@ -49,13 +55,11 @@ type WsUpdateMessage = WsSubscriptionMessage<'update'> & {
 
 export class DataApiWsClient {
 	public readonly config: DataApiWsSubscriptionConfig;
-	private ws: WS;
 	private readonly candleSubject: Subject<JsonCandle>;
 	private readonly tradesSubject: Subject<JsonTrade[]>;
 	private readonly _candleObservable: Observable<JsonCandle>;
 	private readonly _tradesObservable: Observable<JsonTrade[]>;
-	private expectDisconnect: boolean;
-	private resetConnectionMutex = false;
+	private multiplexSubscription: { unsubscribe: () => void } | null = null;
 
 	constructor(config: DataApiWsSubscriptionConfig) {
 		this.config = config;
@@ -65,18 +69,18 @@ export class DataApiWsClient {
 		this._tradesObservable = this.tradesSubject.asObservable();
 	}
 
-	private handleWsMessage = (message: string) => {
-		const parsedMessage = JSON.parse(
-			message
-		) as WsSubscriptionMessage<WsSubscriptionMessageType>;
+	private handleWsMessage = (
+		message: WsSubscriptionMessage<WsSubscriptionMessageType>
+	) => {
+		const parsedMessage = message;
 
 		switch (parsedMessage.type) {
 			case 'update':
 				{
 					const candle = (parsedMessage as WsUpdateMessage).candle;
 					const trades = (parsedMessage as WsUpdateMessage).trades;
-					if (candle) this.candleSubject.next(candle); // Candle should always be attached to update but doing this for safety
-					if (trades) this.tradesSubject.next(trades); // Trades should always be attached to update but doing this for safety
+					if (candle) this.candleSubject.next(candle);
+					if (trades) this.tradesSubject.next(trades);
 				}
 				break;
 			default:
@@ -84,71 +88,70 @@ export class DataApiWsClient {
 		}
 	};
 
-	private closeConnection = (code: number, reason: string) => {
-		if (!this.ws) return;
-		this.ws.onopen = null;
-		this.ws.onmessage = null;
-		this.ws.onclose = null;
-		this.ws.onerror = null;
-		this.ws.close(code, reason);
-		delete this.ws;
+	private handleError = () => {
+		console.info('candlesv2:: dataApiWsClient error occurred');
 	};
 
-	/**
-	 * This class should be called when a connection issue is detected so that it can recreate the connection
-	 */
-	private resetConnection = async () => {
-		if (this.resetConnectionMutex) return;
-
-		this.resetConnectionMutex = true;
-
-		this.closeConnection(1000, 'Connection reset');
-
-		await this.subscribe();
-
-		this.resetConnectionMutex = false;
+	private handleClose = () => {
+		console.info('candlesv2:: dataApiWsClient connection closed');
 	};
 
 	public subscribe = async () => {
-		this.expectDisconnect = false;
-		console.log(
-			`candlesv2:: Opening new WS for ${getWsSubscriptionPath(this.config)}`
-		);
+		const subscriptionId = `${this.config.marketSymbol}-${this.config.resolution}`;
 
-		return new Promise<void>((resolve, reject) => {
-			this.ws = new WS(getWsSubscriptionPath(this.config));
+		console.debug(`candlesv2:: Opening new Data APi WS ${subscriptionId}`);
 
-			this.ws.onopen = (_event) => {
-				this.ws.send(getWsSubscriptionMessage(this.config));
-				resolve();
-			};
+		this.multiplexSubscription = MultiplexWebSocket.createWebSocketSubscription<
+			WsSubscriptionMessage<WsSubscriptionMessageType>
+		>({
+			wsUrl: getWsSubscriptionPath(this.config),
+			subscriptionId,
+			subscribeMessage: getWsSubscriptionMessage(this.config),
+			unsubscribeMessage: JSON.stringify({
+				type: 'unsubscribe',
+				symbol: this.config.marketSymbol,
+				resolution: `${this.config.resolution}`,
+			}),
+			onError: this.handleError,
+			onMessage: this.handleWsMessage,
+			onClose: this.handleClose,
+			messageFilter: (message) => {
+				try {
+					// Only accept `update` messages with a matching resolution and symbol for this subscription
+					if (
+						message?.type === 'update' &&
+						message.candle?.resolution === this.config.resolution &&
+						message.candle?.symbol === this.config.marketSymbol
+					) {
+						return true;
+					}
 
-			this.ws.onmessage = (incoming) => {
-				// Forward message to all observers
-				const message = incoming.data as string;
-				this.handleWsMessage(message);
-			};
+					return false;
+				} catch (error) {
+					console.error('candlesv2:: dataApiWsClient messageFilter error', {
+						error,
+						message,
+					});
 
-			this.ws.onclose = (event) => {
-				if (!this.expectDisconnect) {
-					this.resetConnection();
-					console.info(`dataApiWsClient::unexpected_onclose`, event);
+					return false;
 				}
-			};
-
-			this.ws.onerror = (error) => {
-				if (!this.expectDisconnect) {
-					this.resetConnection();
-				}
-				console.info(`dataApiWsClient::onerror`, error);
-				reject(error);
-			};
+			},
+			errorMessageFilter: (_message) => {
+				return false; // No known error messages
+			},
+			healthCheck: {
+				enabled: false,
+			},
 		});
+
+		return Promise.resolve();
 	};
 
 	public unsubscribe = () => {
-		this.expectDisconnect = true;
-		this.closeConnection(1000, 'Client unsubscribed');
+		if (this.multiplexSubscription) {
+			this.multiplexSubscription.unsubscribe();
+			this.multiplexSubscription = null;
+		}
 		this.candleSubject.complete();
 		this.tradesSubject.complete();
 	};

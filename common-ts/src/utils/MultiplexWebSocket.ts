@@ -1,27 +1,36 @@
 import { Subject, catchError, Subscription } from 'rxjs';
 import WebSocket, { MessageEvent } from 'isomorphic-ws';
 
-export type WebSocketMessage = {
-	channel: string;
-	data: any;
-};
+type WebSocketMessage<T = Record<string, unknown>> = T;
 
-type WebSocketSubscriptionProps = {
+type HealthCheckConfig =
+	| { enabled: false }
+	| {
+			enabled: true;
+			intervalMs: number;
+			unhealthyThresholdMs: number;
+			maxReconnectAttempts: number;
+			reconnectionWindowMs: number;
+	  };
+
+type WebSocketSubscriptionProps<T = Record<string, unknown>> = {
 	wsUrl: string;
 	subscriptionId: string;
 	subscribeMessage: string;
 	unsubscribeMessage: string;
 	onError: (err?: any) => void;
-	onMessage: (message: WebSocketMessage) => void;
-	messageFilter: (message: WebSocketMessage) => boolean;
-	errorMessageFilter: (message: WebSocketMessage) => boolean;
+	onMessage: (message: WebSocketMessage<T>) => void;
+	messageFilter: (message: WebSocketMessage<T>) => boolean;
+	errorMessageFilter: (message: WebSocketMessage<T>) => boolean;
 	onClose?: () => void;
+	healthCheck?: HealthCheckConfig;
 };
 
-type WebSocketSubscriptionState = WebSocketSubscriptionProps & {
-	hasSentSubscribeMessage?: boolean;
-	subjectSubscription?: Subscription;
-};
+type WebSocketSubscriptionState<T = Record<string, unknown>> =
+	WebSocketSubscriptionProps<T> & {
+		hasSentSubscribeMessage?: boolean;
+		subjectSubscription?: Subscription;
+	};
 
 type WebSocketUrl = string;
 type SubscriptionId = string;
@@ -33,19 +42,21 @@ enum WebSocketConnectionState {
 	DISCONNECTED,
 }
 
-type IMultiplexWebSocket = {
+type IMultiplexWebSocket<T = Record<string, unknown>> = {
 	wsUrl: WebSocketUrl;
 	webSocket: WebSocket;
 	customConnectionState: WebSocketConnectionState;
-	subject: Subject<WebSocketMessage>;
+	subject: Subject<WebSocketMessage<T>>;
 	subscriptions: Map<
 		SubscriptionId,
-		Omit<WebSocketSubscriptionProps, 'wsUrl' | 'subscriptionId'>
+		Omit<WebSocketSubscriptionProps<T>, 'wsUrl' | 'subscriptionId'>
 	>;
 	healthCheck: {
+		enabled: boolean;
+		config: HealthCheckConfig;
 		lastMessageTimestamp: number;
 		reconnectTimeStamps: number[];
-		interval: ReturnType<typeof setInterval>;
+		interval?: ReturnType<typeof setInterval>;
 	};
 };
 
@@ -61,52 +72,46 @@ type IMultiplexWebSocket = {
  * - The websocket is closed when the number of subscriptions is 0 (occurs during health check)
  * - The websocket will be refreshed (new instance) when it is unhealthy, until it reaches the maximum number of reconnect attempts
  */
-export class MultiplexWebSocket implements IMultiplexWebSocket {
+export class MultiplexWebSocket<T = Record<string, unknown>>
+	implements IMultiplexWebSocket<T>
+{
 	/**
 	 * A lookup of all websockets by their URL.
 	 */
-	static WEBSOCKETS_LOOKUP = new Map<WebSocketUrl, MultiplexWebSocket>();
+	private static URL_TO_WEBSOCKETS_LOOKUP = new Map<
+		WebSocketUrl,
+		MultiplexWebSocket<any>
+	>();
 
 	/**
-	 * The maximum number of reconnect attempts for a websocket, before throwing an error.
+	 * A lookup from websocket URL to all subscription IDs for that URL.
 	 */
-	static MAX_RECONNECT_ATTEMPTS = 3;
-
-	/**
-	 * The interval at which the websocket will check if it is still connected.
-	 */
-	static CONNECTION_HEALTH_CHECK_INTERVAL_MS = 5_000;
-
-	/**
-	 * The number of milliseconds between messages before considering the websocket unhealthy.
-	 */
-	static CONNECTION_HEALTH_CHECK_UNHEALTHY_THRESHOLD_MS = 10_000;
-
-	/**
-	 * The number of milliseconds to consider when checking if the websocket has exceeded the maximum number of reconnect attempts.
-	 * A buffer is added to account for the time it takes for the websocket to reconnect.
-	 */
-	static RECONNECTION_ATTEMPTS_SLIDING_WINDOW_MS =
-		MultiplexWebSocket.CONNECTION_HEALTH_CHECK_UNHEALTHY_THRESHOLD_MS *
-		MultiplexWebSocket.MAX_RECONNECT_ATTEMPTS *
-		1.5;
+	private static URL_TO_SUBSCRIPTION_IDS_LOOKUP = new Map<
+		WebSocketUrl,
+		Set<SubscriptionId>
+	>();
 
 	wsUrl: WebSocketUrl;
 	#webSocket: WebSocket;
 	customConnectionState: WebSocketConnectionState;
-	subject: Subject<WebSocketMessage>;
+	subject: Subject<WebSocketMessage<T>>;
 	subscriptions: Map<
 		SubscriptionId,
-		Omit<WebSocketSubscriptionState, 'wsUrl' | 'subscriptionId'>
+		Omit<WebSocketSubscriptionState<T>, 'wsUrl' | 'subscriptionId'>
 	>;
 	healthCheck: {
+		enabled: boolean;
+		config: HealthCheckConfig;
 		lastMessageTimestamp: number;
 		reconnectTimeStamps: number[];
-		interval: ReturnType<typeof setInterval>;
+		interval?: ReturnType<typeof setInterval>;
 	};
 
-	private constructor(wsUrl: WebSocketUrl) {
-		if (MultiplexWebSocket.WEBSOCKETS_LOOKUP.has(wsUrl)) {
+	private constructor(
+		wsUrl: WebSocketUrl,
+		initialHealthCheckConfig?: HealthCheckConfig
+	) {
+		if (MultiplexWebSocket.URL_TO_WEBSOCKETS_LOOKUP.has(wsUrl)) {
 			throw new Error(
 				`Attempting to create a new websocket for ${wsUrl}, but it already exists`
 			);
@@ -114,46 +119,61 @@ export class MultiplexWebSocket implements IMultiplexWebSocket {
 
 		this.wsUrl = wsUrl;
 		this.customConnectionState = WebSocketConnectionState.CONNECTING;
-		this.subject = new Subject<WebSocketMessage>();
+		this.subject = new Subject<WebSocketMessage<T>>();
 		this.subscriptions = new Map<
 			SubscriptionId,
-			Omit<WebSocketSubscriptionProps, 'wsUrl' | 'subscriptionId'>
+			Omit<WebSocketSubscriptionProps<T>, 'wsUrl' | 'subscriptionId'>
 		>();
+
+		// Default to health check disabled
+		const healthCheckConfig: HealthCheckConfig = initialHealthCheckConfig || {
+			enabled: false,
+		};
+
 		this.healthCheck = {
+			enabled: healthCheckConfig.enabled,
+			config: healthCheckConfig,
 			lastMessageTimestamp: Date.now(),
 			reconnectTimeStamps: [],
-			interval: setInterval(() => {
-				this.startHealthCheck();
-			}, MultiplexWebSocket.CONNECTION_HEALTH_CHECK_INTERVAL_MS),
 		};
+
+		if (healthCheckConfig.enabled) {
+			this.healthCheck.interval = setInterval(() => {
+				this.startHealthCheck();
+			}, healthCheckConfig.intervalMs);
+		}
+
 		this.webSocket = new WebSocket(wsUrl);
 
-		MultiplexWebSocket.WEBSOCKETS_LOOKUP.set(wsUrl, this);
+		MultiplexWebSocket.URL_TO_WEBSOCKETS_LOOKUP.set(wsUrl, this);
 	}
 
 	/**
 	 * Creates a new virtual websocket subscription. If an existing websocket for the given URL exists, the subscription will be added to the existing websocket.
 	 * Returns a function that can be called to unsubscribe from the subscription.
 	 */
-	public static createWebSocketSubscription(
-		props: WebSocketSubscriptionProps
+	public static createWebSocketSubscription<T = Record<string, unknown>>(
+		props: WebSocketSubscriptionProps<T>
 	): { unsubscribe: () => void } {
 		const { wsUrl } = props;
 
 		const doesWebSocketForWsUrlExist =
-			MultiplexWebSocket.WEBSOCKETS_LOOKUP.has(wsUrl);
+			MultiplexWebSocket.URL_TO_WEBSOCKETS_LOOKUP.has(wsUrl);
 
 		if (doesWebSocketForWsUrlExist) {
-			return this.handleNewSubForExistingWsUrl(props);
+			return this.handleNewSubForExistingWsUrl<T>(props);
 		} else {
-			return this.handleNewSubForNewWsUrl(props);
+			return this.handleNewSubForNewWsUrl<T>(props);
 		}
 	}
 
-	private static handleNewSubForNewWsUrl(
-		newSubscriptionProps: WebSocketSubscriptionProps
+	private static handleNewSubForNewWsUrl<T = Record<string, unknown>>(
+		newSubscriptionProps: WebSocketSubscriptionProps<T>
 	) {
-		const newMWS = new MultiplexWebSocket(newSubscriptionProps.wsUrl);
+		const newMWS = new MultiplexWebSocket<T>(
+			newSubscriptionProps.wsUrl,
+			newSubscriptionProps.healthCheck
+		);
 
 		newMWS.subscribe(newSubscriptionProps);
 
@@ -164,18 +184,20 @@ export class MultiplexWebSocket implements IMultiplexWebSocket {
 		};
 	}
 
-	private static handleNewSubForExistingWsUrl(
-		newSubscriptionProps: WebSocketSubscriptionProps
+	private static handleNewSubForExistingWsUrl<T = Record<string, unknown>>(
+		newSubscriptionProps: WebSocketSubscriptionProps<T>
 	) {
 		const { wsUrl, subscriptionId } = newSubscriptionProps;
 
-		if (!MultiplexWebSocket.WEBSOCKETS_LOOKUP.has(wsUrl)) {
+		if (!MultiplexWebSocket.URL_TO_WEBSOCKETS_LOOKUP.has(wsUrl)) {
 			throw new Error(
 				`Attempting to subscribe to ${subscriptionId} on websocket ${wsUrl}, but websocket does not exist yet`
 			);
 		}
 
-		const existingMWS = MultiplexWebSocket.WEBSOCKETS_LOOKUP.get(wsUrl);
+		const existingMWS = MultiplexWebSocket.URL_TO_WEBSOCKETS_LOOKUP.get(
+			wsUrl
+		) as MultiplexWebSocket<T>;
 
 		// Track new subscription for existing websocket
 		existingMWS.subscribe(newSubscriptionProps);
@@ -205,15 +227,33 @@ export class MultiplexWebSocket implements IMultiplexWebSocket {
 		};
 
 		webSocket.onmessage = (messageEvent: MessageEvent) => {
-			this.healthCheck.lastMessageTimestamp = Date.now();
+			if (this.healthCheck.enabled) {
+				this.healthCheck.lastMessageTimestamp = Date.now();
+			}
 			const message = JSON.parse(
 				messageEvent.data as string
-			) as WebSocketMessage;
+			) as WebSocketMessage<T>;
 			this.subject.next(message);
 		};
 
 		webSocket.onclose = () => {
 			this.customConnectionState = WebSocketConnectionState.DISCONNECTED;
+		};
+
+		webSocket.onerror = (error) => {
+			console.error('MultiplexWebSocket Error', { error, webSocket });
+
+			// Forward error to all subscriptions for this websocket URL
+			const subscriptionIds =
+				MultiplexWebSocket.URL_TO_SUBSCRIPTION_IDS_LOOKUP.get(this.wsUrl);
+			if (subscriptionIds) {
+				for (const subscriptionId of subscriptionIds) {
+					const subscription = this.subscriptions.get(subscriptionId);
+					if (subscription) {
+						subscription.onError(error);
+					}
+				}
+			}
 		};
 
 		this.#webSocket = webSocket;
@@ -245,7 +285,7 @@ export class MultiplexWebSocket implements IMultiplexWebSocket {
 				})
 			)
 			.subscribe({
-				next: (message: WebSocketMessage) => {
+				next: (message: WebSocketMessage<T>) => {
 					try {
 						if (!messageFilter(message)) return;
 
@@ -274,7 +314,7 @@ export class MultiplexWebSocket implements IMultiplexWebSocket {
 		subscriptionState.subjectSubscription = subjectSubscription;
 	}
 
-	private subscribe(props: WebSocketSubscriptionProps) {
+	private subscribe(props: WebSocketSubscriptionProps<T>) {
 		const {
 			subscriptionId,
 			subscribeMessage,
@@ -303,6 +343,17 @@ export class MultiplexWebSocket implements IMultiplexWebSocket {
 			hasSentSubscribeMessage: false,
 		});
 
+		// Update URL to subscription IDs lookup
+		if (!MultiplexWebSocket.URL_TO_SUBSCRIPTION_IDS_LOOKUP.has(this.wsUrl)) {
+			MultiplexWebSocket.URL_TO_SUBSCRIPTION_IDS_LOOKUP.set(
+				this.wsUrl,
+				new Set()
+			);
+		}
+		MultiplexWebSocket.URL_TO_SUBSCRIPTION_IDS_LOOKUP.get(this.wsUrl)!.add(
+			subscriptionId
+		);
+
 		if (this.customConnectionState === WebSocketConnectionState.CONNECTED) {
 			this.subscribeToWebSocket(subscriptionId);
 		} else if (
@@ -321,6 +372,16 @@ export class MultiplexWebSocket implements IMultiplexWebSocket {
 			subscriptionState.subjectSubscription?.unsubscribe();
 			this.webSocket.send(subscriptionState.unsubscribeMessage);
 			this.subscriptions.delete(subscriptionId);
+
+			// Update URL to subscription IDs lookup
+			const subscriptionIds =
+				MultiplexWebSocket.URL_TO_SUBSCRIPTION_IDS_LOOKUP.get(this.wsUrl);
+			if (subscriptionIds) {
+				subscriptionIds.delete(subscriptionId);
+				if (subscriptionIds.size === 0) {
+					MultiplexWebSocket.URL_TO_SUBSCRIPTION_IDS_LOOKUP.delete(this.wsUrl);
+				}
+			}
 		}
 	}
 
@@ -331,8 +392,11 @@ export class MultiplexWebSocket implements IMultiplexWebSocket {
 
 		this.subscriptions.clear();
 		this.webSocket.close();
-		clearInterval(this.healthCheck.interval);
-		MultiplexWebSocket.WEBSOCKETS_LOOKUP.delete(this.wsUrl);
+		if (this.healthCheck.interval) {
+			clearInterval(this.healthCheck.interval);
+		}
+		MultiplexWebSocket.URL_TO_WEBSOCKETS_LOOKUP.delete(this.wsUrl);
+		MultiplexWebSocket.URL_TO_SUBSCRIPTION_IDS_LOOKUP.delete(this.wsUrl);
 	}
 
 	private refreshWebSocket() {
@@ -355,8 +419,13 @@ export class MultiplexWebSocket implements IMultiplexWebSocket {
 	 * The health check is used to determine if the websocket is still connected.
 	 * If there isn't any subscriptions, the websocket will be closed.
 	 * If the websocket is unhealthy, it will be refreshed until it reaches the maximum number of reconnect attempts, where it will then be closed.
+	 * This method only runs if health check is enabled.
 	 */
 	private startHealthCheck() {
+		if (!this.healthCheck.enabled) {
+			return;
+		}
+
 		if (
 			[
 				WebSocketConnectionState.DISCONNECTING,
@@ -372,21 +441,24 @@ export class MultiplexWebSocket implements IMultiplexWebSocket {
 			return;
 		}
 
+		// Type guard to ensure we have enabled config with all required properties
+		if (!this.healthCheck.config.enabled) {
+			return;
+		}
+
+		const config = this.healthCheck.config;
 		const isUnhealthy =
 			Date.now() - this.healthCheck.lastMessageTimestamp >
-			MultiplexWebSocket.CONNECTION_HEALTH_CHECK_UNHEALTHY_THRESHOLD_MS;
+			config.unhealthyThresholdMs;
 
 		if (isUnhealthy) {
 			const numOfReconnectsInWindow =
 				this.healthCheck.reconnectTimeStamps.filter(
-					(timestamp) =>
-						timestamp >
-						Date.now() -
-							MultiplexWebSocket.RECONNECTION_ATTEMPTS_SLIDING_WINDOW_MS
+					(timestamp) => timestamp > Date.now() - config.reconnectionWindowMs
 				).length;
 
 			const exceedsMaxReconnectAttempts =
-				numOfReconnectsInWindow >= MultiplexWebSocket.MAX_RECONNECT_ATTEMPTS;
+				numOfReconnectsInWindow >= config.maxReconnectAttempts;
 
 			if (exceedsMaxReconnectAttempts) {
 				for (const [
