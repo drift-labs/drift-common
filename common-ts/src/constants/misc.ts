@@ -1,4 +1,4 @@
-import { BASE_PRECISION_EXP, BigNum, LAMPORTS_EXP } from '@drift-labs/sdk';
+import { BigNum, LAMPORTS_EXP } from '@drift-labs/sdk';
 
 export const USDC_SPOT_MARKET_INDEX = 0;
 
@@ -11,10 +11,7 @@ export const SACRED_POOL_ID = 4;
 /**
  * Equal to 0.01
  */
-export const NEW_ACCOUNT_DONATION = BigNum.fromPrint(
-	'0.0001',
-	BASE_PRECISION_EXP
-);
+export const NEW_ACCOUNT_DONATION = BigNum.fromPrint('0.0001', LAMPORTS_EXP);
 
 /**
  * Equal to 0.035
@@ -32,12 +29,12 @@ export const NEW_ACCOUNT_BASE_COST =
  */
 export const IF_STAKE_ACCOUNT_BASE_RENT = BigNum.fromPrint(
 	'0.002',
-	BASE_PRECISION_EXP
+	LAMPORTS_EXP
 );
 
 /**
- * Equal to 0.015
+ * Equal to 0.01 SOL
  */
-export const MIN_LEFTOVER_SOL = BigNum.fromPrint('0.015', BASE_PRECISION_EXP);
+export const MIN_LEFTOVER_SOL = BigNum.fromPrint('0.01', LAMPORTS_EXP);
 
 export const ONE_DAY_MS = 1000 * 60 * 60 * 24;

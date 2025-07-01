@@ -9,6 +9,7 @@ import {
 	LIMIT_ORDER_TYPE_CONFIG,
 	MARKET_ORDER_TYPE_CONFIG,
 	ORACLE_LIMIT_ORDER_TYPE_CONFIG,
+	ORACLE_MARKET_ORDER_TYPE_CONFIG,
 	STOP_LIMIT_ORDER_TYPE_CONFIG,
 	STOP_MARKET_ORDER_TYPE_CONFIG,
 	TAKE_PROFIT_LIMIT_ORDER_TYPE_CONFIG,
@@ -191,17 +192,19 @@ const getUIOrderTypeFromSdkOrderType = (
 	} else if (matchEnum(orderType, OrderType.TRIGGER_LIMIT)) {
 		if (isLong) {
 			if (triggerAbove) {
-				return TAKE_PROFIT_LIMIT_ORDER_TYPE_CONFIG;
-			} else if (triggerBelow) {
 				return STOP_LIMIT_ORDER_TYPE_CONFIG;
+			} else if (triggerBelow) {
+				return TAKE_PROFIT_LIMIT_ORDER_TYPE_CONFIG;
 			}
 		} else {
 			if (triggerAbove) {
-				return STOP_LIMIT_ORDER_TYPE_CONFIG;
-			} else if (triggerBelow) {
 				return TAKE_PROFIT_LIMIT_ORDER_TYPE_CONFIG;
+			} else if (triggerBelow) {
+				return STOP_LIMIT_ORDER_TYPE_CONFIG;
 			}
 		}
+	} else if (matchEnum(orderType, OrderType.ORACLE)) {
+		return ORACLE_MARKET_ORDER_TYPE_CONFIG;
 	}
 	throw new Error('Invalid order type');
 };

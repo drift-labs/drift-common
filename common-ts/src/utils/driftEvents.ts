@@ -182,7 +182,7 @@ export const getDriftEventKey = (event: UniqableDriftEvent) => {
 			}
 		}
 		default: {
-			const _unhandledEvent: never = _eventType;
+			const _unhandledEvent: string = _eventType;
 			throw new Error(`Unhandled event type: ${_unhandledEvent}`);
 		}
 	}

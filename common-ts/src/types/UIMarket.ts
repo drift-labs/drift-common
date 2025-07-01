@@ -18,12 +18,7 @@ const useAsyncMarketConfigs =
 export class UIMarket {
 	static perpMarkets = PerpMarkets['mainnet-beta'];
 	static spotMarkets = SpotMarkets['mainnet-beta'];
-	static perpMarketIds = PerpMarkets['mainnet-beta'].map((m) =>
-		MarketId.createPerpMarket(m.marketIndex)
-	);
-	static spotMarketIds = SpotMarkets['mainnet-beta'].map((m) =>
-		MarketId.createSpotMarket(m.marketIndex)
-	);
+	private static cache = new Map<string, UIMarket>();
 
 	readonly market: SpotMarketConfig | PerpMarketConfig;
 	readonly marketId: MarketId;
@@ -38,41 +33,47 @@ export class UIMarket {
 			: Config.spotMarketsLookup;
 		const markets = marketId.isPerp ? perpMarkets : spotMarkets;
 
-		const market = markets[marketIndex];
+		//@ts-ignore
+		const market = markets.find((m) => m.marketIndex === marketIndex);
 
+		// TODO: should we purposely throw an error here? Or construct a default market?
 		invariant(
 			market,
 			`Market not found for type: ${marketId.marketTypeStr}, market index: ${marketIndex}`
 		);
 
 		this.marketId = marketId;
-		this.market = markets[marketIndex];
+		this.market = market;
 	}
 
 	static setPerpMarkets(perpMarkets: PerpMarketConfig[]) {
 		this.perpMarkets = perpMarkets;
-		this.perpMarketIds = perpMarkets.map((m) =>
-			MarketId.createPerpMarket(m.marketIndex)
-		);
 	}
 
 	static setSpotMarkets(spotMarkets: SpotMarketConfig[]) {
 		this.spotMarkets = spotMarkets;
-		this.spotMarketIds = spotMarkets.map((m) =>
-			MarketId.createSpotMarket(m.marketIndex)
-		);
+	}
+
+	private static getOrCreate(marketIndex: number, marketType: MarketType) {
+		const key = MarketId.key(marketIndex, marketType);
+		if (UIMarket.cache.has(key)) {
+			return UIMarket.cache.get(key)!;
+		}
+		const market = new UIMarket(marketIndex, marketType);
+		UIMarket.cache.set(key, market);
+		return market;
 	}
 
 	static createSpotMarket(marketIndex: number) {
-		return new UIMarket(marketIndex, MarketType.SPOT);
+		return UIMarket.getOrCreate(marketIndex, MarketType.SPOT);
 	}
 
 	static createPerpMarket(marketIndex: number) {
-		return new UIMarket(marketIndex, MarketType.PERP);
+		return UIMarket.getOrCreate(marketIndex, MarketType.PERP);
 	}
 
 	static fromMarketId(marketId: MarketId) {
-		return new UIMarket(marketId.marketIndex, marketId.marketType);
+		return UIMarket.getOrCreate(marketId.marketIndex, marketId.marketType);
 	}
 
 	static checkIsPredictionMarket(marketConfig: PerpMarketConfig) {
