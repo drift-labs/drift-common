@@ -10,7 +10,7 @@ import invariant from 'tiny-invariant';
 
 /*
 
-# Internal explanation of the MarketDataFeed class
+# Internal/Functional explanation of the MarketDataFeed class
 
 This class was implmented as a singleton so that we can avoid making duplicate websockets where they are not necessary.
 
@@ -39,6 +39,32 @@ There is a minor inefficiency remaining in this implementation, where to be opti
 - <close> SOL-PERP-Resolution-1 (Subscriber A) => will keep Subscription A open because Subscriber C is still listening
 - * We could more optimally close Subscription A and make Subscriber C use Subscription B
 - * We're not doing this for the same of simplicity. In the future we could add this optimisation if it becomes necessary.
+
+---
+
+## Explanation of each of the classes in this file and their purpose:
+
+### Core Data Classes:
+- **SubscriberSubscription (abstract)**: Base class for subscription objects returned to external consumers. Contains an ID and an observable for receiving data.
+- **CandleSubscriberSubscription**: Concrete implementation for candle data subscriptions, emits JsonCandle objects.
+- **TradeSubscriberSubscription**: Concrete implementation for trade data subscriptions, emits JsonTrade[] arrays.
+
+### Internal Subscriber Management:
+- **_Subscriber (abstract)**: Base class for internal subscriber management. Tracks subscriber config, generates unique IDs, and manages the connection to ApiSubscription.
+- **CandleSubscriber**: Internal subscriber for candle data, creates and manages a Subject<JsonCandle> for data distribution.
+- **TradeSubscriber**: Internal subscriber for trade data, creates and manages a Subject<JsonTrade[]> for data distribution.
+
+### WebSocket Connection Management:
+- **ApiSubscription**: Manages a single websocket connection to the Drift Data API. Can serve multiple subscribers (both candle and trade) if they're compatible. Handles the actual API communication and data distribution to attached subscribers.
+
+### Subscription Discovery and Sharing:
+- **SubscriptionLookup (abstract)**: Base class for lookup tables that help find compatible existing subscriptions for new subscribers.
+- **TradeSubscriptionLookup**: Manages lookup table for trade subscriptions. Multiple ApiSubscriptions can be compatible for trade subscribers (any subscription for the same market works).
+- **CandleSubscriptionLookup**: Manages lookup table for candle subscriptions. Only one ApiSubscription per market+resolution combination.
+
+### Core Orchestration:
+- **SubscriptionManager**: The main orchestrator that handles all subscription logic, manages the lifecycle of subscribers and ApiSubscriptions, handles subscription sharing and transfer optimization.
+- **MarketDataFeed**: Public singleton interface that external code uses to subscribe/unsubscribe. Delegates all work to the internal SubscriptionManager.
 */
 
 type SubscriptionType = 'candles' | 'trades';
@@ -184,21 +210,27 @@ class ApiSubscription {
 		)}(${ApiSubscription.idIncrementer++})` as ApiSubscriptionId;
 	}
 
+	/**
+	 * Any trade subscription with a matching key can use this ApiSubscription.
+	 */
 	get tradeSubscriptionsLookupKey() {
 		return getCompatibleTradeSubscriptionLookupKey(this.config);
 	}
 
+	/**
+	 * Any candle subscription with a matching key can use this ApiSubscription.
+	 */
 	get candleSubscriptionsLookupKey() {
 		return getCompatibleCandleSubscriptionLookupKey(this.config);
 	}
 
 	constructor(
-		marketSymbol: MarketSymbol,
 		resolution: CandleResolution,
-		env: UIEnv,
 		initialSubscriber: Subscriber,
 		onNoMoreSubscribers: (subscription: ApiSubscriptionId) => void
 	) {
+		const marketSymbol = initialSubscriber.config.marketSymbol;
+		const env = initialSubscriber.config.env;
 		this.config = { marketSymbol, resolution, env };
 		this.id = this.generateSubscriptionId();
 		this.onNoMoreSubscribers = () => onNoMoreSubscribers(this.id);
@@ -314,7 +346,9 @@ class TradeSubscriptionLookup extends SubscriptionLookup {
 		}
 	}
 
-	get(subscriptionLookupKey: TradeSubscriptionLookupKey): ApiSubscription {
+	get(
+		subscriptionLookupKey: TradeSubscriptionLookupKey
+	): ApiSubscription | null {
 		return this.subscriptions.get(subscriptionLookupKey)?.[0] ?? null;
 	}
 
@@ -364,7 +398,9 @@ class CandleSubscriptionLookup extends SubscriptionLookup {
 		);
 	}
 
-	get(subscriptionLookupKey: CandleSubscriptionLookupKey): ApiSubscription {
+	get(
+		subscriptionLookupKey: CandleSubscriptionLookupKey
+	): ApiSubscription | null {
 		return this.subscriptions.get(subscriptionLookupKey) ?? null;
 	}
 
@@ -457,6 +493,7 @@ class SubscriptionManager {
 	 * - If a TRADE SUBSCRIBER caused a new subscription to be created
 	 * - and then a following CANDLE SUBSCRIBER is created for the same market
 	 * => then it is wasteful to keep the previous trade subscription open, because the new candle subscription can collect the data for both subscribers
+	 *
 	 * @param newSubscription
 	 */
 	private checkForTradeSubscriptionTransferForNewSubscription(
@@ -465,25 +502,23 @@ class SubscriptionManager {
 		const tradeSubscriptionLookupKey =
 			newSubscription.tradeSubscriptionsLookupKey;
 
-		const existingTradeSubscription =
-			this.compatibleTradeSubscriptionLookup.get(tradeSubscriptionLookupKey);
-
 		invariant(
-			!!existingTradeSubscription,
+			!!this.compatibleTradeSubscriptionLookup.get(tradeSubscriptionLookupKey),
 			`Expect a matching trade subscription when checking for transfers for a new subscription`
 		);
 
-		if (existingTradeSubscription.id === newSubscription.id) return; // Skip early if the new subscription is the trade subscription in question
+		const allCompatibleTradeSubscriptions =
+			this.compatibleTradeSubscriptionLookup.getAll(tradeSubscriptionLookupKey);
 
-		if (existingTradeSubscription.candleSubscribers.size > 0) {
-			// If the existing subscription has candle subscribers, there is no point transferring the trade subscribers
-			return;
+		for (const existingTradeSubscription of allCompatibleTradeSubscriptions) {
+			if (existingTradeSubscription.id === newSubscription.id) continue; // If the subscription is the current subscription, then there are no subscribers to transfer.
+			if (existingTradeSubscription.candleSubscribers.size > 0) continue; // If the existing subscription has candle subscribers, skip doing any transfers because it's not any extra efficient to do so.
+
+			this.transferTradeSubscribersToNewSubscription(
+				existingTradeSubscription,
+				newSubscription
+			);
 		}
-
-		this.transferTradeSubscribersToNewSubscription(
-			existingTradeSubscription,
-			newSubscription
-		);
 	}
 
 	/**
@@ -549,9 +584,7 @@ class SubscriptionManager {
 		} else {
 			console.log(`marketDataFeed::creating_new_candle_subscription`);
 			const newSubscription = new ApiSubscription(
-				subscriber.config.marketSymbol,
 				subscriber.config.resolution,
-				subscriber.config.env,
 				subscriber,
 				this.cleanupApiSubscription.bind(this)
 			);
@@ -586,9 +619,7 @@ class SubscriptionManager {
 		} else {
 			console.log(`marketDataFeed::creating_new_trade_subscription`);
 			const newSubscription = new ApiSubscription(
-				subscriber.config.marketSymbol,
 				DEFAULT_CANDLE_RESOLUTION_FOR_TRADE_SUBSCRIPTIONS,
-				subscriber.config.env,
 				subscriber,
 				this.cleanupApiSubscription.bind(this)
 			);
