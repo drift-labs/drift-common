@@ -163,6 +163,7 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 		if (doesWebSocketForWsUrlExist) {
 			return this.handleNewSubForExistingWsUrl<T>(props);
 		} else {
+			// Create new websocket for new URL or reopen previously closed websocket
 			return this.handleNewSubForNewWsUrl<T>(props);
 		}
 	}
@@ -378,8 +379,6 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 				this.webSocket.readyState === WebSocket.OPEN
 			) {
 				this.webSocket.send(subscriptionState.unsubscribeMessage);
-			} else {
-				console.debug(`candlesv2 :: would have sent bad unsubcribe message`);
 			}
 
 			this.subscriptions.delete(subscriptionId);
@@ -391,6 +390,8 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 				subscriptionIds.delete(subscriptionId);
 				if (subscriptionIds.size === 0) {
 					MultiplexWebSocket.URL_TO_SUBSCRIPTION_IDS_LOOKUP.delete(this.wsUrl);
+					// Close websocket when last subscriber unsubscribes
+					this.close();
 				}
 			}
 		}
