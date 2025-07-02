@@ -198,12 +198,17 @@ export class DriftTvFeed {
 	private candleType: CandleType;
 	private candleClient: CandleClient;
 	private driftClient: DriftClient;
+	private onResetCache: () => void;
 
 	constructor(env: UIEnv, candleType: CandleType, driftClient: DriftClient) {
 		this.env = env;
 		this.candleType = candleType;
 		this.candleClient = new CandleClient();
 		this.driftClient = driftClient;
+	}
+
+	public resetCache() {
+		this.onResetCache?.();
 	}
 
 	private searchMarkets = (symbol: string): TVMarketInfo[] => {
@@ -473,8 +478,10 @@ export class DriftTvFeed {
 		resolution,
 		onTick,
 		subscriberGuid: string,
-		_resetHistory
+		onResetCache
 	) {
+		this.onResetCache = onResetCache;
+
 		const targetResolution =
 			tvResolutionStringToStandardResolutionString(resolution);
 		const targetMarket = findMarketBySymbol(symbolInfo.ticker, this.env);

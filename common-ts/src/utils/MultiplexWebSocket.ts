@@ -370,7 +370,18 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 		const subscriptionState = this.subscriptions.get(subscriptionId);
 		if (subscriptionState) {
 			subscriptionState.subjectSubscription?.unsubscribe();
-			this.webSocket.send(subscriptionState.unsubscribeMessage);
+
+			// Only send unsubscribe message if websocket is connected and ready to send.
+			//// Otherwise, when the websocket DOES connect we don't have to worry about this subscription because we are deleting it from the subscriptions map. (Which only trigger their connections once the websocket becomes connected)
+			if (
+				this.customConnectionState === WebSocketConnectionState.CONNECTED &&
+				this.webSocket.readyState === WebSocket.OPEN
+			) {
+				this.webSocket.send(subscriptionState.unsubscribeMessage);
+			} else {
+				console.debug(`candlesv2 :: would have sent bad unsubcribe message`);
+			}
+
 			this.subscriptions.delete(subscriptionId);
 
 			// Update URL to subscription IDs lookup
