@@ -9,7 +9,7 @@ export const EXPONENT_POOL_ID = 3;
 export const SACRED_POOL_ID = 4;
 
 /**
- * Equal to 0.01
+ * Equal to 0.0001
  */
 export const NEW_ACCOUNT_DONATION = BigNum.fromPrint('0.0001', LAMPORTS_EXP);
 
@@ -36,8 +36,8 @@ export const IF_STAKE_ACCOUNT_BASE_RENT = BigNum.fromPrint(
 );
 
 /**
- * Equal to 0.01 SOL
+ * Equal to 0.015 SOL
  */
-export const MIN_LEFTOVER_SOL = BigNum.fromPrint('0.01', LAMPORTS_EXP);
+export const MIN_LEFTOVER_SOL = BigNum.fromPrint('0.015', LAMPORTS_EXP);
 
 export const ONE_DAY_MS = 1000 * 60 * 60 * 24;
