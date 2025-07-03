@@ -1,16 +1,14 @@
-import { CandleType, JsonCandle, MarketId } from '../types';
 import {
 	CandleResolution,
 	DriftClient,
 	PerpMarketConfig,
-	PerpMarkets,
 	PRICE_PRECISION_EXP,
 	SpotMarketConfig,
-	SpotMarkets,
 } from '@drift-labs/sdk';
-import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
-import { CANDLE_UTILS } from '../utils/candleUtils';
+import { CandleType, JsonCandle, MarketId } from '../types';
 import { UIEnv } from '../types/UIEnv';
+import { CANDLE_UTILS } from '../utils/candleUtils';
+import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
 import { CandleClient } from './candleClient';
 
 const DRIFT_V2_START_TS = 1668470400; // 15th November 2022 ... 2022-11-15T00:00:00.000Z
@@ -97,7 +95,8 @@ type TVBar = {
 
 const findMarketBySymbol = (
 	symbol: string,
-	uiEnv: UIEnv
+	perpMarketConfigs: PerpMarketConfig[],
+	spotMarketConfigs: SpotMarketConfig[]
 ):
 	| {
 			type: 'perp';
@@ -107,49 +106,37 @@ const findMarketBySymbol = (
 			type: 'spot';
 			config: SpotMarketConfig;
 	  } => {
-	const sdkEnv = uiEnv.sdkEnv;
-
-	const perpMarketConfigs =
-		sdkEnv === 'mainnet-beta'
-			? PerpMarkets['mainnet-beta']
-			: PerpMarkets['devnet'];
-
-	const spotMarketConfigs =
-		sdkEnv === 'mainnet-beta'
-			? SpotMarkets['mainnet-beta']
-			: SpotMarkets['devnet'];
-
 	if (!symbol) {
-		return {
-			type: 'perp',
-			config: perpMarketConfigs[0],
-		};
+		throw new Error(`TVFeed::No symbol provided`);
 	}
 
-	const isPerp = symbol.toLowerCase().includes('perp');
+	const sanitisedSymbol = symbol.toLowerCase().replace('/usdc', ''); // Lowercase and replace /usdc (for spot markets) to santise symbol for lookup
+
+	const isPerp = sanitisedSymbol.toLowerCase().includes('perp');
 
 	const matchingMarketConfig = isPerp
 		? perpMarketConfigs.find((mkt) =>
-				mkt.symbol.toLowerCase().includes(symbol.toLowerCase())
+				mkt.symbol.toLowerCase().includes(sanitisedSymbol.toLowerCase())
 		  )
 		: spotMarketConfigs.find((mkt) =>
-				mkt.symbol.toLowerCase().includes(symbol.toLowerCase())
+				mkt.symbol.toLowerCase().includes(sanitisedSymbol.toLowerCase())
 		  );
 
-	return matchingMarketConfig
-		? isPerp
-			? {
-					type: 'perp',
-					config: matchingMarketConfig as PerpMarketConfig,
-			  }
-			: {
-					type: 'spot',
-					config: matchingMarketConfig as SpotMarketConfig,
-			  }
-		: {
-				type: 'perp',
-				config: perpMarketConfigs[0],
-		  };
+	if (!matchingMarketConfig) {
+		throw new Error(`TVFeed::No market found for symbol ${symbol}`);
+	}
+
+	if (isPerp) {
+		return {
+			type: 'perp',
+			config: matchingMarketConfig as PerpMarketConfig,
+		};
+	}
+
+	return {
+		type: 'spot',
+		config: matchingMarketConfig as SpotMarketConfig,
+	};
 };
 
 const candleFetchingPollKey = Symbol('candleFetchingPollKey');
@@ -199,12 +186,22 @@ export class DriftTvFeed {
 	private candleClient: CandleClient;
 	private driftClient: DriftClient;
 	private onResetCache: () => void;
+	private perpMarketConfigs: PerpMarketConfig[];
+	private spotMarketConfigs: SpotMarketConfig[];
 
-	constructor(env: UIEnv, candleType: CandleType, driftClient: DriftClient) {
+	constructor(
+		env: UIEnv,
+		candleType: CandleType,
+		driftClient: DriftClient,
+		perpMarketConfigs: PerpMarketConfig[],
+		spotMarketConfigs: SpotMarketConfig[]
+	) {
 		this.env = env;
 		this.candleType = candleType;
 		this.candleClient = new CandleClient();
 		this.driftClient = driftClient;
+		this.perpMarketConfigs = perpMarketConfigs;
+		this.spotMarketConfigs = spotMarketConfigs;
 	}
 
 	public resetCache() {
@@ -217,27 +214,20 @@ export class DriftTvFeed {
 			'symbol' | 'ticker' | 'full_name' | 'description'
 		>[] = [];
 
-		const CurrentPerpMarkets =
-			this.env.sdkEnv === 'mainnet-beta'
-				? PerpMarkets['mainnet-beta']
-				: PerpMarkets['devnet'];
-
-		const CurrentSpotMarkets =
-			this.env.sdkEnv === 'mainnet-beta'
-				? SpotMarkets['mainnet-beta']
-				: SpotMarkets['devnet'];
+		const currentPerpMarkets = this.perpMarketConfigs;
+		const currentSpotMarkets = this.spotMarketConfigs;
 
 		if (!symbol) {
-			res.push(PerpMarketConfigToTVMarketInfo(CurrentPerpMarkets[0]));
+			res.push(PerpMarketConfigToTVMarketInfo(currentPerpMarkets[0]));
 		} else {
-			for (const market of CurrentPerpMarkets) {
+			for (const market of currentPerpMarkets) {
 				const lowerCaseMarket = market.symbol.toLowerCase();
 				if (lowerCaseMarket.includes(symbol.toLowerCase())) {
 					res.push(PerpMarketConfigToTVMarketInfo(market));
 				}
 			}
 
-			for (const market of CurrentSpotMarkets) {
+			for (const market of currentSpotMarkets) {
 				const lowerCaseMarket = market.symbol.toLowerCase();
 				if (lowerCaseMarket.includes(symbol.toLowerCase())) {
 					res.push(SpotMarketConfigToTVMarketInfo(market));
@@ -275,7 +265,11 @@ export class DriftTvFeed {
 	}
 
 	resolveSymbol(symbolName: string, onResolve, onError): void {
-		const targetMarket = findMarketBySymbol(symbolName, this.env);
+		const targetMarket = findMarketBySymbol(
+			symbolName,
+			this.perpMarketConfigs,
+			this.spotMarketConfigs
+		);
 
 		if (targetMarket) {
 			const tvMarketName = targetMarket.config.symbol;
@@ -406,7 +400,11 @@ export class DriftTvFeed {
 
 		const targetResolution =
 			tvResolutionStringToStandardResolutionString(resolution);
-		const targetMarket = findMarketBySymbol(symbolToUse, this.env);
+		const targetMarket = findMarketBySymbol(
+			symbolToUse,
+			this.perpMarketConfigs,
+			this.spotMarketConfigs
+		);
 		const targetMarketId =
 			targetMarket.type === 'perp'
 				? MarketId.createPerpMarket(targetMarket.config.marketIndex)
@@ -484,7 +482,11 @@ export class DriftTvFeed {
 
 		const targetResolution =
 			tvResolutionStringToStandardResolutionString(resolution);
-		const targetMarket = findMarketBySymbol(symbolInfo.ticker, this.env);
+		const targetMarket = findMarketBySymbol(
+			symbolInfo.ticker,
+			this.perpMarketConfigs,
+			this.spotMarketConfigs
+		);
 		const targetMarketId =
 			targetMarket.type === 'perp'
 				? MarketId.createPerpMarket(targetMarket.config.marketIndex)
