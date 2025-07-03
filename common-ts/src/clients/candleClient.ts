@@ -5,13 +5,13 @@ import {
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
 } from '@drift-labs/sdk';
-import { MarketId } from '../types';
-import WS from 'isomorphic-ws';
+import { JsonCandle, MarketId, MarketSymbol } from '../types';
 import { CANDLE_UTILS } from '../utils/candleUtils';
 import { StrictEventEmitter } from '../utils/StrictEventEmitter';
 import { EnvironmentConstants } from '../EnvironmentConstants';
 import { UIEnv } from '../types/UIEnv';
 import { assert } from '../utils/assert';
+import { CandleSubscriberSubscription, MarketDataFeed } from './marketDataFeed';
 
 /**
  * # CANDLE CLIENT HIGH LEVEL EXPLANATION:
@@ -63,21 +63,6 @@ type CandleFetchUrlConfig = {
 	countToFetch: number;
 };
 
-// Type for the candles returned by the data API
-export type JsonCandle = {
-	ts: number;
-	fillOpen: number;
-	fillHigh: number;
-	fillClose: number;
-	fillLow: number;
-	oracleOpen: number;
-	oracleHigh: number;
-	oracleClose: number;
-	oracleLow: number;
-	quoteVolume: number;
-	baseVolume: number;
-};
-
 type CandleFetchResponseJson = {
 	success: boolean;
 	records: JsonCandle[];
@@ -94,14 +79,14 @@ const getMarketSymbolForMarketId = (marketId: MarketId, uiEnv: UIEnv) => {
 		const targetMarketConfig = marketConfigs.find(
 			(config) => config.marketIndex === marketId.marketIndex
 		);
-		return targetMarketConfig.symbol;
+		return targetMarketConfig.symbol as MarketSymbol;
 	} else {
 		const marketConfigs =
 			sdkEnv === 'mainnet-beta' ? MainnetSpotMarkets : DevnetSpotMarkets;
 		const targetMarketConfig = marketConfigs.find(
 			(config) => config.marketIndex === marketId.marketIndex
 		);
-		return targetMarketConfig.symbol;
+		return targetMarketConfig.symbol as MarketSymbol;
 	}
 };
 
@@ -138,34 +123,6 @@ const getCandleFetchUrl = ({
 	return fetchUrl;
 };
 
-const getCandleWsSubscriptionPath = (config: CandleSubscriptionConfig) => {
-	const baseDataApiUrl = getBaseDataApiUrl(config.env);
-	return `wss://${baseDataApiUrl}/ws`;
-};
-
-const getCandleWsSubscriptionMessage = (config: CandleSubscriptionConfig) => {
-	return JSON.stringify({
-		type: 'subscribe',
-		symbol: getMarketSymbolForMarketId(config.marketId, config.env),
-		resolution: `${config.resolution}`,
-	});
-};
-
-type WsSubscriptionMessageType =
-	| 'subscribe'
-	| 'init'
-	| 'subscription'
-	| 'update'
-	| 'create';
-
-type WsSubscriptionMessage<T extends WsSubscriptionMessageType> = {
-	type: T;
-};
-
-type WsCandleUpdateMessage = WsSubscriptionMessage<'update'> & {
-	candle: JsonCandle;
-};
-
 type CandleSubscriberEvents = {
 	'candle-update': JsonCandle;
 };
@@ -175,62 +132,6 @@ class CandleEventBus extends StrictEventEmitter<CandleSubscriberEvents> {
 	constructor() {
 		super();
 	}
-}
-
-// This class is responsible for subscribing to the candles websocket endpoint and forwarding events to the event bus
-class CandleSubscriber {
-	public readonly config: CandleSubscriptionConfig;
-	private readonly eventBus: CandleEventBus;
-	private ws: WS;
-
-	constructor(config: CandleSubscriptionConfig, eventBus: CandleEventBus) {
-		this.config = config;
-		this.eventBus = eventBus;
-	}
-
-	private handleWsMessage = (message: string) => {
-		const parsedMessage = JSON.parse(
-			message
-		) as WsSubscriptionMessage<WsSubscriptionMessageType>;
-
-		let candle: JsonCandle;
-		switch (parsedMessage.type) {
-			case 'update':
-				candle = (parsedMessage as WsCandleUpdateMessage).candle;
-				this.eventBus.emit('candle-update', candle);
-				break;
-			default:
-				break;
-		}
-	};
-
-	public subscribeToCandles = async () => {
-		this.ws = new WS(getCandleWsSubscriptionPath(this.config));
-
-		this.ws.onopen = (_event) => {
-			this.ws.send(getCandleWsSubscriptionMessage(this.config));
-		};
-
-		this.ws.onmessage = (incoming) => {
-			// Forward message to all observers
-			const message = incoming.data as string;
-			this.handleWsMessage(message);
-		};
-
-		this.ws.onclose = (_event) => {
-			console.debug(
-				`candlesv2:: CANDLE_CLIENT WS CLOSED for ${this.config.marketId.key}`
-			);
-		};
-	};
-
-	public killWs = () => {
-		if (this.ws) {
-			this.ws.send(JSON.stringify({ type: 'unsubscribe' }));
-			this.ws.close();
-			delete this.ws;
-		}
-	};
 }
 
 // This class is reponsible for fetching candles from the data API's GET endpoint
@@ -259,7 +160,6 @@ class CandleFetcher {
 	// Public method to clear the entire cache
 	public static clearWholeCache() {
 		CandleFetcher.recentCandlesCache.clear();
-		console.debug('candlesv2:: CANDLE_CLIENT CACHE CLEARED');
 	}
 
 	public static clearCacheForSubscription(
@@ -282,10 +182,6 @@ class CandleFetcher {
 		const parsedResponse = (await response.json()) as CandleFetchResponseJson;
 
 		if (!parsedResponse.success) {
-			console.debug(
-				`candlesv2:: CANDLE_CLIENT FAILED to fetch candles from data API: ${fetchUrl}`,
-				parsedResponse
-			);
 			throw new Error('Failed to fetch candles from data API');
 		}
 
@@ -323,10 +219,6 @@ class CandleFetcher {
 				this.config.fromTs >= cachedCandles.earliestTs &&
 				this.config.toTs <= cachedCandles.latestTs
 			) {
-				console.debug(
-					`candlesv2:: CANDLE_CLIENT USING CACHED CANDLES for ${this.config.marketId.key}-${this.config.resolution} (${this.config.fromTs}-${this.config.toTs})`
-				);
-
 				// Filter cached candles to the requested time range
 				const filteredCandles = cachedCandles.candles.filter(
 					(candle) =>
@@ -361,14 +253,6 @@ class CandleFetcher {
 	private fetchRecentCandles = async (
 		nowSeconds: number
 	): Promise<JsonCandle[]> => {
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT FETCHING RECENT CANDLES (fromTs=${new Date(
-				this.config.fromTs * 1000
-			).toISOString()}, toTs=${new Date(
-				this.config.toTs * 1000
-			).toISOString()}, cacheable=true)`
-		);
-
 		// Fetch recent candles without specifying startTs
 		const fetchUrl = getCandleFetchUrl({
 			env: this.config.env,
@@ -385,25 +269,11 @@ class CandleFetcher {
 			return [];
 		}
 
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT RECEIVED ${
-				fetchedCandles.length
-			} RECENT CANDLES between\n${new Date(
-				fetchedCandles[0].ts * 1000
-			).toISOString()} =>\n${new Date(
-				fetchedCandles[fetchedCandles.length - 1].ts * 1000
-			).toISOString()}`
-		);
-
 		// Store the full fetchedCandles in cache before filtering
 		this.updateCandleCache(fetchedCandles, nowSeconds);
 
 		// Filter to only include candles in the requested time range
 		const filteredCandles = this.filterCandlesByTimeRange(fetchedCandles);
-
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT RETURNING ${filteredCandles.length} FILTERED RECENT CANDLES`
-		);
 
 		return filteredCandles;
 	};
@@ -444,10 +314,6 @@ class CandleFetcher {
 				latestTs,
 				fetchTime: nowSeconds,
 			});
-
-			console.debug(
-				`candlesv2:: CANDLE_CLIENT CACHING ${sortedCandles.length} FULL CANDLES for ${this.config.marketId.key}-${this.config.resolution}`
-			);
 		}
 	};
 
@@ -462,19 +328,13 @@ class CandleFetcher {
 
 		let currentStartTs = this.config.toTs; // The data API takes "startTs" as the "first timestamp you want going backwards in time" e.g. all candles will be returned with descending time backwards from the startTs
 		let hitEndTsCutoff = false;
-		let loopCount = 0;
 
 		const candles: JsonCandle[] = [];
-
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT TOTAL HISTORICAL CANDLES TO FETCH: ${candlesRemainingToFetch}`
-		);
 
 		while (candlesRemainingToFetch > 0) {
 			const result = await this.fetchHistoricalCandlesBatch(
 				candlesRemainingToFetch,
-				currentStartTs,
-				loopCount
+				currentStartTs
 			);
 
 			if (result.fetchedCandles.length === 0) {
@@ -490,13 +350,8 @@ class CandleFetcher {
 				currentStartTs = result.nextStartTs;
 			} else if (candlesRemainingToFetch > 0) {
 				// This means we have fetched all the candles available for this time range and we can stop fetching
-				console.debug(
-					`candlesv2:: Asked to fetch more candles but no more remaining`
-				);
 				candlesRemainingToFetch = 0;
 			}
-
-			loopCount++;
 		}
 
 		if (hitEndTsCutoff) {
@@ -517,8 +372,7 @@ class CandleFetcher {
 	 */
 	private fetchHistoricalCandlesBatch = async (
 		candlesRemainingToFetch: number,
-		currentStartTs: number,
-		loopCount: number
+		currentStartTs: number
 	): Promise<{
 		fetchedCandles: JsonCandle[];
 		candlesToAdd: JsonCandle[];
@@ -539,26 +393,10 @@ class CandleFetcher {
 			countToFetch: candlesToFetch,
 		});
 
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT LOOP ${loopCount} ASKING for ${candlesToFetch} before \n${new Date(
-				currentStartTs * 1000
-			).toISOString()}`
-		);
-
 		const fetchedCandles = await this.fetchCandlesFromApi(fetchUrl);
 
 		// Reverse candles into ascending order
 		fetchedCandles.reverse();
-
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT RETURNING ${
-				fetchedCandles.length
-			} between\n${new Date(
-				fetchedCandles[0]?.ts * 1000 || 0
-			).toISOString()} =>\n${new Date(
-				fetchedCandles[fetchedCandles.length - 1]?.ts * 1000 || 0
-			).toISOString()}`
-		);
 
 		if (fetchedCandles.length === 0) {
 			return {
@@ -633,6 +471,40 @@ class CandleFetcher {
 	};
 }
 
+class CandleSubscriber {
+	private subscription: CandleSubscriberSubscription;
+
+	constructor(
+		readonly config: CandleSubscriptionConfig,
+		readonly eventBus: CandleEventBus
+	) {}
+
+	subscribeToCandles = async () => {
+		this.subscription = MarketDataFeed.subscribe({
+			type: 'candles',
+			resolution: this.config.resolution,
+			env: this.config.env,
+			marketSymbol: getMarketSymbolForMarketId(
+				this.config.marketId,
+				this.config.env
+			),
+		});
+
+		this.subscription.observable.subscribe((candle) => {
+			this.eventBus.emit('candle-update', candle);
+		});
+	};
+
+	unsubscribe = () => {
+		MarketDataFeed.unsubscribe(this.subscription.id);
+	};
+}
+
+/**
+ * This class will subscribe to candles from the Drift Data API.
+ *
+ * Note: If you are using TradingView you probably want to just use the DriftTvFeed class instead.
+ */
 export class CandleClient {
 	private activeSubscriptions: Map<
 		string,
@@ -648,10 +520,6 @@ export class CandleClient {
 		config: CandleSubscriptionConfig,
 		subscriptionKey: string
 	) => {
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT SUBSCRIBING for ${subscriptionKey}`
-		);
-
 		// Kill any existing subscription with the same key before creating a new one
 		if (this.activeSubscriptions.has(subscriptionKey)) {
 			this.unsubscribe(subscriptionKey);
@@ -705,23 +573,19 @@ export class CandleClient {
 	};
 
 	public unsubscribe = (subscriptionKey: string) => {
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT UNSUBSCRIBING for ${subscriptionKey}`
-		);
 		const subscription = this.activeSubscriptions.get(subscriptionKey);
 		if (subscription) {
 			CandleFetcher.clearCacheForSubscription(
 				subscription.subscriber.config.marketId,
 				subscription.subscriber.config.resolution
 			);
-			subscription.subscriber.killWs();
+			subscription.subscriber.unsubscribe();
 			subscription.eventBus.removeAllListeners();
 			this.activeSubscriptions.delete(subscriptionKey);
 		}
 	};
 
 	public unsubscribeAll = () => {
-		console.debug(`candlesv2:: CANDLE_CLIENT UNSUBSCRIBING ALL`);
 		for (const subscriptionKey of this.activeSubscriptions.keys()) {
 			this.unsubscribe(subscriptionKey);
 		}
@@ -732,7 +596,6 @@ export class CandleClient {
 		event: keyof CandleSubscriberEvents,
 		listener: (candle: JsonCandle) => void
 	) {
-		console.debug(`candlesv2:: CANDLE_CLIENT ON for ${subscriptionKey}`);
 		const subscription = this.activeSubscriptions.get(subscriptionKey);
 		if (subscription) {
 			subscription.eventBus.on(event, listener);

@@ -100,15 +100,24 @@ const QuoteBigNumSerializationFn = (target: BigNum | BN) =>
 			? target.print()
 			: target.toString()
 		: undefined;
+
 const QuoteBigNumDeserializationFn = (val: string | number) =>
 	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), QUOTE_PRECISION_EXP)
 			: BigNum.fromPrint(val.toString(), QUOTE_PRECISION_EXP)
 		: undefined;
+
 const QuoteBigNumSerializeAndDeserializeFns = {
 	Serialize: QuoteBigNumSerializationFn,
 	Deserialize: QuoteBigNumDeserializationFn,
+};
+
+const NullableQuoteBigNumSerializeAndDeserializeFns = {
+	Serialize: (target: BigNum | BN | null) =>
+		target === null ? null : QuoteBigNumSerializationFn(target),
+	Deserialize: (val: string | number | null) =>
+		val === null ? null : QuoteBigNumDeserializationFn(val),
 };
 
 const MarketBasedBigNumSerializationFn = (target: BigNum | BN) =>
@@ -138,9 +147,17 @@ const DeferBigNumDeserializationFn = (val: string | number) => {
 			: BigNum.fromPrint('0', ZERO)
 		: undefined;
 };
+
 const MarketBasedBigNumSerializeAndDeserializeFns = {
 	Serialize: MarketBasedBigNumSerializationFn,
 	Deserialize: DeferBigNumDeserializationFn,
+};
+
+const NullableMarketBasedBigNumSerializeAndDeserializeFns = {
+	Serialize: (target: BigNum | BN | null) =>
+		target === null ? null : MarketBasedBigNumSerializationFn(target),
+	Deserialize: (val: string | number | null) =>
+		val === null ? null : DeferBigNumDeserializationFn(val),
 };
 
 const PctBigNumSerializationFn = (target: BigNum | BN) =>
@@ -799,13 +816,13 @@ export class UISerializableOrderActionRecordV2
 	@autoserializeAs(String) symbol: string;
 	@autoserializeAs(Number) bitFlags: number;
 
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(NullableQuoteBigNumSerializeAndDeserializeFns)
 	takerExistingQuoteEntryAmount: BigNum | null;
-	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(NullableMarketBasedBigNumSerializeAndDeserializeFns)
 	takerExistingBaseAssetAmount: BigNum | null;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(NullableQuoteBigNumSerializeAndDeserializeFns)
 	makerExistingQuoteEntryAmount: BigNum | null;
-	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	@autoserializeUsing(NullableMarketBasedBigNumSerializeAndDeserializeFns)
 	makerExistingBaseAssetAmount: BigNum | null;
 
 	static onDeserialized(

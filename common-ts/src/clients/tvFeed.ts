@@ -1,17 +1,15 @@
-import { CandleType, MarketId } from '../types';
 import {
 	CandleResolution,
 	DriftClient,
 	PerpMarketConfig,
-	PerpMarkets,
 	PRICE_PRECISION_EXP,
 	SpotMarketConfig,
-	SpotMarkets,
 } from '@drift-labs/sdk';
-import { CandleClient, JsonCandle } from './candleClient';
-import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
-import { CANDLE_UTILS } from '../utils/candleUtils';
+import { CandleType, JsonCandle, MarketId } from '../types';
 import { UIEnv } from '../types/UIEnv';
+import { CANDLE_UTILS } from '../utils/candleUtils';
+import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
+import { CandleClient } from './candleClient';
 
 const DRIFT_V2_START_TS = 1668470400; // 15th November 2022 ... 2022-11-15T00:00:00.000Z
 
@@ -97,7 +95,8 @@ type TVBar = {
 
 const findMarketBySymbol = (
 	symbol: string,
-	uiEnv: UIEnv
+	perpMarketConfigs: PerpMarketConfig[],
+	spotMarketConfigs: SpotMarketConfig[]
 ):
 	| {
 			type: 'perp';
@@ -107,54 +106,40 @@ const findMarketBySymbol = (
 			type: 'spot';
 			config: SpotMarketConfig;
 	  } => {
-	const sdkEnv = uiEnv.sdkEnv;
-
-	const perpMarketConfigs =
-		sdkEnv === 'mainnet-beta'
-			? PerpMarkets['mainnet-beta']
-			: PerpMarkets['devnet'];
-
-	const spotMarketConfigs =
-		sdkEnv === 'mainnet-beta'
-			? SpotMarkets['mainnet-beta']
-			: SpotMarkets['devnet'];
-
 	if (!symbol) {
-		return {
-			type: 'perp',
-			config: perpMarketConfigs[0],
-		};
+		throw new Error(`TVFeed::No symbol provided`);
 	}
 
-	const isPerp = symbol.toLowerCase().includes('perp');
+	const sanitisedSymbol = symbol.toLowerCase().replace('/usdc', ''); // Lowercase and replace /usdc (for spot markets) to santise symbol for lookup
+
+	const isPerp = sanitisedSymbol.toLowerCase().includes('perp');
 
 	const matchingMarketConfig = isPerp
 		? perpMarketConfigs.find((mkt) =>
-				mkt.symbol.toLowerCase().includes(symbol.toLowerCase())
+				mkt.symbol.toLowerCase().includes(sanitisedSymbol.toLowerCase())
 		  )
 		: spotMarketConfigs.find((mkt) =>
-				mkt.symbol.toLowerCase().includes(symbol.toLowerCase())
+				mkt.symbol.toLowerCase().includes(sanitisedSymbol.toLowerCase())
 		  );
 
-	return matchingMarketConfig
-		? isPerp
-			? {
-					type: 'perp',
-					config: matchingMarketConfig as PerpMarketConfig,
-			  }
-			: {
-					type: 'spot',
-					config: matchingMarketConfig as SpotMarketConfig,
-			  }
-		: {
-				type: 'perp',
-				config: perpMarketConfigs[0],
-		  };
+	if (!matchingMarketConfig) {
+		throw new Error(`TVFeed::No market found for symbol ${symbol}`);
+	}
+
+	if (isPerp) {
+		return {
+			type: 'perp',
+			config: matchingMarketConfig as PerpMarketConfig,
+		};
+	}
+
+	return {
+		type: 'spot',
+		config: matchingMarketConfig as SpotMarketConfig,
+	};
 };
 
 const candleFetchingPollKey = Symbol('candleFetchingPollKey');
-
-type Mutex<T> = { current: T };
 
 const candleToTvBar = (candle: JsonCandle, candleType: CandleType): TVBar => {
 	const useOraclePrice = candleType === CandleType.ORACLE_PRICE;
@@ -200,20 +185,27 @@ export class DriftTvFeed {
 	private candleType: CandleType;
 	private candleClient: CandleClient;
 	private driftClient: DriftClient;
-	private chartMarketMutex: Mutex<string> = { current: undefined };
-	private chartResolutionMutex: Mutex<CandleResolution> = {
-		current: undefined,
-	};
+	private onResetCache: () => void;
+	private perpMarketConfigs: PerpMarketConfig[];
+	private spotMarketConfigs: SpotMarketConfig[];
 
-	constructor(env: UIEnv, candleType: CandleType, driftClient: DriftClient) {
+	constructor(
+		env: UIEnv,
+		candleType: CandleType,
+		driftClient: DriftClient,
+		perpMarketConfigs: PerpMarketConfig[],
+		spotMarketConfigs: SpotMarketConfig[]
+	) {
 		this.env = env;
 		this.candleType = candleType;
 		this.candleClient = new CandleClient();
 		this.driftClient = driftClient;
+		this.perpMarketConfigs = perpMarketConfigs;
+		this.spotMarketConfigs = spotMarketConfigs;
 	}
 
-	updateMarketMutex(marketId: MarketId) {
-		this.chartMarketMutex.current = marketId.key;
+	public resetCache() {
+		this.onResetCache?.();
 	}
 
 	private searchMarkets = (symbol: string): TVMarketInfo[] => {
@@ -222,27 +214,20 @@ export class DriftTvFeed {
 			'symbol' | 'ticker' | 'full_name' | 'description'
 		>[] = [];
 
-		const CurrentPerpMarkets =
-			this.env.sdkEnv === 'mainnet-beta'
-				? PerpMarkets['mainnet-beta']
-				: PerpMarkets['devnet'];
-
-		const CurrentSpotMarkets =
-			this.env.sdkEnv === 'mainnet-beta'
-				? SpotMarkets['mainnet-beta']
-				: SpotMarkets['devnet'];
+		const currentPerpMarkets = this.perpMarketConfigs;
+		const currentSpotMarkets = this.spotMarketConfigs;
 
 		if (!symbol) {
-			res.push(PerpMarketConfigToTVMarketInfo(CurrentPerpMarkets[0]));
+			res.push(PerpMarketConfigToTVMarketInfo(currentPerpMarkets[0]));
 		} else {
-			for (const market of CurrentPerpMarkets) {
+			for (const market of currentPerpMarkets) {
 				const lowerCaseMarket = market.symbol.toLowerCase();
 				if (lowerCaseMarket.includes(symbol.toLowerCase())) {
 					res.push(PerpMarketConfigToTVMarketInfo(market));
 				}
 			}
 
-			for (const market of CurrentSpotMarkets) {
+			for (const market of currentSpotMarkets) {
 				const lowerCaseMarket = market.symbol.toLowerCase();
 				if (lowerCaseMarket.includes(symbol.toLowerCase())) {
 					res.push(SpotMarketConfigToTVMarketInfo(market));
@@ -280,7 +265,11 @@ export class DriftTvFeed {
 	}
 
 	resolveSymbol(symbolName: string, onResolve, onError): void {
-		const targetMarket = findMarketBySymbol(symbolName, this.env);
+		const targetMarket = findMarketBySymbol(
+			symbolName,
+			this.perpMarketConfigs,
+			this.spotMarketConfigs
+		);
 
 		if (targetMarket) {
 			const tvMarketName = targetMarket.config.symbol;
@@ -357,10 +346,14 @@ export class DriftTvFeed {
 		return roundedTimestampMs / 1000;
 	};
 
-	private formatTVRequestedRange = (fromTs: number, toTs: number) => {
+	private formatTVRequestedRange = (
+		fromTs: number,
+		toTs: number,
+		resolution: CandleResolution
+	) => {
 		const formattedFromTs = this.roundFromTimestampToExactCandleTs(
 			fromTs,
-			this.chartResolutionMutex.current
+			resolution
 		); // TradingView sometimes asks for a FROM timestamp halfway between two candles, so we round down to the nearest candle
 
 		const formattedToTs = Math.floor(Math.min(toTs, Date.now() / 1000)); // TradingView sometimes asks for a TO timestamp in the future, so we cap it at the current timestamp
@@ -390,13 +383,8 @@ export class DriftTvFeed {
 		) => void,
 		_onError
 	) {
-		console.debug(
-			`candlesv2:: getBars::${symbolInfo.name},resolution:${resolution},from:${periodParams.from},to:${periodParams.to}`
-		);
-
 		// Can automatically return no data if the requested range is before the Drift V2 launch
 		if (periodParams.to < DRIFT_V2_START_TS) {
-			console.debug(`candlesv2:: skipping_request_before_v2_launch`);
 			onResult([], {
 				noData: true,
 			});
@@ -407,24 +395,21 @@ export class DriftTvFeed {
 
 		const targetResolution =
 			tvResolutionStringToStandardResolutionString(resolution);
-		const targetMarket = findMarketBySymbol(symbolToUse, this.env);
+		const targetMarket = findMarketBySymbol(
+			symbolToUse,
+			this.perpMarketConfigs,
+			this.spotMarketConfigs
+		);
 		const targetMarketId =
 			targetMarket.type === 'perp'
 				? MarketId.createPerpMarket(targetMarket.config.marketIndex)
 				: MarketId.createSpotMarket(targetMarket.config.marketIndex);
-		this.chartMarketMutex.current = targetMarketId.key;
-		this.chartResolutionMutex.current = targetResolution;
 
 		const fetchCandles = async () => {
-			console.debug(
-				`candlesv2:: TV_FEED ASKING for candles between\n${new Date(
-					periodParams.from * 1000
-				).toISOString()} =>\n${new Date(periodParams.to * 1000).toISOString()}`
-			);
-
 			const formattedTsRange = this.formatTVRequestedRange(
 				periodParams.from,
-				periodParams.to
+				periodParams.to,
+				targetResolution
 			);
 
 			const candles = await this.candleClient.fetch({
@@ -443,39 +428,21 @@ export class DriftTvFeed {
 		);
 
 		if (candlesResult.length === 0) {
-			console.debug(
-				`candlesv2:: TV_FEED NO CANDLES FOUND for ${targetMarketId.key}-${targetResolution}::${periodParams.from}=>${periodParams.to}`
-			);
 			onResult([], {
 				noData: true,
 			});
 			return;
 		}
 
-		// Protect against user switching between UI faster than candle client responds, by checking that market and resoltion mutexes match
-		if (
-			targetMarketId.key === this.chartMarketMutex.current &&
-			targetResolution === this.chartResolutionMutex.current
-		) {
-			const bars = candlesResult.map((candle) =>
-				candleToTvBar(candle, this.candleType)
-			);
+		const bars = candlesResult.map((candle) =>
+			candleToTvBar(candle, this.candleType)
+		);
 
-			console.debug(
-				`candlesv2:: TV_FEED RETURNING candles between\n${new Date(
-					bars[0].time
-				).toISOString()} =>\n${new Date(
-					bars[bars.length - 1].time
-				).toISOString()}`
-			);
+		onResult(bars, {
+			noData: candlesResult.length === 0,
+		});
 
-			onResult(bars, {
-				noData: candlesResult.length === 0,
-			});
-			return;
-		} else {
-			throw new Error('Market or resolution mutex mismatch');
-		}
+		return;
 	}
 
 	async subscribeBars(
@@ -483,11 +450,17 @@ export class DriftTvFeed {
 		resolution,
 		onTick,
 		subscriberGuid: string,
-		_resetHistory
+		onResetCache
 	) {
+		this.onResetCache = onResetCache;
+
 		const targetResolution =
 			tvResolutionStringToStandardResolutionString(resolution);
-		const targetMarket = findMarketBySymbol(symbolInfo.ticker, this.env);
+		const targetMarket = findMarketBySymbol(
+			symbolInfo.ticker,
+			this.perpMarketConfigs,
+			this.spotMarketConfigs
+		);
 		const targetMarketId =
 			targetMarket.type === 'perp'
 				? MarketId.createPerpMarket(targetMarket.config.marketIndex)
@@ -507,13 +480,7 @@ export class DriftTvFeed {
 		this.candleClient.on(subscriberGuid, 'candle-update', (newCandle) => {
 			const newBar = candleToTvBar(newCandle, this.candleType);
 
-			console.debug(
-				`candlesv2:: TV_FEED UPDATE for ${subscriberGuid} :: ${newBar.close}`
-			);
-
-			if (targetMarketId.key === this.chartMarketMutex.current) {
-				onTick(newBar);
-			}
+			onTick(newBar);
 		});
 	}
 
