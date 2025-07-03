@@ -137,9 +137,6 @@ export class DataApiWsClient {
 			errorMessageFilter: (_message) => {
 				return false; // No known error messages
 			},
-			healthCheck: {
-				enabled: false,
-			},
 		});
 
 		return Promise.resolve();

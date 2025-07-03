@@ -3,16 +3,6 @@ import WebSocket, { MessageEvent } from 'isomorphic-ws';
 
 type WebSocketMessage<T = Record<string, unknown>> = T;
 
-type HealthCheckConfig =
-	| { enabled: false }
-	| {
-			enabled: true;
-			intervalMs: number;
-			unhealthyThresholdMs: number;
-			maxReconnectAttempts: number;
-			reconnectionWindowMs: number;
-	  };
-
 type WebSocketSubscriptionProps<T = Record<string, unknown>> = {
 	wsUrl: string;
 	subscriptionId: string;
@@ -23,7 +13,6 @@ type WebSocketSubscriptionProps<T = Record<string, unknown>> = {
 	messageFilter: (message: WebSocketMessage<T>) => boolean;
 	errorMessageFilter: (message: WebSocketMessage<T>) => boolean;
 	onClose?: () => void;
-	healthCheck?: HealthCheckConfig;
 };
 
 type WebSocketSubscriptionState<T = Record<string, unknown>> =
@@ -34,6 +23,62 @@ type WebSocketSubscriptionState<T = Record<string, unknown>> =
 
 type WebSocketUrl = string;
 type SubscriptionId = string;
+
+const DEFAULT_MAX_RECONNECT_ATTEMPTS = 5;
+const DEFAULT_MAX_RECONNECT_WINDOW_MS = 60 * 1000;
+
+class ReconnectionManager {
+	private reconnectAttempts: number = 0;
+	private lastReconnectWindow: number = Date.now();
+	private maxAttemptsCount: number;
+	private maxAttemptsWindowMs: number;
+
+	constructor(
+		maxAttemptsCount = DEFAULT_MAX_RECONNECT_ATTEMPTS,
+		maxAttemptsWindowMs = DEFAULT_MAX_RECONNECT_WINDOW_MS
+	) {
+		this.maxAttemptsCount = maxAttemptsCount;
+		this.maxAttemptsWindowMs = maxAttemptsWindowMs;
+	}
+
+	public attemptReconnection(wsUrl: string): {
+		shouldReconnect: boolean;
+		delay: number;
+	} {
+		const now = Date.now();
+
+		// Reset reconnect attempts if more than a minute has passed
+		if (now - this.lastReconnectWindow > this.maxAttemptsWindowMs) {
+			this.reconnectAttempts = 0;
+			this.lastReconnectWindow = now;
+		}
+
+		// Check if we've exceeded the maximum reconnect attempts
+		if (this.reconnectAttempts >= this.maxAttemptsCount) {
+			throw new Error(
+				`WebSocket reconnection failed: Maximum reconnect attempts (${this.maxAttemptsCount}) exceeded within ${this.maxAttemptsWindowMs}ms for ${wsUrl}`
+			);
+		}
+
+		this.reconnectAttempts++;
+
+		// Calculate exponential backoff delay: 1s, 2s, 4s, 8s, etc. (capped at 8s)
+		const backoffDelay = Math.min(
+			1000 * Math.pow(2, this.reconnectAttempts - 1),
+			8000
+		);
+
+		return {
+			shouldReconnect: true,
+			delay: backoffDelay,
+		};
+	}
+
+	public reset(): void {
+		this.reconnectAttempts = 0;
+		this.lastReconnectWindow = Date.now();
+	}
+}
 
 enum WebSocketConnectionState {
 	CONNECTING,
@@ -51,26 +96,18 @@ type IMultiplexWebSocket<T = Record<string, unknown>> = {
 		SubscriptionId,
 		Omit<WebSocketSubscriptionProps<T>, 'wsUrl' | 'subscriptionId'>
 	>;
-	healthCheck: {
-		enabled: boolean;
-		config: HealthCheckConfig;
-		lastMessageTimestamp: number;
-		reconnectTimeStamps: number[];
-		interval?: ReturnType<typeof setInterval>;
-	};
 };
 
 /**
  * MultiplexWebSocket allows for multiple subscriptions to a single websocket of the same URL, improving efficiency and reducing the number of open connections.
  *
  * This implementation assumes the following:
- * - All websocket streams are treated equally - health checks and reconnection attempts are performed at the same standards
+ * - All websocket streams are treated equally - reconnection attempts are performed at the same standards
  * - All messages returned are in the `WebSocketMessage` format
  *
  * Internal implementation details:
- * - There is a health check that runs at an interval
- * - The websocket is closed when the number of subscriptions is 0 (occurs during health check)
- * - The websocket will be refreshed (new instance) when it is unhealthy, until it reaches the maximum number of reconnect attempts
+ * - The websocket is closed when the number of subscriptions is 0
+ * - The websocket will be refreshed (new instance) when it disconnects unexpectedly or errors, until it reaches the maximum number of reconnect attempts
  */
 export class MultiplexWebSocket<T = Record<string, unknown>>
 	implements IMultiplexWebSocket<T>
@@ -99,18 +136,9 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 		SubscriptionId,
 		Omit<WebSocketSubscriptionState<T>, 'wsUrl' | 'subscriptionId'>
 	>;
-	healthCheck: {
-		enabled: boolean;
-		config: HealthCheckConfig;
-		lastMessageTimestamp: number;
-		reconnectTimeStamps: number[];
-		interval?: ReturnType<typeof setInterval>;
-	};
+	private reconnectionManager: ReconnectionManager;
 
-	private constructor(
-		wsUrl: WebSocketUrl,
-		initialHealthCheckConfig?: HealthCheckConfig
-	) {
+	private constructor(wsUrl: WebSocketUrl) {
 		if (MultiplexWebSocket.URL_TO_WEBSOCKETS_LOOKUP.has(wsUrl)) {
 			throw new Error(
 				`Attempting to create a new websocket for ${wsUrl}, but it already exists`
@@ -125,23 +153,7 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 			Omit<WebSocketSubscriptionProps<T>, 'wsUrl' | 'subscriptionId'>
 		>();
 
-		// Default to health check disabled
-		const healthCheckConfig: HealthCheckConfig = initialHealthCheckConfig || {
-			enabled: false,
-		};
-
-		this.healthCheck = {
-			enabled: healthCheckConfig.enabled,
-			config: healthCheckConfig,
-			lastMessageTimestamp: Date.now(),
-			reconnectTimeStamps: [],
-		};
-
-		if (healthCheckConfig.enabled) {
-			this.healthCheck.interval = setInterval(() => {
-				this.startHealthCheck();
-			}, healthCheckConfig.intervalMs);
-		}
+		this.reconnectionManager = new ReconnectionManager();
 
 		this.webSocket = new WebSocket(wsUrl);
 
@@ -171,10 +183,7 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 	private static handleNewSubForNewWsUrl<T = Record<string, unknown>>(
 		newSubscriptionProps: WebSocketSubscriptionProps<T>
 	) {
-		const newMWS = new MultiplexWebSocket<T>(
-			newSubscriptionProps.wsUrl,
-			newSubscriptionProps.healthCheck
-		);
+		const newMWS = new MultiplexWebSocket<T>(newSubscriptionProps.wsUrl);
 
 		newMWS.subscribe(newSubscriptionProps);
 
@@ -228,17 +237,20 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 		};
 
 		webSocket.onmessage = (messageEvent: MessageEvent) => {
-			if (this.healthCheck.enabled) {
-				this.healthCheck.lastMessageTimestamp = Date.now();
-			}
 			const message = JSON.parse(
 				messageEvent.data as string
 			) as WebSocketMessage<T>;
 			this.subject.next(message);
 		};
 
-		webSocket.onclose = () => {
+		webSocket.onclose = (event) => {
 			this.customConnectionState = WebSocketConnectionState.DISCONNECTED;
+
+			// Restart websocket if it was closed unexpectedly (not by us)
+			if (!event.wasClean && this.subscriptions.size > 0) {
+				console.log('WebSocket closed unexpectedly, restarting...', event);
+				this.refreshWebSocket();
+			}
 		};
 
 		webSocket.onerror = (error) => {
@@ -255,6 +267,9 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 					}
 				}
 			}
+
+			// Restart the websocket connection on error
+			this.refreshWebSocket();
 		};
 
 		this.#webSocket = webSocket;
@@ -404,86 +419,40 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 
 		this.subscriptions.clear();
 		this.webSocket.close();
-		if (this.healthCheck.interval) {
-			clearInterval(this.healthCheck.interval);
-		}
 		MultiplexWebSocket.URL_TO_WEBSOCKETS_LOOKUP.delete(this.wsUrl);
 		MultiplexWebSocket.URL_TO_SUBSCRIPTION_IDS_LOOKUP.delete(this.wsUrl);
+		this.reconnectionManager.reset();
 	}
 
 	private refreshWebSocket() {
-		const currentWebSocket = this.webSocket;
-		currentWebSocket.onopen = () => {
-			// in the event where the websocket has yet to connect, we close the connection after it is connected
-			currentWebSocket.onclose = () => {};
-			currentWebSocket.close();
-		};
-		currentWebSocket.close();
+		const { shouldReconnect, delay } =
+			this.reconnectionManager.attemptReconnection(this.wsUrl);
 
+		if (!shouldReconnect) {
+			return;
+		}
+
+		// Clean up current websocket
+		const currentWebSocket = this.webSocket;
+		if (currentWebSocket) {
+			currentWebSocket.onerror = () => {};
+			currentWebSocket.onclose = () => {};
+			currentWebSocket.onmessage = () => {};
+			currentWebSocket.onopen = () => {
+				// in the event where the websocket has yet to connect, we close the connection after it is connected
+				currentWebSocket.close();
+			};
+			currentWebSocket.close();
+		}
+
+		// Reset subscription states
 		this.subscriptions.forEach((subscription) => {
 			subscription.hasSentSubscribeMessage = false;
 		});
 
-		this.webSocket = new WebSocket(this.wsUrl);
-	}
-
-	/**
-	 * The health check is used to determine if the websocket is still connected.
-	 * If there isn't any subscriptions, the websocket will be closed.
-	 * If the websocket is unhealthy, it will be refreshed until it reaches the maximum number of reconnect attempts, where it will then be closed.
-	 * This method only runs if health check is enabled.
-	 */
-	private startHealthCheck() {
-		if (!this.healthCheck.enabled) {
-			return;
-		}
-
-		if (
-			[
-				WebSocketConnectionState.DISCONNECTING,
-				WebSocketConnectionState.DISCONNECTED,
-			].includes(this.customConnectionState)
-		) {
-			// do nothing, since the websocket is already in the process of disconnecting/disconnected
-			return;
-		}
-
-		if (this.subscriptions.size === 0) {
-			this.close();
-			return;
-		}
-
-		// Type guard to ensure we have enabled config with all required properties
-		if (!this.healthCheck.config.enabled) {
-			return;
-		}
-
-		const config = this.healthCheck.config;
-		const isUnhealthy =
-			Date.now() - this.healthCheck.lastMessageTimestamp >
-			config.unhealthyThresholdMs;
-
-		if (isUnhealthy) {
-			const numOfReconnectsInWindow =
-				this.healthCheck.reconnectTimeStamps.filter(
-					(timestamp) => timestamp > Date.now() - config.reconnectionWindowMs
-				).length;
-
-			const exceedsMaxReconnectAttempts =
-				numOfReconnectsInWindow >= config.maxReconnectAttempts;
-
-			if (exceedsMaxReconnectAttempts) {
-				for (const [
-					subscriptionId,
-					subscriptionState,
-				] of this.subscriptions.entries()) {
-					subscriptionState.onError();
-					this.unsubscribe(subscriptionId);
-				}
-			} else {
-				this.refreshWebSocket();
-				this.healthCheck.reconnectTimeStamps.push(Date.now());
-			}
-		}
+		// Use exponential backoff before attempting to reconnect
+		setTimeout(() => {
+			this.webSocket = new WebSocket(this.wsUrl);
+		}, delay);
 	}
 }
