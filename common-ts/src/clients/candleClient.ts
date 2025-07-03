@@ -160,7 +160,6 @@ class CandleFetcher {
 	// Public method to clear the entire cache
 	public static clearWholeCache() {
 		CandleFetcher.recentCandlesCache.clear();
-		console.debug('candlesv2:: CANDLE_CLIENT CACHE CLEARED');
 	}
 
 	public static clearCacheForSubscription(
@@ -183,10 +182,6 @@ class CandleFetcher {
 		const parsedResponse = (await response.json()) as CandleFetchResponseJson;
 
 		if (!parsedResponse.success) {
-			console.debug(
-				`candlesv2:: CANDLE_CLIENT FAILED to fetch candles from data API: ${fetchUrl}`,
-				parsedResponse
-			);
 			throw new Error('Failed to fetch candles from data API');
 		}
 
@@ -224,10 +219,6 @@ class CandleFetcher {
 				this.config.fromTs >= cachedCandles.earliestTs &&
 				this.config.toTs <= cachedCandles.latestTs
 			) {
-				console.debug(
-					`candlesv2:: CANDLE_CLIENT USING CACHED CANDLES for ${this.config.marketId.key}-${this.config.resolution} (${this.config.fromTs}-${this.config.toTs})`
-				);
-
 				// Filter cached candles to the requested time range
 				const filteredCandles = cachedCandles.candles.filter(
 					(candle) =>
@@ -262,14 +253,6 @@ class CandleFetcher {
 	private fetchRecentCandles = async (
 		nowSeconds: number
 	): Promise<JsonCandle[]> => {
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT FETCHING RECENT CANDLES (fromTs=${new Date(
-				this.config.fromTs * 1000
-			).toISOString()}, toTs=${new Date(
-				this.config.toTs * 1000
-			).toISOString()}, cacheable=true)`
-		);
-
 		// Fetch recent candles without specifying startTs
 		const fetchUrl = getCandleFetchUrl({
 			env: this.config.env,
@@ -286,25 +269,11 @@ class CandleFetcher {
 			return [];
 		}
 
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT RECEIVED ${
-				fetchedCandles.length
-			} RECENT CANDLES between\n${new Date(
-				fetchedCandles[0].ts * 1000
-			).toISOString()} =>\n${new Date(
-				fetchedCandles[fetchedCandles.length - 1].ts * 1000
-			).toISOString()}`
-		);
-
 		// Store the full fetchedCandles in cache before filtering
 		this.updateCandleCache(fetchedCandles, nowSeconds);
 
 		// Filter to only include candles in the requested time range
 		const filteredCandles = this.filterCandlesByTimeRange(fetchedCandles);
-
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT RETURNING ${filteredCandles.length} FILTERED RECENT CANDLES`
-		);
 
 		return filteredCandles;
 	};
@@ -345,10 +314,6 @@ class CandleFetcher {
 				latestTs,
 				fetchTime: nowSeconds,
 			});
-
-			console.debug(
-				`candlesv2:: CANDLE_CLIENT CACHING ${sortedCandles.length} FULL CANDLES for ${this.config.marketId.key}-${this.config.resolution}`
-			);
 		}
 	};
 
@@ -363,19 +328,13 @@ class CandleFetcher {
 
 		let currentStartTs = this.config.toTs; // The data API takes "startTs" as the "first timestamp you want going backwards in time" e.g. all candles will be returned with descending time backwards from the startTs
 		let hitEndTsCutoff = false;
-		let loopCount = 0;
 
 		const candles: JsonCandle[] = [];
-
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT TOTAL HISTORICAL CANDLES TO FETCH: ${candlesRemainingToFetch}`
-		);
 
 		while (candlesRemainingToFetch > 0) {
 			const result = await this.fetchHistoricalCandlesBatch(
 				candlesRemainingToFetch,
-				currentStartTs,
-				loopCount
+				currentStartTs
 			);
 
 			if (result.fetchedCandles.length === 0) {
@@ -391,13 +350,8 @@ class CandleFetcher {
 				currentStartTs = result.nextStartTs;
 			} else if (candlesRemainingToFetch > 0) {
 				// This means we have fetched all the candles available for this time range and we can stop fetching
-				console.debug(
-					`candlesv2:: Asked to fetch more candles but no more remaining`
-				);
 				candlesRemainingToFetch = 0;
 			}
-
-			loopCount++;
 		}
 
 		if (hitEndTsCutoff) {
@@ -418,8 +372,7 @@ class CandleFetcher {
 	 */
 	private fetchHistoricalCandlesBatch = async (
 		candlesRemainingToFetch: number,
-		currentStartTs: number,
-		loopCount: number
+		currentStartTs: number
 	): Promise<{
 		fetchedCandles: JsonCandle[];
 		candlesToAdd: JsonCandle[];
@@ -440,26 +393,10 @@ class CandleFetcher {
 			countToFetch: candlesToFetch,
 		});
 
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT LOOP ${loopCount} ASKING for ${candlesToFetch} before \n${new Date(
-				currentStartTs * 1000
-			).toISOString()}`
-		);
-
 		const fetchedCandles = await this.fetchCandlesFromApi(fetchUrl);
 
 		// Reverse candles into ascending order
 		fetchedCandles.reverse();
-
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT RETURNING ${
-				fetchedCandles.length
-			} between\n${new Date(
-				fetchedCandles[0]?.ts * 1000 || 0
-			).toISOString()} =>\n${new Date(
-				fetchedCandles[fetchedCandles.length - 1]?.ts * 1000 || 0
-			).toISOString()}`
-		);
 
 		if (fetchedCandles.length === 0) {
 			return {
@@ -583,10 +520,6 @@ export class CandleClient {
 		config: CandleSubscriptionConfig,
 		subscriptionKey: string
 	) => {
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT SUBSCRIBING for ${subscriptionKey}`
-		);
-
 		// Kill any existing subscription with the same key before creating a new one
 		if (this.activeSubscriptions.has(subscriptionKey)) {
 			this.unsubscribe(subscriptionKey);
@@ -640,9 +573,6 @@ export class CandleClient {
 	};
 
 	public unsubscribe = (subscriptionKey: string) => {
-		console.debug(
-			`candlesv2:: CANDLE_CLIENT UNSUBSCRIBING for ${subscriptionKey}`
-		);
 		const subscription = this.activeSubscriptions.get(subscriptionKey);
 		if (subscription) {
 			CandleFetcher.clearCacheForSubscription(
@@ -656,7 +586,6 @@ export class CandleClient {
 	};
 
 	public unsubscribeAll = () => {
-		console.debug(`candlesv2:: CANDLE_CLIENT UNSUBSCRIBING ALL`);
 		for (const subscriptionKey of this.activeSubscriptions.keys()) {
 			this.unsubscribe(subscriptionKey);
 		}
@@ -667,7 +596,6 @@ export class CandleClient {
 		event: keyof CandleSubscriberEvents,
 		listener: (candle: JsonCandle) => void
 	) {
-		console.debug(`candlesv2:: CANDLE_CLIENT ON for ${subscriptionKey}`);
 		const subscription = this.activeSubscriptions.get(subscriptionKey);
 		if (subscription) {
 			subscription.eventBus.on(event, listener);

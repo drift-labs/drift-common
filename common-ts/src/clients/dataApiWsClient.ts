@@ -89,17 +89,15 @@ export class DataApiWsClient {
 	};
 
 	private handleError = () => {
-		console.info('candlesv2:: dataApiWsClient error occurred');
+		console.error('candlesv2:: dataApiWsClient error occurred');
 	};
 
 	private handleClose = () => {
-		console.info('candlesv2:: dataApiWsClient connection closed');
+		console.log('candlesv2:: dataApiWsClient connection closed');
 	};
 
 	public subscribe = async () => {
 		const subscriptionId = `${this.config.marketSymbol}-${this.config.resolution}`;
-
-		console.debug(`candlesv2:: Opening new Data APi WS ${subscriptionId}`);
 
 		this.multiplexSubscription = MultiplexWebSocket.createWebSocketSubscription<
 			WsSubscriptionMessage<WsSubscriptionMessageType>

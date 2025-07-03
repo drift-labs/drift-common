@@ -383,13 +383,8 @@ export class DriftTvFeed {
 		) => void,
 		_onError
 	) {
-		console.debug(
-			`candlesv2:: getBars::${symbolInfo.name},resolution:${resolution},from:${periodParams.from},to:${periodParams.to}`
-		);
-
 		// Can automatically return no data if the requested range is before the Drift V2 launch
 		if (periodParams.to < DRIFT_V2_START_TS) {
-			console.debug(`candlesv2:: skipping_request_before_v2_launch`);
 			onResult([], {
 				noData: true,
 			});
@@ -411,14 +406,6 @@ export class DriftTvFeed {
 				: MarketId.createSpotMarket(targetMarket.config.marketIndex);
 
 		const fetchCandles = async () => {
-			console.debug(
-				`candlesv2:: TV_FEED ASKING for candles ${
-					targetMarketId.key
-				}-${targetResolution} between\n${new Date(
-					periodParams.from * 1000
-				).toISOString()} =>\n${new Date(periodParams.to * 1000).toISOString()}`
-			);
-
 			const formattedTsRange = this.formatTVRequestedRange(
 				periodParams.from,
 				periodParams.to,
@@ -441,9 +428,6 @@ export class DriftTvFeed {
 		);
 
 		if (candlesResult.length === 0) {
-			console.debug(
-				`candlesv2:: TV_FEED NO CANDLES FOUND for ${targetMarketId.key}-${targetResolution}::${periodParams.from}=>${periodParams.to}`
-			);
 			onResult([], {
 				noData: true,
 			});
@@ -452,16 +436,6 @@ export class DriftTvFeed {
 
 		const bars = candlesResult.map((candle) =>
 			candleToTvBar(candle, this.candleType)
-		);
-
-		console.debug(
-			`candlesv2:: TV_FEED RETURNING ${
-				targetMarketId.key
-			}-${targetResolution} candles between\n${new Date(
-				bars[0].time
-			).toISOString()} =>\n${new Date(
-				bars[bars.length - 1].time
-			).toISOString()}`
 		);
 
 		onResult(bars, {
@@ -505,12 +479,6 @@ export class DriftTvFeed {
 		// Then set up the event listener once the eventBus exists
 		this.candleClient.on(subscriberGuid, 'candle-update', (newCandle) => {
 			const newBar = candleToTvBar(newCandle, this.candleType);
-
-			console.debug(
-				`candlesv2:: TV_FEED UPDATE for ${subscriberGuid} :: ${new Date(
-					newCandle.ts * 1000
-				).toLocaleString()} :: close ${newBar.close}`
-			);
 
 			onTick(newBar);
 		});
