@@ -44,6 +44,7 @@ export { default as Details } from './components/Details';
 export { default as Diamond } from './components/Diamond';
 export { default as Disclaimers } from './components/Disclaimers';
 export { default as Discord } from './components/Discord';
+export { default as DoubleTick } from './components/DoubleTick';
 export { default as Down } from './components/Down';
 export { default as Download } from './components/Download';
 export { default as DrawAnnounce } from './components/DrawAnnounce';
