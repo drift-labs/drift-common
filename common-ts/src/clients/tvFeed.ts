@@ -319,11 +319,19 @@ export class DriftTvFeed {
 				return;
 			}
 		} catch (e) {
-			console.error(e);
+			console.error(e, {
+				perpMarketConfigs: this.perpMarketConfigs,
+				spotMarketConfigs: this.spotMarketConfigs,
+				symbolName,
+			});
 			onError(e);
 		}
 
-		console.error(`Couldn't find market for symbol ${symbolName}`);
+		console.error(`Couldn't find market for symbol ${symbolName}`, {
+			perpMarketConfigs: this.perpMarketConfigs,
+			spotMarketConfigs: this.spotMarketConfigs,
+			symbolName,
+		});
 		onError(`Couldn't find market for symbol ${symbolName}`);
 	}
 
