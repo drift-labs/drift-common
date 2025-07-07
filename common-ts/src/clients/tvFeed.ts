@@ -106,8 +106,6 @@ const findMarketBySymbol = (
 			type: 'spot';
 			config: SpotMarketConfig;
 	  } => {
-	throw new Error('TVFeed::Not implemented');
-
 	if (!symbol) {
 		throw new Error(`TVFeed::No symbol provided`);
 	}
