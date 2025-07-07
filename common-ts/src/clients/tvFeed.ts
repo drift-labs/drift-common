@@ -106,6 +106,8 @@ const findMarketBySymbol = (
 			type: 'spot';
 			config: SpotMarketConfig;
 	  } => {
+	throw new Error('TVFeed::Not implemented');
+
 	if (!symbol) {
 		throw new Error(`TVFeed::No symbol provided`);
 	}
@@ -265,53 +267,65 @@ export class DriftTvFeed {
 	}
 
 	resolveSymbol(symbolName: string, onResolve, onError): void {
-		const targetMarket = findMarketBySymbol(
+		console.debug(`luke_debug`, {
+			perpMarketConfigs: this.perpMarketConfigs,
+			spotMarketConfigs: this.spotMarketConfigs,
 			symbolName,
-			this.perpMarketConfigs,
-			this.spotMarketConfigs
-		);
+		});
 
-		if (targetMarket) {
-			const tvMarketName = targetMarket.config.symbol;
+		try {
+			const targetMarket = findMarketBySymbol(
+				symbolName,
+				this.perpMarketConfigs,
+				this.spotMarketConfigs
+			);
 
-			let tickSize: number;
+			if (targetMarket) {
+				const tvMarketName = targetMarket.config.symbol;
 
-			if (targetMarket.type === 'perp') {
-				tickSize = this.driftClient
-					.getPerpMarketAccount(targetMarket.config.marketIndex)
-					.amm.orderTickSize.toNumber();
-			} else {
-				tickSize = this.driftClient
-					.getSpotMarketAccount(targetMarket.config.marketIndex)
-					.orderTickSize.toNumber();
+				let tickSize: number;
+
+				if (targetMarket.type === 'perp') {
+					tickSize = this.driftClient
+						.getPerpMarketAccount(targetMarket.config.marketIndex)
+						.amm.orderTickSize.toNumber();
+				} else {
+					tickSize = this.driftClient
+						.getSpotMarketAccount(targetMarket.config.marketIndex)
+						.orderTickSize.toNumber();
+				}
+
+				const pricePrecisionExp = PRICE_PRECISION_EXP.toNumber();
+				const tickSizeExp = Math.ceil(Math.log10(tickSize));
+				const priceScaleExponent = Math.max(0, pricePrecisionExp - tickSizeExp);
+				const priceScale = 10 ** priceScaleExponent;
+
+				onResolve({
+					name: tvMarketName,
+					full_name: tvMarketName,
+					description: tvMarketName,
+					exchange: 'Drift',
+					ticker: targetMarket.config.symbol,
+					type: 'crypto',
+					session: '24x7',
+					timezone: 'Etc/UTC',
+					listed_exchange: 'Drift',
+					format: 'price',
+					pricescale: priceScale,
+					minmov: 1,
+					supported_resolutions: [...resolutions],
+					has_intraday: true,
+					intraday_multipliers: ['1', '5', '15', '60', '240'],
+				});
+
+				return;
 			}
-
-			const pricePrecisionExp = PRICE_PRECISION_EXP.toNumber();
-			const tickSizeExp = Math.ceil(Math.log10(tickSize));
-			const priceScaleExponent = Math.max(0, pricePrecisionExp - tickSizeExp);
-			const priceScale = 10 ** priceScaleExponent;
-
-			onResolve({
-				name: tvMarketName,
-				full_name: tvMarketName,
-				description: tvMarketName,
-				exchange: 'Drift',
-				ticker: targetMarket.config.symbol,
-				type: 'crypto',
-				session: '24x7',
-				timezone: 'Etc/UTC',
-				listed_exchange: 'Drift',
-				format: 'price',
-				pricescale: priceScale,
-				minmov: 1,
-				supported_resolutions: [...resolutions],
-				has_intraday: true,
-				intraday_multipliers: ['1', '5', '15', '60', '240'],
-			});
-
-			return;
+		} catch (e) {
+			console.error(e);
+			onError(e);
 		}
 
+		console.error(`Couldn't find market for symbol ${symbolName}`);
 		onError(`Couldn't find market for symbol ${symbolName}`);
 	}
 
