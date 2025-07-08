@@ -291,8 +291,14 @@ export type OpenPosition = {
 	feesAndFundingPnl: BN;
 	lastCumulativeFundingRate: BN;
 	openOrders: number;
+	/**
+	 * This is the unsettled pnl that is claimable. Naming is a bit confusing here.
+	 */
 	unsettledPnl: BN;
 	unsettledFundingPnl: BN;
+	/**
+	 * This is the total of unsettled pnl and unsettled funding.
+	 */
 	totalUnrealizedPnl: BN;
 	costBasis: BN;
 	realizedPnl: BN;
