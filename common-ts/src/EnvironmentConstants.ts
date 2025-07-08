@@ -32,8 +32,8 @@ export const EnvironmentConstants = {
 			},
 			{
 				label: 'Helius 1',
-				value: 'https://abigail-3etg2x-fast-mainnet.helius-rpc.com/',
-				wsValue: 'wss://abigail-3etg2x-fast-mainnet.helius-rpc.com/',
+				value: 'https://kora-8cwrc2-fast-mainnet.helius-rpc.com/',
+				wsValue: 'wss://kora-8cwrc2-fast-mainnet.helius-rpc.com/',
 				allowAdditionalConnection: true,
 			},
 		] as RpcEndpoint[],
