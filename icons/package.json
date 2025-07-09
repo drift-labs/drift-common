@@ -9,6 +9,7 @@
   ],
   "types": "dist/index.d.ts",
   "license": "MIT",
+  "sideEffects": false,
   "scripts": {
     "build-icons-script": "tsc ./src/generate.ts --esModuleInterop --skipLibCheck",
     "icons": "node ./src/generate.js",
