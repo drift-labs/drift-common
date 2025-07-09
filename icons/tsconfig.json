@@ -19,7 +19,8 @@
     "outDir": "dist",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "strict": false
+    "strict": false,
+    "types": ["node"]
   }
     
   // "compilerOptions": {

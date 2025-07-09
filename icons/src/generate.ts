@@ -89,6 +89,29 @@ exporter
 
 		const allSVGs = [...downloadedSVGsData, ...manuallyAddedSvgs];
 
+		// Check for existing components that don't match Figma SVGs
+		console.log(chalk.cyanBright('-> Checking for manually added components'));
+		console.log(chalk.cyanBright('-> (These components have either been added by hand, or may be stale - as they don\'t match the Figma SVGs)'));
+		const existingComponents = fs.existsSync(ICONS_DIRECTORY_PATH) 
+			? fs.readdirSync(ICONS_DIRECTORY_PATH)
+				.filter(file => file.endsWith('.tsx'))
+				.map(file => file.replace('.tsx', ''))
+			: [];
+
+		const generatedComponentNames = allSVGs.map(svg => toPascalCase(svg.name));
+		const manuallyAddedComponents = existingComponents.filter(component => 
+			!generatedComponentNames.includes(component)
+		);
+
+		if (manuallyAddedComponents.length > 0) {
+			console.log(chalk.yellowBright('-> Found manually added components:'));
+			manuallyAddedComponents.forEach(component => {
+				console.log(chalk.yellow(`   - ${component}`));
+			});
+		} else {
+			console.log(chalk.green('-> No manually added components found'));
+		}
+
 		// 5. Convert SVG to React Components
 		console.log(chalk.cyanBright('-> Converting to React components'));
 		allSVGs.forEach((svg) => {
