@@ -82,14 +82,16 @@ exporter
     canvas: FIGMA_CANVAS
 })
     .then(function (svgsData) { return __awaiter(void 0, void 0, void 0, function () {
-    var filteredSvgs, downloadedSVGsData, _i, downloadedSVGsData_1, svg, manuallyAddedSvgs, svgFiles, allSVGs;
+    var filteredSvgs, downloadedSVGsData, _i, downloadedSVGsData_1, svg, manuallyAddedSvgs, svgFiles, allSVGs, existingComponents, generatedComponentNames, manuallyAddedComponents;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 // 3. Download SVG files from Figma
                 console.log(chalk_1["default"].blueBright("-> Fetched ".concat(svgsData.svgs.length, " SVGs")));
                 console.log(chalk_1["default"].blueBright('-> Downloading SVG code'));
-                filteredSvgs = svgsData.svgs.filter(function (svg) { return svg.name.includes('ic/'); });
+                filteredSvgs = svgsData.svgs.filter(function (svg) {
+                    return svg.name.includes('ic/');
+                });
                 console.log(chalk_1["default"].blueBright("-> Filtered ".concat(filteredSvgs.length, " SVGs")));
                 return [4 /*yield*/, (0, utils_1.downloadSVGsData)(filteredSvgs)];
             case 1:
@@ -128,6 +130,26 @@ exporter
                     console.log(chalk_1["default"].blueBright('-> No manually added SVGs found'));
                 }
                 allSVGs = __spreadArray(__spreadArray([], downloadedSVGsData, true), manuallyAddedSvgs, true);
+                // Check for existing components that don't match Figma SVGs
+                console.log(chalk_1["default"].cyanBright('-> Checking for manually added components'));
+                existingComponents = fs_extra_1["default"].existsSync(ICONS_DIRECTORY_PATH)
+                    ? fs_extra_1["default"].readdirSync(ICONS_DIRECTORY_PATH)
+                        .filter(function (file) { return file.endsWith('.tsx'); })
+                        .map(function (file) { return file.replace('.tsx', ''); })
+                    : [];
+                generatedComponentNames = allSVGs.map(function (svg) { return (0, utils_1.toPascalCase)(svg.name); });
+                manuallyAddedComponents = existingComponents.filter(function (component) {
+                    return !generatedComponentNames.includes(component);
+                });
+                if (manuallyAddedComponents.length > 0) {
+                    console.log(chalk_1["default"].yellowBright('-> Found manually added components:'));
+                    manuallyAddedComponents.forEach(function (component) {
+                        console.log(chalk_1["default"].yellow("   - ".concat(component)));
+                    });
+                }
+                else {
+                    console.log(chalk_1["default"].green('-> No manually added components found'));
+                }
                 // 5. Convert SVG to React Components
                 console.log(chalk_1["default"].cyanBright('-> Converting to React components'));
                 allSVGs.forEach(function (svg) {
