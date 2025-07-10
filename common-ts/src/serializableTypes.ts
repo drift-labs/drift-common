@@ -863,6 +863,112 @@ export class UISerializableOrderActionRecordV2
 		);
 	}
 }
+export class UISerializablePositionHistoryRecord {
+	@autoserializeAs(String) eventType: 'PositionHistoryRecord';
+	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
+	@autoserializeAs(String) txSig: string;
+	@autoserializeAs(Number) txSigIndex: number;
+	@autoserializeAs(Number) slot: number;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	fillerReward: BigNum;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	baseAssetAmountFilled: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	quoteAssetAmountFilled: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) takerFee: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	makerRebate: BigNum;
+	@autoserializeAs(Number) referrerReward: number;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	quoteAssetAmountSurplus: BigNum;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	takerOrderBaseAssetAmount: BigNum;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	takerOrderCumulativeBaseAssetAmountFilled: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	takerOrderCumulativeQuoteAssetAmountFilled: BigNum;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	makerOrderBaseAssetAmount: BigNum;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	makerOrderCumulativeBaseAssetAmountFilled: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	makerOrderCumulativeQuoteAssetAmountFilled: BigNum;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	oraclePrice: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) makerFee: BigNum;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) action: OrderAction;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	actionExplanation: OrderActionExplanation;
+	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) filler: PublicKey;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) fillRecordId: BN; //
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) taker: PublicKey;
+	@autoserializeAs(Number) takerOrderId: number;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	takerOrderDirection: PositionDirection;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) maker: PublicKey;
+	@autoserializeAs(Number) makerOrderId: number;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns)
+	makerOrderDirection: PositionDirection;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	spotFulfillmentMethodFee: BigNum;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
+	@autoserializeAs(String) symbol: string;
+	@autoserializeAs(Number) bitFlags: number;
+
+	@autoserializeUsing(NullableQuoteBigNumSerializeAndDeserializeFns)
+	takerExistingQuoteEntryAmount: BigNum | null;
+	@autoserializeUsing(NullableMarketBasedBigNumSerializeAndDeserializeFns)
+	takerExistingBaseAssetAmount: BigNum | null;
+	@autoserializeUsing(NullableQuoteBigNumSerializeAndDeserializeFns)
+	makerExistingQuoteEntryAmount: BigNum | null;
+	@autoserializeUsing(NullableMarketBasedBigNumSerializeAndDeserializeFns)
+	makerExistingBaseAssetAmount: BigNum | null;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	baseClosedForPnl: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	userFee: BigNum;
+
+	static onDeserialized(
+		data: JsonObject,
+		instance: UISerializablePositionHistoryRecord
+	) {
+		assert(Config.initialized, 'Common Config Not Initialised');
+
+		validateEventTypeOnDeserialize<UISerializablePositionHistoryRecord>(
+			instance,
+			'PositionHistoryRecord',
+			'UISerializablePositionHistoryRecord'
+		);
+
+		const keysToUse: (keyof UISerializablePositionHistoryRecord)[] = [
+			'baseAssetAmountFilled',
+			'takerOrderBaseAssetAmount',
+			'takerOrderCumulativeBaseAssetAmountFilled',
+			'makerOrderBaseAssetAmount',
+			'makerOrderCumulativeBaseAssetAmountFilled',
+			'takerExistingBaseAssetAmount',
+			'makerExistingBaseAssetAmount',
+			'baseClosedForPnl',
+		];
+
+		handleOnDeserializedPrecision(
+			data,
+			instance,
+			getPrecisionToUse(instance.marketType, instance.marketIndex),
+			keysToUse
+		);
+	}
+
+	static onSerialized(json: JsonObject) {
+		validateEventTypeOnSerialize<UISerializablePositionHistoryRecord>(
+			json,
+			'PositionHistoryRecord',
+			'UISerializablePositionHistoryRecord'
+		);
+	}
+}
 
 export type DepositRecordEvent = Event<DepositRecord>;
 
@@ -2274,6 +2380,28 @@ export function transformDataApiOrderActionRecordToUISerializableOrderActionReco
 	return transformedRecord;
 }
 
+export function transformDataApiPositionHistoryRecordToUISerializablePositionHistoryRecord(
+	v2Record: JsonObject
+): UISerializablePositionHistoryRecord {
+	try {
+		const deserializedV2Record = Deserialize(
+			{ ...v2Record, eventType: 'PositionHistoryRecord' },
+			UISerializablePositionHistoryRecord
+		);
+		const transformedRecord: UISerializablePositionHistoryRecord = {
+			...deserializedV2Record,
+		};
+
+		return transformedRecord;
+	} catch (e) {
+		console.error(
+			'Error in transformDataApiPositionHistoryRecordToUISerializablePositionHistoryRecord',
+			e
+		);
+		throw e;
+	}
+}
+
 export function transformDataApiOrderActionRecordToSerializableOrderActionRecord(
 	v2Record: JsonObject
 ): SerializableOrderActionRecord {
@@ -2424,6 +2552,10 @@ export const Serializer = {
 			transformDataApiOrderActionRecordToSerializableOrderActionRecord(cls),
 		DataApiUIOrderActionRecord: (cls: JsonObject) =>
 			transformDataApiOrderActionRecordToUISerializableOrderActionRecord(cls),
+		DataApiUISerializablePositionHistoryRecord: (cls: JsonObject) =>
+			transformDataApiPositionHistoryRecordToUISerializablePositionHistoryRecord(
+				cls
+			),
 		Deposit: (cls: JsonObject) =>
 			Deserialize(cls, SerializableDepositRecord) as DepositRecordEvent,
 		UIDeposit: (cls: JsonObject) =>
