@@ -210,6 +210,11 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 		isEnteringHighLeverageMode
 	);
 
+	if (liqPriceBn.isNeg()) {
+		// means no liquidation price
+		return 0;
+	}
+
 	// cap liq price at the oracle price for ui
 	// ie: long order shouldn't have a liq price above oracle price
 	const cappedLiqPriceBn = capLiqPrice
@@ -219,10 +224,6 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 		: liqPriceBn;
 
 	const liqPriceBigNum = BigNum.from(cappedLiqPriceBn, PRICE_PRECISION_EXP);
-
-	if (liqPriceBigNum.isNeg()) {
-		return 0;
-	}
 
 	const liqPriceNum =
 		Math.round(liqPriceBigNum.toNum() * 10 ** precision) / 10 ** precision;
