@@ -91,7 +91,7 @@ export class UIMarket {
 	private _uiSymbols: UISymbols;
 
 	get uiSymbols() {
-		return this.uiSymbols;
+		return this._uiSymbols;
 	}
 
 	private set uiSymbols(uiSymbols: UISymbols) {
