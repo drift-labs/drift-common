@@ -63,7 +63,7 @@ export type BaseAssetDisplaySymbol = Opaque<string, 'BaseAssetDisplaySymbol'>;
  *
  * - 1KWEN-PERP => 1KWEN
  * - JitoSOL-3 => JitoSOL
- * - PT-fragSOL-15JUN25-3 => PT-fragSOL-15JUN25
+ * - PT-fragSOL-15JUN25-3 => fragSOL
  *
  * ## BaseAssetSymbol:
  * This is the symbol for the underlying asset for a market. I don't believe we will display this anywhere but we use these for example when looking up the market icon to use.
