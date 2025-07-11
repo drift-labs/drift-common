@@ -319,17 +319,14 @@ export class UIMarket {
 				case EXPONENT_POOL_ID: {
 					/*
 					Example market symbol conversions:
-					PT-fragSOL-15JUN25-3 => PT-fragSOL
-					PT-kySOL-10JUL25-3 => PT-kySOL
+					PT-fragSOL-15JUN25-3 => fragSOL
+					PT-kySOL-10JUL25-3 => kySOL
 					JitoSOL-3 => JitoSOL
 					JTO-3 => JTO
 				*/
 					return (
 						marketConfig.symbol.startsWith('PT-')
-							? marketConfig.symbol.slice(
-									0,
-									marketConfig.symbol.indexOf('-', 3)
-							  )
+							? marketConfig.symbol.split('-')[1]
 							: marketConfig.symbol.split('-')[0]
 					) as BaseAssetDisplaySymbol;
 				}
