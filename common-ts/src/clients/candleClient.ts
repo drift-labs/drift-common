@@ -175,6 +175,9 @@ class CandleFetcher {
 		this.config = config;
 	}
 
+	/**
+	 * Candles are fetched in ascending order of time (index 0 -> oldest to index n -> newest)
+	 */
 	private fetchCandlesFromApi = async (
 		fetchUrl: string
 	): Promise<JsonCandle[]> => {
@@ -424,7 +427,8 @@ class CandleFetcher {
 				return candle.ts < lastCandle.ts;
 			});
 
-			nextStartTs = lastCandle.ts; // If we are doing another loop, then the trimmed candles have all the candles except for ones with the last candle's timestamp. For the next loop we want to fetch from that timestamp;
+			const oldestCandle = fetchedCandles[0]; // first candle is the oldest
+			nextStartTs = oldestCandle.ts; // If we are doing another loop, then the trimmed candles have all the candles except for ones with the last candle's timestamp. For the next loop we want to fetch from that timestamp;
 		}
 
 		return {
