@@ -332,7 +332,7 @@ class CandleFetcher {
 		let currentStartTs = this.config.toTs; // The data API takes "startTs" as the "first timestamp you want going backwards in time" e.g. all candles will be returned with descending time backwards from the startTs
 		let hitEndTsCutoff = false;
 
-		const candles: JsonCandle[] = [];
+		let candles: JsonCandle[] = [];
 
 		while (candlesRemainingToFetch > 0) {
 			const result = await this.fetchHistoricalCandlesBatch(
@@ -345,7 +345,8 @@ class CandleFetcher {
 				break;
 			}
 
-			candles.push(...result.candlesToAdd);
+			// the deeper the loop, the older the result.candlesToAdd will be
+			candles = [...result.candlesToAdd, ...candles];
 			candlesRemainingToFetch -= result.candlesToAdd.length;
 			hitEndTsCutoff = result.hitEndTsCutoff;
 
