@@ -27,9 +27,17 @@ export function useSyncLocalStorage<T>(
 	const [storedValue, setStoredValue] = useState<T>(() => {
 		try {
 			const storage = safeLocalStorage();
-			if (!storage) return initialValue;
+			if (!storage) {
+				return initialValue;
+			}
+
 			const item = storage.getItem(key);
-			return item ? (JSON.parse(item) as T) : initialValue;
+			if (item != null) {
+				return JSON.parse(item) as T;
+			}
+
+			localStorage.setItem(key, JSON.stringify(initialValue));
+			return initialValue;
 		} catch (error) {
 			console.log(error);
 			return initialValue;
@@ -63,9 +71,15 @@ export function useSyncLocalStorage<T>(
 				if (!storage) return;
 
 				const newValue = JSON.parse(storage.getItem(key) as string) as T;
-				if (newValue !== storedValue) {
-					setStoredValue(newValue);
+
+				// If the item has been removed, reset to the initial value.
+				// Note, this will also add the item back to `localStorage` itself.
+				if (newValue == null) {
+					setValue(initialValue);
+					return;
 				}
+
+				setStoredValue(newValue);
 			} catch (error) {
 				console.log(error);
 			}
