@@ -1,0 +1,15 @@
+export const PERFORMANCE_TESTING_LABELS = {
+	totalRenders: 'Total Renders',
+	totalActualDuration: 'Total Render Duration',
+	min: 'Min Duration',
+	median: 'Median Duration',
+	max: 'Max Duration',
+	p90: '90th Percentile Duration',
+	mean: 'Mean Duration',
+	totalDurationMs: 'Total Profiling Duration',
+	totalDurationSec: 'Total Profiling Duration',
+	avgRendersPerSec: 'Average Renders Per Second',
+	avgDurationPerSec: 'Average Render Duration Per Second',
+	avgFPS: 'Avg FPS',
+	avgEventLoopLag: 'Avg Event Loop Lag',
+};
