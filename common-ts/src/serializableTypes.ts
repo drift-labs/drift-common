@@ -760,14 +760,13 @@ export class UISerializableOrderRecordV2 {
 	}
 }
 
-export class UISerializableOrderActionRecordV2
-	implements UISerializableOrderActionRecord
-{
-	@autoserializeAs(String) eventType: 'OrderActionRecord';
+export class UISerializableOrderActionRecordBase {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	fillerReward: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
@@ -798,8 +797,7 @@ export class UISerializableOrderActionRecordV2
 	@autoserializeUsing(EnumSerializeAndDeserializeFns) action: OrderAction;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
 	actionExplanation: OrderActionExplanation;
-	@autoserializeAs(Number) marketIndex: number;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
+
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) filler: PublicKey;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fillRecordId: BN; //
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) taker: PublicKey;
@@ -824,6 +822,11 @@ export class UISerializableOrderActionRecordV2
 	makerExistingQuoteEntryAmount: BigNum | null;
 	@autoserializeUsing(NullableMarketBasedBigNumSerializeAndDeserializeFns)
 	makerExistingBaseAssetAmount: BigNum | null;
+}
+
+@inheritSerialization(UISerializableOrderActionRecordBase)
+export class UISerializableOrderActionRecordV2 extends UISerializableOrderActionRecordBase {
+	@autoserializeAs(String) eventType: 'OrderActionRecord';
 
 	static onDeserialized(
 		data: JsonObject,
@@ -860,6 +863,54 @@ export class UISerializableOrderActionRecordV2
 			json,
 			'OrderActionRecord',
 			'UISerializableOrderActionRecordV2'
+		);
+	}
+}
+
+@inheritSerialization(UISerializableOrderActionRecordBase)
+export class UISerializablePositionHistoryRecord extends UISerializableOrderActionRecordBase {
+	@autoserializeAs(String) eventType: 'PositionHistoryRecord';
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	baseClosedForPnl: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	userFee: BigNum;
+
+	static onDeserialized(
+		data: JsonObject,
+		instance: UISerializablePositionHistoryRecord
+	) {
+		assert(Config.initialized, 'Common Config Not Initialised');
+
+		validateEventTypeOnDeserialize<UISerializablePositionHistoryRecord>(
+			instance,
+			'PositionHistoryRecord',
+			'UISerializablePositionHistoryRecord'
+		);
+
+		const keysToUse: (keyof UISerializablePositionHistoryRecord)[] = [
+			'baseAssetAmountFilled',
+			'takerOrderBaseAssetAmount',
+			'takerOrderCumulativeBaseAssetAmountFilled',
+			'makerOrderBaseAssetAmount',
+			'makerOrderCumulativeBaseAssetAmountFilled',
+			'takerExistingBaseAssetAmount',
+			'makerExistingBaseAssetAmount',
+			'baseClosedForPnl',
+		];
+
+		handleOnDeserializedPrecision(
+			data,
+			instance,
+			getPrecisionToUse(instance.marketType, instance.marketIndex),
+			keysToUse
+		);
+	}
+
+	static onSerialized(json: JsonObject) {
+		validateEventTypeOnSerialize<UISerializablePositionHistoryRecord>(
+			json,
+			'PositionHistoryRecord',
+			'UISerializablePositionHistoryRecord'
 		);
 	}
 }
@@ -2274,6 +2325,28 @@ export function transformDataApiOrderActionRecordToUISerializableOrderActionReco
 	return transformedRecord;
 }
 
+export function transformDataApiPositionHistoryRecordToUISerializablePositionHistoryRecord(
+	v2Record: JsonObject
+): UISerializablePositionHistoryRecord {
+	try {
+		const deserializedV2Record = Deserialize(
+			{ ...v2Record, eventType: 'PositionHistoryRecord' },
+			UISerializablePositionHistoryRecord
+		);
+		const transformedRecord: UISerializablePositionHistoryRecord = {
+			...deserializedV2Record,
+		};
+
+		return transformedRecord;
+	} catch (e) {
+		console.error(
+			'Error in transformDataApiPositionHistoryRecordToUISerializablePositionHistoryRecord',
+			e
+		);
+		throw e;
+	}
+}
+
 export function transformDataApiOrderActionRecordToSerializableOrderActionRecord(
 	v2Record: JsonObject
 ): SerializableOrderActionRecord {
@@ -2424,6 +2497,10 @@ export const Serializer = {
 			transformDataApiOrderActionRecordToSerializableOrderActionRecord(cls),
 		DataApiUIOrderActionRecord: (cls: JsonObject) =>
 			transformDataApiOrderActionRecordToUISerializableOrderActionRecord(cls),
+		DataApiUISerializablePositionHistoryRecord: (cls: JsonObject) =>
+			transformDataApiPositionHistoryRecordToUISerializablePositionHistoryRecord(
+				cls
+			),
 		Deposit: (cls: JsonObject) =>
 			Deserialize(cls, SerializableDepositRecord) as DepositRecordEvent,
 		UIDeposit: (cls: JsonObject) =>
