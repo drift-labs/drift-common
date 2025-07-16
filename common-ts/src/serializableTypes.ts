@@ -760,14 +760,13 @@ export class UISerializableOrderRecordV2 {
 	}
 }
 
-export class UISerializableOrderActionRecordV2
-	implements UISerializableOrderActionRecord
-{
-	@autoserializeAs(String) eventType: 'OrderActionRecord';
+export class UISerializableOrderActionRecordBase {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	fillerReward: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
@@ -798,8 +797,7 @@ export class UISerializableOrderActionRecordV2
 	@autoserializeUsing(EnumSerializeAndDeserializeFns) action: OrderAction;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
 	actionExplanation: OrderActionExplanation;
-	@autoserializeAs(Number) marketIndex: number;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
+
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) filler: PublicKey;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fillRecordId: BN; //
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) taker: PublicKey;
@@ -824,6 +822,11 @@ export class UISerializableOrderActionRecordV2
 	makerExistingQuoteEntryAmount: BigNum | null;
 	@autoserializeUsing(NullableMarketBasedBigNumSerializeAndDeserializeFns)
 	makerExistingBaseAssetAmount: BigNum | null;
+}
+
+@inheritSerialization(UISerializableOrderActionRecordBase)
+export class UISerializableOrderActionRecordV2 extends UISerializableOrderActionRecordBase {
+	@autoserializeAs(String) eventType: 'OrderActionRecord';
 
 	static onDeserialized(
 		data: JsonObject,
@@ -863,68 +866,10 @@ export class UISerializableOrderActionRecordV2
 		);
 	}
 }
-export class UISerializablePositionHistoryRecord {
-	@autoserializeAs(String) eventType: 'PositionHistoryRecord';
-	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	fillerReward: BigNum;
-	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	baseAssetAmountFilled: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	quoteAssetAmountFilled: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) takerFee: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	makerRebate: BigNum;
-	@autoserializeAs(Number) referrerReward: number;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	quoteAssetAmountSurplus: BigNum;
-	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	takerOrderBaseAssetAmount: BigNum;
-	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	takerOrderCumulativeBaseAssetAmountFilled: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	takerOrderCumulativeQuoteAssetAmountFilled: BigNum;
-	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	makerOrderBaseAssetAmount: BigNum;
-	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	makerOrderCumulativeBaseAssetAmountFilled: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	makerOrderCumulativeQuoteAssetAmountFilled: BigNum;
-	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
-	oraclePrice: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) makerFee: BigNum;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) action: OrderAction;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	actionExplanation: OrderActionExplanation;
-	@autoserializeAs(Number) marketIndex: number;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) filler: PublicKey;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) fillRecordId: BN; //
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) taker: PublicKey;
-	@autoserializeAs(Number) takerOrderId: number;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	takerOrderDirection: PositionDirection;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) maker: PublicKey;
-	@autoserializeAs(Number) makerOrderId: number;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	makerOrderDirection: PositionDirection;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	spotFulfillmentMethodFee: BigNum;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
-	@autoserializeAs(String) symbol: string;
-	@autoserializeAs(Number) bitFlags: number;
 
-	@autoserializeUsing(NullableQuoteBigNumSerializeAndDeserializeFns)
-	takerExistingQuoteEntryAmount: BigNum | null;
-	@autoserializeUsing(NullableMarketBasedBigNumSerializeAndDeserializeFns)
-	takerExistingBaseAssetAmount: BigNum | null;
-	@autoserializeUsing(NullableQuoteBigNumSerializeAndDeserializeFns)
-	makerExistingQuoteEntryAmount: BigNum | null;
-	@autoserializeUsing(NullableMarketBasedBigNumSerializeAndDeserializeFns)
-	makerExistingBaseAssetAmount: BigNum | null;
+@inheritSerialization(UISerializableOrderActionRecordBase)
+export class UISerializablePositionHistoryRecord extends UISerializableOrderActionRecordBase {
+	@autoserializeAs(String) eventType: 'PositionHistoryRecord';
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
 	baseClosedForPnl: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
