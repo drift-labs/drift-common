@@ -180,6 +180,20 @@ const SpotMarketConfigToTVMarketInfo = (
 	};
 };
 
+interface FilledOrderData {
+	takerOrderDirection: string;
+	baseAssetAmountFilled: string | number;
+	quoteAssetAmountFilled: string | number;
+	ts: number;
+}
+
+interface TvAppContextProvider {
+	getFilledOrdersData(
+		startDate: number,
+		endDate: number
+	): Promise<FilledOrderData[]>;
+}
+
 export class DriftTvFeed {
 	private env: UIEnv;
 	private candleType: CandleType;
@@ -188,7 +202,7 @@ export class DriftTvFeed {
 	private onResetCache: () => void;
 	private perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
-	private tvAppContextProvider: any;
+	private tvAppContextProvider: TvAppContextProvider | undefined;
 
 	constructor(
 		env: UIEnv,
@@ -196,7 +210,7 @@ export class DriftTvFeed {
 		driftClient: DriftClient,
 		perpMarketConfigs: PerpMarketConfig[],
 		spotMarketConfigs: SpotMarketConfig[],
-		tvAppContextProvider: any
+		tvAppContextProvider: TvAppContextProvider | undefined
 	) {
 		this.env = env;
 		this.candleType = candleType;
@@ -368,21 +382,20 @@ export class DriftTvFeed {
 		};
 	};
 	// https://www.tradingview.com/charting-library-docs/latest/api/interfaces/Charting_Library.Mark/ reference for marks type
-	async getMarks(
-		_symbolInfo,
-		_startDate,
-		_endDate,
-		onDataCallback,
-		_resolution
-	) {
-		const orderHistory =
-			await this.tvAppContextProvider.getShortTermFilledOrdersData();
+	async getMarks(_symbolInfo, startDate, endDate, onDataCallback, _resolution) {
+		if (!this.tvAppContextProvider) {
+			return;
+		}
+		const orderHistory = await this.tvAppContextProvider.getFilledOrdersData(
+			startDate,
+			endDate
+		);
 
 		const tradeMarks = orderHistory.map((trade, index) => {
 			const isLong = trade.takerOrderDirection === 'long';
 			const color = isLong ? '#5DD5A0' : '#FF615C';
-			const baseAmount = parseFloat(trade.baseAssetAmountFilled);
-			const quoteAmount = parseFloat(trade.quoteAssetAmountFilled);
+			const baseAmount = Number(trade.baseAssetAmountFilled);
+			const quoteAmount = Number(trade.quoteAssetAmountFilled);
 			const avgPrice = quoteAmount / baseAmount;
 
 			return {
