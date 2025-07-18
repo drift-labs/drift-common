@@ -380,7 +380,7 @@ export class DriftTvFeed {
 
 		const tradeMarks = orderHistory.map((trade, index) => {
 			const isLong = trade.takerOrderDirection === 'long';
-			const color = isLong ? 'green' : 'red';
+			const color = isLong ? '#5DD5A0' : '#FF615C';
 			const baseAmount = parseFloat(trade.baseAssetAmountFilled);
 			const quoteAmount = parseFloat(trade.quoteAssetAmountFilled);
 			const avgPrice = quoteAmount / baseAmount;
@@ -388,11 +388,16 @@ export class DriftTvFeed {
 			return {
 				id: index + 1,
 				time: trade.ts,
-				color: color,
-				text: `${isLong ? 'long' : 'short'} at $${avgPrice.toFixed(2)}`,
+				color: {
+					background: color,
+					border: '#152A44',
+				},
+				borderWidth: 1,
+				hoveredBorderWidth: 1,
+				text: `${isLong ? 'Long' : 'Short'} at $${avgPrice.toFixed(2)}`,
 				label: isLong ? 'B' : 'S',
 				labelFontColor: '#000000',
-				minSize: 12, // Size based on trade amount
+				minSize: 16,
 			};
 		});
 
