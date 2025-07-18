@@ -68,7 +68,7 @@ const DATAFEED_CONFIG = {
 	exchanges: [],
 	supported_resolutions: [...resolutions],
 	currency_codes: [],
-	supports_marks: false,
+	supports_marks: true,
 	supports_time: false,
 	supports_timescale_marks: false,
 	symbols_types: [],
@@ -180,6 +180,20 @@ const SpotMarketConfigToTVMarketInfo = (
 	};
 };
 
+interface FilledOrderData {
+	takerOrderDirection: string;
+	baseAssetAmountFilled: string | number;
+	quoteAssetAmountFilled: string | number;
+	ts: number;
+}
+
+interface TvAppContextProvider {
+	getFilledOrdersData(
+		startDate: number,
+		endDate: number
+	): Promise<FilledOrderData[]>;
+}
+
 export class DriftTvFeed {
 	private env: UIEnv;
 	private candleType: CandleType;
@@ -188,13 +202,15 @@ export class DriftTvFeed {
 	private onResetCache: () => void;
 	private perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
+	private tvAppContextProvider: TvAppContextProvider | undefined;
 
 	constructor(
 		env: UIEnv,
 		candleType: CandleType,
 		driftClient: DriftClient,
 		perpMarketConfigs: PerpMarketConfig[],
-		spotMarketConfigs: SpotMarketConfig[]
+		spotMarketConfigs: SpotMarketConfig[],
+		tvAppContextProvider: TvAppContextProvider | undefined
 	) {
 		this.env = env;
 		this.candleType = candleType;
@@ -202,6 +218,7 @@ export class DriftTvFeed {
 		this.driftClient = driftClient;
 		this.perpMarketConfigs = perpMarketConfigs;
 		this.spotMarketConfigs = spotMarketConfigs;
+		this.tvAppContextProvider = tvAppContextProvider;
 	}
 
 	public resetCache() {
@@ -265,6 +282,7 @@ export class DriftTvFeed {
 	}
 
 	resolveSymbol(symbolName: string, onResolve, onError): void {
+		console.log('resolveSymbol', symbolName);
 		const targetMarket = findMarketBySymbol(
 			symbolName,
 			this.perpMarketConfigs,
@@ -363,6 +381,41 @@ export class DriftTvFeed {
 			to: formattedToTs,
 		};
 	};
+	// https://www.tradingview.com/charting-library-docs/latest/api/interfaces/Charting_Library.Mark/ reference for marks type
+	async getMarks(_symbolInfo, startDate, endDate, onDataCallback, _resolution) {
+		if (!this.tvAppContextProvider) {
+			return;
+		}
+		const orderHistory = await this.tvAppContextProvider.getFilledOrdersData(
+			startDate,
+			endDate
+		);
+
+		const tradeMarks = orderHistory.map((trade, index) => {
+			const isLong = trade.takerOrderDirection === 'long';
+			const color = isLong ? '#5DD5A0' : '#FF615C';
+			const baseAmount = Number(trade.baseAssetAmountFilled);
+			const quoteAmount = Number(trade.quoteAssetAmountFilled);
+			const avgPrice = quoteAmount / baseAmount;
+
+			return {
+				id: index + 1,
+				time: trade.ts,
+				color: {
+					background: color,
+					border: '#152A44',
+				},
+				borderWidth: 1,
+				hoveredBorderWidth: 1,
+				text: `${isLong ? 'Long' : 'Short'} at $${avgPrice.toFixed(2)}`,
+				label: isLong ? 'B' : 'S',
+				labelFontColor: '#000000',
+				minSize: 16,
+			};
+		});
+
+		onDataCallback(tradeMarks);
+	}
 
 	async getBars(
 		symbolInfo: {
