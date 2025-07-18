@@ -68,7 +68,7 @@ const DATAFEED_CONFIG = {
 	exchanges: [],
 	supported_resolutions: [...resolutions],
 	currency_codes: [],
-	supports_marks: false,
+	supports_marks: true,
 	supports_time: false,
 	supports_timescale_marks: false,
 	symbols_types: [],
@@ -188,13 +188,15 @@ export class DriftTvFeed {
 	private onResetCache: () => void;
 	private perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
+	private tvAppContextProvider: any;
 
 	constructor(
 		env: UIEnv,
 		candleType: CandleType,
 		driftClient: DriftClient,
 		perpMarketConfigs: PerpMarketConfig[],
-		spotMarketConfigs: SpotMarketConfig[]
+		spotMarketConfigs: SpotMarketConfig[],
+		tvAppContextProvider: any
 	) {
 		this.env = env;
 		this.candleType = candleType;
@@ -202,6 +204,7 @@ export class DriftTvFeed {
 		this.driftClient = driftClient;
 		this.perpMarketConfigs = perpMarketConfigs;
 		this.spotMarketConfigs = spotMarketConfigs;
+		this.tvAppContextProvider = tvAppContextProvider;
 	}
 
 	public resetCache() {
@@ -265,6 +268,7 @@ export class DriftTvFeed {
 	}
 
 	resolveSymbol(symbolName: string, onResolve, onError): void {
+		console.log('resolveSymbol', symbolName);
 		const targetMarket = findMarketBySymbol(
 			symbolName,
 			this.perpMarketConfigs,
@@ -363,6 +367,37 @@ export class DriftTvFeed {
 			to: formattedToTs,
 		};
 	};
+	// https://www.tradingview.com/charting-library-docs/latest/api/interfaces/Charting_Library.Mark/ reference for marks type
+	async getMarks(
+		_symbolInfo,
+		_startDate,
+		_endDate,
+		onDataCallback,
+		_resolution
+	) {
+		const orderHistory =
+			await this.tvAppContextProvider.getShortTermFilledOrdersData();
+
+		const tradeMarks = orderHistory.map((trade, index) => {
+			const isLong = trade.takerOrderDirection === 'long';
+			const color = isLong ? 'green' : 'red';
+			const baseAmount = parseFloat(trade.baseAssetAmountFilled);
+			const quoteAmount = parseFloat(trade.quoteAssetAmountFilled);
+			const avgPrice = quoteAmount / baseAmount;
+
+			return {
+				id: index + 1,
+				time: trade.ts,
+				color: color,
+				text: `${isLong ? 'long' : 'short'} at $${avgPrice.toFixed(2)}`,
+				label: isLong ? 'B' : 'S',
+				labelFontColor: '#000000',
+				minSize: 12, // Size based on trade amount
+			};
+		});
+
+		onDataCallback(tradeMarks);
+	}
 
 	async getBars(
 		symbolInfo: {
