@@ -6,27 +6,30 @@ const LOCAL_STORAGE_EVENT_TYPE = 'local-storage';
 
 /**
  * This hook syncs the value of a key in localStorage, across all usage of this hook with the same key.
- *
- * @template T - The type of the value stored in localStorage.
- * @param {string} key - The key used to store the value in localStorage.
- * @param {T} initialValue - The initial value to be stored in localStorage if the key does not exist.
- * @returns {[T, (value: SetValue<T>) => void]} - An array containing the stored value and a function to update the value.
  */
+
+// If `T` and an initial value is provided, the return value should be `T`.
+// This is like `useState<'off' | 'on'>('off')`
+// Note, if `T` is not provided, it is inferred from the initial value: e.g. `useState('off')`
 export function useSyncLocalStorage<T>(
 	key: string,
 	initialValue: T
-): [T, (value: SetValue<T>) => void] {
-	// Function to safely access localStorage
-	const safeLocalStorage = () => {
-		if (typeof window !== 'undefined') {
-			return window.localStorage;
-		}
-		return undefined; // or a mock localStorage object, if needed
-	};
+): [T, (value: SetValue<T>) => void];
 
-	const [storedValue, setStoredValue] = useState<T>(() => {
+// When only `T` is provided, return value should be `T | undefined`.
+// This is like `useState<'off' | 'on'>()`
+export function useSyncLocalStorage<T>(
+	key: string
+): [T | undefined, (value: SetValue<T | undefined>) => void];
+
+export function useSyncLocalStorage<T>(
+	key: string,
+	initialValue?: T
+): [T | undefined, (value: SetValue<T | undefined>) => void] {
+	const storage = typeof window !== 'undefined' ? localStorage : undefined;
+
+	const [storedValue, setStoredValue] = useState<T | undefined>(() => {
 		try {
-			const storage = safeLocalStorage();
 			if (!storage) {
 				return initialValue;
 			}
@@ -36,7 +39,11 @@ export function useSyncLocalStorage<T>(
 				return JSON.parse(item) as T;
 			}
 
-			localStorage.setItem(key, JSON.stringify(initialValue));
+			if (initialValue != null) {
+				storage.setItem(key, JSON.stringify(initialValue));
+				return initialValue as T;
+			}
+
 			return initialValue;
 		} catch (error) {
 			console.log(error);
@@ -45,37 +52,52 @@ export function useSyncLocalStorage<T>(
 	});
 
 	const setValue = useCallback(
-		(value: SetValue<T>) => {
+		(value: SetValue<T | undefined>) => {
 			try {
-				const storage = safeLocalStorage();
-				if (!storage) return;
+				if (!storage) {
+					return;
+				}
 
 				const valueToStore =
 					value instanceof Function ? value(storedValue) : value;
 				setStoredValue(valueToStore);
-				storage.setItem(key, JSON.stringify(valueToStore));
-				if (typeof window !== 'undefined') {
-					window.dispatchEvent(new Event(LOCAL_STORAGE_EVENT_TYPE));
+
+				// Store the value in `localStorage` if it's not nullish. Else, remove it.
+				if (valueToStore != null) {
+					storage.setItem(key, JSON.stringify(valueToStore));
+				} else {
+					storage.removeItem(key);
 				}
+
+				window.dispatchEvent(new Event(LOCAL_STORAGE_EVENT_TYPE));
 			} catch (error) {
 				console.log(error);
 			}
 		},
-		[storedValue]
+		[storedValue, storage]
 	);
+
+	const resetValue = useCallback(() => {
+		if (initialValue != null) {
+			storage?.setItem(key, JSON.stringify(initialValue));
+		}
+
+		setStoredValue(initialValue);
+	}, [initialValue, key, storage]);
 
 	useEffect(() => {
 		const handleStorageChange = () => {
 			try {
-				const storage = safeLocalStorage();
-				if (!storage) return;
+				if (!storage) {
+					return;
+				}
 
 				const newValue = JSON.parse(storage.getItem(key) as string) as T;
 
-				// If the item has been removed, reset to the initial value.
-				// Note, this will also add the item back to `localStorage` itself.
+				// If the item has been removed, reset to the initial value. Note, if the
+				// initial value isn't nullish, the item will be added back to `localStorage`.
 				if (newValue == null) {
-					setValue(initialValue);
+					resetValue();
 					return;
 				}
 
@@ -85,16 +107,12 @@ export function useSyncLocalStorage<T>(
 			}
 		};
 
-		if (typeof window !== 'undefined') {
-			window.addEventListener(LOCAL_STORAGE_EVENT_TYPE, handleStorageChange);
-			return () => {
-				window.removeEventListener(
-					LOCAL_STORAGE_EVENT_TYPE,
-					handleStorageChange
-				);
-			};
-		}
-	}, [key, storedValue]);
+		window.addEventListener(LOCAL_STORAGE_EVENT_TYPE, handleStorageChange);
+
+		return () => {
+			window.removeEventListener(LOCAL_STORAGE_EVENT_TYPE, handleStorageChange);
+		};
+	}, [key, storedValue, storage]);
 
 	return [storedValue, setValue];
 }
