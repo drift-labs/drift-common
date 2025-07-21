@@ -282,7 +282,6 @@ export class DriftTvFeed {
 	}
 
 	resolveSymbol(symbolName: string, onResolve, onError): void {
-		console.log('resolveSymbol', symbolName);
 		const targetMarket = findMarketBySymbol(
 			symbolName,
 			this.perpMarketConfigs,
