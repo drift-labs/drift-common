@@ -211,7 +211,7 @@ export class DriftTvFeed {
 		driftClient: DriftClient,
 		perpMarketConfigs: PerpMarketConfig[],
 		spotMarketConfigs: SpotMarketConfig[],
-		tvAppContextProvider: TvAppContextProvider | undefined
+		tvAppContextProvider?: TvAppContextProvider
 	) {
 		this.env = env;
 		this.candleType = candleType;
