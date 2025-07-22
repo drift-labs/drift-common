@@ -5,7 +5,7 @@ import {
 	PRICE_PRECISION_EXP,
 	SpotMarketConfig,
 } from '@drift-labs/sdk';
-import { CandleType, JsonCandle, MarketId } from '../types';
+import { CandleType, JsonCandle, JsonTrade, MarketId } from '../types';
 import { UIEnv } from '../types/UIEnv';
 import { CANDLE_UTILS } from '../utils/candleUtils';
 import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
@@ -180,19 +180,8 @@ const SpotMarketConfigToTVMarketInfo = (
 	};
 };
 
-interface FilledOrderData {
-	takerOrderDirection: string;
-	baseAssetAmountFilled: string | number;
-	quoteAssetAmountFilled: string | number;
-	ts: number;
-	txSig: string;
-}
-
 interface TvAppContextProvider {
-	getFilledOrdersData(
-		startDate: number,
-		endDate: number
-	): Promise<FilledOrderData[]>;
+	getFilledOrdersData(startDate: number, endDate: number): Promise<JsonTrade[]>;
 }
 
 export class DriftTvFeed {
