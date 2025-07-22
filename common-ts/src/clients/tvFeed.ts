@@ -185,6 +185,7 @@ interface FilledOrderData {
 	baseAssetAmountFilled: string | number;
 	quoteAssetAmountFilled: string | number;
 	ts: number;
+	txSig: string;
 }
 
 interface TvAppContextProvider {
@@ -390,15 +391,28 @@ export class DriftTvFeed {
 			endDate
 		);
 
-		const tradeMarks = orderHistory.map((trade, index) => {
+		const tradeMarks = orderHistory.map((trade) => {
 			const isLong = trade.takerOrderDirection === 'long';
 			const color = isLong ? '#5DD5A0' : '#FF615C';
 			const baseAmount = Number(trade.baseAssetAmountFilled);
 			const quoteAmount = Number(trade.quoteAssetAmountFilled);
 			const avgPrice = quoteAmount / baseAmount;
 
+			const formatPrice = (price: number): string => {
+				if (price >= 1) {
+					return price.toLocaleString('en-US', {
+						minimumFractionDigits: 2,
+						maximumFractionDigits: 2,
+					});
+				} else {
+					if (price === 0) return '0.0000';
+					if (price < 0.00001) return '<0.00001';
+					return price.toFixed(4);
+				}
+			};
+
 			return {
-				id: index + 1,
+				id: trade.txSig,
 				time: trade.ts,
 				color: {
 					background: color,
@@ -406,7 +420,7 @@ export class DriftTvFeed {
 				},
 				borderWidth: 1,
 				hoveredBorderWidth: 1,
-				text: `${isLong ? 'Long' : 'Short'} at $${avgPrice.toFixed(2)}`,
+				text: `${isLong ? 'Long' : 'Short'} at $${formatPrice(avgPrice)}`,
 				label: isLong ? 'B' : 'S',
 				labelFontColor: '#000000',
 				minSize: 16,
