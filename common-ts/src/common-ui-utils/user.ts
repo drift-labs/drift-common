@@ -133,7 +133,6 @@ const getOpenPositionData = (
 					BASE_PRECISION_EXP
 				),
 				exitPrice: BigNum.from(markPrice, PRICE_PRECISION_EXP),
-				slippageTolerance: 0,
 				takerFeeBps: 0,
 			}).estimatedProfit.shiftTo(QUOTE_PRECISION_EXP).val;
 
@@ -154,7 +153,6 @@ const getOpenPositionData = (
 					BASE_PRECISION_EXP
 				),
 				exitPrice: BigNum.from(oraclePrice, PRICE_PRECISION_EXP),
-				slippageTolerance: 0,
 				takerFeeBps: 0,
 			}).estimatedProfit.shiftTo(QUOTE_PRECISION_EXP).val;
 

@@ -48,7 +48,6 @@ const calculatePotentialProfit = (props: {
 	 * Either the user's limit price (for limit orders) or the estimated exit price (for market orders)
 	 */
 	exitPrice: BigNum;
-	slippageTolerance: number;
 	takerFeeBps: number;
 	isMarketOrder?: boolean;
 }): {
@@ -92,15 +91,6 @@ const calculatePotentialProfit = (props: {
 	notionalSizeAtExit = baseSizeBeingClosed.mul(
 		props.exitPrice.shiftTo(baseSizeBeingClosed.precision)
 	);
-
-	// For market orders, include worst-case slippage tolerance
-	if (props.isMarketOrder) {
-		const notionalSlippageAmount = notionalSizeAtExit.scale(
-			props.slippageTolerance / 100,
-			1
-		);
-		notionalSizeAtExit = notionalSizeAtExit.sub(notionalSlippageAmount);
-	}
 
 	if (isClosingLong) {
 		estimatedProfitBeforeFees = notionalSizeAtExit.sub(notionalSizeAtEntry);
