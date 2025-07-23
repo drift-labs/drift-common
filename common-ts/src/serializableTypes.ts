@@ -324,7 +324,7 @@ const handleOnDeserializedPrecision = <T>(
  * @param className The name of the class being deserialized (for error messages)
  */
 function validateEventTypeOnDeserialize<
-	InstanceType extends { eventType?: string }
+	InstanceType extends { eventType?: string },
 >(
 	instance: InstanceType,
 	expectedEventType: InstanceType extends { eventType: infer EventType }
@@ -351,7 +351,7 @@ function validateEventTypeOnDeserialize<
  * @param className The name of the class being serialized (for error messages)
  */
 function validateEventTypeOnSerialize<
-	InstanceType extends { eventType?: string }
+	InstanceType extends { eventType?: string },
 >(
 	json: JsonObject,
 	expectedEventType: InstanceType extends { eventType: infer E } ? E : never,

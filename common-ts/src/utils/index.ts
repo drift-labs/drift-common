@@ -158,8 +158,8 @@ const getChronologicalValueForOrderAction = (action: OrderAction) => {
 	return matchEnum(action, OrderAction.PLACE)
 		? 0
 		: matchEnum(action, OrderAction.FILL)
-		? 1
-		: 2;
+			? 1
+			: 2;
 };
 
 /**
@@ -786,7 +786,7 @@ function calculateVaultNextApr(
 			spotMarket.insuranceFund.totalFactor > 0 &&
 			spotMarket.insuranceFund.userFactor > 0
 				? spotMarket.insuranceFund.userFactor /
-				  spotMarket.insuranceFund.totalFactor
+					spotMarket.insuranceFund.totalFactor
 				: 0;
 
 		// Settle periods from on-chain data
@@ -859,7 +859,7 @@ const syncGetIfStakingVaultApr = (
 	const userRevenueFactor =
 		spotMarket.insuranceFund.totalFactor > 0
 			? spotMarket.insuranceFund.userFactor /
-			  spotMarket.insuranceFund.totalFactor
+				spotMarket.insuranceFund.totalFactor
 			: 0;
 
 	const revPoolTokensNum = BigNum.from(

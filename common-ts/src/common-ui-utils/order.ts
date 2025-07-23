@@ -68,8 +68,8 @@ const getOrderLabelFromOrderDetails = (
 					? 'Trigger Market'
 					: UI_ORDER_TYPES.stopMarket.label
 				: matchEnum(orderDetails.direction, PositionDirection.SHORT)
-				? UI_ORDER_TYPES.takeProfitMarket.label
-				: UI_ORDER_TYPES.stopMarket.label;
+					? UI_ORDER_TYPES.takeProfitMarket.label
+					: UI_ORDER_TYPES.stopMarket.label;
 		} else {
 			return matchEnum(
 				orderDetails.existingPositionDirection,
@@ -79,8 +79,8 @@ const getOrderLabelFromOrderDetails = (
 					? 'Trigger Market'
 					: UI_ORDER_TYPES.takeProfitMarket.label
 				: matchEnum(orderDetails.direction, PositionDirection.SHORT)
-				? UI_ORDER_TYPES.stopMarket.label
-				: UI_ORDER_TYPES.takeProfitMarket.label;
+					? UI_ORDER_TYPES.stopMarket.label
+					: UI_ORDER_TYPES.takeProfitMarket.label;
 		}
 	}
 
@@ -114,8 +114,8 @@ const getOrderLabelFromOrderDetails = (
 			)
 				? UI_ORDER_TYPES.stopLimit.label
 				: matchEnum(orderDetails.direction, PositionDirection.SHORT)
-				? 'Stop Limit'
-				: UI_ORDER_TYPES.takeProfitLimit.label;
+					? 'Stop Limit'
+					: UI_ORDER_TYPES.takeProfitLimit.label;
 		}
 	}
 

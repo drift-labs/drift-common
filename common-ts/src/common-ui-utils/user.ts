@@ -58,7 +58,7 @@ const getOpenPositionData = (
 
 			// mark price fetched with a callback so we don't need extra dlob server calls. fallback to oracle
 			let markPrice = markPriceCallback
-				? markPriceCallback(position.marketIndex) ?? oraclePriceData.price
+				? (markPriceCallback(position.marketIndex) ?? oraclePriceData.price)
 				: oraclePriceData.price;
 
 			const perpPositionWithLpSettle = user.getPerpPositionWithLPSettle(

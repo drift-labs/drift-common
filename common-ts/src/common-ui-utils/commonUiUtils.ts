@@ -235,7 +235,7 @@ const createThrowawayIWallet = (walletPubKey?: PublicKey) => {
 		? new Keypair({
 				publicKey: walletPubKey.toBytes(),
 				secretKey: new Keypair().publicKey.toBytes(),
-		  })
+			})
 		: new Keypair();
 
 	const newWallet: IWallet = {
