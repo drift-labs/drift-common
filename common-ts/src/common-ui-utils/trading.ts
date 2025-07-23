@@ -49,6 +49,7 @@ const calculatePotentialProfit = (props: {
 	 */
 	exitPrice: BigNum;
 	takerFeeBps: number;
+	slippageTolerance?: number;
 	isMarketOrder?: boolean;
 }): {
 	estimatedProfit: BigNum;
