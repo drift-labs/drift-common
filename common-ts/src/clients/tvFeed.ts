@@ -180,7 +180,7 @@ const SpotMarketConfigToTVMarketInfo = (
 	};
 };
 
-interface TvAppContextProvider {
+interface TvAppTradeDataManager {
 	getFilledOrdersData(startDate: number, endDate: number): Promise<JsonTrade[]>;
 }
 
@@ -192,7 +192,7 @@ export class DriftTvFeed {
 	private onResetCache: () => void;
 	private perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
-	private tvAppContextProvider: TvAppContextProvider | undefined;
+	private tvAppTradeDataManager: TvAppTradeDataManager | undefined;
 
 	constructor(
 		env: UIEnv,
@@ -200,7 +200,7 @@ export class DriftTvFeed {
 		driftClient: DriftClient,
 		perpMarketConfigs: PerpMarketConfig[],
 		spotMarketConfigs: SpotMarketConfig[],
-		tvAppContextProvider?: TvAppContextProvider
+		tvAppTradeDataManager?: TvAppTradeDataManager
 	) {
 		this.env = env;
 		this.candleType = candleType;
@@ -208,7 +208,7 @@ export class DriftTvFeed {
 		this.driftClient = driftClient;
 		this.perpMarketConfigs = perpMarketConfigs;
 		this.spotMarketConfigs = spotMarketConfigs;
-		this.tvAppContextProvider = tvAppContextProvider;
+		this.tvAppTradeDataManager = tvAppTradeDataManager;
 	}
 
 	public resetCache() {
@@ -372,10 +372,10 @@ export class DriftTvFeed {
 	};
 	// https://www.tradingview.com/charting-library-docs/latest/api/interfaces/Charting_Library.Mark/ reference for marks type
 	async getMarks(_symbolInfo, startDate, endDate, onDataCallback, _resolution) {
-		if (!this.tvAppContextProvider) {
+		if (!this.tvAppTradeDataManager) {
 			return;
 		}
-		const orderHistory = await this.tvAppContextProvider.getFilledOrdersData(
+		const orderHistory = await this.tvAppTradeDataManager.getFilledOrdersData(
 			startDate,
 			endDate
 		);
