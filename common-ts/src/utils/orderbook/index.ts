@@ -1,13 +1,20 @@
 import { MarketType, OraclePriceData, L2OrderBook, BN } from '@drift-labs/sdk';
 
-export type L2WithOracle = L2OrderBook & { oracleData: OraclePriceData };
+export interface L2WithOracle extends L2OrderBook {
+	oracleData: OraclePriceData;
+	markPrice: BN;
+	bestBidPrice: BN;
+	bestAskPrice: BN;
+	spreadPct: BN;
+	spreadQuote: BN;
+}
 
-export type L2WithOracleAndMarketData = L2WithOracle & {
+export interface L2WithOracleAndMarketData extends L2WithOracle {
 	marketSlot: number;
 	marketIndex: number;
 	marketName: string;
 	marketType?: MarketType;
-};
+}
 
 export type RawL2Output = {
 	marketIndex: number;
@@ -37,6 +44,11 @@ export type RawL2Output = {
 		twapConfidence?: string;
 		maxPrice?: string;
 	};
+	markPrice: string;
+	bestBidPrice: string;
+	bestAskPrice: string;
+	spreadPct: string;
+	spreadQuote: string;
 	slot?: number;
 };
 
@@ -98,5 +110,10 @@ export const deserializeL2Response = (
 		marketType: serializedOrderbook.marketType,
 		marketIndex: serializedOrderbook.marketIndex,
 		marketName: serializedOrderbook.marketName,
+		markPrice: new BN(serializedOrderbook.markPrice),
+		bestBidPrice: new BN(serializedOrderbook.bestBidPrice),
+		bestAskPrice: new BN(serializedOrderbook.bestAskPrice),
+		spreadPct: new BN(serializedOrderbook.spreadPct),
+		spreadQuote: new BN(serializedOrderbook.spreadQuote),
 	};
 };

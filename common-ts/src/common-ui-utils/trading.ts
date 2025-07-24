@@ -93,15 +93,6 @@ const calculatePotentialProfit = (props: {
 		props.exitPrice.shiftTo(baseSizeBeingClosed.precision)
 	);
 
-	// For market orders, include worst-case slippage tolerance
-	if (props.isMarketOrder && props.slippageTolerance) {
-		const notionalSlippageAmount = notionalSizeAtExit.scale(
-			props.slippageTolerance / 100,
-			1
-		);
-		notionalSizeAtExit = notionalSizeAtExit.sub(notionalSlippageAmount);
-	}
-
 	if (isClosingLong) {
 		estimatedProfitBeforeFees = notionalSizeAtExit.sub(notionalSizeAtEntry);
 	} else if (isClosingShort) {
