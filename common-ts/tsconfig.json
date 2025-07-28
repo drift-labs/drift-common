@@ -11,8 +11,9 @@
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
 		"baseUrl": ".",
+		"moduleResolution": "node",
 		"paths": {
-			"@drift-labs/sdk": ["../protocol/sdk"]
+			"@drift-labs/sdk": ["../protocol/sdk/lib/browser"]
 		},
 		"outDir": "./lib"
 	},

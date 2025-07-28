@@ -604,6 +604,7 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 	//@ts-ignore
 	makerRebate: BigNum | null;
 
+	//@ts-ignore
 	@autoserializeAs(Number) referrerReward: number | null;
 
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
@@ -1376,7 +1377,7 @@ export class UISerializablePerpBankrupcyRecord extends SerializablePerpBankrupcy
 	//@ts-ignore
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) ifPayment: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	clawbackUserPayment: BN;
+	declare clawbackUserPayment: BN;
 }
 
 export class SerializableSpotBankruptcyRecord implements SpotBankruptcyRecord {
@@ -1696,8 +1697,6 @@ export class UISerializableUserSnapshotRecord extends SerializableUserSnapshotRe
 	@autoserializeUsing(ReferralVolumeBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	cumulativeReferralVolume: BigNum;
-
-	@autoserializeAs(Number) cumulativeReferralCount: number;
 }
 
 export class SerializableCandle {
@@ -1717,7 +1716,6 @@ export class SerializableCandle {
 
 @inheritSerialization(SerializableCandle)
 export class UISerializableCandle extends SerializableCandle {
-	@autoserializeUsing(BNSerializeAndDeserializeFns) start: BN;
 	//@ts-ignore
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns) fillOpen: BigNum;
 	//@ts-ignore
@@ -1756,12 +1754,6 @@ export class SerializableRollingPnlData implements RollingPnlData {
 
 export class SerializableAllTimePnlData extends SerializableRollingPnlData {
 	@autoserializeAs(Number) epochTs: number;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) spotPnlQuote: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) spotPnlPct: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) perpPnlQuote: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) perpPnlPct: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) totalPnlQuote: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) totalPnlPct: BN;
 }
 
 export class UISerializableRollingPnlData extends SerializableRollingPnlData {
