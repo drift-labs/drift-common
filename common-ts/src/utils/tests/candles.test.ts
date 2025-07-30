@@ -11,7 +11,7 @@ import {
 import { describe, expect, test } from '@jest/globals';
 import { PartialUISerializableOrderActionRecord } from '..';
 import { Serializer, UISerializableCandle } from '../../serializableTypes';
-import { CANDLE_UTILS } from '../candleUtils';
+import { Candle } from '../candles/Candle';
 
 const timestampFromDateString = (dateString: string) =>
 	Math.floor(new Date(Date.parse(dateString + ' GMT')).getTime());
@@ -119,7 +119,7 @@ describe('candles-tests', () => {
 			const now = timestampFromDateString('2022-01-01 00:00:00');
 			const nowTs = now / 1000;
 			const barStartTime =
-				now - (now % CANDLE_UTILS.resolutionStringToCandleLengthMs('1'));
+				now - (now % Candle.resolutionStringToCandleLengthMs('1'));
 			const candleResolution: CandleResolution = '1';
 
 			const tradesToUse: PartialUISerializableOrderActionRecord[] = [
@@ -128,7 +128,7 @@ describe('candles-tests', () => {
 				generateTradeRecordWithTargetPrice(12, nowTs + 2),
 			];
 
-			const newCandle = CANDLE_UTILS.convertTradesToCandle(
+			const newCandle = Candle.convertTradesToCandle(
 				tradesToUse,
 				barStartTime,
 				candleResolution,
@@ -156,7 +156,7 @@ describe('candles-tests', () => {
 			const now = timestampFromDateString('2022-01-01 00:00:00');
 			const nowTs = now / 1000;
 			const barStartTime =
-				now - (now % CANDLE_UTILS.resolutionStringToCandleLengthMs('1'));
+				now - (now % Candle.resolutionStringToCandleLengthMs('1'));
 			const candleResolution: CandleResolution = '1';
 
 			const tradesToUse: PartialUISerializableOrderActionRecord[] = [
@@ -176,7 +176,7 @@ describe('candles-tests', () => {
 				'1'
 			);
 
-			const newCandle = CANDLE_UTILS.convertTradesToCandle(
+			const newCandle = Candle.convertTradesToCandle(
 				tradesToUse,
 				barStartTime,
 				candleResolution,
@@ -205,7 +205,7 @@ describe('candles-tests', () => {
 			const now = timestampFromDateString('2022-01-01 00:01:00');
 			const nowTs = now / 1000;
 			const barStartTime =
-				now - (now % CANDLE_UTILS.resolutionStringToCandleLengthMs('1'));
+				now - (now % Candle.resolutionStringToCandleLengthMs('1'));
 			const candleResolution: CandleResolution = '1';
 
 			const tradesToUse: PartialUISerializableOrderActionRecord[] = [
@@ -225,7 +225,7 @@ describe('candles-tests', () => {
 				'1'
 			);
 
-			const newCandle = CANDLE_UTILS.convertTradesToCandle(
+			const newCandle = Candle.convertTradesToCandle(
 				tradesToUse,
 				barStartTime,
 				candleResolution,
@@ -265,14 +265,14 @@ describe('candles-tests', () => {
 				generateTradeRecordWithTargetPrice(10, barStartTimeTwo / 1000),
 			];
 
-			const newCandleOne = CANDLE_UTILS.convertTradesToCandle(
+			const newCandleOne = Candle.convertTradesToCandle(
 				tradesToUse,
 				barStartTimeOne,
 				candleResolution,
 				undefined
 			);
 
-			const newCandleTwo = CANDLE_UTILS.convertTradesToCandle(
+			const newCandleTwo = Candle.convertTradesToCandle(
 				tradesToUse,
 				barStartTimeTwo,
 				candleResolution,
@@ -348,7 +348,7 @@ describe('candles-tests', () => {
 			);
 
 			console.log('Test 1.1');
-			const outputOne = CANDLE_UTILS.mergeTradesIntoCandle([], candleOne);
+			const outputOne = Candle.mergeTradesIntoCandle([], candleOne);
 			const expectedOutputOne = generateCandle(now, 0, 0, 0, 0, 0, 0, '1');
 
 			expect(Serializer.Serialize.Candle(outputOne)).toEqual(
@@ -356,7 +356,7 @@ describe('candles-tests', () => {
 			);
 
 			console.log('Test 1.2');
-			const outputTwo = CANDLE_UTILS.mergeTradesIntoCandle([], candleTwo);
+			const outputTwo = Candle.mergeTradesIntoCandle([], candleTwo);
 			const expectedOutputTwo = generateCandle(
 				now,
 				5,
@@ -373,10 +373,7 @@ describe('candles-tests', () => {
 			);
 
 			console.log('Test 1.3');
-			const outputThree = CANDLE_UTILS.mergeTradesIntoCandle(
-				tradesToUse,
-				candleOne
-			);
+			const outputThree = Candle.mergeTradesIntoCandle(tradesToUse, candleOne);
 			const expectedOutputThree = generateCandle(
 				now,
 				0,
@@ -393,10 +390,7 @@ describe('candles-tests', () => {
 			);
 
 			console.log('Test 1.4');
-			const outputFour = CANDLE_UTILS.mergeTradesIntoCandle(
-				tradesToUse,
-				candleTwo
-			);
+			const outputFour = Candle.mergeTradesIntoCandle(tradesToUse, candleTwo);
 			const expectedOutputFour = generateCandle(
 				now,
 				5,

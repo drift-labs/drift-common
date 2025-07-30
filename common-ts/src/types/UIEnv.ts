@@ -1,5 +1,5 @@
 import { DriftEnv } from '@drift-labs/sdk';
-import { Opaque } from '.';
+import { Opaque } from './utility';
 
 // Define UIEnvKey as an opaque type
 export type UIEnvKey = Opaque<'UIEnvKey', string>;

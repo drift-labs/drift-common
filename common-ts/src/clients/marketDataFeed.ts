@@ -151,7 +151,7 @@ abstract class _Subscriber<T> {
 }
 
 class CandleSubscriber extends _Subscriber<JsonCandle> {
-	public readonly config: CandleSubscriptionConfig;
+	public declare readonly config: CandleSubscriptionConfig;
 	public readonly subscriberSubscription: CandleSubscriberSubscription;
 
 	constructor(config: CandleSubscriptionConfig) {
@@ -165,7 +165,7 @@ class CandleSubscriber extends _Subscriber<JsonCandle> {
 }
 
 class TradeSubscriber extends _Subscriber<JsonTrade[]> {
-	public readonly config: TradeSubscriptionConfig;
+	public declare readonly config: TradeSubscriptionConfig;
 	public readonly subscriberSubscription: TradeSubscriberSubscription;
 
 	constructor(config: TradeSubscriptionConfig) {
