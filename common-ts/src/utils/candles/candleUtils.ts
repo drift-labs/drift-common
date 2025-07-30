@@ -14,9 +14,9 @@ import {
 	getPriceForUIOrderRecord,
 	PartialUISerializableOrderActionRecord,
 	sortUIOrderActionRecords,
-} from '.';
+} from '..';
 import { Candle } from './Candle';
-import { CandleType } from '../types';
+import { CandleType } from '../../types';
 
 /**
  * Filter for trades which we want to include in candles, which may change over time.
