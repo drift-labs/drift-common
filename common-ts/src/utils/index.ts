@@ -26,7 +26,7 @@ import {
 	UIMatchedOrderRecordAndAction,
 	UISerializableOrderActionRecord,
 } from '../serializableTypes';
-import { getIfStakingVaultApr } from './insuranceFund';
+import { getIfStakingVaultApr, getIfVaultBalance } from './insuranceFund';
 
 export const matchEnum = (enum1: any, enum2) => {
 	return JSON.stringify(enum1) === JSON.stringify(enum2);
@@ -870,6 +870,7 @@ const chunks = <T>(array: readonly T[], size: number): T[][] => {
 };
 
 export const COMMON_UTILS = {
+	getIfVaultBalance,
 	getIfStakingVaultApr,
 	getCurrentOpenInterestForMarket,
 	getDepositAprForMarket,

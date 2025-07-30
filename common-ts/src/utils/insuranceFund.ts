@@ -89,7 +89,7 @@ function calculateVaultNextApr(
  * @param driftClient
  * @returns
  */
-const getIfVaultBalance = async (
+export const getIfVaultBalance = async (
 	spotMarketConfig: SpotMarketConfig,
 	driftClient: DriftClient
 ) => {
