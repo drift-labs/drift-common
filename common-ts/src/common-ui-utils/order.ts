@@ -19,7 +19,7 @@ import {
 import { UISerializableOrder } from '../serializableTypes';
 import { ENUM_UTILS, matchEnum } from '../utils';
 import { AuctionParams } from '../types';
-import { EMPTY_AUCTION_PARAMS } from '..';
+import { EMPTY_AUCTION_PARAMS } from 'src/constants/trade';
 
 const getOrderLabelFromOrderDetails = (
 	orderDetails: Pick<

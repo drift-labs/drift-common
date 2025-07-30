@@ -16,11 +16,11 @@ import {
 	LST_POOL_ID,
 	MAIN_POOL_ID,
 	SACRED_POOL_ID,
-	USDC_SPOT_MARKET_INDEX,
-} from '../constants';
+} from '../constants/pools';
+import { USDC_SPOT_MARKET_INDEX } from '../constants/markets';
 import { ENUM_UTILS } from '../utils';
 import { Config } from '../Config';
-import { Opaque } from '..';
+import { Opaque } from './utility';
 
 const useAsyncMarketConfigs =
 	process.env.NEXT_PUBLIC_USE_ASYNC_MARKET_CONFIGS === 'true';

@@ -8,13 +8,7 @@ module.exports = {
 		browser: true,
 		node: true,
 	},
-	ignorePatterns: [
-		'**/lib',
-		'**/node_modules',
-		'protocol',
-		'icons/**',
-		'snap-solana',
-	],
+	ignorePatterns: ['**/lib', '**/node_modules', 'protocol', 'icons/**'],
 	plugins: ['@typescript-eslint'],
 	extends: [
 		'eslint:recommended',

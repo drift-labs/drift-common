@@ -37,16 +37,11 @@ import { USER_COMMON_UTILS } from './user';
 import { TRADING_COMMON_UTILS } from './trading';
 import { MARKET_COMMON_UTILS } from './market';
 import { ORDER_COMMON_UTILS } from './order';
+import { EMPTY_AUCTION_PARAMS } from 'src/constants/trade';
 
 // When creating an account, try 5 times over 5 seconds to wait for the new account to hit the blockchain.
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
 const ACCOUNT_INITIALIZATION_RETRY_ATTEMPTS = 5;
-
-export const EMPTY_AUCTION_PARAMS: AuctionParams = {
-	auctionStartPrice: null,
-	auctionEndPrice: null,
-	auctionDuration: null,
-};
 
 const abbreviateAddress = (address: string | PublicKey, length = 4) => {
 	if (!address) return '';
