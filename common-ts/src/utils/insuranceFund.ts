@@ -7,7 +7,7 @@ import {
 	SpotMarketAccount,
 	SpotMarketConfig,
 } from '@drift-labs/sdk';
-import { UIMarket } from 'src/types/UIMarket';
+import { UIMarket } from '../types/UIMarket';
 
 /**
  * Calculates the next APR for insurance fund staking

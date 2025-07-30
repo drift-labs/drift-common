@@ -2,9 +2,10 @@
 	"name": "@drift/common",
 	"version": "1.0.0",
 	"description": "Common functions for Drift",
-	"main": "./lib/cjs/index.js",
-	"module": "./lib/esm/index.js",
-	"types": "./lib/esm/index.d.mts",
+	"main": "./lib/index.js",
+	"dual_main": "./lib/cjs/index.js",
+	"dual_module": "./lib/esm/index.js",
+	"dual_types": "./lib/esm/index.d.mts",
 	"license": "MIT",
 	"private": true,
 	"dependencies": {
@@ -28,8 +29,10 @@
 		"winston-slack-webhook-transport": "2.3.5"
 	},
 	"scripts": {
-		"build": "yarn clean && tsup",
-		"watch": "yarn clean && tsup --watch",
+		"build": "yarn clean && tsc",
+		"watch": "yarn clean && tsc --watch",
+		"build-dual": "yarn clean && tsup",
+		"watch-dual": "yarn clean && tsup --watch",
 		"clean": "rm -rf lib",
 		"test": "npx mocha -r ts-node/register tests/**/*.ts",
 		"test:ci": "mocha -r ts-node/register tests/**/*.ts --silent",
@@ -42,6 +45,10 @@
 		"lib": "lib"
 	},
 	"exports": {
+		".": "./lib/index.js",
+		"./clients": "./lib/clients/index.js"
+	},
+	"dual_exports": {
 		".": {
 			"types": "./lib/esm/index.d.mts",
 			"import": "./lib/esm/index.js",

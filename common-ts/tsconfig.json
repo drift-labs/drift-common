@@ -13,7 +13,7 @@
 		"baseUrl": ".",
 		"moduleResolution": "node",
 		"paths": {
-			"@drift-labs/sdk": ["../protocol/sdk/lib/browser"]
+			"@drift-labs/sdk": ["../protocol/sdk"]
 		},
 		"outDir": "./lib"
 	},
