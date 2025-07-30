@@ -59,9 +59,10 @@ import {
 	SetSerializeKeyTransform,
 	SnakeCase,
 } from 'cerializr';
+import { assert } from './utils/assert';
+import { Config } from './Config';
 import {
 	AccountSnapshot,
-	Config,
 	LeaderboardResult,
 	LeaderBoardResultRow,
 	PnlHistoryDataPoint,
@@ -72,8 +73,7 @@ import {
 	UserPerpPositionSnapshot,
 	UserSnapshotRecord,
 	UserSpotPositionSnapshot,
-} from './index';
-import { assert } from './utils/assert';
+} from './types/leaderboard';
 
 // Reusable transformers
 

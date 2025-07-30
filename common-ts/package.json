@@ -35,7 +35,8 @@
 		"test:ci": "mocha -r ts-node/register tests/**/*.ts --silent",
 		"test:debug": "node --inspect-brk --inspect=2234 node_modules/.bin/jest --runInBand",
 		"update-jup-errors": "node src/scripts/update-jup-error-codes.js",
-		"update-drift-errors": "node src/scripts/update-drift-error-codes.js"
+		"update-drift-errors": "node src/scripts/update-drift-error-codes.js",
+		"circular-deps": "bunx madge --circular --circular --extensions ts,tsx src"
 	},
 	"directories": {
 		"lib": "lib"
@@ -63,6 +64,7 @@
 		"chai": "4.3.10",
 		"encoding": "0.1.13",
 		"jest": "29.7.0",
+		"madge": "^8.0.0",
 		"ts-node": "10.9.1",
 		"tsup": "^8.5.0"
 	},
