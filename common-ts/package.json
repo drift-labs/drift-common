@@ -3,9 +3,6 @@
 	"version": "1.0.0",
 	"description": "Common functions for Drift",
 	"main": "./lib/index.js",
-	"dual_main": "./lib/cjs/index.js",
-	"dual_module": "./lib/esm/index.js",
-	"dual_types": "./lib/esm/index.d.mts",
 	"license": "MIT",
 	"private": true,
 	"dependencies": {
@@ -48,18 +45,6 @@
 		".": "./lib/index.js",
 		"./clients": "./lib/clients/index.js"
 	},
-	"dual_exports": {
-		".": {
-			"types": "./lib/esm/index.d.mts",
-			"import": "./lib/esm/index.js",
-			"require": "./lib/cjs/index.js"
-		},
-		"./clients": {
-			"types": "./lib/esm/clients/index.d.mts",
-			"import": "./lib/esm/clients/index.js",
-			"require": "./lib/cjs/clients/index.js"
-		}
-	},
 	"files": [
 		"lib"
 	],
@@ -72,8 +57,7 @@
 		"encoding": "0.1.13",
 		"jest": "29.7.0",
 		"madge": "^8.0.0",
-		"ts-node": "10.9.1",
-		"tsup": "^8.5.0"
+		"ts-node": "10.9.1"
 	},
 	"resolutions": {
 		"@solana/errors": "2.0.0-preview.4"
