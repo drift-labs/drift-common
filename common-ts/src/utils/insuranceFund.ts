@@ -6,6 +6,8 @@ import {
 	SpotBalanceType,
 	SpotMarketAccount,
 	SpotMarketConfig,
+	MAX_APR_PER_REVENUE_SETTLE_TO_INSURANCE_FUND_VAULT_GOV,
+	PERCENTAGE_PRECISION,
 } from '@drift-labs/sdk';
 import { UIMarket } from '../types/UIMarket';
 
@@ -23,7 +25,11 @@ function calculateVaultNextApr(
 	vaultBalanceBigNum: BigNum
 ): number {
 	const MAX_APR = 1000;
-	const GOV_MAX_APR = 20;
+	// Convert SDK constant from percentage precision to percentage
+	const GOV_MAX_APR =
+		(MAX_APR_PER_REVENUE_SETTLE_TO_INSURANCE_FUND_VAULT_GOV.toNumber() /
+			PERCENTAGE_PRECISION.toNumber()) *
+		100;
 	const DRIFT_MARKET_INDEX = 15;
 
 	const { precisionExp } = UIMarket.spotMarkets[spotMarket.marketIndex];
