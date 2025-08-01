@@ -20,18 +20,22 @@ type ClientResponse<T = void> = Promise<{
 	status?: number;
 }>;
 
-type SwiftOrderEvent = (
-	| {
-			type: 'sent' | 'expired' | 'errored';
-			hash: string;
-			message?: string;
-	  }
-	| {
-			type: 'confirmed';
-			orderId: string;
-			hash: string;
-	  }
-) & { status?: number };
+type BaseSwiftOrderEvent = {
+	hash: string;
+};
+
+export interface SwiftOrderErroredEvent extends BaseSwiftOrderEvent {
+	type: 'errored' | 'expired';
+	message?: string;
+	status?: number;
+}
+
+export interface SwiftOrderConfirmedEvent extends BaseSwiftOrderEvent {
+	type: 'confirmed';
+	orderId: string;
+}
+
+export type SwiftOrderEvent = SwiftOrderErroredEvent | SwiftOrderConfirmedEvent;
 
 export class SwiftClient {
 	private static baseUrl = '';
