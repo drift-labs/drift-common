@@ -16,7 +16,7 @@ import {
 	SwiftClient,
 	SwiftOrderConfirmedEvent,
 	SwiftOrderErroredEvent,
-} from '../../../../../../clients/swiftClient';
+} from '../../../../../clients/swiftClient';
 import { MarketId } from 'src/types';
 import { firstValueFrom } from 'rxjs';
 

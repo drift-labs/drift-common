@@ -1,7 +1,10 @@
 import { DriftClient, OptionalOrderParams, User } from '@drift-labs/sdk';
 import { UIOrderType } from 'src/types';
 import { openPerpMarketOrder } from './openPerpMarketOrder';
-import { OptionalTriggerOrderParams } from './openPerpMarketOrder/openSwiftMarketOrder';
+import { OptionalTriggerOrderParams, prepSwiftOrder } from './openSwiftOrder';
+import { SwiftClient } from 'src/clients/swiftClient';
+import invariant from 'tiny-invariant';
+import { openPerpNonMarketOrder } from './openPerpNonMarketOrder';
 
 interface BaseOpenPerpOrderParams {
 	driftClient: DriftClient;
@@ -32,17 +35,56 @@ type OpenPerpOrderParams =
 	| OpenPerpOrderSwiftParams
 	| OpenPerpOrderOnChainParams;
 
-export const openPerpOrder = async (params: OpenPerpOrderParams) => {
-	const { driftClient, user, useSwift, marketOrderParams, orderType } = params;
+export const openPerpOrderTxn = async (params: OpenPerpOrderParams) => {
+	const {
+		driftClient,
+		user,
+		useSwift,
+		marketOrderParams,
+		orderType,
+		swiftParams,
+	} = params;
+
+	if (useSwift) {
+		invariant(
+			SwiftClient.isSupportedOrderType(orderType),
+			'Order type not supported for Swift'
+		);
+		invariant(swiftParams, 'Swift params are required when using Swift');
+
+		const takerAuthority = user.getUserAccount().authority;
+		const takerSubAccountId = user.getUserAccount().subAccountId;
+
+		const preppedSwiftOrder = prepSwiftOrder({
+			driftClient,
+			currentSlot: swiftParams.currentSlot,
+			isDelegate: swiftParams.isDelegate,
+			orderParams: marketOrderParams,
+			takerUserAccount: {
+				pubKey: takerAuthority,
+				subAccountId: takerSubAccountId,
+			},
+			slotBuffer: swiftParams.slotBuffer,
+		});
+
+		return preppedSwiftOrder;
+	}
 
 	switch (orderType) {
 		case 'market':
-			return openPerpMarketOrder({
-				driftClient,
-				user,
-				useSwift,
-				swiftParams: useSwift ? params.swiftParams : undefined,
-				orderParams: marketOrderParams,
-			});
+		case 'oracle':
+			return openPerpMarketOrder();
+		case 'limit':
+		case 'stopMarket':
+		case 'stopLimit':
+		case 'takeProfitMarket':
+		case 'takeProfitLimit':
+		case 'oracleLimit':
+		case 'scaledOrders':
+			return openPerpNonMarketOrder();
+		default: {
+			const _exhaustiveCheck: never = orderType;
+			throw new Error(`Order type ${_exhaustiveCheck} not supported`);
+		}
 	}
 };
