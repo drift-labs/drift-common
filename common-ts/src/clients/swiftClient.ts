@@ -2,6 +2,7 @@ import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import {
 	DriftClient,
 	MarketType,
+	OrderType,
 	SignedMsgUserOrdersAccount,
 	digestSignature,
 	isVariant,
@@ -20,22 +21,28 @@ type ClientResponse<T = void> = Promise<{
 	status?: number;
 }>;
 
-type SwiftOrderEvent = (
-	| {
-			type: 'sent' | 'expired' | 'errored';
-			hash: string;
-			message?: string;
-	  }
-	| {
-			type: 'confirmed';
-			orderId: string;
-			hash: string;
-	  }
-) & { status?: number };
+type BaseSwiftOrderEvent = {
+	hash: string;
+};
+
+export interface SwiftOrderErroredEvent extends BaseSwiftOrderEvent {
+	type: 'errored' | 'expired';
+	message?: string;
+	status?: number;
+}
+
+export interface SwiftOrderConfirmedEvent extends BaseSwiftOrderEvent {
+	type: 'confirmed';
+	orderId: string;
+}
+
+export type SwiftOrderEvent = SwiftOrderErroredEvent | SwiftOrderConfirmedEvent;
 
 export class SwiftClient {
 	private static baseUrl = '';
 	private static swiftClientConsumer?: string;
+
+	static supportedOrderTypes: OrderType[] = [OrderType.MARKET, OrderType.LIMIT];
 
 	public static init(baseUrl: string, swiftClientConsumer?: string) {
 		this.baseUrl = baseUrl;
@@ -477,5 +484,9 @@ export class SwiftClient {
 			'Content-Type': 'application/json',
 			'X-Swift-Client-Consumer': this.swiftClientConsumer ?? 'default',
 		};
+	}
+
+	public static isSupportedOrderType(orderType: OrderType) {
+		return this.supportedOrderTypes.includes(orderType);
 	}
 }
