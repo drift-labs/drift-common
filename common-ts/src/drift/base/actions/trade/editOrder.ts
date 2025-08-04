@@ -54,7 +54,7 @@ interface EditOrderParams {
  * @param editOrderParams - Parameters containing the new order values
  * @returns Promise that resolves to a TransactionInstruction
  */
-export const editOrderIx = async (
+export const createEditOrderIx = async (
 	driftClient: DriftClient,
 	user: User,
 	orderId: number,
@@ -84,7 +84,7 @@ export const editOrderIx = async (
  * @param txParams - Optional transaction parameters (compute units, priority fees, etc.)
  * @returns Promise that resolves to a Transaction or VersionedTransaction
  */
-export const editOrderTxn = async (
+export const createEditOrderTxn = async (
 	driftClient: DriftClient,
 	user: User,
 	orderId: number,
@@ -92,7 +92,7 @@ export const editOrderTxn = async (
 	txParams?: TxParams
 ): Promise<Transaction | VersionedTransaction> => {
 	return driftClient.buildTransaction(
-		await editOrderIx(driftClient, user, orderId, editOrderParams),
+		await createEditOrderIx(driftClient, user, orderId, editOrderParams),
 		txParams
 	);
 };

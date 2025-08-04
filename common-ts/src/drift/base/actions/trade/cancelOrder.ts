@@ -24,7 +24,7 @@ import {
  *
  * ```
  */
-export const cancelOrderIx = async (
+export const createCancelOrdersIx = async (
 	driftClient: DriftClient,
 	orderIds: number[],
 	user: User
@@ -56,14 +56,14 @@ export const cancelOrderIx = async (
  * const signature = await wallet.sendTransaction(transaction, connection);
  * ```
  */
-export const cancelOrderTxn = async (
+export const createCancelOrdersTxn = async (
 	driftClient: DriftClient,
 	user: User,
 	orderIds: number[],
 	txParams?: TxParams
 ): Promise<Transaction | VersionedTransaction> => {
 	return driftClient.buildTransaction(
-		await cancelOrderIx(driftClient, orderIds, user),
+		await createCancelOrdersIx(driftClient, orderIds, user),
 		txParams
 	);
 };
