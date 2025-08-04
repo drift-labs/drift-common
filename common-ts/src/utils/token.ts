@@ -1,3 +1,4 @@
+import { WRAPPED_SOL_MINT } from '@drift-labs/sdk';
 import {
 	createAssociatedTokenAccountInstruction,
 	getAssociatedTokenAddress,
@@ -18,6 +19,17 @@ export const getTokenAddress = (
 		new PublicKey(userPubKey),
 		true
 	);
+};
+
+export const getTokenAddressForDepositAndWithdraw = async (
+	mintAddress: PublicKey,
+	userPubKey: PublicKey
+): Promise<PublicKey> => {
+	const isSol = mintAddress.equals(WRAPPED_SOL_MINT);
+
+	if (isSol) return userPubKey;
+
+	return getAssociatedTokenAddress(mintAddress, userPubKey, true);
 };
 
 export const getTokenAccount = async (
