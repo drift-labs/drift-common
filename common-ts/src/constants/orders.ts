@@ -25,7 +25,7 @@ export const STOP_MARKET_ORDER_TYPE_CONFIG: UIOrderTypeValue = {
 	value: 'stopMarket',
 	orderType: OrderType.TRIGGER_MARKET,
 	description:
-		'A Stop Market Order is an order to close the position of a given asset if its Oracle Price reaches the specified Trigger Price. If this happens, the position is closed at Market Price.',
+		'A Stop Market Order is an order to close the position of a given asset if its specified Trigger Price is reached. If this happens, the position is closed at Market Price.',
 };
 
 // Stop Limit order type
@@ -34,7 +34,7 @@ export const STOP_LIMIT_ORDER_TYPE_CONFIG: UIOrderTypeValue = {
 	value: 'stopLimit',
 	orderType: OrderType.TRIGGER_LIMIT,
 	description:
-		'A Stop Limit Order will only execute where the Oracle Price of a given asset reaches the Trigger Price. If this happens, a Limit Order at the specified Limit Price will be placed.',
+		'A Stop Limit Order will only execute where the specified Trigger Price of a given asset is reached. If this happens, a Limit Order at the specified Limit Price will be placed.',
 };
 
 // Take Profit Market order type
