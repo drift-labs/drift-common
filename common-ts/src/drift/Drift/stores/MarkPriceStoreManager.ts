@@ -1,0 +1,77 @@
+import { BN, ZERO } from '@drift-labs/sdk';
+import { Subject } from 'rxjs';
+import { MarketKey } from 'src/types';
+
+export type MarkPriceData = {
+	markPrice: BN;
+	bestBid: BN;
+	bestAsk: BN;
+	lastUpdateSlot: BN;
+};
+
+export type MarkPriceStore = Record<MarketKey, MarkPriceData>;
+
+export class MarkPriceStoreManager {
+	private _store: MarkPriceStore = {};
+	private updatesSubject$ = new Subject<MarkPriceStore>();
+
+	constructor() {}
+
+	get store() {
+		return { ...this._store };
+	}
+
+	get updatesSubject() {
+		return this.updatesSubject$;
+	}
+
+	public updateMarkPrices(
+		...markPrices: ({
+			marketKey: MarketKey;
+		} & MarkPriceData)[]
+	) {
+		const updatedMarkPrices = {};
+
+		markPrices.forEach(
+			({ marketKey, markPrice, bestBid, bestAsk, lastUpdateSlot }) => {
+				const currentMarkPriceState = this._store[marketKey];
+
+				if (
+					!currentMarkPriceState ||
+					currentMarkPriceState.lastUpdateSlot.gt(lastUpdateSlot)
+				) {
+					updatedMarkPrices[marketKey] = {
+						markPrice,
+						bestBid,
+						bestAsk,
+						lastUpdateSlot,
+					};
+				}
+			}
+		);
+
+		this._store = { ...this._store, ...updatedMarkPrices };
+
+		if (Object.keys(updatedMarkPrices).length > 0) {
+			this.updatesSubject$.next(updatedMarkPrices);
+		}
+	}
+
+	public getMarkPriceData(marketKey: MarketKey): MarkPriceData {
+		const storeData = this._store[marketKey];
+		if (!storeData) {
+			return {
+				markPrice: ZERO,
+				bestBid: ZERO,
+				bestAsk: ZERO,
+				lastUpdateSlot: ZERO,
+			};
+		}
+
+		return storeData;
+	}
+
+	public getMarkPrice(marketKey: MarketKey): BN {
+		return this.getMarkPriceData(marketKey).markPrice;
+	}
+}
