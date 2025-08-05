@@ -60,14 +60,16 @@ export const POLLING_DEPTHS = {
 } as const;
 
 /**
- * PollingDlob - A configurable market data polling system
+ * PollingDlob - A configurable market data polling system.
+ * The Drift DLOB (decentralized limit orderbook) server stores the current live state of the orderbook
+ * across all Drift markets. This class is used to poll the DLOB server for the markets' current mark price,
+ * while oracle price data is also provided alongside.
  *
  * Example usage:
  * ```typescript
  * import { PollingDlob, MarketId } from '@drift/common';
  *
  * const pollingDlob = new PollingDlob({
- *   baseTickIntervalMs: 1000,
  *   dlobServerHttpUrl: 'https://dlob.drift.trade',
  *   indicativeLiquidityEnabled: true
  * });
@@ -173,6 +175,15 @@ export class PollingDlob {
 		this.marketToIntervalMap.set(marketKey, intervalId);
 	}
 
+	public addMarketsToInterval(
+		intervalId: string,
+		marketKeys: MarketKey[]
+	): void {
+		for (const marketKey of marketKeys) {
+			this.addMarketToInterval(intervalId, marketKey);
+		}
+	}
+
 	public removeMarketFromInterval(
 		intervalId: string,
 		marketKey: MarketKey
@@ -205,6 +216,8 @@ export class PollingDlob {
 
 		this.isStarted = true;
 		this.tickCounter = 0;
+
+		this.tick();
 
 		this.intervalHandle = setInterval(() => {
 			this.tick();

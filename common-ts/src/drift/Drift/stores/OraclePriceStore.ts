@@ -2,11 +2,11 @@ import { BN, OraclePriceData, ZERO } from '@drift-labs/sdk';
 import { Subject } from 'rxjs';
 import { MarketKey } from 'src/types';
 
-export type OraclePriceStore = Record<MarketKey, OraclePriceData>;
+export type OraclePriceLookup = Record<MarketKey, OraclePriceData>;
 
-export class OraclePriceStoreManager {
-	private _store: OraclePriceStore = {};
-	private updatesSubject$ = new Subject<OraclePriceStore>();
+export class OraclePriceStore {
+	private _store: OraclePriceLookup = {};
+	private updatesSubject$ = new Subject<OraclePriceLookup>();
 
 	constructor() {}
 

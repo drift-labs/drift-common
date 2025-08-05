@@ -6,14 +6,14 @@ export type MarkPriceData = {
 	markPrice: BN;
 	bestBid: BN;
 	bestAsk: BN;
-	lastUpdateSlot: BN;
+	lastUpdateSlot: number;
 };
 
-export type MarkPriceStore = Record<MarketKey, MarkPriceData>;
+export type MarkPriceLookup = Record<MarketKey, MarkPriceData>;
 
-export class MarkPriceStoreManager {
-	private _store: MarkPriceStore = {};
-	private updatesSubject$ = new Subject<MarkPriceStore>();
+export class MarkPriceStore {
+	private _store: MarkPriceLookup = {};
+	private updatesSubject$ = new Subject<MarkPriceLookup>();
 
 	constructor() {}
 
@@ -38,7 +38,7 @@ export class MarkPriceStoreManager {
 
 				if (
 					!currentMarkPriceState ||
-					currentMarkPriceState.lastUpdateSlot.gt(lastUpdateSlot)
+					currentMarkPriceState.lastUpdateSlot < lastUpdateSlot
 				) {
 					updatedMarkPrices[marketKey] = {
 						markPrice,
@@ -64,7 +64,7 @@ export class MarkPriceStoreManager {
 				markPrice: ZERO,
 				bestBid: ZERO,
 				bestAsk: ZERO,
-				lastUpdateSlot: ZERO,
+				lastUpdateSlot: 0,
 			};
 		}
 

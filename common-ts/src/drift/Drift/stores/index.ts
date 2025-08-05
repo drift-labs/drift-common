@@ -1,2 +1,2 @@
-export * from './OraclePriceStoreManager';
-export * from './MarkPriceStoreManager';
+export * from './OraclePriceStore';
+export * from './MarkPriceStore';
