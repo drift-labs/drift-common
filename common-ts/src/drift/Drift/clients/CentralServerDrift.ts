@@ -15,7 +15,7 @@ import {
 	DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS,
 	DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 	DEFAULT_TX_SENDER_RETRY_INTERVAL,
-} from './constants';
+} from '../constants';
 import { MarketId } from 'src/types';
 
 /**

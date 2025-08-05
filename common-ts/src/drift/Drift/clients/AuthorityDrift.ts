@@ -15,7 +15,7 @@ import {
 	DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS,
 	DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 	DEFAULT_TX_SENDER_RETRY_INTERVAL,
-} from './constants';
+} from '../constants';
 import { MarketId } from 'src/types';
 
 /**
@@ -88,6 +88,12 @@ export class AuthorityDrift {
 	}
 
 	public async subscribe() {
-		await this.driftClient.subscribe();
+		const driftClientSubscribePromise = this.driftClient.subscribe();
+
+		// subscribe to orderbook - includes updated oracle data
+		// - subscribe to main market using websocket
+		// - subscribe to other markets using polling
+
+		await Promise.all([driftClientSubscribePromise]);
 	}
 }
