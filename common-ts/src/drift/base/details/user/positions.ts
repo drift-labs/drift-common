@@ -13,27 +13,24 @@ import {
 	QUOTE_PRECISION_EXP,
 	User,
 	ZERO,
+	calculateClaimablePnl,
 	calculateEntryPrice,
 	calculateFeesAndFundingPnl,
+	calculatePositionPNL,
+	calculateUnsettledFundingPnl,
 } from '@drift-labs/sdk';
 import { TRADING_COMMON_UTILS } from '../../../../common-ui-utils/trading';
 import { ENUM_UTILS } from '../../../../utils';
-import { MAX_PREDICTION_PRICE_BIG_NUM } from 'src/constants';
+import {
+	MAX_PREDICTION_PRICE_BIG_NUM,
+	USDC_SPOT_MARKET_INDEX,
+} from 'src/constants';
 
 /**
  * Comprehensive position information derived from a PerpPosition at a specific reference price.
  * This interface contains all the key metrics needed for position display and analysis.
  */
 export interface PriceBasedPositionInfo {
-	/** Position entry price.*/
-	entryPrice: BigNum;
-
-	/** Absolute size of the position. */
-	baseSize: BigNum;
-
-	/** Notional value of the position at the reference price */
-	notionalSize: BigNum;
-
 	/**
 	 * Position PnL in notional terms based on the reference price.
 	 * This does NOT include funding PnL - only the price-based profit/loss.
@@ -46,18 +43,6 @@ export interface PriceBasedPositionInfo {
 	 * For regular markets: calculated as (PnL / quote entry amount) * account leverage.
 	 */
 	positionPnlPercentage: number;
-
-	/**
-	 * Cumulative funding and fees PnL for this position.
-	 * This is separate from positionNotionalPnl to allow granular PnL breakdown.
-	 */
-	fundingPnl: BigNum;
-
-	/**
-	 * Price at which the position would be liquidated.
-	 * Returns zero if liquidation price cannot be calculated.
-	 */
-	liquidationPrice: BigNum;
 }
 
 /**
@@ -74,7 +59,6 @@ export interface PriceBasedPositionInfo {
  */
 export const getPriceBasedPositionInfo = (
 	driftClient: DriftClient,
-	user: User,
 	perpPosition: PerpPosition,
 	referencePrice: BN,
 	accountLeverage?: number
@@ -86,16 +70,6 @@ export const getPriceBasedPositionInfo = (
 	// Base Size
 	const baseSize = perpPosition.baseAssetAmount;
 	const baseSizeBigNum = BigNum.from(baseSize.abs(), BASE_PRECISION_EXP);
-
-	// Notional size
-	const notionalSize = BigNum.from(
-		user
-			.getPerpPositionValue(marketIndex, {
-				price: referencePrice,
-			})
-			.abs(),
-		QUOTE_PRECISION_EXP
-	);
 
 	// Entry Price
 	const entryPriceBN = calculateEntryPrice(perpPosition);
@@ -148,12 +122,6 @@ export const getPriceBasedPositionInfo = (
 		QUOTE_PRECISION_EXP
 	);
 
-	// funding pnl
-	const fundingPnl = BigNum.from(
-		calculateFeesAndFundingPnl(perpMarket, perpPosition),
-		QUOTE_PRECISION_EXP
-	);
-
 	// Determine if this is a sell-side prediction market for price adjustment
 	const isSellPredictionMarket = isPredictionMarket && isShortPosition;
 
@@ -185,17 +153,152 @@ export const getPriceBasedPositionInfo = (
 		  })()
 		: 0;
 
-	// Liquidation price
+	return {
+		positionNotionalPnl: positionNotionalPnlBigNum,
+		positionPnlPercentage,
+	};
+};
+
+export type PerpPositionInfo = {
+	marketIndex: number;
+	/** Absolute base size of the position. */
+	baseSize: BigNum;
+	/** Notional value of the position based on oracle price */
+	notionalSize: BigNum;
+	/** Direction of the position */
+	direction: PositionDirection;
+	/** Position entry price.*/
+	entryPrice: BigNum;
+	/**
+	 * Price at which the position would be liquidated.
+	 * Returns zero if liquidation price cannot be calculated.
+	 */
+	liquidationPrice: BigNum;
+	/**
+	 * Cumulative funding and fees PnL for this position.
+	 * This is separate from positionNotionalPnl to allow granular PnL breakdown.
+	 */
+	feesAndFundingPnl: BigNum;
+	/** Position P&L information based on the oracle price and the mark price as reference prices. This does not include fees and funding PnL. */
+	positionPnl: {
+		oracleBased: PriceBasedPositionInfo;
+		markBased: PriceBasedPositionInfo;
+	};
+	/** The quote amount that was used to enter the position. */
+	costBasis: BigNum;
+	/** The quote amount that the position needs to be at, to breakeven. This is net of fees and funding, hence why it is different from quoteEntryAmount. */
+	quoteBreakEvenAmount: BigNum;
+	/** This is the total of unsettled pnl and unsettled funding. */
+	totalUnsettledPnl: BigNum;
+	/** This is the total of unsettled pnl and unsettled funding that is claimable from the P&L pool. */
+	totalClaimablePnl: BigNum;
+	/** This is the unsettled funding pnl. */
+	unsettledFundingPnl: BigNum;
+	/** This is the total of settled pnl and settled funding. */
+	totalSettledPnl: BigNum;
+};
+
+export const getPositionInfo = (
+	driftClient: DriftClient,
+	user: User,
+	perpPosition: PerpPosition,
+	oraclePrice: BN,
+	markPrice: BN
+): PerpPositionInfo => {
+	const { marketIndex } = perpPosition;
+
+	const baseSize = perpPosition.baseAssetAmount;
+	const baseSizeBigNum = BigNum.from(baseSize.abs(), BASE_PRECISION_EXP);
+
+	const notionalSizeBigNum = BigNum.from(
+		user
+			.getPerpPositionValue(perpPosition.marketIndex, {
+				price: oraclePrice,
+			})
+			.abs(),
+		QUOTE_PRECISION_EXP
+	);
+
+	const positionDirection = baseSize.isNeg()
+		? PositionDirection.SHORT
+		: PositionDirection.LONG;
+
+	const entryPrice = calculateEntryPrice(perpPosition);
+	const entryPriceBigNum = BigNum.from(entryPrice, PRICE_PRECISION_EXP);
+
 	const liqPrice = user.liquidationPrice(marketIndex);
 	const liqPriceBigNum = BigNum.from(liqPrice, PRICE_PRECISION_EXP);
 
+	const perpMarket = driftClient.getPerpMarketAccount(marketIndex);
+	const feesAndFundingPnlBigNum = BigNum.from(
+		calculateFeesAndFundingPnl(perpMarket, perpPosition),
+		QUOTE_PRECISION_EXP
+	);
+
+	const accountLeverage = user.getLeverage().toNumber();
+	const oracleBasedPositionInfo = getPriceBasedPositionInfo(
+		driftClient,
+		perpPosition,
+		oraclePrice,
+		accountLeverage
+	);
+	const markBasedPositionInfo = getPriceBasedPositionInfo(
+		driftClient,
+		perpPosition,
+		markPrice,
+		accountLeverage
+	);
+
+	const quoteEntryAmountBigNum = BigNum.from(
+		perpPosition.quoteEntryAmount,
+		QUOTE_PRECISION_EXP
+	);
+	const quoteBreakEvenAmountBigNum = BigNum.from(
+		perpPosition.quoteBreakEvenAmount,
+		QUOTE_PRECISION_EXP
+	);
+
+	const totalUnrealizedPnlBigNum = BigNum.from(
+		calculatePositionPNL(perpMarket, perpPosition, true, {
+			price: oraclePrice,
+		}),
+		QUOTE_PRECISION_EXP
+	);
+	const usdcSpotMarketAccount = driftClient.getSpotMarketAccount(
+		USDC_SPOT_MARKET_INDEX
+	);
+	const totalClaimablePnlBigNum = BigNum.from(
+		calculateClaimablePnl(perpMarket, usdcSpotMarketAccount, perpPosition, {
+			price: oraclePrice,
+		}),
+		QUOTE_PRECISION_EXP
+	);
+	const unsettledFundingPnlBigNum = BigNum.from(
+		calculateUnsettledFundingPnl(perpMarket, perpPosition),
+		QUOTE_PRECISION_EXP
+	);
+	const totalSettledPnlBigNum = BigNum.from(
+		perpPosition.settledPnl,
+		QUOTE_PRECISION_EXP
+	);
+
 	return {
+		marketIndex,
 		baseSize: baseSizeBigNum,
+		notionalSize: notionalSizeBigNum,
+		direction: positionDirection,
 		entryPrice: entryPriceBigNum,
-		notionalSize,
-		positionNotionalPnl: positionNotionalPnlBigNum,
-		fundingPnl,
-		positionPnlPercentage,
 		liquidationPrice: liqPriceBigNum,
+		feesAndFundingPnl: feesAndFundingPnlBigNum,
+		positionPnl: {
+			oracleBased: oracleBasedPositionInfo,
+			markBased: markBasedPositionInfo,
+		},
+		costBasis: quoteEntryAmountBigNum,
+		quoteBreakEvenAmount: quoteBreakEvenAmountBigNum,
+		unsettledFundingPnl: unsettledFundingPnlBigNum,
+		totalUnsettledPnl: totalUnrealizedPnlBigNum,
+		totalClaimablePnl: totalClaimablePnlBigNum,
+		totalSettledPnl: totalSettledPnlBigNum,
 	};
 };

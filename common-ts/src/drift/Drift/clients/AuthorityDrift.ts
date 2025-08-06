@@ -27,6 +27,7 @@ import { EnvironmentConstants } from 'src/EnvironmentConstants';
 import { MarkPriceStore } from '../stores/MarkPriceStore';
 import { OraclePriceStore } from '../stores/OraclePriceStore';
 import { Subscription } from 'rxjs';
+import { UserAccountStore } from '../stores/UserAccountStore';
 
 interface AuthorityDriftConfig {
 	solanaRpcEndpoint: string;
@@ -79,6 +80,11 @@ export class AuthorityDrift {
 	private oraclePriceStore: OraclePriceStore;
 
 	/**
+	 * Stores the fetched user account data for all user accounts.
+	 */
+	private userAccountStore: UserAccountStore;
+
+	/**
 	 * The active trade market to use for the drift client. This is used to subscribe to the market account,
 	 * oracle data and mark price more frequently compared to the other markets.
 	 *
@@ -100,14 +106,19 @@ export class AuthorityDrift {
 	constructor(readonly config: AuthorityDriftConfig) {
 		this.activeTradeMarket = config.activeTradeMarket ?? null;
 
-		this.setupDriftClient(config);
-		this.setupStores();
+		const driftClient = this.setupDriftClient(config);
+		this.setupStores(driftClient);
 		this.setupPollingDlob(config.driftDlobServerHttpUrl);
 	}
 
-	private setupStores() {
+	private setupStores(driftClient: DriftClient) {
 		this.markPriceStore = new MarkPriceStore();
 		this.oraclePriceStore = new OraclePriceStore();
+		this.userAccountStore = new UserAccountStore(
+			driftClient,
+			this.oraclePriceStore,
+			this.markPriceStore
+		);
 	}
 
 	private setupDriftClient(
@@ -173,6 +184,8 @@ export class AuthorityDrift {
 		});
 
 		this.driftClient.txSender = txSender;
+
+		return this.driftClient;
 	}
 
 	private setupPollingDlob(driftDlobServerHttpUrl?: string) {
@@ -235,16 +248,27 @@ export class AuthorityDrift {
 		this.pollingDlob.stop();
 	}
 
+	private subscribeToAllUsersUpdates() {
+		const users = this.driftClient.getUsers();
+		users.forEach((user) => {
+			user.eventEmitter.on('update', () => {
+				this.userAccountStore.updateUserAccount(user);
+			});
+		});
+	}
+
 	public async subscribe() {
 		const driftClientSubscribePromise = this.driftClient.subscribe();
+		const pollingDlobStartPromise = this.pollingDlob.start();
 
-		this.pollingDlob.start();
+		await Promise.all([driftClientSubscribePromise, pollingDlobStartPromise]);
 
-		await Promise.all([driftClientSubscribePromise]);
+		this.subscribeToAllUsersUpdates();
 	}
 
 	public async unsubscribe() {
 		this.unsubscribeFromPollingDlob();
+		this.userAccountStore.reset();
 
 		const driftClientUnsubscribePromise = this.driftClient.unsubscribe();
 
@@ -260,6 +284,7 @@ export class AuthorityDrift {
 		this.config.authority = authority;
 
 		await Promise.all(this.driftClient.unsubscribeUsers());
+		this.userAccountStore.reset();
 
 		const updateWalletResult = await this.driftClient.updateWallet(
 			COMMON_UI_UTILS.createPlaceholderIWallet(authority),
@@ -277,6 +302,6 @@ export class AuthorityDrift {
 			await this.driftClient.switchActiveUser(activeSubAccountId);
 		}
 
-		// TODO: subscribe to user accounts
+		this.subscribeToAllUsersUpdates();
 	}
 }

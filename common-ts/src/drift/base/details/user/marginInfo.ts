@@ -1,0 +1,119 @@
+import {
+	QUOTE_PRECISION_EXP,
+	BN,
+	BigNum,
+	User,
+	ZERO,
+	FOUR,
+	TWO,
+	DriftClient,
+	calculateClaimablePnl,
+	BASE_PRECISION,
+} from '@drift-labs/sdk';
+import { USDC_SPOT_MARKET_INDEX } from 'src/constants';
+import { MarketId, MarketKey } from 'src/types';
+
+export type AccountMarginInfo = {
+	/** Net USD value of the account, including spot balances and unsettled P&L from perp positions. */
+	netUsdValue: BigNum;
+	/** Total unsettled P&L from perp positions. Includes position P&L and funding P&L. */
+	totalUnsettledPnl: BigNum;
+	/** Total unsettled funding P&L from perp positions. */
+	totalUnsettledFundingPnL: BigNum;
+	/** Total claimable P&L from the P&L pool for perp positions. */
+	totalClaimablePnl: BigNum;
+	/** Total initial margin in the account. Includes weighted values of spot balances and unsettled P&L from perp positions. */
+	totalInitialMargin: BigNum;
+	/** Total maintenance margin in the account. Includes weighted values of spot balances and unsettled P&L from perp positions. */
+	totalMaintenanceMargin: BigNum;
+	/** Free initial margin in the account, used to open new positions. */
+	freeInitialMargin: BigNum;
+	/** Free maintenance margin in the account, used to avoid liquidations. */
+	freeMaintenanceMargin: BigNum;
+	/** Current leverage multiplier of the account. */
+	leverage: number;
+	/** Initial margin required to open a new position. */
+	initialReq: BigNum;
+	/** Maintenance margin required to avoid liquidations. */
+	maintenanceReq: BigNum;
+	/** Quote value of open orders in the account. */
+	quoteInOpenOrders: BigNum;
+	/** Margin ratio of the account. */
+	marginRatioPct: number;
+};
+
+export const getAccountMarginInfo = (
+	driftClient: DriftClient,
+	user: User,
+	getOraclePrice: (marketKey: MarketKey) => BN
+): AccountMarginInfo => {
+	const netUsdValue = user.getNetUsdValue();
+	const totalUnsettledPnl = user.getUnrealizedPNL(true);
+	const totalUnsettledFundingPnL = user.getUnrealizedFundingPNL();
+	const totalInitialMargin = user.getTotalCollateral();
+	const totalMaintenanceMargin = user.getTotalCollateral('Maintenance');
+	const freeInitialMargin = user.getFreeCollateral();
+	const freeMaintenanceMargin = user.getFreeCollateral('Maintenance');
+	const initialReq = user.getInitialMarginRequirement();
+	const maintenanceReq = user.getMaintenanceMarginRequirement();
+	const userLeverage = user.getLeverage();
+
+	let userMarginRatio = user.getMarginRatio();
+	// weird to display massive fraction when really it just means that their position is zero
+	if (userMarginRatio.eq(new BN(Number.MAX_SAFE_INTEGER)))
+		userMarginRatio = ZERO;
+
+	const usdcSpotMarketAccount = driftClient.getSpotMarketAccount(
+		USDC_SPOT_MARKET_INDEX
+	);
+	const totalClaimablePnl = user
+		.getActivePerpPositions()
+		.reduce((acc, position) => {
+			const perpMarket = driftClient.getPerpMarketAccount(position.marketIndex);
+			const oraclePrice = getOraclePrice(
+				MarketId.createPerpMarket(position.marketIndex).key
+			);
+			const positionClaimablePnl = calculateClaimablePnl(
+				perpMarket,
+				usdcSpotMarketAccount,
+				position,
+				{
+					price: oraclePrice,
+				}
+			);
+			return acc.add(positionClaimablePnl);
+		}, ZERO);
+
+	const quoteInOpenOrders = user.getOpenOrders().reduce((acc, order) => {
+		const price = order.price.gtn(0)
+			? order.price
+			: getOraclePrice(MarketId.createPerpMarket(order.marketIndex).key);
+		const unfilledBase = order.baseAssetAmount.sub(order.baseAssetAmountFilled);
+		return acc.add(unfilledBase.mul(price).div(BASE_PRECISION));
+	}, ZERO);
+
+	return {
+		netUsdValue: BigNum.from(netUsdValue, QUOTE_PRECISION_EXP),
+		totalUnsettledPnl: BigNum.from(totalUnsettledPnl, QUOTE_PRECISION_EXP),
+		totalUnsettledFundingPnL: BigNum.from(
+			totalUnsettledFundingPnL,
+			QUOTE_PRECISION_EXP
+		),
+		totalInitialMargin: BigNum.from(totalInitialMargin, QUOTE_PRECISION_EXP),
+		totalMaintenanceMargin: BigNum.from(
+			totalMaintenanceMargin,
+			QUOTE_PRECISION_EXP
+		),
+		freeInitialMargin: BigNum.from(freeInitialMargin, QUOTE_PRECISION_EXP),
+		freeMaintenanceMargin: BigNum.from(
+			freeMaintenanceMargin,
+			QUOTE_PRECISION_EXP
+		),
+		leverage: BigNum.from(userLeverage, FOUR).toNum(),
+		maintenanceReq: BigNum.from(maintenanceReq, QUOTE_PRECISION_EXP),
+		initialReq: BigNum.from(initialReq, QUOTE_PRECISION_EXP),
+		totalClaimablePnl: BigNum.from(totalClaimablePnl, QUOTE_PRECISION_EXP),
+		quoteInOpenOrders: BigNum.from(quoteInOpenOrders, QUOTE_PRECISION_EXP),
+		marginRatioPct: BigNum.from(userMarginRatio, TWO).toNum(),
+	};
+};

@@ -209,7 +209,7 @@ export class PollingDlob {
 		return this.errorSubject.asObservable();
 	}
 
-	public start(): void {
+	public start(): Promise<void> {
 		if (this.isStarted) {
 			return;
 		}
@@ -217,11 +217,13 @@ export class PollingDlob {
 		this.isStarted = true;
 		this.tickCounter = 0;
 
-		this.tick();
+		const firstTickPromise = this.tick();
 
 		this.intervalHandle = setInterval(() => {
 			this.tick();
 		}, this.baseTickIntervalMs);
+
+		return firstTickPromise;
 	}
 
 	public stop(): void {
