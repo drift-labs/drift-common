@@ -44,6 +44,15 @@ export type RawL2Output = {
 		twapConfidence?: string;
 		maxPrice?: string;
 	};
+	mmOracleData?: {
+		price: string;
+		slot: string;
+		confidence: string;
+		hasSufficientNumberOfDataPoints: boolean;
+		twap?: string;
+		twapConfidence?: string;
+		maxPrice?: string;
+	};
 	markPrice: string;
 	bestBidPrice: string;
 	bestAskPrice: string;
@@ -62,6 +71,8 @@ export type LiquidityType = 'vamm' | 'dlob' | 'serum' | 'phoenix' | 'openbook';
 export const deserializeL2Response = (
 	serializedOrderbook: RawL2Output
 ): L2WithOracleAndMarketData => {
+	const oracleDataToUse =
+		serializedOrderbook.mmOracleData ?? serializedOrderbook.oracleData;
 	return {
 		asks: serializedOrderbook.asks.map((ask) => ({
 			price: new BN(ask.price),
@@ -84,25 +95,19 @@ export const deserializeL2Response = (
 			}, {}),
 		})),
 		oracleData: {
-			price: serializedOrderbook.oracleData.price
-				? new BN(serializedOrderbook.oracleData.price)
-				: undefined,
-			slot: serializedOrderbook.oracleData.slot
-				? new BN(serializedOrderbook.oracleData.slot)
-				: undefined,
-			confidence: serializedOrderbook.oracleData.confidence
-				? new BN(serializedOrderbook.oracleData.confidence)
+			price: oracleDataToUse.price ? new BN(oracleDataToUse.price) : undefined,
+			slot: oracleDataToUse.slot ? new BN(oracleDataToUse.slot) : undefined,
+			confidence: oracleDataToUse.confidence
+				? new BN(oracleDataToUse.confidence)
 				: undefined,
 			hasSufficientNumberOfDataPoints:
-				serializedOrderbook.oracleData.hasSufficientNumberOfDataPoints,
-			twap: serializedOrderbook.oracleData.twap
-				? new BN(serializedOrderbook.oracleData.twap)
+				oracleDataToUse.hasSufficientNumberOfDataPoints,
+			twap: oracleDataToUse.twap ? new BN(oracleDataToUse.twap) : undefined,
+			twapConfidence: oracleDataToUse.twapConfidence
+				? new BN(oracleDataToUse.twapConfidence)
 				: undefined,
-			twapConfidence: serializedOrderbook.oracleData.twapConfidence
-				? new BN(serializedOrderbook.oracleData.twapConfidence)
-				: undefined,
-			maxPrice: serializedOrderbook.oracleData.maxPrice
-				? new BN(serializedOrderbook.oracleData.maxPrice)
+			maxPrice: oracleDataToUse.maxPrice
+				? new BN(oracleDataToUse.maxPrice)
 				: undefined,
 		},
 		slot: serializedOrderbook.slot,
