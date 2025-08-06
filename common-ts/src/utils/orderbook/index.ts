@@ -7,6 +7,7 @@ export interface L2WithOracle extends L2OrderBook {
 	bestAskPrice: BN;
 	spreadPct: BN;
 	spreadQuote: BN;
+	mmOracleData?: OraclePriceData;
 }
 
 export interface L2WithOracleAndMarketData extends L2WithOracle {
@@ -36,6 +37,15 @@ export type RawL2Output = {
 		};
 	}[];
 	oracleData: {
+		price: string;
+		slot: string;
+		confidence: string;
+		hasSufficientNumberOfDataPoints: boolean;
+		twap?: string;
+		twapConfidence?: string;
+		maxPrice?: string;
+	};
+	mmOracleData?: {
 		price: string;
 		slot: string;
 		confidence: string;
@@ -103,6 +113,28 @@ export const deserializeL2Response = (
 				: undefined,
 			maxPrice: serializedOrderbook.oracleData.maxPrice
 				? new BN(serializedOrderbook.oracleData.maxPrice)
+				: undefined,
+		},
+		mmOracleData: {
+			price: serializedOrderbook.mmOracleData?.price
+				? new BN(serializedOrderbook.mmOracleData.price)
+				: undefined,
+			slot: serializedOrderbook.mmOracleData?.slot
+				? new BN(serializedOrderbook.mmOracleData.slot)
+				: undefined,
+			confidence: serializedOrderbook.mmOracleData?.confidence
+				? new BN(serializedOrderbook.mmOracleData.confidence)
+				: undefined,
+			hasSufficientNumberOfDataPoints:
+				serializedOrderbook.mmOracleData?.hasSufficientNumberOfDataPoints,
+			twap: serializedOrderbook.mmOracleData?.twap
+				? new BN(serializedOrderbook.mmOracleData.twap)
+				: undefined,
+			twapConfidence: serializedOrderbook.mmOracleData?.twapConfidence
+				? new BN(serializedOrderbook.mmOracleData.twapConfidence)
+				: undefined,
+			maxPrice: serializedOrderbook.mmOracleData?.maxPrice
+				? new BN(serializedOrderbook.mmOracleData.maxPrice)
 				: undefined,
 		},
 		slot: serializedOrderbook.slot,
