@@ -7,7 +7,7 @@ import {
 	QUOTE_PRECISION_EXP,
 	User,
 } from '@drift-labs/sdk';
-import { MARKET_UTILS } from 'src/common-ui-utils/market';
+import { MARKET_UTILS } from '../../../../common-ui-utils/market';
 
 /**
  * Essential balance information for a spot market position.

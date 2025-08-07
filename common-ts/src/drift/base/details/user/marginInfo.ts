@@ -9,8 +9,8 @@ import {
 	DriftClient,
 	calculateClaimablePnl,
 } from '@drift-labs/sdk';
-import { USDC_SPOT_MARKET_INDEX } from 'src/constants';
-import { MarketId, MarketKey } from 'src/types';
+import { USDC_SPOT_MARKET_INDEX } from '../../../../constants';
+import { MarketId, MarketKey } from '../../../../types';
 
 export type AccountMarginInfo = {
 	/** Net USD value of the account, including spot balances and unsettled P&L from perp positions. */

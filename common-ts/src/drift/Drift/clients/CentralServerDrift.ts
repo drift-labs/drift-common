@@ -9,14 +9,14 @@ import {
 	WhileValidTxSender,
 } from '@drift-labs/sdk';
 import { Connection } from '@solana/web3.js';
-import { COMMON_UI_UTILS } from 'src/common-ui-utils/commonUiUtils';
+import { COMMON_UI_UTILS } from '../../../common-ui-utils/commonUiUtils';
 import {
 	DEFAULT_ACCOUNT_LOADER_COMMITMENT,
 	DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS,
 	DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 	DEFAULT_TX_SENDER_RETRY_INTERVAL,
 } from '../constants';
-import { MarketId } from 'src/types';
+import { MarketId } from '../../../types';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.

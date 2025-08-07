@@ -17,25 +17,25 @@ import {
 	ZERO,
 } from '@drift-labs/sdk';
 import { Connection, TransactionSignature } from '@solana/web3.js';
-import { COMMON_UI_UTILS } from 'src/common-ui-utils/commonUiUtils';
+import { COMMON_UI_UTILS } from '../../../common-ui-utils/commonUiUtils';
 import {
 	DEFAULT_ACCOUNT_LOADER_COMMITMENT,
 	DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS,
 	DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 	DEFAULT_TX_SENDER_RETRY_INTERVAL,
 } from '../constants';
-import { MarketId } from 'src/types';
-import { MARKET_UTILS } from 'src/common-ui-utils/market';
+import { MarketId } from '../../../types';
+import { MARKET_UTILS } from '../../../common-ui-utils/market';
 import { PollingDlob } from '../data/PollingDlob';
-import { EnvironmentConstants } from 'src/EnvironmentConstants';
+import { EnvironmentConstants } from '../../../EnvironmentConstants';
 import { MarkPriceStore } from '../stores/MarkPriceStore';
 import { OraclePriceLookup, OraclePriceStore } from '../stores/OraclePriceStore';
 import { Subscription } from 'rxjs';
 import { UserAccountStore } from '../stores/UserAccountStore';
-import { getTokenAddressForDepositAndWithdraw } from 'src/utils/token';
-import { USER_UTILS } from 'src/common-ui-utils/user';
-import { MAIN_POOL_ID } from 'src/constants';
-import { TRADING_UTILS } from 'src/common-ui-utils/trading';
+import { getTokenAddressForDepositAndWithdraw } from '../../../utils/token';
+import { USER_UTILS } from '../../../common-ui-utils/user';
+import { MAIN_POOL_ID } from '../../../constants';
+import { TRADING_UTILS } from '../../../common-ui-utils/trading';
 
 export interface AuthorityDriftConfig {
 	solanaRpcEndpoint: string;

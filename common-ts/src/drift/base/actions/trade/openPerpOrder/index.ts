@@ -1,8 +1,8 @@
 import { DriftClient, OptionalOrderParams, User } from '@drift-labs/sdk';
-import { UIOrderType } from 'src/types';
+import { UIOrderType } from '../../../../../types';
 import { openPerpMarketOrder } from './openPerpMarketOrder';
 import { OptionalTriggerOrderParams, prepSwiftOrder } from './openSwiftOrder';
-import { SwiftClient } from 'src/clients/swiftClient';
+import { SwiftClient } from '../../../../../clients/swiftClient';
 import invariant from 'tiny-invariant';
 import { openPerpNonMarketOrder } from './openPerpNonMarketOrder';
 

@@ -9,21 +9,21 @@ import { Observable, Subject } from 'rxjs';
 import {
 	getSpotBalanceInfo,
 	SpotBalanceInfo,
-} from 'src/drift/base/details/user/balances';
+} from '../../base/details/user/balances';
 import {
 	AccountMarginInfo,
 	getAccountMarginInfo,
-} from 'src/drift/base/details/user/marginInfo';
+} from '../../base/details/user/marginInfo';
 import {
 	getPositionInfo,
 	PerpPositionInfo,
-} from 'src/drift/base/details/user/positions';
-import { UISerializableOrder } from 'src/serializableTypes';
-import { MarketId } from 'src/types';
+} from '../../base/details/user/positions';
+import { UISerializableOrder } from '../../../serializableTypes';
+import { MarketId } from '../../../types';
 import { OraclePriceStore } from './OraclePriceStore';
 import { MarkPriceStore } from './MarkPriceStore';
-import { getOrderDetails } from 'src/drift/base/details/user/orders';
-import { ENUM_UTILS } from 'src/utils';
+import { getOrderDetails } from '../../base/details/user/orders';
+import { ENUM_UTILS } from '../../../utils';
 
 export type AccountData = {
 	pubKey: PublicKey;

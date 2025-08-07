@@ -17,7 +17,7 @@ import {
 	SwiftOrderConfirmedEvent,
 	SwiftOrderErroredEvent,
 } from '../../../../../clients/swiftClient';
-import { MarketId } from 'src/types';
+import { MarketId } from '../../../../../types';
 import { firstValueFrom } from 'rxjs';
 
 export interface OptionalTriggerOrderParams extends OptionalOrderParams {

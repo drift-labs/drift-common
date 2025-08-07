@@ -24,7 +24,7 @@ import { ENUM_UTILS } from '../../../../utils';
 import {
 	MAX_PREDICTION_PRICE_BIG_NUM,
 	USDC_SPOT_MARKET_INDEX,
-} from 'src/constants';
+} from '../../../../constants';
 
 /**
  * Comprehensive position information derived from a PerpPosition at a specific reference price.

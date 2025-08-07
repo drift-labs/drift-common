@@ -1,6 +1,6 @@
 import { BN, OraclePriceData, ZERO } from '@drift-labs/sdk';
 import { Subject, Subscription } from 'rxjs';
-import { MarketKey } from 'src/types';
+import { MarketKey } from '../../../types';
 
 export type OraclePriceLookup = Record<MarketKey, OraclePriceData>;
 

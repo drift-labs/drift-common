@@ -1,5 +1,5 @@
 import { Order } from '@drift-labs/sdk';
-import { Serializer, UISerializableOrder } from 'src/serializableTypes';
+import { Serializer, UISerializableOrder } from '../../../../serializableTypes';
 
 export const getOrderDetails = (order: Order): UISerializableOrder => {
 	const serializedOrder = Serializer.Serialize.Order(order);

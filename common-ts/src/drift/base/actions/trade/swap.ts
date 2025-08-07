@@ -7,8 +7,8 @@ import {
 	TxParams,
 	User,
 } from '@drift-labs/sdk';
-import { getTokenAddressForDepositAndWithdraw } from 'src/utils/token';
-import { MARKET_UTILS } from 'src/common-ui-utils/market';
+import { getTokenAddressForDepositAndWithdraw } from '../../../..//utils/token';
+import { MARKET_UTILS } from '../../../..//common-ui-utils/market';
 import {
 	AddressLookupTableAccount,
 	Transaction,

@@ -10,7 +10,7 @@ import {
 	TransactionInstruction,
 	VersionedTransaction,
 } from '@solana/web3.js';
-import { getTokenAddressForDepositAndWithdraw } from 'src/utils/token';
+import { getTokenAddressForDepositAndWithdraw } from '../../../../utils/token';
 
 interface CreateDepositIxParams {
 	driftClient: DriftClient;

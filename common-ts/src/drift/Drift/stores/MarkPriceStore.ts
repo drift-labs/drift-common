@@ -1,6 +1,6 @@
 import { BN, ZERO } from '@drift-labs/sdk';
 import { Subject } from 'rxjs';
-import { MarketKey } from 'src/types';
+import { MarketKey } from '../../../types';
 
 export type MarkPriceData = {
 	markPrice: BN;
