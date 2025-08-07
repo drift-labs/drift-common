@@ -1,5 +1,5 @@
 import { BN, OraclePriceData, ZERO } from '@drift-labs/sdk';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { MarketKey } from 'src/types';
 
 export type OraclePriceLookup = Record<MarketKey, OraclePriceData>;
@@ -60,5 +60,13 @@ export class OraclePriceStore {
 
 	public getOraclePrice(marketKey: MarketKey): BN {
 		return this.getOraclePriceData(marketKey).price;
+	}
+
+	public onUpdate(callback: (oraclePrice: OraclePriceLookup) => void): Subscription {
+		const subscription = this.updatesSubject$.subscribe((oraclePrice) => {
+			callback(oraclePrice);
+		});
+
+		return subscription;
 	}
 }

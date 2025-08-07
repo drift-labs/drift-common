@@ -29,7 +29,7 @@ import { MARKET_UTILS } from 'src/common-ui-utils/market';
 import { PollingDlob } from '../data/PollingDlob';
 import { EnvironmentConstants } from 'src/EnvironmentConstants';
 import { MarkPriceStore } from '../stores/MarkPriceStore';
-import { OraclePriceStore } from '../stores/OraclePriceStore';
+import { OraclePriceLookup, OraclePriceStore } from '../stores/OraclePriceStore';
 import { Subscription } from 'rxjs';
 import { UserAccountStore } from '../stores/UserAccountStore';
 import { getTokenAddressForDepositAndWithdraw } from 'src/utils/token';
@@ -37,7 +37,7 @@ import { USER_UTILS } from 'src/common-ui-utils/user';
 import { MAIN_POOL_ID } from 'src/constants';
 import { TRADING_UTILS } from 'src/common-ui-utils/trading';
 
-interface AuthorityDriftConfig {
+export interface AuthorityDriftConfig {
 	solanaRpcEndpoint: string;
 	driftEnv: DriftEnv;
 	wallet?: IWallet;
@@ -85,7 +85,7 @@ export class AuthorityDrift {
 	 * - DriftClient oracle account subscriptions
 	 * - Polling DLOB server (all non-active markets)
 	 */
-	private oraclePriceStore: OraclePriceStore;
+	private _oraclePriceStore: OraclePriceStore;
 
 	/**
 	 * Stores the fetched user account data for all user accounts.
@@ -119,12 +119,16 @@ export class AuthorityDrift {
 		this.setupPollingDlob(config.driftDlobServerHttpUrl);
 	}
 
+	public get oraclePriceStore(): OraclePriceLookup {
+		return this._oraclePriceStore.store;
+	}
+
 	private setupStores(driftClient: DriftClient) {
 		this.markPriceStore = new MarkPriceStore();
-		this.oraclePriceStore = new OraclePriceStore();
+		this._oraclePriceStore = new OraclePriceStore();
 		this.userAccountStore = new UserAccountStore(
 			driftClient,
-			this.oraclePriceStore,
+			this._oraclePriceStore,
 			this.markPriceStore
 		);
 	}
@@ -251,7 +255,7 @@ export class AuthorityDrift {
 			});
 
 			this.markPriceStore.updateMarkPrices(...updatedMarkPrices);
-			this.oraclePriceStore.updateOraclePrices(...updatedOraclePrices);
+			this._oraclePriceStore.updateOraclePrices(...updatedOraclePrices);
 		});
 
 		this.pollingDlob = pollingDlob;
@@ -291,6 +295,10 @@ export class AuthorityDrift {
 		await Promise.all([driftClientUnsubscribePromise]);
 
 		this.pollingDlobSubscription = null;
+	}
+
+	public onOraclePricesUpdate(callback: (oraclePrice: OraclePriceLookup) => void) {
+		return this._oraclePriceStore.onUpdate(callback);
 	}
 
 	public async updateAuthority(wallet: IWallet, activeSubAccountId?: number) {
