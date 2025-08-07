@@ -27,7 +27,7 @@ interface CreateDepositIxParams {
  * @param user - The user account that will perform the deposit
  * @param amount - The amount to deposit (in BigNum format)
  * @param spotMarketConfig - The spot market configuration for the token being deposited
- * @param isMaxBorrowRepayment - Whether this deposit is for maximum borrow repayment (scales amount by 2x)
+ * @param isMaxBorrowRepayment - Whether this deposit is for maximum borrow repayment (scales amount by 2x, set to reduce only)
  *
  * @returns Promise resolving to an array of transaction instructions for the deposit
  */

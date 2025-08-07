@@ -10,6 +10,7 @@ import {
 	PerpMarketConfig,
 	PerpPosition,
 	PositionDirection,
+	PublicKey,
 	QUOTE_PRECISION_EXP,
 	QUOTE_SPOT_MARKET_INDEX,
 	User,
@@ -20,10 +21,11 @@ import {
 	calculateFeesAndFundingPnl,
 	calculatePositionFundingPNL,
 	calculatePositionPNL,
+	getUserAccountPublicKeySync,
 	isOracleValid,
 } from '@drift-labs/sdk';
 import { OpenPosition, UIMarket } from '../types';
-import { TRADING_COMMON_UTILS } from './trading';
+import { TRADING_UTILS } from './trading';
 import { ENUM_UTILS } from '../utils';
 
 const getOpenPositionData = (
@@ -116,7 +118,7 @@ const getOpenPositionData = (
 				oraclePrice = markPrice;
 			}
 
-			const pnlVsMark = TRADING_COMMON_UTILS.calculatePotentialProfit({
+			const pnlVsMark = TRADING_UTILS.calculatePotentialProfit({
 				currentPositionSize: BigNum.from(
 					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
@@ -136,7 +138,7 @@ const getOpenPositionData = (
 				takerFeeBps: 0,
 			}).estimatedProfit.shiftTo(QUOTE_PRECISION_EXP).val;
 
-			const pnlVsOracle = TRADING_COMMON_UTILS.calculatePotentialProfit({
+			const pnlVsOracle = TRADING_UTILS.calculatePotentialProfit({
 				currentPositionSize: BigNum.from(
 					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
@@ -225,6 +227,37 @@ const getOpenPositionData = (
 	return newResult;
 };
 
-export const USER_COMMON_UTILS = {
+const checkIfUserAccountExists = async (
+	driftClient: DriftClient,
+	config:
+		| {
+				type: 'userPubKey';
+				userPubKey: PublicKey;
+		  }
+		| {
+				type: 'subAccountId';
+				subAccountId: number;
+				authority: PublicKey;
+		  }
+) => {
+	let userPubKey: PublicKey;
+
+	if (config.type === 'userPubKey') {
+		userPubKey = config.userPubKey;
+	} else {
+		userPubKey = getUserAccountPublicKeySync(
+			driftClient.program.programId,
+			config.authority,
+			config.subAccountId
+		);
+	}
+
+	const accountInfo = await driftClient.connection.getAccountInfo(userPubKey);
+
+	return accountInfo !== null;
+};
+
+export const USER_UTILS = {
 	getOpenPositionData,
+	checkIfUserAccountExists,
 };

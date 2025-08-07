@@ -8,7 +8,7 @@ import {
 	User,
 } from '@drift-labs/sdk';
 import { getTokenAddressForDepositAndWithdraw } from 'src/utils/token';
-import { getMarketConfig } from '../../utils/markets';
+import { MARKET_UTILS } from 'src/common-ui-utils/market';
 import {
 	AddressLookupTableAccount,
 	Transaction,
@@ -64,7 +64,7 @@ export const createSwapIxDetails = async ({
 }> => {
 	const userPublicKey = user.getUserAccountPublicKey();
 
-	const swapFromMarketConfig = getMarketConfig(
+	const swapFromMarketConfig = MARKET_UTILS.getMarketConfig(
 		driftClient.env,
 		MarketType.SPOT,
 		swapFromMarketIndex
@@ -74,7 +74,7 @@ export const createSwapIxDetails = async ({
 			swapFromMarketConfig.mint,
 			userPublicKey
 		);
-	const swapToMarketConfig = getMarketConfig(
+	const swapToMarketConfig = MARKET_UTILS.getMarketConfig(
 		driftClient.env,
 		MarketType.SPOT,
 		swapToMarketIndex

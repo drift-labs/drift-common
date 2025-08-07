@@ -5,7 +5,7 @@ import {
 	PublicKey,
 	User,
 } from '@drift-labs/sdk';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import {
 	getSpotBalanceInfo,
 	SpotBalanceInfo,
@@ -124,5 +124,13 @@ export class UserAccountStore {
 
 	public reset(): void {
 		this._store = {};
+	}
+
+	public getUser(subAccountId: number): AccountData | undefined {
+		return this._store[subAccountId];
+	}
+
+	public observeStoreUpdates(): Observable<AccountData> {
+		return this.updatesSubject$.asObservable();
 	}
 }

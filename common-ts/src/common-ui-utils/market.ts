@@ -5,7 +5,14 @@ import {
 	SpotOperation,
 	isOperationPaused,
 	InsuranceFundOperation,
+	MarketType,
+	SpotMarketConfig,
+	DriftEnv,
+	PerpMarketConfig,
+	PerpMarkets,
+	SpotMarkets,
 } from '@drift-labs/sdk';
+import { ENUM_UTILS } from '../utils';
 
 const getBaseAssetSymbol = (marketName: string, removePrefix = false) => {
 	let baseAssetSymbol = marketName.replace('-PERP', '').replace('/USDC', '');
@@ -89,10 +96,35 @@ const getPausedOperations = (
 	return pausedOperations;
 };
 
-export const MARKET_COMMON_UTILS = {
+function getMarketConfig(
+	driftEnv: DriftEnv,
+	marketType: typeof MarketType.PERP,
+	marketIndex: number
+): PerpMarketConfig;
+function getMarketConfig(
+	driftEnv: DriftEnv,
+	marketType: typeof MarketType.SPOT,
+	marketIndex: number
+): SpotMarketConfig;
+function getMarketConfig(
+	driftEnv: DriftEnv,
+	marketType: MarketType,
+	marketIndex: number
+): PerpMarketConfig | SpotMarketConfig {
+	const isPerp = ENUM_UTILS.match(marketType, MarketType.PERP);
+
+	if (isPerp) {
+		return PerpMarkets[driftEnv][marketIndex];
+	} else {
+		return SpotMarkets[driftEnv][marketIndex];
+	}
+}
+
+export const MARKET_UTILS = {
 	getBaseAssetSymbol,
 	getPausedOperations,
 	PerpOperationsMap,
 	SpotOperationsMap,
 	InsuranceFundOperationsMap,
+	getMarketConfig,
 };

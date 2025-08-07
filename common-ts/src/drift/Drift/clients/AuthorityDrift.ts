@@ -1,4 +1,5 @@
 import {
+	BigNum,
 	CustomizedCadenceBulkAccountLoader,
 	DelistedMarketSetting,
 	DRIFT_PROGRAM_ID,
@@ -6,13 +7,16 @@ import {
 	DriftClientConfig,
 	DriftEnv,
 	getMarketsAndOraclesForSubscription,
+	IWallet,
 	MarketType,
 	PerpMarkets,
 	PublicKey,
+	ReferrerInfo,
 	SpotMarkets,
 	WhileValidTxSender,
+	ZERO,
 } from '@drift-labs/sdk';
-import { Connection } from '@solana/web3.js';
+import { Connection, TransactionSignature } from '@solana/web3.js';
 import { COMMON_UI_UTILS } from 'src/common-ui-utils/commonUiUtils';
 import {
 	DEFAULT_ACCOUNT_LOADER_COMMITMENT,
@@ -21,18 +25,22 @@ import {
 	DEFAULT_TX_SENDER_RETRY_INTERVAL,
 } from '../constants';
 import { MarketId } from 'src/types';
-import { getMarketConfig } from 'src/drift/base/utils';
+import { MARKET_UTILS } from 'src/common-ui-utils/market';
 import { PollingDlob } from '../data/PollingDlob';
 import { EnvironmentConstants } from 'src/EnvironmentConstants';
 import { MarkPriceStore } from '../stores/MarkPriceStore';
 import { OraclePriceStore } from '../stores/OraclePriceStore';
 import { Subscription } from 'rxjs';
 import { UserAccountStore } from '../stores/UserAccountStore';
+import { getTokenAddressForDepositAndWithdraw } from 'src/utils/token';
+import { USER_UTILS } from 'src/common-ui-utils/user';
+import { MAIN_POOL_ID } from 'src/constants';
+import { TRADING_UTILS } from 'src/common-ui-utils/trading';
 
 interface AuthorityDriftConfig {
 	solanaRpcEndpoint: string;
 	driftEnv: DriftEnv;
-	authority?: PublicKey;
+	wallet?: IWallet;
 	driftDlobServerHttpUrl?: string;
 	onUserAccountUpdate?: (userPubKey: PublicKey) => void;
 	tradableMarkets?: MarketId[];
@@ -134,20 +142,28 @@ export class AuthorityDrift {
 			DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS
 		);
 
-		const wallet = COMMON_UI_UTILS.createPlaceholderIWallet(config.authority);
-		const skipInitialUsersLoad = !config.authority;
+		const wallet = config.wallet ?? COMMON_UI_UTILS.createPlaceholderIWallet();
+		const skipInitialUsersLoad = !config.wallet;
 
 		const perpMarkets =
 			config.tradableMarkets
 				?.filter((market) => market.isPerp)
 				.map((market) =>
-					getMarketConfig(driftEnv, MarketType.PERP, market.marketIndex)
+					MARKET_UTILS.getMarketConfig(
+						driftEnv,
+						MarketType.PERP,
+						market.marketIndex
+					)
 				) ?? PerpMarkets[driftEnv];
 		const spotMarkets =
 			config.tradableMarkets
 				?.filter((market) => !market.isPerp)
 				.map((market) =>
-					getMarketConfig(driftEnv, MarketType.SPOT, market.marketIndex)
+					MARKET_UTILS.getMarketConfig(
+						driftEnv,
+						MarketType.SPOT,
+						market.marketIndex
+					)
 				) ?? SpotMarkets[driftEnv];
 		const { perpMarketIndexes, spotMarketIndexes, oracleInfos } =
 			getMarketsAndOraclesForSubscription(driftEnv, perpMarkets, spotMarkets);
@@ -277,17 +293,14 @@ export class AuthorityDrift {
 		this.pollingDlobSubscription = null;
 	}
 
-	public async updateAuthority(
-		authority: PublicKey,
-		activeSubAccountId?: number
-	) {
-		this.config.authority = authority;
+	public async updateAuthority(wallet: IWallet, activeSubAccountId?: number) {
+		this.config.wallet = wallet;
 
 		await Promise.all(this.driftClient.unsubscribeUsers());
 		this.userAccountStore.reset();
 
 		const updateWalletResult = await this.driftClient.updateWallet(
-			COMMON_UI_UTILS.createPlaceholderIWallet(authority),
+			wallet,
 			undefined,
 			activeSubAccountId,
 			true,
@@ -303,5 +316,196 @@ export class AuthorityDrift {
 		}
 
 		this.subscribeToAllUsersUpdates();
+	}
+
+	private async getReferrerInfo(
+		referrerName: string
+	): Promise<ReferrerInfo | null> {
+		if (!referrerName) {
+			return null;
+		}
+
+		const referrerNameAccount = await this.driftClient.fetchReferrerNameAccount(
+			referrerName
+		);
+
+		if (referrerNameAccount) {
+			return {
+				referrer: referrerNameAccount.user,
+				referrerStats: referrerNameAccount.userStats,
+			};
+		} else {
+			return null;
+		}
+	}
+
+	public async createUserAndDeposit({
+		depositAmount,
+		depositSpotMarketIndex,
+		name,
+		maxLeverage,
+		poolId = MAIN_POOL_ID,
+		subAccountId,
+		referrerName,
+	}: {
+		depositAmount: BigNum;
+		depositSpotMarketIndex: number;
+		name?: string;
+		maxLeverage?: number;
+		poolId?: number;
+		subAccountId?: number;
+		referrerName?: string;
+	}) {
+		const spotMarketConfig = MARKET_UTILS.getMarketConfig(
+			this.config.driftEnv,
+			MarketType.SPOT,
+			depositSpotMarketIndex
+		);
+
+		const referrerInfoPromise = this.getReferrerInfo(referrerName);
+		const subaccountExistsPromise = USER_UTILS.checkIfUserAccountExists(
+			this.driftClient,
+			{
+				type: 'subAccountId',
+				subAccountId,
+				authority: this.config.wallet.publicKey,
+			}
+		);
+		const associatedDepositTokenAddressPromise =
+			getTokenAddressForDepositAndWithdraw(
+				spotMarketConfig.mint,
+				this.driftClient.wallet.publicKey
+			);
+
+		const [referrerInfo, subaccountExists, associatedDepositTokenAddress] =
+			await Promise.all([
+				referrerInfoPromise,
+				subaccountExistsPromise,
+				associatedDepositTokenAddressPromise,
+			]);
+
+		if (subaccountExists) {
+			throw new Error('Subaccount already exists');
+		}
+
+		const newAccountName = name ?? `Account ${subAccountId}`;
+		const customMaxMarginRatio = TRADING_UTILS.convertLeverageToMarginRatio(
+			maxLeverage ?? 0
+		);
+
+		const [txSig, userAccountPublicKey] =
+			await this.driftClient.initializeUserAccountAndDepositCollateral(
+				depositAmount.val,
+				associatedDepositTokenAddress,
+				depositSpotMarketIndex,
+				subAccountId,
+				newAccountName,
+				undefined, // donation amount
+				referrerInfo,
+				ZERO,
+				undefined, // tx params
+				customMaxMarginRatio,
+				poolId
+			);
+
+		await this.driftClient.addUser(subAccountId, this.config.wallet.publicKey); // adds user to driftclient's user map, subscribes to user account data
+		const user = this.driftClient.getUser(
+			subAccountId,
+			this.config.wallet.publicKey
+		);
+
+		user.eventEmitter.on('update', () => {
+			this.userAccountStore.updateUserAccount(user);
+		});
+
+		return {
+			txSig,
+			userAccountPublicKey,
+		};
+	}
+
+	public async deposit({
+		subAccountId,
+		amount,
+		spotMarketIndex,
+		isMaxBorrowRepayment,
+	}: {
+		subAccountId: number;
+		amount: BigNum;
+		spotMarketIndex: number;
+		isMaxBorrowRepayment?: boolean;
+	}): Promise<TransactionSignature> {
+		const spotMarketConfig = MARKET_UTILS.getMarketConfig(
+			this.config.driftEnv,
+			MarketType.SPOT,
+			spotMarketIndex
+		);
+
+		const authority = this.config.wallet.publicKey;
+		const associatedDepositTokenAddress =
+			await getTokenAddressForDepositAndWithdraw(
+				spotMarketConfig.mint,
+				authority
+			);
+
+		let finalDepositAmount = amount;
+
+		if (isMaxBorrowRepayment) {
+			// we over-estimate to ensure that there is no borrow dust left
+			// since isMaxBorrowRepayment = reduceOnly, it is safe to over-estimate
+			finalDepositAmount = finalDepositAmount.scale(2, 1);
+		}
+
+		return this.driftClient.deposit(
+			finalDepositAmount.val,
+			spotMarketIndex,
+			associatedDepositTokenAddress,
+			subAccountId,
+			isMaxBorrowRepayment
+		);
+	}
+
+	public async withdraw({
+		subAccountId,
+		amount,
+		spotMarketIndex,
+		allowBorrow = false,
+		isMax = false,
+	}: {
+		subAccountId: number;
+		amount: BigNum;
+		spotMarketIndex: number;
+		allowBorrow?: boolean;
+		isMax?: boolean;
+	}) {
+		const spotMarketConfig = MARKET_UTILS.getMarketConfig(
+			this.config.driftEnv,
+			MarketType.SPOT,
+			spotMarketIndex
+		);
+
+		const authority = this.config.wallet.publicKey;
+		const associatedDepositTokenAddress =
+			await getTokenAddressForDepositAndWithdraw(
+				spotMarketConfig.mint,
+				authority
+			);
+
+		const reduceOnly = !allowBorrow;
+
+		let finalWithdrawAmount = amount;
+		if (isMax && reduceOnly) {
+			// we over-estimate to ensure that there is no borrow dust left
+			// since reduceOnly is true, it is safe to over-estimate
+			finalWithdrawAmount = finalWithdrawAmount.scale(2, 1);
+		}
+
+		return this.driftClient.withdraw(
+			finalWithdrawAmount.val,
+			spotMarketIndex,
+			associatedDepositTokenAddress,
+			reduceOnly,
+			subAccountId
+		);
 	}
 }

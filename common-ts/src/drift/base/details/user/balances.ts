@@ -7,7 +7,7 @@ import {
 	QUOTE_PRECISION_EXP,
 	User,
 } from '@drift-labs/sdk';
-import { getMarketConfig } from '../../utils/markets';
+import { MARKET_UTILS } from 'src/common-ui-utils/market';
 
 /**
  * Essential balance information for a spot market position.
@@ -55,7 +55,7 @@ export const getSpotBalanceInfo = (
 	marketIndex: number,
 	oraclePrice: BN
 ): SpotBalanceInfo => {
-	const spotMarketConfig = getMarketConfig(
+	const spotMarketConfig = MARKET_UTILS.getMarketConfig(
 		driftClient.env,
 		MarketType.SPOT,
 		marketIndex

@@ -33,9 +33,9 @@ import bcrypt from 'bcryptjs-react';
 import nacl, { sign } from 'tweetnacl';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { AuctionParams, TradeOffsetPrice } from 'src/types';
-import { USER_COMMON_UTILS } from './user';
-import { TRADING_COMMON_UTILS } from './trading';
-import { MARKET_COMMON_UTILS } from './market';
+import { USER_UTILS } from './user';
+import { TRADING_UTILS } from './trading';
+import { MARKET_UTILS } from './market';
 import { ORDER_COMMON_UTILS } from './order';
 import { EMPTY_AUCTION_PARAMS } from '../constants/trade';
 
@@ -987,8 +987,8 @@ export const COMMON_UI_UTILS = {
 	userExists,
 	verifySignature,
 	trimTrailingZeros,
-	...USER_COMMON_UTILS,
-	...TRADING_COMMON_UTILS,
-	...MARKET_COMMON_UTILS,
+	...USER_UTILS,
+	...TRADING_UTILS,
+	...MARKET_UTILS,
 	...ORDER_COMMON_UTILS,
 };
