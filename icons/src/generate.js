@@ -132,15 +132,17 @@ exporter
                 allSVGs = __spreadArray(__spreadArray([], downloadedSVGsData, true), manuallyAddedSvgs, true);
                 // Check for existing components that don't match Figma SVGs
                 console.log(chalk_1["default"].cyanBright('-> Checking for manually added components'));
+                console.log(chalk_1["default"].cyanBright("-> (These components have either been added by hand, or may be stale - as they don't match the Figma SVGs)"));
                 existingComponents = fs_extra_1["default"].existsSync(ICONS_DIRECTORY_PATH)
-                    ? fs_extra_1["default"].readdirSync(ICONS_DIRECTORY_PATH)
+                    ? fs_extra_1["default"]
+                        .readdirSync(ICONS_DIRECTORY_PATH)
                         .filter(function (file) { return file.endsWith('.tsx'); })
                         .map(function (file) { return file.replace('.tsx', ''); })
                     : [];
-                generatedComponentNames = allSVGs.map(function (svg) { return (0, utils_1.toPascalCase)(svg.name); });
-                manuallyAddedComponents = existingComponents.filter(function (component) {
-                    return !generatedComponentNames.includes(component);
+                generatedComponentNames = allSVGs.map(function (svg) {
+                    return (0, utils_1.toPascalCase)(svg.name);
                 });
+                manuallyAddedComponents = existingComponents.filter(function (component) { return !generatedComponentNames.includes(component); });
                 if (manuallyAddedComponents.length > 0) {
                     console.log(chalk_1["default"].yellowBright('-> Found manually added components:'));
                     manuallyAddedComponents.forEach(function (component) {
