@@ -180,8 +180,9 @@ const SpotMarketConfigToTVMarketInfo = (
 	};
 };
 
-interface TvAppContextProvider {
+interface TvAppTradeDataManager {
 	getFilledOrdersData(startDate: number, endDate: number): Promise<JsonTrade[]>;
+	getCurrentSubAccountAddress(): string | null;
 }
 
 export class DriftTvFeed {
@@ -192,7 +193,7 @@ export class DriftTvFeed {
 	private onResetCache: () => void;
 	private perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
-	private tvAppContextProvider: TvAppContextProvider | undefined;
+	private tvAppTradeDataManager: TvAppTradeDataManager | undefined;
 
 	constructor(
 		env: UIEnv,
@@ -200,7 +201,7 @@ export class DriftTvFeed {
 		driftClient: DriftClient,
 		perpMarketConfigs: PerpMarketConfig[],
 		spotMarketConfigs: SpotMarketConfig[],
-		tvAppContextProvider?: TvAppContextProvider
+		tvAppTradeDataManager?: TvAppTradeDataManager
 	) {
 		this.env = env;
 		this.candleType = candleType;
@@ -208,7 +209,7 @@ export class DriftTvFeed {
 		this.driftClient = driftClient;
 		this.perpMarketConfigs = perpMarketConfigs;
 		this.spotMarketConfigs = spotMarketConfigs;
-		this.tvAppContextProvider = tvAppContextProvider;
+		this.tvAppTradeDataManager = tvAppTradeDataManager;
 	}
 
 	public resetCache() {
@@ -371,16 +372,28 @@ export class DriftTvFeed {
 	};
 	// https://www.tradingview.com/charting-library-docs/latest/api/interfaces/Charting_Library.Mark/ reference for marks type
 	async getMarks(_symbolInfo, startDate, endDate, onDataCallback, _resolution) {
-		if (!this.tvAppContextProvider) {
+		if (!this.tvAppTradeDataManager) {
 			return;
 		}
-		const orderHistory = await this.tvAppContextProvider.getFilledOrdersData(
+		const orderHistory = await this.tvAppTradeDataManager.getFilledOrdersData(
 			startDate,
 			endDate
 		);
 
+		const currentUserAccount =
+			this.tvAppTradeDataManager.getCurrentSubAccountAddress();
+
 		const tradeMarks = orderHistory.map((trade) => {
-			const isLong = trade.takerOrderDirection === 'long';
+			const currentUserIsMaker = trade.maker === currentUserAccount;
+			const currentUserIsTaker = trade.taker === currentUserAccount;
+
+			let isLong: boolean;
+			if (currentUserIsMaker) {
+				isLong = trade.makerOrderDirection === 'long';
+			} else if (currentUserIsTaker) {
+				isLong = trade.takerOrderDirection === 'long';
+			}
+
 			const color = isLong ? '#5DD5A0' : '#FF615C';
 			const baseAmount = Number(trade.baseAssetAmountFilled);
 			const quoteAmount = Number(trade.quoteAssetAmountFilled);
