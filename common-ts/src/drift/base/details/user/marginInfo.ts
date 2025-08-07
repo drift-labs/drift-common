@@ -8,7 +8,6 @@ import {
 	TWO,
 	DriftClient,
 	calculateClaimablePnl,
-	BASE_PRECISION,
 } from '@drift-labs/sdk';
 import { USDC_SPOT_MARKET_INDEX } from 'src/constants';
 import { MarketId, MarketKey } from 'src/types';
@@ -36,8 +35,6 @@ export type AccountMarginInfo = {
 	initialReq: BigNum;
 	/** Maintenance margin required to avoid liquidations. */
 	maintenanceReq: BigNum;
-	/** Quote value of open orders in the account. */
-	quoteInOpenOrders: BigNum;
 	/** Margin ratio of the account. */
 	marginRatioPct: number;
 };
@@ -48,7 +45,7 @@ export const getAccountMarginInfo = (
 	getOraclePrice: (marketKey: MarketKey) => BN
 ): AccountMarginInfo => {
 	const netUsdValue = user.getNetUsdValue();
-	const totalUnsettledPnl = user.getUnrealizedPNL(true);
+	const totalUnsettledPnl = user.getUnrealizedPNL(true); // method from SDK is inappropriately named, totalUnsettledPnl is the right definition here
 	const totalUnsettledFundingPnL = user.getUnrealizedFundingPNL();
 	const totalInitialMargin = user.getTotalCollateral();
 	const totalMaintenanceMargin = user.getTotalCollateral('Maintenance');
@@ -84,14 +81,6 @@ export const getAccountMarginInfo = (
 			return acc.add(positionClaimablePnl);
 		}, ZERO);
 
-	const quoteInOpenOrders = user.getOpenOrders().reduce((acc, order) => {
-		const price = order.price.gtn(0)
-			? order.price
-			: getOraclePrice(MarketId.createPerpMarket(order.marketIndex).key);
-		const unfilledBase = order.baseAssetAmount.sub(order.baseAssetAmountFilled);
-		return acc.add(unfilledBase.mul(price).div(BASE_PRECISION));
-	}, ZERO);
-
 	return {
 		netUsdValue: BigNum.from(netUsdValue, QUOTE_PRECISION_EXP),
 		totalUnsettledPnl: BigNum.from(totalUnsettledPnl, QUOTE_PRECISION_EXP),
@@ -99,6 +88,7 @@ export const getAccountMarginInfo = (
 			totalUnsettledFundingPnL,
 			QUOTE_PRECISION_EXP
 		),
+		totalClaimablePnl: BigNum.from(totalClaimablePnl, QUOTE_PRECISION_EXP),
 		totalInitialMargin: BigNum.from(totalInitialMargin, QUOTE_PRECISION_EXP),
 		totalMaintenanceMargin: BigNum.from(
 			totalMaintenanceMargin,
@@ -112,8 +102,6 @@ export const getAccountMarginInfo = (
 		leverage: BigNum.from(userLeverage, FOUR).toNum(),
 		maintenanceReq: BigNum.from(maintenanceReq, QUOTE_PRECISION_EXP),
 		initialReq: BigNum.from(initialReq, QUOTE_PRECISION_EXP),
-		totalClaimablePnl: BigNum.from(totalClaimablePnl, QUOTE_PRECISION_EXP),
-		quoteInOpenOrders: BigNum.from(quoteInOpenOrders, QUOTE_PRECISION_EXP),
 		marginRatioPct: BigNum.from(userMarginRatio, TWO).toNum(),
 	};
 };
