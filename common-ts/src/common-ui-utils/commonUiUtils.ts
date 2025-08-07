@@ -225,7 +225,37 @@ async function updateUserAccount(user: User): Promise<void> {
 const getMarketKey = (marketIndex: number, marketType: MarketType) =>
 	`${ENUM_UTILS.toStr(marketType)}_${marketIndex}`;
 
+/**
+ * @deprecated Use createPlaceholderIWallet instead, since this is poorly named.
+ */
 const createThrowawayIWallet = (walletPubKey?: PublicKey) => {
+	const newKeypair = walletPubKey
+		? new Keypair({
+				publicKey: walletPubKey.toBytes(),
+				secretKey: new Keypair().publicKey.toBytes(),
+		  })
+		: new Keypair();
+
+	const newWallet: IWallet = {
+		publicKey: newKeypair.publicKey,
+		//@ts-ignore
+		signTransaction: () => {
+			return Promise.resolve();
+		},
+		//@ts-ignore
+		signAllTransactions: () => {
+			return Promise.resolve();
+		},
+	};
+
+	return newWallet;
+};
+
+/**
+ * Creates an IWallet wrapper, with redundant methods. If a `walletPubKey` is passed in,
+ * the `publicKey` will be based on that.
+ */
+const createPlaceholderIWallet = (walletPubKey?: PublicKey) => {
 	const newKeypair = walletPubKey
 		? new Keypair({
 				publicKey: walletPubKey.toBytes(),
@@ -932,6 +962,7 @@ export const COMMON_UI_UTILS = {
 	chunks,
 	compareSignatures,
 	createThrowawayIWallet,
+	createPlaceholderIWallet,
 	deriveMarketOrderParams,
 	fetchCurrentSubaccounts,
 	fetchUserClientsAndAccounts,

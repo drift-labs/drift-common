@@ -1,3 +1,4 @@
+import { WRAPPED_SOL_MINT } from '@drift-labs/sdk';
 import {
 	createAssociatedTokenAccountInstruction,
 	getAssociatedTokenAddress,
@@ -18,6 +19,24 @@ export const getTokenAddress = (
 		new PublicKey(userPubKey),
 		true
 	);
+};
+
+/**
+ * Get the associated token address for the given mint and user public key. If the mint is SOL, return the user public key.
+ * This should be used for spot token movement in and out of the user's wallet.
+ * @param mintAddress - The mint address
+ * @param authorityPubKey - The authority's public key
+ * @returns The associated token address
+ */
+export const getTokenAddressForDepositAndWithdraw = async (
+	mintAddress: PublicKey,
+	authorityPubKey: PublicKey
+): Promise<PublicKey> => {
+	const isSol = mintAddress.equals(WRAPPED_SOL_MINT);
+
+	if (isSol) return authorityPubKey;
+
+	return getAssociatedTokenAddress(mintAddress, authorityPubKey, true);
 };
 
 export const getTokenAccount = async (
