@@ -182,6 +182,7 @@ const SpotMarketConfigToTVMarketInfo = (
 
 interface TvAppTradeDataManager {
 	getFilledOrdersData(startDate: number, endDate: number): Promise<JsonTrade[]>;
+	getCurrentSubAccountAddress(): string | null;
 }
 
 export class DriftTvFeed {
@@ -379,8 +380,20 @@ export class DriftTvFeed {
 			endDate
 		);
 
+		const currentUserAccount =
+			this.tvAppTradeDataManager.getCurrentSubAccountAddress();
+
 		const tradeMarks = orderHistory.map((trade) => {
-			const isLong = trade.takerOrderDirection === 'long';
+			const currentUserIsMaker = trade.maker === currentUserAccount;
+			const currentUserIsTaker = trade.taker === currentUserAccount;
+
+			let isLong: boolean;
+			if (currentUserIsMaker) {
+				isLong = trade.makerOrderDirection === 'long';
+			} else if (currentUserIsTaker) {
+				isLong = trade.takerOrderDirection === 'long';
+			}
+
 			const color = isLong ? '#5DD5A0' : '#FF615C';
 			const baseAmount = Number(trade.baseAssetAmountFilled);
 			const quoteAmount = Number(trade.quoteAssetAmountFilled);
