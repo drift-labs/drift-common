@@ -1,6 +1,6 @@
 import { MarketType } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../utils';
-import { Opaque } from '.';
+import { Opaque } from './utility';
 
 // Define MarketKey as an opaque type
 export type MarketKey = Opaque<'MarketKey', string>;

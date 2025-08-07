@@ -24,7 +24,7 @@ import {
 } from '@drift-labs/sdk';
 import { OpenPosition, UIMarket } from '../types';
 import { TRADING_COMMON_UTILS } from './trading';
-import { ENUM_UTILS } from '..';
+import { ENUM_UTILS } from '../utils';
 
 const getOpenPositionData = (
 	driftClient: DriftClient,

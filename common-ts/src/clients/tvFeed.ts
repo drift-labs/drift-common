@@ -7,7 +7,7 @@ import {
 } from '@drift-labs/sdk';
 import { CandleType, JsonCandle, JsonTrade, MarketId } from '../types';
 import { UIEnv } from '../types/UIEnv';
-import { CANDLE_UTILS } from '../utils/candleUtils';
+import { Candle } from '../utils/candles/Candle';
 import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
 import { CandleClient } from './candleClient';
 
@@ -335,8 +335,7 @@ export class DriftTvFeed {
 		const ROUND_UP = true;
 
 		const timestampMs = timestamp * 1000;
-		const candleLengthMs =
-			CANDLE_UTILS.resolutionStringToCandleLengthMs(resolution);
+		const candleLengthMs = Candle.resolutionStringToCandleLengthMs(resolution);
 
 		const remainderMs = timestampMs % candleLengthMs;
 

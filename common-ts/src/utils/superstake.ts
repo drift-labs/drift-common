@@ -24,7 +24,8 @@ import {
 	QUOTE_PRECISION_EXP,
 	calculateScaledInitialAssetWeight,
 } from '@drift-labs/sdk';
-import { LstMetrics, aprFromApy } from '../';
+import { aprFromApy } from '../utils';
+import { LstMetrics } from '../types/Superstake';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { B_SOL, JITO_SOL, M_SOL } from '../constants';
 

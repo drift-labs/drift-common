@@ -6,7 +6,7 @@ import {
 	MainnetSpotMarkets,
 } from '@drift-labs/sdk';
 import { JsonCandle, MarketId, MarketSymbol } from '../types';
-import { CANDLE_UTILS } from '../utils/candleUtils';
+import { Candle } from '../utils/candles/Candle';
 import { StrictEventEmitter } from '../utils/StrictEventEmitter';
 import { EnvironmentConstants } from '../EnvironmentConstants';
 import { UIEnv } from '../types/UIEnv';
@@ -197,8 +197,7 @@ class CandleFetcher {
 	) => {
 		const diffInSeconds = endTs - startTs;
 		const resolutionInSeconds =
-			CANDLE_UTILS.resolutionStringToCandleLengthMs(this.config.resolution) /
-			1000;
+			Candle.resolutionStringToCandleLengthMs(this.config.resolution) / 1000;
 		const diffInCandles = diffInSeconds / resolutionInSeconds;
 		return Math.ceil(diffInCandles);
 	};
@@ -457,7 +456,7 @@ class CandleFetcher {
 		}
 
 		// Calculate the candle length in seconds for the current resolution
-		const candleLengthMs = CANDLE_UTILS.resolutionStringToCandleLengthMs(
+		const candleLengthMs = Candle.resolutionStringToCandleLengthMs(
 			this.config.resolution
 		);
 		const candleLengthSeconds = candleLengthMs / 1000;

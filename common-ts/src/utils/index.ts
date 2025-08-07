@@ -21,13 +21,12 @@ import {
 	getTokenAmount,
 	SpotBalanceType,
 	SpotMarketConfig,
-	SpotMarketAccount,
 } from '@drift-labs/sdk';
 import {
 	UIMatchedOrderRecordAndAction,
 	UISerializableOrderActionRecord,
 } from '../serializableTypes';
-import { UIMarket } from '../types';
+import { getIfStakingVaultApr, getIfVaultBalance } from './insuranceFund';
 
 export const matchEnum = (enum1: any, enum2) => {
 	return JSON.stringify(enum1) === JSON.stringify(enum2);
@@ -719,176 +718,6 @@ const toCamelCase = (str: string): string => {
 	return [firstWord, ...restWords].join('');
 };
 
-/**
- * Get the size of an insurance fund vault
- * @param spotMarketConfig
- * @param driftClient
- * @returns
- */
-const getIfVaultBalance = async (
-	spotMarketConfig: SpotMarketConfig,
-	driftClient: DriftClient
-) => {
-	const spotMarket = driftClient.getSpotMarketAccount(
-		spotMarketConfig.marketIndex
-	);
-
-	const vaultBalanceBN = new BN(
-		(
-			await driftClient.provider.connection.getTokenAccountBalance(
-				spotMarket.insuranceFund.vault
-			)
-		).value.amount
-	);
-
-	const vaultBalanceBigNum = BigNum.from(
-		vaultBalanceBN,
-		spotMarketConfig.precisionExp
-	);
-
-	return vaultBalanceBigNum;
-};
-
-/**
- * Calculates the next APR for insurance fund staking
- * This function extracts the APR calculation logic from the insurance fund staking implementation
- * Reference: https://github.com/drift-labs/protocol-v2-mono/blob/ebbe7b8df7e81de59bd510a37d16f55d5c985ef5/ui/src/utils/insuranceFund.ts#L105
- *
- * @param spotMarket - Spot market account
- * @param vaultBalanceBigNum - Current vault balance as BigNum
- * @returns Next APR as a percentage (e.g., 35 means 35% APR)
- */
-function calculateVaultNextApr(
-	spotMarket: SpotMarketAccount,
-	vaultBalanceBigNum: BigNum
-): number {
-	const MAX_APR = 1000;
-	const GOV_MAX_APR = 20;
-	const DRIFT_MARKET_INDEX = 15;
-
-	const { precisionExp } = UIMarket.spotMarkets[spotMarket.marketIndex];
-
-	try {
-		const vaultBalance = vaultBalanceBigNum.toNum();
-
-		// Calculate revenue pool
-		const revenuePoolBN = getTokenAmount(
-			spotMarket.revenuePool.scaledBalance,
-			spotMarket,
-			SpotBalanceType.DEPOSIT
-		);
-		const revenuePoolBigNum = BigNum.from(revenuePoolBN, precisionExp);
-		const revenuePool = revenuePoolBigNum.toNum();
-
-		// APR calculation constants and factors
-		const payoutRatio = 0.1;
-		const ratioForStakers =
-			spotMarket.insuranceFund.totalFactor > 0 &&
-			spotMarket.insuranceFund.userFactor > 0
-				? spotMarket.insuranceFund.userFactor /
-				  spotMarket.insuranceFund.totalFactor
-				: 0;
-
-		// Settle periods from on-chain data
-		const revSettlePeriod =
-			spotMarket.insuranceFund.revenueSettlePeriod.toNumber() * 1000;
-
-		// Handle edge case where settle period is 0
-		if (revSettlePeriod === 0) {
-			return 0;
-		}
-
-		// Calculate settlements per year (31536000000 ms = 1 year)
-		const settlesPerYear = 31536000000 / revSettlePeriod;
-
-		// Calculate projected annual revenue
-		const projectedAnnualRev = revenuePool * settlesPerYear * payoutRatio;
-
-		// Calculate uncapped APR
-		const uncappedApr =
-			vaultBalance === 0 ? 0 : (projectedAnnualRev / vaultBalance) * 100;
-
-		// Apply APR cap: DRIFT token (governance) capped at 20%, others at 1000%
-		const maxApr =
-			spotMarket.marketIndex === DRIFT_MARKET_INDEX ? GOV_MAX_APR : MAX_APR;
-		const cappedApr = Math.min(uncappedApr, maxApr);
-
-		// Calculate final APR for stakers
-		const nextApr = cappedApr * ratioForStakers;
-
-		return nextApr;
-	} catch (error) {
-		console.warn('Error calculating next APR:', error);
-		return 0;
-	}
-}
-
-/**
- * Get the current staking APR for a market.
- * @param spotMarketConfig
- * @param driftClient
- * @returns APR Percentage .. e.g. 100 for 100%
- */
-const getIfStakingVaultApr = async (
-	spotMarketConfig: SpotMarketConfig,
-	driftClient: DriftClient
-) => {
-	const vaultBalance = await getIfVaultBalance(spotMarketConfig, driftClient);
-
-	return calculateVaultNextApr(
-		driftClient.getSpotMarketAccount(spotMarketConfig.marketIndex),
-		vaultBalance
-	);
-};
-
-const syncGetIfStakingVaultApr = (
-	spotMarketConfig: SpotMarketConfig,
-	driftClient: DriftClient,
-	vaultBalance: number
-) => {
-	const spotMarket = driftClient.getSpotMarketAccount(
-		spotMarketConfig.marketIndex
-	);
-
-	const revPoolTokens = getTokenAmount(
-		spotMarket.revenuePool.scaledBalance,
-		spotMarket,
-		SpotBalanceType.DEPOSIT
-	);
-
-	const userRevenueFactor =
-		spotMarket.insuranceFund.totalFactor > 0
-			? spotMarket.insuranceFund.userFactor /
-			  spotMarket.insuranceFund.totalFactor
-			: 0;
-
-	const revPoolTokensNum = BigNum.from(
-		revPoolTokens,
-		spotMarketConfig.precisionExp
-	).toNum();
-
-	const nextPayment = revPoolTokensNum / 5;
-
-	const revSettlePeriod =
-		spotMarket.insuranceFund.revenueSettlePeriod.toNumber() * 1000;
-
-	const settlesPerYear = Math.floor(
-		(1000 * 60 * 60 * 24 * 365) / revSettlePeriod
-	);
-
-	let stakerAPR: number;
-	if (vaultBalance > 0) {
-		stakerAPR =
-			((nextPayment * settlesPerYear * userRevenueFactor) / vaultBalance) * 100;
-		// Capped at 1000% APR
-		stakerAPR = Math.min(1000, stakerAPR);
-	} else {
-		stakerAPR = 0;
-	}
-
-	return stakerAPR;
-};
-
 export const aprFromApy = (apy: number, compoundsPerYear: number) => {
 	const compoundedAmount = 1 + apy * 0.01;
 	const estimatedApr =
@@ -1041,9 +870,8 @@ const chunks = <T>(array: readonly T[], size: number): T[][] => {
 };
 
 export const COMMON_UTILS = {
-	getIfVaultBalance: getIfVaultBalance,
-	getIfStakingVaultApr: getIfStakingVaultApr,
-	syncGetIfStakingVaultApr,
+	getIfVaultBalance,
+	getIfStakingVaultApr,
 	getCurrentOpenInterestForMarket,
 	getDepositAprForMarket,
 	getBorrowAprForMarket,
