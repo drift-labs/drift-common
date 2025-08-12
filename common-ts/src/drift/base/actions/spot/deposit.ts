@@ -88,15 +88,15 @@ export const createDepositTxn = async ({
 	amount,
 	spotMarketConfig,
 	isMaxBorrowRepayment,
-	txParams,
-	initSwiftAccount,
+	txParams: _txParams,
+	initSwiftAccount: _initSwiftAccount,
 }: CreateDepositTxnParams): Promise<Transaction | VersionedTransaction> => {
 	const authority = user.getUserAccount().authority;
-	const associatedDepositTokenAddress =
-		await getTokenAddressForDepositAndWithdraw(
-			spotMarketConfig.mint,
-			authority
-		);
+	// const associatedDepositTokenAddress =
+	// 	await getTokenAddressForDepositAndWithdraw(
+	// 		spotMarketConfig.mint,
+	// 		authority
+	// 	);
 
 	let finalDepositAmount = amount;
 
@@ -107,15 +107,32 @@ export const createDepositTxn = async ({
 	}
 
 	// we choose to not use createDepositIxs here because it doesn't have the initSwiftAccount logic
-	const depositTxn = await driftClient.createDepositTxn(
-		finalDepositAmount.val,
-		spotMarketConfig.marketIndex,
-		associatedDepositTokenAddress,
-		user.getUserAccount().subAccountId,
+	// const depositTxn = await driftClient.createDepositTxn(
+	// 	finalDepositAmount.val,
+	// 	spotMarketConfig.marketIndex,
+	// 	associatedDepositTokenAddress,
+	// 	user.getUserAccount().subAccountId,
+	// 	isMaxBorrowRepayment,
+	// 	txParams,
+	// 	initSwiftAccount
+	// );
+	const depositIxs = await createDepositIxs({
+		driftClient,
+		user,
+		amount: finalDepositAmount,
+		spotMarketConfig,
 		isMaxBorrowRepayment,
-		txParams,
-		initSwiftAccount
-	);
+	});
+
+	const depositTxn = await driftClient.txHandler.buildTransaction({
+		instructions: depositIxs,
+		txVersion: 0,
+		connection: driftClient.connection,
+		preFlightCommitment: 'confirmed',
+		fetchAllMarketLookupTableAccounts:
+			driftClient.fetchAllLookupTableAccounts.bind(driftClient),
+		customPayer: authority,
+	});
 
 	return depositTxn;
 };
