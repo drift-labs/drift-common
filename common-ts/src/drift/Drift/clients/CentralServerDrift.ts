@@ -14,6 +14,7 @@ import {
 	PerpMarketConfig,
 	PublicKey,
 	SpotMarketConfig,
+	TxParams,
 	User,
 	WhileValidTxSender,
 } from '@drift-labs/sdk';
@@ -27,6 +28,7 @@ import {
 } from '../constants';
 import { MarketId } from '../../../types';
 import { createDepositTxn } from '../../base/actions/spot/deposit';
+import { createWithdrawTxn } from '../../base/actions/spot/withdraw';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.
@@ -102,73 +104,152 @@ export class CentralServerDrift {
 		await this.driftClient.subscribe();
 	}
 
-	public async getDepositTxn(
+	/**
+	 * Manages DriftClient state for transaction creation with proper setup and cleanup.
+	 * This abstraction handles:
+	 * - User creation and subscription
+	 * - Authority management
+	 * - Wallet replacement for correct transaction signing
+	 * - Cleanup and state restoration
+	 *
+	 * @param userAccountPublicKey - The user account public key
+	 * @param operation - The transaction creation operation to execute
+	 * @returns The result of the operation
+	 */
+	private async driftClientContextWrapper<T>(
 		userAccountPublicKey: PublicKey,
-		amount: BN,
-		spotMarketIndex: number
-	): Promise<VersionedTransaction | Transaction> {
+		operation: (user: User) => Promise<T>
+	): Promise<T> {
 		const user = new User({
 			driftClient: this.driftClient,
 			userAccountPublicKey,
 		});
 
-		await user.subscribe();
-
-		const authority = user.getUserAccount().authority;
-
-		this.driftClient.authority = authority;
-
-		const success = await this.driftClient.addUser(
-			user.getUserAccount().subAccountId,
-			authority
-		);
-
-		if (!success) {
-			throw new Error('Failed to add user to DriftClient');
-		}
-
-		const spotMarketConfig = this.spotMarketConfigs.find(
-			(market) => market.marketIndex === spotMarketIndex
-		);
-
-		if (!spotMarketConfig) {
-			throw new Error(
-				`Spot market config not found for index ${spotMarketIndex}`
-			);
-		}
-
-		// Temporarily replace the driftClient's wallet with the user's authority
-		// to ensure the transaction is built with the correct signer
-		// This is gross to have to do but even when building transactions from the ix, the driftClient
-		// adds the wallet.publicKey to the ix.. we need to decide if we want to do a larger refactor in DriftClient
-		// or use a workaround like this
+		// Store original state
 		const originalWallet = this.driftClient.wallet;
-		const userWallet = {
-			publicKey: authority,
-			signTransaction: () =>
-				Promise.reject('This is a placeholder - do not sign with this wallet'),
-			signAllTransactions: () =>
-				Promise.reject('This is a placeholder - do not sign with this wallet'),
-		};
-		this.driftClient.wallet = userWallet;
+		const originalAuthority = this.driftClient.authority;
 
 		try {
-			const depositTxn = await createDepositTxn({
-				driftClient: this.driftClient,
-				user,
-				amount: BigNum.from(amount, spotMarketConfig.precisionExp),
-				spotMarketConfig,
-			});
+			// Setup: Subscribe to user and configure DriftClient
+			await user.subscribe();
 
-			// cleanup
-			await user.unsubscribe();
-			this.driftClient.users.clear();
+			const authority = user.getUserAccount().authority;
+			this.driftClient.authority = authority;
 
-			return depositTxn;
+			const success = await this.driftClient.addUser(
+				user.getUserAccount().subAccountId,
+				authority
+			);
+
+			if (!success) {
+				throw new Error('Failed to add user to DriftClient');
+			}
+
+			// Replace wallet with user's authority to ensure correct transaction signing
+			// This is necessary because DriftClient adds wallet.publicKey to instructions
+			const userWallet = {
+				publicKey: authority,
+				signTransaction: () =>
+					Promise.reject(
+						'This is a placeholder - do not sign with this wallet'
+					),
+				signAllTransactions: () =>
+					Promise.reject(
+						'This is a placeholder - do not sign with this wallet'
+					),
+			};
+
+			// Update wallet in all places that reference it
+			this.driftClient.wallet = userWallet;
+			this.driftClient.txHandler.updateWallet(userWallet);
+			// Note: We don't update provider.wallet because it's readonly, but TxHandler should be sufficient
+
+			// Execute the operation
+			const result = await operation(user);
+
+			return result;
 		} finally {
-			// Always restore the original wallet
+			// Cleanup: Always restore original state and unsubscribe
 			this.driftClient.wallet = originalWallet;
+			this.driftClient.txHandler.updateWallet(originalWallet);
+			this.driftClient.authority = originalAuthority;
+
+			try {
+				await user.unsubscribe();
+				this.driftClient.users.clear();
+			} catch (cleanupError) {
+				console.warn('Error during cleanup:', cleanupError);
+				// Don't throw cleanup errors, but log them
+			}
 		}
+	}
+
+	public async getDepositTxn(
+		userAccountPublicKey: PublicKey,
+		amount: BN,
+		spotMarketIndex: number
+	): Promise<VersionedTransaction | Transaction> {
+		return this.driftClientContextWrapper(
+			userAccountPublicKey,
+			async (user) => {
+				const spotMarketConfig = this.spotMarketConfigs.find(
+					(market) => market.marketIndex === spotMarketIndex
+				);
+
+				if (!spotMarketConfig) {
+					throw new Error(
+						`Spot market config not found for index ${spotMarketIndex}`
+					);
+				}
+
+				const depositTxn = await createDepositTxn({
+					driftClient: this.driftClient,
+					user,
+					amount: BigNum.from(amount, spotMarketConfig.precisionExp),
+					spotMarketConfig,
+				});
+
+				return depositTxn;
+			}
+		);
+	}
+
+	public async getWithdrawTxn(
+		userAccountPublicKey: PublicKey,
+		amount: BN,
+		spotMarketIndex: number,
+		options?: {
+			isBorrow?: boolean;
+			isMax?: boolean;
+			txParams?: TxParams;
+		}
+	): Promise<VersionedTransaction | Transaction> {
+		return this.driftClientContextWrapper(
+			userAccountPublicKey,
+			async (user) => {
+				const spotMarketConfig = this.spotMarketConfigs.find(
+					(market) => market.marketIndex === spotMarketIndex
+				);
+
+				if (!spotMarketConfig) {
+					throw new Error(
+						`Spot market config not found for index ${spotMarketIndex}`
+					);
+				}
+
+				const withdrawTxn = await createWithdrawTxn({
+					driftClient: this.driftClient,
+					user,
+					amount: BigNum.from(amount, spotMarketConfig.precisionExp),
+					spotMarketConfig,
+					isBorrow: options?.isBorrow,
+					isMax: options?.isMax,
+					txParams: options?.txParams,
+				});
+
+				return withdrawTxn;
+			}
+		);
 	}
 
 	public async sendSignedTransaction(tx: VersionedTransaction | Transaction) {

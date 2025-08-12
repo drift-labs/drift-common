@@ -80,7 +80,15 @@ export const createWithdrawTxn = async ({
 		isMax,
 	});
 
-	const tx = await driftClient.buildTransaction(withdrawIxs, txParams);
+	const withdrawTxn = await driftClient.txHandler.buildTransaction({
+		instructions: withdrawIxs,
+		txVersion: 0,
+		connection: driftClient.connection,
+		preFlightCommitment: 'confirmed',
+		fetchAllMarketLookupTableAccounts:
+			driftClient.fetchAllLookupTableAccounts.bind(driftClient),
+		txParams,
+	});
 
-	return tx;
+	return withdrawTxn;
 };

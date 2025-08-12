@@ -15,11 +15,12 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
  * 1. Set up an Anchor wallet with a private key
  * 2. Initialize a CentralServerDrift instance
  * 3. Create deposit transactions
- * 4. Sign and send transactions
+ * 4. Create withdraw transactions
+ * 5. Sign and send transactions
  *
  * Prerequisites:
  * - Create a .env file in the same directory as this example file with:
- *   ANCHOR_WALLET=/path/to/your/private-key.json
+ *   ANCHOR_WALLET=[private key byte array]
  *   ENDPOINT=https://your-rpc-endpoint.com
  */
 
@@ -75,43 +76,87 @@ async function runCentralServerDriftExample() {
 	await centralServerDrift.subscribe();
 	console.log('✅ Successfully subscribed to market data\n');
 
-	// Example 1: Create a deposit transaction
-	console.log('--- 📥 Example 1: Creating Deposit Transaction ---');
-
-	// Configuration for the deposit
+	// Configuration (shared between examples)
 	const userAccountPublicKey = new PublicKey(
 		'11111111111111111111111111111111'
 	); // enter the publickey for the drift account here
-	const depositAmount = new BN(1000000); // 1 USDC (6 decimals)
+	const amount = new BN(1000000); // 1 USDC (6 decimals)
 	const spotMarketIndex = 0; // USDC market index
 
-	try {
-		console.log(`💰 Deposit Amount: ${depositAmount.toString()} raw units`);
-		console.log(`🏪 Spot Market Index: ${spotMarketIndex}`);
-
-		const depositTxn = (await centralServerDrift.getDepositTxn(
-			userAccountPublicKey,
-			depositAmount,
-			spotMarketIndex
-		)) as VersionedTransaction;
-
-		console.log('✅ Deposit transaction created successfully');
-		console.log(`📋 Transaction Type: ${depositTxn.constructor.name}`);
-		console.log('📝 Signing Transaction...');
+	/**
+	 * Reusable function to handle transaction signing and sending
+	 */
+	async function executeVersionedTransaction(
+		txn: VersionedTransaction,
+		transactionType: string
+	): Promise<void> {
+		console.log(`✅ ${transactionType} transaction created successfully`);
+		console.log(`📋 Transaction Type: ${txn.constructor.name}`);
+		console.log('\n📝 Signing Transaction...');
 		// Sign with the wallet's keypair
-		depositTxn.sign([wallet.payer]);
-		const signedTx = depositTxn;
+		txn.sign([wallet.payer]);
+
 		console.log('✅ Transaction signed successfully');
+		console.log(`  Signatures Count After Signing: ${txn.signatures.length}`);
+		console.log(
+			`  First Signature Present: ${
+				txn.signatures[0] && txn.signatures[0].length > 0
+			}`
+		);
 
-		console.log('🚀 Sending transaction to the network...');
+		console.log('\n🚀 Sending transaction to the network...');
 
-		const txSig = await centralServerDrift.sendSignedTransaction(signedTx);
+		const txSig = await centralServerDrift.sendSignedTransaction(txn);
 
 		console.log('✅ Transaction sent successfully!');
 		console.log(`📋 Transaction Signature: ${txSig}`);
 		console.log(`🔍 View on Solscan: https://solscan.io/tx/${txSig}`);
+	}
+
+	// Example 1: Create a deposit transaction
+	console.log('--- 📥 Example 1: Creating Deposit Transaction ---');
+
+	try {
+		console.log(`💰 Deposit Amount: ${amount.toString()} raw units`);
+		console.log(`🏪 Spot Market Index: ${spotMarketIndex}`);
+
+		const depositTxn = await centralServerDrift.getDepositTxn(
+			userAccountPublicKey,
+			amount,
+			spotMarketIndex
+		);
+
+		await executeVersionedTransaction(
+			depositTxn as VersionedTransaction,
+			'Deposit'
+		);
 	} catch (error) {
 		console.error('❌ Error during deposit transaction flow:', error);
+	}
+
+	// Example 2: Create a withdraw transaction
+	console.log('\n--- 📤 Example 2: Creating Withdraw Transaction ---');
+
+	try {
+		console.log(`💰 Withdraw Amount: ${amount.toString()} raw units`);
+		console.log(`🏪 Spot Market Index: ${spotMarketIndex}`);
+
+		const withdrawTxn = await centralServerDrift.getWithdrawTxn(
+			userAccountPublicKey,
+			amount,
+			spotMarketIndex,
+			{
+				isBorrow: false, // true = borrow, false = reduce-only withdraw
+				isMax: false, // true = withdraw maximum available
+			}
+		);
+
+		await executeVersionedTransaction(
+			withdrawTxn as VersionedTransaction,
+			'Withdraw'
+		);
+	} catch (error) {
+		console.error('❌ Error during withdraw transaction flow:', error);
 	}
 }
 
