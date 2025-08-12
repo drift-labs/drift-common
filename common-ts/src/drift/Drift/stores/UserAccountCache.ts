@@ -20,8 +20,8 @@ import {
 } from '../../base/details/user/positions';
 import { UISerializableOrder } from '../../../serializableTypes';
 import { MarketId } from '../../../types';
-import { OraclePriceStore } from './OraclePriceStore';
-import { MarkPriceStore } from './MarkPriceStore';
+import { OraclePriceCache } from './OraclePriceCache';
+import { MarkPriceCache } from './MarkPriceCache';
 import { getOrderDetails } from '../../base/details/user/orders';
 import { ENUM_UTILS } from '../../../utils';
 
@@ -42,17 +42,17 @@ export type AccountData = {
 
 export type UserAccountLookup = Record<number, AccountData>;
 
-export class UserAccountStore {
+export class UserAccountCache {
 	private _store: UserAccountLookup = {};
 	private updatesSubject$ = new Subject<AccountData>();
 	private driftClient: DriftClient;
-	private oraclePriceStore: OraclePriceStore;
-	private markPriceStore: MarkPriceStore;
+	private oraclePriceStore: OraclePriceCache;
+	private markPriceStore: MarkPriceCache;
 
 	constructor(
 		driftClient: DriftClient,
-		oraclePriceStore: OraclePriceStore,
-		markPriceStore: MarkPriceStore
+		oraclePriceStore: OraclePriceCache,
+		markPriceStore: MarkPriceCache
 	) {
 		this.driftClient = driftClient;
 		this.oraclePriceStore = oraclePriceStore;
@@ -61,6 +61,10 @@ export class UserAccountStore {
 
 	get store() {
 		return { ...this._store };
+	}
+
+	get allUsers() {
+		return Object.values(this._store);
 	}
 
 	private processAccountData(user: User): AccountData {

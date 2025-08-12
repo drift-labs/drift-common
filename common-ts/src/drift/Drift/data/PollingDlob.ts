@@ -159,6 +159,10 @@ export class PollingDlob {
 		this.intervals.delete(id);
 	}
 
+	/**
+	 * Add a market to an interval.
+	 * If the market is already in an interval, it will be removed from the existing interval.
+	 */
 	public addMarketToInterval(intervalId: string, marketKey: MarketKey): void {
 		const interval = this.intervals.get(intervalId);
 		if (!interval) {
@@ -167,6 +171,12 @@ export class PollingDlob {
 
 		// Remove market from any existing interval first
 		const existingIntervalId = this.marketToIntervalMap.get(marketKey);
+
+		if (existingIntervalId === intervalId) {
+			// market is already in the interval
+			return;
+		}
+
 		if (existingIntervalId) {
 			this.removeMarketFromInterval(existingIntervalId, marketKey);
 		}

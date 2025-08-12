@@ -4,7 +4,7 @@ import { MarketKey } from '../../../types';
 
 export type OraclePriceLookup = Record<MarketKey, OraclePriceData>;
 
-export class OraclePriceStore {
+export class OraclePriceCache {
 	private _store: OraclePriceLookup = {};
 	private updatesSubject$ = new Subject<OraclePriceLookup>();
 
@@ -24,11 +24,11 @@ export class OraclePriceStore {
 		const updatedOraclePrices = {};
 
 		oraclePrices.forEach(({ marketKey, price, lastUpdateSlot }) => {
-			const currentOraclePriceState = this._store[marketKey];
+			const prevOraclePriceState = this._store[marketKey];
 
 			if (
-				!currentOraclePriceState ||
-				currentOraclePriceState.slot.gt(lastUpdateSlot)
+				!prevOraclePriceState?.slot ||
+				prevOraclePriceState.slot.lt(lastUpdateSlot)
 			) {
 				updatedOraclePrices[marketKey] = { price, lastUpdateSlot };
 			}
@@ -62,9 +62,11 @@ export class OraclePriceStore {
 		return this.getOraclePriceData(marketKey).price;
 	}
 
-	public onUpdate(callback: (oraclePrice: OraclePriceLookup) => void): Subscription {
-		const subscription = this.updatesSubject$.subscribe((oraclePrice) => {
-			callback(oraclePrice);
+	public onUpdate(
+		callback: (oraclePriceLookup: OraclePriceLookup) => void
+	): Subscription {
+		const subscription = this.updatesSubject$.subscribe((oraclePriceLookup) => {
+			callback(oraclePriceLookup);
 		});
 
 		return subscription;

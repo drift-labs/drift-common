@@ -1,5 +1,5 @@
 import { BN, ZERO } from '@drift-labs/sdk';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { MarketKey } from '../../../types';
 
 export type MarkPriceData = {
@@ -11,7 +11,7 @@ export type MarkPriceData = {
 
 export type MarkPriceLookup = Record<MarketKey, MarkPriceData>;
 
-export class MarkPriceStore {
+export class MarkPriceCache {
 	private _store: MarkPriceLookup = {};
 	private updatesSubject$ = new Subject<MarkPriceLookup>();
 
@@ -73,5 +73,15 @@ export class MarkPriceStore {
 
 	public getMarkPrice(marketKey: MarketKey): BN {
 		return this.getMarkPriceData(marketKey).markPrice;
+	}
+
+	public onUpdate(
+		callback: (markPriceLookup: MarkPriceLookup) => void
+	): Subscription {
+		const subscription = this.updatesSubject$.subscribe((markPriceLookup) => {
+			callback(markPriceLookup);
+		});
+
+		return subscription;
 	}
 }

@@ -9,10 +9,14 @@ import {
 	getMarketsAndOraclesForSubscription,
 	IWallet,
 	MarketType,
+	PerpMarketAccount,
 	PerpMarkets,
+	PollingDriftClientAccountSubscriber,
 	PublicKey,
 	ReferrerInfo,
+	SpotMarketAccount,
 	SpotMarkets,
+	User,
 	WhileValidTxSender,
 	ZERO,
 } from '@drift-labs/sdk';
@@ -23,15 +27,25 @@ import {
 	DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS,
 	DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 	DEFAULT_TX_SENDER_RETRY_INTERVAL,
+	PollingCategory,
+	SELECTED_MARKET_ACCOUNT_POLLING_CADENCE,
+	USER_INVOLVED_MARKET_ACCOUNT_POLLING_CADENCE,
+	USER_NOT_INVOLVED_MARKET_ACCOUNT_POLLING_CADENCE,
 } from '../constants';
-import { MarketId } from '../../../types';
+import { MarketId, MarketKey } from '../../../types';
 import { MARKET_UTILS } from '../../../common-ui-utils/market';
 import { PollingDlob } from '../data/PollingDlob';
 import { EnvironmentConstants } from '../../../EnvironmentConstants';
-import { MarkPriceStore } from '../stores/MarkPriceStore';
-import { OraclePriceLookup, OraclePriceStore } from '../stores/OraclePriceStore';
+import { MarkPriceLookup, MarkPriceCache } from '../stores/MarkPriceCache';
+import {
+	OraclePriceLookup,
+	OraclePriceCache,
+} from '../stores/OraclePriceCache';
 import { Subscription } from 'rxjs';
-import { UserAccountStore } from '../stores/UserAccountStore';
+import {
+	UserAccountCache,
+	UserAccountLookup,
+} from '../stores/UserAccountCache';
 import { getTokenAddressForDepositAndWithdraw } from '../../../utils/token';
 import { USER_UTILS } from '../../../common-ui-utils/user';
 import { MAIN_POOL_ID } from '../../../constants';
@@ -44,7 +58,7 @@ export interface AuthorityDriftConfig {
 	driftDlobServerHttpUrl?: string;
 	onUserAccountUpdate?: (userPubKey: PublicKey) => void;
 	tradableMarkets?: MarketId[];
-	activeTradeMarket?: MarketId;
+	selectedTradeMarket?: MarketId;
 	additionalDriftClientConfig?: Partial<Omit<DriftClientConfig, 'env'>>;
 }
 
@@ -59,6 +73,11 @@ export class AuthorityDrift {
 	 * Handles all Drift program interactions e.g. trading, read account details, etc.
 	 */
 	private driftClient: DriftClient;
+
+	/**
+	 * Handles bulk account loading from the RPC.
+	 */
+	private accountLoader: CustomizedCadenceBulkAccountLoader;
 
 	/**
 	 * Handles polling the DLOB server for mark price and oracle price data for markets.
@@ -77,7 +96,7 @@ export class AuthorityDrift {
 	 * - Websocket DLOB subscriber (active market, derived when fetching orderbook data)
 	 * - Polling DLOB server (all non-active markets)
 	 */
-	private markPriceStore: MarkPriceStore;
+	private _markPriceCache: MarkPriceCache;
 
 	/**
 	 * Stores the fetched oracle prices for all tradable markets.
@@ -85,22 +104,27 @@ export class AuthorityDrift {
 	 * - DriftClient oracle account subscriptions
 	 * - Polling DLOB server (all non-active markets)
 	 */
-	private _oraclePriceStore: OraclePriceStore;
+	private _oraclePriceCache: OraclePriceCache;
 
 	/**
 	 * Stores the fetched user account data for all user accounts.
 	 */
-	private userAccountStore: UserAccountStore;
+	private _userAccountCache: UserAccountCache;
 
 	/**
-	 * The active trade market to use for the drift client. This is used to subscribe to the market account,
+	 * The selected trade market to use for the drift client. This is used to subscribe to the market account,
 	 * oracle data and mark price more frequently compared to the other markets.
 	 *
 	 * Example usage:
 	 * - When the UI wants to display the orderbook of this market.
 	 * - When the user is interacting with the trade form to trade on this market.
 	 */
-	private activeTradeMarket: MarketId | null = null;
+	private selectedTradeMarket: MarketId | null = null;
+
+	/**
+	 * The markets that are tradable through this client. This affects oracle price, mark price and market account subscriptions.
+	 */
+	private tradableMarkets: MarketId[] = [];
 
 	/**
 	 * @param solanaRpcEndpoint - The Solana RPC endpoint to use for reading RPC data.
@@ -108,28 +132,37 @@ export class AuthorityDrift {
 	 * @param authority - The authority (wallet) whose user accounts to subscribe to.
 	 * @param onUserAccountUpdate - The function to call when a user account is updated.
 	 * @param tradableMarkets - The markets that are tradable through this client.
-	 * @param activeTradeMarket - The active trade market to use for the drift client. This is used to subscribe to the market account, oracle data and mark price more frequently compared to the other markets.
+	 * @param selectedTradeMarket - The active trade market to use for the drift client. This is used to subscribe to the market account, oracle data and mark price more frequently compared to the other markets.
 	 * @param additionalDriftClientConfig - Additional DriftClient config to use for the DriftClient.
 	 */
-	constructor(readonly config: AuthorityDriftConfig) {
-		this.activeTradeMarket = config.activeTradeMarket ?? null;
+	constructor(config: AuthorityDriftConfig) {
+		this.selectedTradeMarket = config.selectedTradeMarket ?? null;
+		this.tradableMarkets = config.tradableMarkets ?? [];
 
 		const driftClient = this.setupDriftClient(config);
 		this.setupStores(driftClient);
 		this.setupPollingDlob(config.driftDlobServerHttpUrl);
 	}
 
-	public get oraclePriceStore(): OraclePriceLookup {
-		return this._oraclePriceStore.store;
+	public get oraclePriceCache(): OraclePriceLookup {
+		return this._oraclePriceCache.store;
+	}
+
+	public get markPriceCache(): MarkPriceLookup {
+		return this._markPriceCache.store;
+	}
+
+	public get userAccountCache(): UserAccountLookup {
+		return this._userAccountCache.store;
 	}
 
 	private setupStores(driftClient: DriftClient) {
-		this.markPriceStore = new MarkPriceStore();
-		this._oraclePriceStore = new OraclePriceStore();
-		this.userAccountStore = new UserAccountStore(
+		this._markPriceCache = new MarkPriceCache();
+		this._oraclePriceCache = new OraclePriceCache();
+		this._userAccountCache = new UserAccountCache(
 			driftClient,
-			this._oraclePriceStore,
-			this.markPriceStore
+			this._oraclePriceCache,
+			this._markPriceCache
 		);
 	}
 
@@ -145,6 +178,7 @@ export class AuthorityDrift {
 			DEFAULT_ACCOUNT_LOADER_COMMITMENT,
 			DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS
 		);
+		this.accountLoader = accountLoader;
 
 		const wallet = config.wallet ?? COMMON_UI_UTILS.createPlaceholderIWallet();
 		const skipInitialUsersLoad = !config.wallet;
@@ -212,27 +246,27 @@ export class AuthorityDrift {
 		const driftDlobServerHttpUrlToUse =
 			driftDlobServerHttpUrl ??
 			EnvironmentConstants.dlobServerHttpUrl[
-				this.config.driftEnv === 'devnet' ? 'dev' : 'mainnet'
+				this.driftClient.env === 'devnet' ? 'dev' : 'mainnet'
 			];
 
 		const pollingDlob = new PollingDlob({
 			driftDlobServerHttpUrl: driftDlobServerHttpUrlToUse,
 		});
 
-		pollingDlob.addInterval('orderbook', 1, 100); // used to get orderbook data. this is mainly used as a fallback from the Websocket DLOB subscriber
-		pollingDlob.addInterval('active-market', 1, 1); // used to get the mark price at a higher frequency for the current active market (e.g. market that the user is trading on). this won't be needed when the websocket DLOB is set up
-		pollingDlob.addInterval('user-involved', 2, 1); // markets that the user is involved in
-		pollingDlob.addInterval('user-not-involved', 30, 1); // markets that the user is not involved in
+		pollingDlob.addInterval(PollingCategory.ORDERBOOK, 1, 100); // used to get orderbook data. this is mainly used as a fallback from the Websocket DLOB subscriber
+		pollingDlob.addInterval(PollingCategory.SELECTED_MARKET, 1, 1); // used to get the mark price at a higher frequency for the current active market (e.g. market that the user is trading on). this won't be needed when the websocket DLOB is set up
+		pollingDlob.addInterval(PollingCategory.USER_INVOLVED, 2, 1); // markets that the user is involved in
+		pollingDlob.addInterval(PollingCategory.USER_NOT_INVOLVED, 30, 1); // markets that the user is not involved in
 
 		// add all markets to the user-not-involved interval first, until user-involved markets are known
 		pollingDlob.addMarketsToInterval(
 			'user-not-involved',
-			this.config.tradableMarkets.map((market) => market.key)
+			this.tradableMarkets.map((market) => market.key)
 		);
-		if (this.activeTradeMarket) {
+		if (this.selectedTradeMarket) {
 			pollingDlob.addMarketToInterval(
 				'active-market',
-				this.activeTradeMarket.key
+				this.selectedTradeMarket.key
 			);
 		}
 
@@ -254,8 +288,8 @@ export class AuthorityDrift {
 				};
 			});
 
-			this.markPriceStore.updateMarkPrices(...updatedMarkPrices);
-			this._oraclePriceStore.updateOraclePrices(...updatedOraclePrices);
+			this._markPriceCache.updateMarkPrices(...updatedMarkPrices);
+			this._oraclePriceCache.updateOraclePrices(...updatedOraclePrices);
 		});
 
 		this.pollingDlob = pollingDlob;
@@ -270,11 +304,195 @@ export class AuthorityDrift {
 
 	private subscribeToAllUsersUpdates() {
 		const users = this.driftClient.getUsers();
+
+		this.handleSubscriptionUpdatesOnUserUpdates(...users);
+
 		users.forEach((user) => {
 			user.eventEmitter.on('update', () => {
-				this.userAccountStore.updateUserAccount(user);
+				this.handleSubscriptionUpdatesOnUserUpdates(...users);
+				this._userAccountCache.updateUserAccount(user);
 			});
 		});
+	}
+
+	private categorizeMarketsByUserInvolvement(...users: User[]): {
+		userInvolvedMarkets: MarketId[];
+		userNotInvolvedMarkets: MarketId[];
+	} {
+		const perpMarketIndexesSet = new Set<number>();
+		const spotMarketIndexesSet = new Set<number>();
+		users.forEach((user) => {
+			const { activePerpPositions, activeSpotPositions } =
+				user.getActivePositions();
+			activePerpPositions.forEach((marketIndex) =>
+				perpMarketIndexesSet.add(marketIndex)
+			);
+			activeSpotPositions.forEach((marketIndex) =>
+				spotMarketIndexesSet.add(marketIndex)
+			);
+		});
+
+		const userInvolvedMarkets = Array.from(perpMarketIndexesSet)
+			.map((index) => MarketId.createPerpMarket(index))
+			.concat(
+				Array.from(spotMarketIndexesSet).map((index) =>
+					MarketId.createSpotMarket(index)
+				)
+			)
+			.filter((market) => market.key !== this.selectedTradeMarket?.key);
+		const userInvolvedMarketKeys = userInvolvedMarkets.map(
+			(market) => market.key
+		);
+		const userNotInvolvedMarkets = this.tradableMarkets
+			.filter((market) => !userInvolvedMarketKeys.includes(market.key))
+			.filter((market) => market.key !== this.selectedTradeMarket?.key);
+
+		return { userInvolvedMarkets, userNotInvolvedMarkets };
+	}
+
+	/**
+	 * Updates the polling cadence for a market account and its oracle account.
+	 */
+	private updateMarketAccountCadence(market: MarketId, newCadence: number) {
+		const marketAccount = market.isPerp
+			? this.driftClient.getPerpMarketAccount(market.marketIndex)
+			: this.driftClient.getSpotMarketAccount(market.marketIndex);
+
+		const currentMarketCadence = this.accountLoader.getAccountCadence(
+			marketAccount.pubkey
+		);
+
+		if (currentMarketCadence !== newCadence) {
+			this.accountLoader.setCustomPollingFrequency(
+				marketAccount.pubkey,
+				newCadence
+			);
+		}
+
+		const oracleAccountPubKey = market.isPerp
+			? (marketAccount as PerpMarketAccount).amm.oracle
+			: (marketAccount as SpotMarketAccount).oracle;
+
+		const currentOracleCadence =
+			this.accountLoader.getAccountCadence(oracleAccountPubKey);
+
+		if (currentOracleCadence !== newCadence) {
+			this.accountLoader.setCustomPollingFrequency(
+				oracleAccountPubKey,
+				newCadence
+			);
+		}
+	}
+
+	private updateAccountLoaderCadenceForMarkets(
+		userInvolvedMarkets: MarketId[],
+		userNotInvolvedMarkets: MarketId[]
+	) {
+		if (this.selectedTradeMarket) {
+			this.updateMarketAccountCadence(
+				this.selectedTradeMarket,
+				SELECTED_MARKET_ACCOUNT_POLLING_CADENCE
+			);
+		}
+
+		userInvolvedMarkets.forEach((market) => {
+			this.updateMarketAccountCadence(
+				market,
+				USER_INVOLVED_MARKET_ACCOUNT_POLLING_CADENCE
+			);
+		});
+
+		userNotInvolvedMarkets.forEach((market) => {
+			this.updateMarketAccountCadence(
+				market,
+				USER_NOT_INVOLVED_MARKET_ACCOUNT_POLLING_CADENCE
+			);
+		});
+	}
+
+	private updatePollingDlobIntervals(
+		userInvolvedMarkets: MarketKey[],
+		userNotInvolvedMarkets: MarketKey[]
+	) {
+		if (this.selectedTradeMarket) {
+			this.pollingDlob.addMarketToInterval(
+				PollingCategory.SELECTED_MARKET,
+				this.selectedTradeMarket.key
+			);
+		}
+		this.pollingDlob.addMarketsToInterval(
+			PollingCategory.USER_INVOLVED,
+			userInvolvedMarkets
+		);
+		this.pollingDlob.addMarketsToInterval(
+			PollingCategory.USER_NOT_INVOLVED,
+			userNotInvolvedMarkets
+		);
+	}
+
+	/**
+	 * When a user account data is updated, we want to ensure that all markets (both spot and perp)
+	 * that the user is involved in, are subscribed to:
+	 * - for polling mark and oracle prices on the dlob, we want to poll them at a higher frequency
+	 * - for market account and oracle account subscription thru DriftClient, we want to poll them at a higher frequency
+	 *
+	 * Note: If the user has an active position in a market that is not in the tradableMarkets,
+	 * the market's oracle price, mark price and market account will still be subscribed to.
+	 * This ensures that the state is accurate for the user.
+	 */
+	private handleSubscriptionUpdatesOnUserUpdates(...users: User[]) {
+		const { userInvolvedMarkets, userNotInvolvedMarkets } =
+			this.categorizeMarketsByUserInvolvement(...users);
+
+		// update market account cadences
+		this.updateAccountLoaderCadenceForMarkets(
+			userInvolvedMarkets,
+			userNotInvolvedMarkets
+		);
+
+		// handle polling dlob polling intervals
+		this.updatePollingDlobIntervals(
+			userInvolvedMarkets.map((market) => market.key),
+			userNotInvolvedMarkets.map((market) => market.key)
+		);
+	}
+
+	private async subscribeToNonWhitelistedButUserInvolvedMarkets(users: User[]) {
+		const perpMarketIndexesSet = new Set(
+			(
+				this.driftClient
+					.accountSubscriber as PollingDriftClientAccountSubscriber
+			).perpMarketIndexes
+		);
+		const spotMarketIndexesSet = new Set(
+			(
+				this.driftClient
+					.accountSubscriber as PollingDriftClientAccountSubscriber
+			).spotMarketIndexes
+		);
+
+		const { userInvolvedMarkets } = this.categorizeMarketsByUserInvolvement(
+			...users
+		);
+
+		userInvolvedMarkets.forEach((market) => {
+			if (market.isPerp) {
+				perpMarketIndexesSet.add(market.marketIndex);
+			} else {
+				spotMarketIndexesSet.add(market.marketIndex);
+			}
+		});
+
+		(
+			this.driftClient.accountSubscriber as PollingDriftClientAccountSubscriber
+		).perpMarketIndexes = Array.from(perpMarketIndexesSet);
+		(
+			this.driftClient.accountSubscriber as PollingDriftClientAccountSubscriber
+		).spotMarketIndexes = Array.from(spotMarketIndexesSet);
+
+		await (
+			this.driftClient.accountSubscriber as PollingDriftClientAccountSubscriber
+		).updateAccountsToPoll();
 	}
 
 	public async subscribe() {
@@ -283,12 +501,18 @@ export class AuthorityDrift {
 
 		await Promise.all([driftClientSubscribePromise, pollingDlobStartPromise]);
 
+		await this.subscribeToNonWhitelistedButUserInvolvedMarkets(
+			this.driftClient.getUsers()
+		);
+
 		this.subscribeToAllUsersUpdates();
+
+		// TODO: subscribe to oracle price updates from drift client?
 	}
 
 	public async unsubscribe() {
 		this.unsubscribeFromPollingDlob();
-		this.userAccountStore.reset();
+		this._userAccountCache.reset();
 
 		const driftClientUnsubscribePromise = this.driftClient.unsubscribe();
 
@@ -297,15 +521,23 @@ export class AuthorityDrift {
 		this.pollingDlobSubscription = null;
 	}
 
-	public onOraclePricesUpdate(callback: (oraclePrice: OraclePriceLookup) => void) {
-		return this._oraclePriceStore.onUpdate(callback);
+	public onOraclePricesUpdate(
+		callback: (oraclePrice: OraclePriceLookup) => void
+	) {
+		return this._oraclePriceCache.onUpdate(callback);
+	}
+
+	public onMarkPricesUpdate(callback: (markPrice: MarkPriceLookup) => void) {
+		return this._markPriceCache.onUpdate(callback);
 	}
 
 	public async updateAuthority(wallet: IWallet, activeSubAccountId?: number) {
-		this.config.wallet = wallet;
+		if (this.driftClient.wallet.publicKey.equals(wallet.publicKey)) {
+			return;
+		}
 
 		await Promise.all(this.driftClient.unsubscribeUsers());
-		this.userAccountStore.reset();
+		this._userAccountCache.reset();
 
 		const updateWalletResult = await this.driftClient.updateWallet(
 			wallet,
@@ -313,6 +545,10 @@ export class AuthorityDrift {
 			activeSubAccountId,
 			true,
 			undefined
+		);
+
+		await this.subscribeToNonWhitelistedButUserInvolvedMarkets(
+			this.driftClient.getUsers()
 		);
 
 		if (!updateWalletResult) {
@@ -324,6 +560,59 @@ export class AuthorityDrift {
 		}
 
 		this.subscribeToAllUsersUpdates();
+	}
+
+	public async updateSelectedTradeMarket(selectedTradeMarket: MarketId) {
+		const previousSelectedTradeMarket = this.selectedTradeMarket;
+
+		if (previousSelectedTradeMarket) {
+			this.pollingDlob.removeMarketFromInterval(
+				PollingCategory.SELECTED_MARKET,
+				previousSelectedTradeMarket.key
+			);
+		}
+
+		// update the selected trade market
+		this.selectedTradeMarket = selectedTradeMarket;
+		this.pollingDlob.addMarketToInterval(
+			PollingCategory.SELECTED_MARKET,
+			selectedTradeMarket.key
+		);
+		this.updateMarketAccountCadence(
+			selectedTradeMarket,
+			SELECTED_MARKET_ACCOUNT_POLLING_CADENCE
+		);
+
+		// add the previous selected market to the appropriate polling interval
+		let isUserInvolvedInPreviousSelectedTradeMarket = false;
+		const allUsers = this._userAccountCache.allUsers;
+		for (const user of allUsers) {
+			const { activePerpPositions, activeSpotPositions } =
+				user.userClient.getActivePositions();
+			if (
+				activePerpPositions.includes(previousSelectedTradeMarket.marketIndex) ||
+				activeSpotPositions.includes(previousSelectedTradeMarket.marketIndex)
+			) {
+				isUserInvolvedInPreviousSelectedTradeMarket = true;
+				break;
+			}
+		}
+		const pollingCategoryOfPreviousSelectedMarket =
+			isUserInvolvedInPreviousSelectedTradeMarket
+				? PollingCategory.USER_INVOLVED
+				: PollingCategory.USER_NOT_INVOLVED;
+		this.pollingDlob.addMarketToInterval(
+			pollingCategoryOfPreviousSelectedMarket,
+			selectedTradeMarket.key
+		);
+		const pollingCadenceOfPreviousSelectedMarket =
+			isUserInvolvedInPreviousSelectedTradeMarket
+				? USER_INVOLVED_MARKET_ACCOUNT_POLLING_CADENCE
+				: USER_NOT_INVOLVED_MARKET_ACCOUNT_POLLING_CADENCE;
+		this.updateMarketAccountCadence(
+			previousSelectedTradeMarket,
+			pollingCadenceOfPreviousSelectedMarket
+		);
 	}
 
 	private async getReferrerInfo(
@@ -365,7 +654,7 @@ export class AuthorityDrift {
 		referrerName?: string;
 	}) {
 		const spotMarketConfig = MARKET_UTILS.getMarketConfig(
-			this.config.driftEnv,
+			this.driftClient.env,
 			MarketType.SPOT,
 			depositSpotMarketIndex
 		);
@@ -376,7 +665,7 @@ export class AuthorityDrift {
 			{
 				type: 'subAccountId',
 				subAccountId,
-				authority: this.config.wallet.publicKey,
+				authority: this.driftClient.wallet.publicKey,
 			}
 		);
 		const associatedDepositTokenAddressPromise =
@@ -416,14 +705,17 @@ export class AuthorityDrift {
 				poolId
 			);
 
-		await this.driftClient.addUser(subAccountId, this.config.wallet.publicKey); // adds user to driftclient's user map, subscribes to user account data
+		await this.driftClient.addUser(
+			subAccountId,
+			this.driftClient.wallet.publicKey
+		); // adds user to driftclient's user map, subscribes to user account data
 		const user = this.driftClient.getUser(
 			subAccountId,
-			this.config.wallet.publicKey
+			this.driftClient.wallet.publicKey
 		);
 
 		user.eventEmitter.on('update', () => {
-			this.userAccountStore.updateUserAccount(user);
+			this._userAccountCache.updateUserAccount(user);
 		});
 
 		return {
@@ -444,12 +736,12 @@ export class AuthorityDrift {
 		isMaxBorrowRepayment?: boolean;
 	}): Promise<TransactionSignature> {
 		const spotMarketConfig = MARKET_UTILS.getMarketConfig(
-			this.config.driftEnv,
+			this.driftClient.env,
 			MarketType.SPOT,
 			spotMarketIndex
 		);
 
-		const authority = this.config.wallet.publicKey;
+		const authority = this.driftClient.wallet.publicKey;
 		const associatedDepositTokenAddress =
 			await getTokenAddressForDepositAndWithdraw(
 				spotMarketConfig.mint,
@@ -487,12 +779,12 @@ export class AuthorityDrift {
 		isMax?: boolean;
 	}) {
 		const spotMarketConfig = MARKET_UTILS.getMarketConfig(
-			this.config.driftEnv,
+			this.driftClient.env,
 			MarketType.SPOT,
 			spotMarketIndex
 		);
 
-		const authority = this.config.wallet.publicKey;
+		const authority = this.driftClient.wallet.publicKey;
 		const associatedDepositTokenAddress =
 			await getTokenAddressForDepositAndWithdraw(
 				spotMarketConfig.mint,
