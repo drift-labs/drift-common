@@ -27,6 +27,7 @@ import {
 	DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS,
 	DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 	DEFAULT_TX_SENDER_RETRY_INTERVAL,
+	DELISTED_MARKET_STATUSES,
 	PollingCategory,
 	SELECTED_MARKET_ACCOUNT_POLLING_CADENCE,
 	USER_INVOLVED_MARKET_ACCOUNT_POLLING_CADENCE,
@@ -50,6 +51,7 @@ import { getTokenAddressForDepositAndWithdraw } from '../../../utils/token';
 import { USER_UTILS } from '../../../common-ui-utils/user';
 import { MAIN_POOL_ID } from '../../../constants';
 import { TRADING_UTILS } from '../../../common-ui-utils/trading';
+import { ENUM_UTILS } from '../../../utils';
 
 export interface AuthorityDriftConfig {
 	solanaRpcEndpoint: string;
@@ -126,6 +128,8 @@ export class AuthorityDrift {
 	 */
 	private tradableMarkets: MarketId[] = [];
 
+	private driftDlobServerHttpUrl: string | undefined;
+
 	/**
 	 * @param solanaRpcEndpoint - The Solana RPC endpoint to use for reading RPC data.
 	 * @param driftEnv - The drift environment to use for the drift client.
@@ -137,11 +141,22 @@ export class AuthorityDrift {
 	 */
 	constructor(config: AuthorityDriftConfig) {
 		this.selectedTradeMarket = config.selectedTradeMarket ?? null;
-		this.tradableMarkets = config.tradableMarkets ?? [];
+		this.driftDlobServerHttpUrl = config.driftDlobServerHttpUrl;
+
+		const perpTradableMarkets = PerpMarkets[config.driftEnv].map(
+			(marketConfig) => MarketId.createPerpMarket(marketConfig.marketIndex)
+		);
+		const spotTradableMarkets = SpotMarkets[config.driftEnv].map(
+			(marketConfig) => MarketId.createSpotMarket(marketConfig.marketIndex)
+		);
+
+		this.tradableMarkets = config.tradableMarkets ?? [
+			...perpTradableMarkets,
+			...spotTradableMarkets,
+		];
 
 		const driftClient = this.setupDriftClient(config);
 		this.setupStores(driftClient);
-		this.setupPollingDlob(config.driftDlobServerHttpUrl);
 	}
 
 	public get oraclePriceCache(): OraclePriceLookup {
@@ -242,9 +257,9 @@ export class AuthorityDrift {
 		return this.driftClient;
 	}
 
-	private setupPollingDlob(driftDlobServerHttpUrl?: string) {
+	private setupPollingDlob() {
 		const driftDlobServerHttpUrlToUse =
-			driftDlobServerHttpUrl ??
+			this.driftDlobServerHttpUrl ??
 			EnvironmentConstants.dlobServerHttpUrl[
 				this.driftClient.env === 'devnet' ? 'dev' : 'mainnet'
 			];
@@ -490,16 +505,40 @@ export class AuthorityDrift {
 			this.driftClient.accountSubscriber as PollingDriftClientAccountSubscriber
 		).spotMarketIndexes = Array.from(spotMarketIndexesSet);
 
+		// TODO: see if this can be optimized - instead of unsubscribing and resubscribing, find a way to add the new markets to the existing subscription
 		await (
 			this.driftClient.accountSubscriber as PollingDriftClientAccountSubscriber
-		).updateAccountsToPoll();
+		).unsubscribe();
+		await (
+			this.driftClient.accountSubscriber as PollingDriftClientAccountSubscriber
+		).subscribe();
 	}
 
 	public async subscribe() {
-		const driftClientSubscribePromise = this.driftClient.subscribe();
-		const pollingDlobStartPromise = this.pollingDlob.start();
+		await this.driftClient.subscribe();
 
-		await Promise.all([driftClientSubscribePromise, pollingDlobStartPromise]);
+		// filter out markets that are delisted
+		const actualTradableMarkets = this.tradableMarkets.filter((market) => {
+			const marketAccount = market.isPerp
+				? this.driftClient.getPerpMarketAccount(market.marketIndex)
+				: this.driftClient.getSpotMarketAccount(market.marketIndex);
+
+			if (
+				!marketAccount ||
+				DELISTED_MARKET_STATUSES.some((marketStatus) =>
+					ENUM_UTILS.match(marketAccount.status, marketStatus)
+				)
+			) {
+				return false;
+			}
+
+			return true;
+		});
+
+		this.tradableMarkets = actualTradableMarkets;
+		this.setupPollingDlob();
+
+		await this.pollingDlob.start();
 
 		await this.subscribeToNonWhitelistedButUserInvolvedMarkets(
 			this.driftClient.getUsers()

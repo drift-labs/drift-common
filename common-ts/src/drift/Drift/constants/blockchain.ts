@@ -1,4 +1,4 @@
-import { ConfirmationStrategy } from '@drift-labs/sdk';
+import { ConfirmationStrategy, MarketStatus } from '@drift-labs/sdk';
 import { Commitment } from '@solana/web3.js';
 
 export const DEFAULT_ACCOUNT_LOADER_COMMITMENT: Commitment = 'confirmed';
@@ -10,6 +10,11 @@ export const DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY =
 export const SELECTED_MARKET_ACCOUNT_POLLING_CADENCE = 1_000;
 export const USER_INVOLVED_MARKET_ACCOUNT_POLLING_CADENCE = 1_000;
 export const USER_NOT_INVOLVED_MARKET_ACCOUNT_POLLING_CADENCE = 60_000;
+
+export const DELISTED_MARKET_STATUSES = [
+	MarketStatus.DELISTED,
+	MarketStatus.SETTLEMENT,
+];
 
 export enum PollingCategory {
 	ORDERBOOK = 'orderbook',
