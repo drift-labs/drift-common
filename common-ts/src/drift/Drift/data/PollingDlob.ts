@@ -110,7 +110,7 @@ export class PollingDlob {
 	private config: PollingConfig;
 	private baseTickIntervalMs = 1000;
 	private intervals: Map<string, PollingInterval> = new Map();
-	private marketToIntervalMap: Map<MarketKey, string> = new Map();
+	private _marketToIntervalMap: Map<MarketKey, string> = new Map();
 	private dataSubject: Subject<MarketPollingData[]> = new Subject();
 	private errorSubject: Subject<Error> = new Subject();
 	private isStarted = false;
@@ -126,6 +126,10 @@ export class PollingDlob {
 			indicativeLiquidityEnabled: true,
 			...config,
 		};
+	}
+
+	get marketToIntervalMap(): Map<MarketKey, string> {
+		return this._marketToIntervalMap;
 	}
 
 	public addInterval(
@@ -153,7 +157,7 @@ export class PollingDlob {
 
 		// Remove all markets from this interval
 		interval.markets.forEach((market) => {
-			this.marketToIntervalMap.delete(market);
+			this._marketToIntervalMap.delete(market);
 		});
 
 		this.intervals.delete(id);
@@ -170,7 +174,7 @@ export class PollingDlob {
 		}
 
 		// Remove market from any existing interval first
-		const existingIntervalId = this.marketToIntervalMap.get(marketKey);
+		const existingIntervalId = this._marketToIntervalMap.get(marketKey);
 
 		if (existingIntervalId === intervalId) {
 			// market is already in the interval
@@ -182,7 +186,7 @@ export class PollingDlob {
 		}
 
 		interval.markets.add(marketKey);
-		this.marketToIntervalMap.set(marketKey, intervalId);
+		this._marketToIntervalMap.set(marketKey, intervalId);
 	}
 
 	public addMarketsToInterval(
@@ -204,11 +208,11 @@ export class PollingDlob {
 		}
 
 		interval.markets.delete(marketKey);
-		this.marketToIntervalMap.delete(marketKey);
+		this._marketToIntervalMap.delete(marketKey);
 	}
 
 	public getMarketInterval(marketKey: MarketKey): string | undefined {
-		return this.marketToIntervalMap.get(marketKey);
+		return this._marketToIntervalMap.get(marketKey);
 	}
 
 	public onData(): Observable<MarketPollingData[]> {
@@ -221,7 +225,7 @@ export class PollingDlob {
 
 	public start(): Promise<void> {
 		if (this.isStarted) {
-			return;
+			return Promise.resolve();
 		}
 
 		this.isStarted = true;
@@ -262,7 +266,7 @@ export class PollingDlob {
 	}
 
 	public getMarketCount(): number {
-		return this.marketToIntervalMap.size;
+		return this._marketToIntervalMap.size;
 	}
 
 	public getIntervalCount(): number {
@@ -294,7 +298,7 @@ export class PollingDlob {
 			isRunning: this.isStarted,
 			tickCounter: this.tickCounter,
 			intervalCount: this.intervals.size,
-			marketCount: this.marketToIntervalMap.size,
+			marketCount: this._marketToIntervalMap.size,
 			consecutiveEmptyResponses: this.consecutiveEmptyResponseCount,
 			consecutiveErrors: this.consecutiveErrorCount,
 		};
