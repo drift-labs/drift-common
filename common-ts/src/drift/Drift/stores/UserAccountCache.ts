@@ -5,7 +5,7 @@ import {
 	PublicKey,
 	User,
 } from '@drift-labs/sdk';
-import { Observable, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import {
 	getSpotBalanceInfo,
 	SpotBalanceInfo,
@@ -26,6 +26,7 @@ import { getOrderDetails } from '../../base/details/user/orders';
 import { ENUM_UTILS } from '../../../utils';
 
 export type AccountData = {
+	authority: PublicKey;
 	pubKey: PublicKey;
 	subAccountId: number;
 	name: string;
@@ -40,7 +41,12 @@ export type AccountData = {
 	poolId: number;
 };
 
-export type UserAccountLookup = Record<number, AccountData>;
+/**
+ * A key for a user account. Combines the subAccountId and the authority.
+ */
+export type UserAccountKey = `${number}_${string}`;
+
+export type UserAccountLookup = Record<UserAccountKey, AccountData>; // we use UserAccountKey because this store can store multiple accounts with the same subAccountId, but from different authorities
 
 export class UserAccountCache {
 	private _store: UserAccountLookup = {};
@@ -65,6 +71,13 @@ export class UserAccountCache {
 
 	get allUsers() {
 		return Object.values(this._store);
+	}
+
+	static getUserAccountKey(
+		subAccountId: number,
+		authority: PublicKey | string
+	): UserAccountKey {
+		return `${subAccountId}_${authority.toString()}`;
 	}
 
 	private processAccountData(user: User): AccountData {
@@ -94,7 +107,7 @@ export class UserAccountCache {
 		const marginInfo = getAccountMarginInfo(
 			this.driftClient,
 			user,
-			this.oraclePriceStore.getOraclePrice
+			this.oraclePriceStore.getOraclePrice.bind(this.oraclePriceStore)
 		);
 		const openOrders = userAccount.orders
 			.filter((order) => !order.baseAssetAmount.isZero())
@@ -106,6 +119,7 @@ export class UserAccountCache {
 			.map((order) => getOrderDetails(order));
 
 		return {
+			authority: user.getUserAccount().authority,
 			pubKey: user.getUserAccountPublicKey(),
 			subAccountId: userAccount.subAccountId,
 			name: decodeName(userAccount.name),
@@ -122,7 +136,12 @@ export class UserAccountCache {
 	public updateUserAccount(user: User) {
 		const accountData = this.processAccountData(user);
 
-		this._store[accountData.subAccountId] = accountData;
+		this._store[
+			UserAccountCache.getUserAccountKey(
+				accountData.subAccountId,
+				accountData.authority
+			)
+		] = accountData;
 		this.updatesSubject$.next(accountData);
 	}
 
@@ -130,11 +149,20 @@ export class UserAccountCache {
 		this._store = {};
 	}
 
-	public getUser(subAccountId: number): AccountData | undefined {
-		return this._store[subAccountId];
+	public getUser(
+		subAccountId: number,
+		authority: PublicKey | string
+	): AccountData | undefined {
+		return this._store[
+			UserAccountCache.getUserAccountKey(subAccountId, authority)
+		];
 	}
 
-	public observeStoreUpdates(): Observable<AccountData> {
-		return this.updatesSubject$.asObservable();
+	public onUpdate(callback: (userAccount: AccountData) => void) {
+		const subscription = this.updatesSubject$.subscribe((userAccount) => {
+			callback(userAccount);
+		});
+
+		return subscription;
 	}
 }

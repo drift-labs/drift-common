@@ -33,6 +33,7 @@ import {
 } from '../../stores/OraclePriceCache';
 import { Subscription } from 'rxjs';
 import {
+	AccountData,
 	UserAccountCache,
 	UserAccountLookup,
 } from '../../stores/UserAccountCache';
@@ -47,13 +48,13 @@ import {
 	SwapParams,
 	SettlePnlParams,
 } from './TradingOperations';
+import { Initialize } from '../../../../Config';
 
 export interface AuthorityDriftConfig {
 	solanaRpcEndpoint: string;
 	driftEnv: DriftEnv;
 	wallet?: IWallet;
 	driftDlobServerHttpUrl?: string;
-	onUserAccountUpdate?: (userPubKey: PublicKey) => void;
 	tradableMarkets?: MarketId[];
 	selectedTradeMarket?: MarketId;
 	additionalDriftClientConfig?: Partial<Omit<DriftClientConfig, 'env'>>;
@@ -69,33 +70,33 @@ export class AuthorityDrift {
 	/**
 	 * Handles all Drift program interactions e.g. trading, read account details, etc.
 	 */
-	private driftClient: DriftClient;
+	private driftClient!: DriftClient;
 
 	/**
 	 * Handles bulk account loading from the RPC.
 	 */
-	private accountLoader: CustomizedCadenceBulkAccountLoader;
+	private accountLoader!: CustomizedCadenceBulkAccountLoader;
 
 	/**
 	 * Handles polling the DLOB server for mark price and oracle price data for markets.
 	 * It is also the fallback source for orderbook data, if the websocket DLOB subscriber is unavailable.
 	 */
-	private pollingDlob: PollingDlob;
+	private pollingDlob!: PollingDlob;
 
 	/**
 	 * Subscription to the polling DLOB data.
 	 */
-	private pollingDlobSubscription: Subscription;
+	private pollingDlobSubscription: Subscription | null = null;
 
 	/**
 	 * Handles all trading operations including deposits, withdrawals, and position management.
 	 */
-	private tradingOps: TradingOperations;
+	private tradingOps!: TradingOperations;
 
 	/**
 	 * Manages all subscription operations including user accounts, market subscriptions, and polling optimization.
 	 */
-	private subscriptionManager: SubscriptionManager;
+	private subscriptionManager!: SubscriptionManager;
 
 	/**
 	 * Stores the fetched mark prices for all tradable markets.
@@ -103,7 +104,7 @@ export class AuthorityDrift {
 	 * - Websocket DLOB subscriber (active market, derived when fetching orderbook data)
 	 * - Polling DLOB server (all non-active markets)
 	 */
-	private _markPriceCache: MarkPriceCache;
+	private _markPriceCache!: MarkPriceCache;
 
 	/**
 	 * Stores the fetched oracle prices for all tradable markets.
@@ -111,12 +112,12 @@ export class AuthorityDrift {
 	 * - DriftClient oracle account subscriptions
 	 * - Polling DLOB server (all non-active markets)
 	 */
-	private _oraclePriceCache: OraclePriceCache;
+	private _oraclePriceCache!: OraclePriceCache;
 
 	/**
 	 * Stores the fetched user account data for all user accounts.
 	 */
-	private _userAccountCache: UserAccountCache;
+	private _userAccountCache!: UserAccountCache;
 
 	/**
 	 * The selected trade market to use for the drift client. This is used to subscribe to the market account,
@@ -133,20 +134,16 @@ export class AuthorityDrift {
 	 */
 	private tradableMarkets: MarketId[] = [];
 
-	private driftDlobServerHttpUrl: string | undefined;
-
 	/**
 	 * @param solanaRpcEndpoint - The Solana RPC endpoint to use for reading RPC data.
 	 * @param driftEnv - The drift environment to use for the drift client.
 	 * @param authority - The authority (wallet) whose user accounts to subscribe to.
-	 * @param onUserAccountUpdate - The function to call when a user account is updated.
 	 * @param tradableMarkets - The markets that are tradable through this client.
 	 * @param selectedTradeMarket - The active trade market to use for the drift client. This is used to subscribe to the market account, oracle data and mark price more frequently compared to the other markets.
 	 * @param additionalDriftClientConfig - Additional DriftClient config to use for the DriftClient.
 	 */
 	constructor(config: AuthorityDriftConfig) {
 		this.selectedTradeMarket = config.selectedTradeMarket ?? null;
-		this.driftDlobServerHttpUrl = config.driftDlobServerHttpUrl;
 
 		const perpTradableMarkets = PerpMarkets[config.driftEnv].map(
 			(marketConfig) => MarketId.createPerpMarket(marketConfig.marketIndex)
@@ -160,8 +157,12 @@ export class AuthorityDrift {
 			...spotTradableMarkets,
 		];
 
+		Initialize(config.driftEnv);
+
 		const driftClient = this.setupDriftClient(config);
-		this.setupStores(driftClient);
+		this.initializePollingDlob(config.driftDlobServerHttpUrl);
+		this.initializeStores(driftClient);
+		this.initializeManagers();
 	}
 
 	public get oraclePriceCache(): OraclePriceLookup {
@@ -176,7 +177,7 @@ export class AuthorityDrift {
 		return this._userAccountCache.store;
 	}
 
-	private setupStores(driftClient: DriftClient) {
+	private initializeStores(driftClient: DriftClient) {
 		this._markPriceCache = new MarkPriceCache();
 		this._oraclePriceCache = new OraclePriceCache();
 		this._userAccountCache = new UserAccountCache(
@@ -184,6 +185,18 @@ export class AuthorityDrift {
 			this._oraclePriceCache,
 			this._markPriceCache
 		);
+	}
+
+	private initializePollingDlob(driftDlobServerHttpUrl?: string) {
+		const driftDlobServerHttpUrlToUse =
+			driftDlobServerHttpUrl ??
+			EnvironmentConstants.dlobServerHttpUrl[
+				this.driftClient.env === 'devnet' ? 'dev' : 'mainnet'
+			];
+
+		this.pollingDlob = new PollingDlob({
+			driftDlobServerHttpUrl: driftDlobServerHttpUrlToUse,
+		});
 	}
 
 	private setupDriftClient(
@@ -263,56 +276,46 @@ export class AuthorityDrift {
 	}
 
 	private setupPollingDlob() {
-		const driftDlobServerHttpUrlToUse =
-			this.driftDlobServerHttpUrl ??
-			EnvironmentConstants.dlobServerHttpUrl[
-				this.driftClient.env === 'devnet' ? 'dev' : 'mainnet'
-			];
-
-		const pollingDlob = new PollingDlob({
-			driftDlobServerHttpUrl: driftDlobServerHttpUrlToUse,
-		});
-
-		pollingDlob.addInterval(PollingCategory.ORDERBOOK, 1, 100); // used to get orderbook data. this is mainly used as a fallback from the Websocket DLOB subscriber
-		pollingDlob.addInterval(PollingCategory.SELECTED_MARKET, 1, 1); // used to get the mark price at a higher frequency for the current active market (e.g. market that the user is trading on). this won't be needed when the websocket DLOB is set up
-		pollingDlob.addInterval(PollingCategory.USER_INVOLVED, 2, 1); // markets that the user is involved in
-		pollingDlob.addInterval(PollingCategory.USER_NOT_INVOLVED, 30, 1); // markets that the user is not involved in
+		this.pollingDlob.addInterval(PollingCategory.ORDERBOOK, 1, 100); // used to get orderbook data. this is mainly used as a fallback from the Websocket DLOB subscriber
+		this.pollingDlob.addInterval(PollingCategory.SELECTED_MARKET, 1, 1); // used to get the mark price at a higher frequency for the current active market (e.g. market that the user is trading on). this won't be needed when the websocket DLOB is set up
+		this.pollingDlob.addInterval(PollingCategory.USER_INVOLVED, 2, 1); // markets that the user is involved in
+		this.pollingDlob.addInterval(PollingCategory.USER_NOT_INVOLVED, 30, 1); // markets that the user is not involved in
 
 		// add all markets to the user-not-involved interval first, until user-involved markets are known
-		pollingDlob.addMarketsToInterval(
+		this.pollingDlob.addMarketsToInterval(
 			'user-not-involved',
 			this.tradableMarkets.map((market) => market.key)
 		);
 		if (this.selectedTradeMarket) {
-			pollingDlob.addMarketToInterval(
+			this.pollingDlob.addMarketToInterval(
 				'active-market',
 				this.selectedTradeMarket.key
 			);
 		}
 
-		this.pollingDlobSubscription = pollingDlob.onData().subscribe((data) => {
-			const updatedMarkPrices = data.map((marketData) => {
-				return {
-					marketKey: marketData.marketId.key,
-					markPrice: marketData.data.markPrice,
-					bestBid: marketData.data.bestBidPrice,
-					bestAsk: marketData.data.bestAskPrice,
-					lastUpdateSlot: marketData.data.slot,
-				};
-			});
-			const updatedOraclePrices = data.map((marketData) => {
-				return {
-					marketKey: marketData.marketId.key,
-					price: marketData.data.oracleData.price,
-					lastUpdateSlot: marketData.data.oracleData.slot,
-				};
-			});
+		this.pollingDlobSubscription = this.pollingDlob
+			.onData()
+			.subscribe((data) => {
+				const updatedMarkPrices = data.map((marketData) => {
+					return {
+						marketKey: marketData.marketId.key,
+						markPrice: marketData.data.markPrice,
+						bestBid: marketData.data.bestBidPrice,
+						bestAsk: marketData.data.bestAskPrice,
+						lastUpdateSlot: marketData.data.slot ?? 0,
+					};
+				});
+				const updatedOraclePrices = data.map((marketData) => {
+					return {
+						marketKey: marketData.marketId.key,
+						price: marketData.data.oracleData.price,
+						lastUpdateSlot: marketData.data.oracleData.slot,
+					};
+				});
 
-			this._markPriceCache.updateMarkPrices(...updatedMarkPrices);
-			this._oraclePriceCache.updateOraclePrices(...updatedOraclePrices);
-		});
-
-		this.pollingDlob = pollingDlob;
+				this._markPriceCache.updateMarkPrices(...updatedMarkPrices);
+				this._oraclePriceCache.updateOraclePrices(...updatedOraclePrices);
+			});
 	}
 
 	private initializeManagers() {
@@ -334,7 +337,7 @@ export class AuthorityDrift {
 	}
 
 	private unsubscribeFromPollingDlob() {
-		this.pollingDlobSubscription.unsubscribe();
+		this.pollingDlobSubscription?.unsubscribe();
 		this.pollingDlobSubscription = null;
 
 		this.pollingDlob.stop();
@@ -362,8 +365,8 @@ export class AuthorityDrift {
 		});
 
 		this.tradableMarkets = actualTradableMarkets;
+		this.subscriptionManager.updateTradableMarkets(actualTradableMarkets);
 		this.setupPollingDlob();
-		this.initializeManagers();
 
 		const pollingDlobStartPromise = this.pollingDlob.start();
 
@@ -401,6 +404,10 @@ export class AuthorityDrift {
 
 	public onMarkPricesUpdate(callback: (markPrice: MarkPriceLookup) => void) {
 		return this._markPriceCache.onUpdate(callback);
+	}
+
+	public onUserAccountUpdate(callback: (userAccount: AccountData) => void) {
+		return this._userAccountCache.onUpdate(callback);
 	}
 
 	/**

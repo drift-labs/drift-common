@@ -225,7 +225,7 @@ export class PollingDlob {
 
 	public start(): Promise<void> {
 		if (this.isStarted) {
-			return;
+			return Promise.resolve();
 		}
 
 		this.isStarted = true;

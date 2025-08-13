@@ -73,6 +73,8 @@ export class SubscriptionManager {
 		this.handleSubscriptionUpdatesOnUserUpdates(users);
 
 		users.forEach((user) => {
+			this.userAccountCache.updateUserAccount(user); // initial hydration of user account data in the store
+
 			user.eventEmitter.on('update', () => {
 				this.handleSubscriptionUpdatesOnUserUpdates(users);
 				this.userAccountCache.updateUserAccount(user);
@@ -134,6 +136,10 @@ export class SubscriptionManager {
 			? this.driftClient.getPerpMarketAccount(market.marketIndex)
 			: this.driftClient.getSpotMarketAccount(market.marketIndex);
 
+		if (!marketAccount) {
+			throw new Error(`Market account not found for market ${market.key}`);
+		}
+
 		const currentMarketCadence = this.accountLoader.getAccountCadence(
 			marketAccount.pubkey
 		);
@@ -171,7 +177,7 @@ export class SubscriptionManager {
 	private updateAccountLoaderCadenceForMarkets(
 		userInvolvedMarkets: MarketId[],
 		userNotInvolvedMarkets: MarketId[],
-		selectedTradeMarket?: MarketId
+		selectedTradeMarket?: MarketId | null
 	): void {
 		if (selectedTradeMarket) {
 			this.updateMarketAccountCadence(
@@ -205,7 +211,7 @@ export class SubscriptionManager {
 	private updatePollingDlobIntervals(
 		userInvolvedMarkets: MarketKey[],
 		userNotInvolvedMarkets: MarketKey[],
-		selectedTradeMarket?: MarketId
+		selectedTradeMarket?: MarketId | null
 	): void {
 		if (selectedTradeMarket) {
 			this.pollingDlob.addMarketToInterval(
