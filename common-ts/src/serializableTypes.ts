@@ -1757,7 +1757,6 @@ export class SerializableAllTimePnlData extends SerializableRollingPnlData {
 	@autoserializeAs(Number) epochTs: number;
 }
 
-@inheritSerialization(SerializableRollingPnlData)
 export class UISerializableRollingPnlData extends SerializableRollingPnlData {
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
@@ -1784,7 +1783,6 @@ export class UISerializableRollingPnlData extends SerializableRollingPnlData {
 	totalPnlPct: BigNum;
 }
 
-@inheritSerialization(UISerializableRollingPnlData)
 export class UISerializableAllTimePnlData extends UISerializableRollingPnlData {
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
