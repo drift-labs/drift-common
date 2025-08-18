@@ -1752,9 +1752,14 @@ export class SerializableRollingPnlData implements RollingPnlData {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) totalPnlPct: BN;
 }
 
-@inheritSerialization(SerializableRollingPnlData)
 export class SerializableAllTimePnlData extends SerializableRollingPnlData {
 	@autoserializeAs(Number) epochTs: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) spotPnlQuote: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) spotPnlPct: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) perpPnlQuote: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) perpPnlPct: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) totalPnlQuote: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) totalPnlPct: BN;
 }
 
 export class UISerializableRollingPnlData extends SerializableRollingPnlData {
