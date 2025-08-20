@@ -7,7 +7,7 @@
 		"preserveConstEnums": true,
 		"sourceMap": true,
 		"inlineSources": true, // <— embed source in the .map (sourcesContent)
-    "sourceRoot": "", // <— keep sources relative (don’t point to http)
+		"sourceRoot": "", // <— keep sources relative (don’t point to http)
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"experimentalDecorators": true,
