@@ -875,6 +875,10 @@ export class UISerializablePositionHistoryRecord extends UISerializableOrderActi
 	baseClosedForPnl: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	userFee: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	userExistingQuoteEntryAmount: BigNum;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	userExistingBaseAssetAmount: BigNum;
 
 	static onDeserialized(
 		data: JsonObject,
@@ -896,6 +900,7 @@ export class UISerializablePositionHistoryRecord extends UISerializableOrderActi
 			'makerOrderCumulativeBaseAssetAmountFilled',
 			'takerExistingBaseAssetAmount',
 			'makerExistingBaseAssetAmount',
+			'userExistingBaseAssetAmount',
 			'baseClosedForPnl',
 		];
 
