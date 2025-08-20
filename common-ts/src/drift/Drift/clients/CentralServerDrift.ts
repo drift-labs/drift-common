@@ -11,7 +11,9 @@ import {
 	DriftEnv,
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
+	MarketType,
 	PerpMarketConfig,
+	PositionDirection,
 	PublicKey,
 	SpotMarketConfig,
 	User,
@@ -30,6 +32,12 @@ import { createDepositTxn } from '../../base/actions/spot/deposit';
 import { createWithdrawTxn } from '../../base/actions/spot/withdraw';
 import { createSettleFundingTxn } from '../../base/actions/perp/settleFunding';
 import { createSettlePnlTxn } from '../../base/actions/perp/settlePnl';
+import {
+	createOpenPerpMarketOrderTxn,
+	AuctionParamsRequestOptions,
+	SwiftOrderOptions,
+	SwiftOrderResult,
+} from '../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.
@@ -281,6 +289,40 @@ export class CentralServerDrift {
 				});
 
 				return settlePnlTxn;
+			}
+		);
+	}
+
+	public async getOpenPerpMarketOrderTxn(
+		userAccountPublicKey: PublicKey,
+		assetType: 'base' | 'quote',
+		marketIndex: number,
+		direction: PositionDirection,
+		amount: BN,
+		dlobServerHttpUrl: string,
+		auctionParamsOptions?: AuctionParamsRequestOptions,
+		useSwift?: boolean,
+		swiftOptions?: SwiftOrderOptions,
+		marketType?: MarketType
+	): Promise<VersionedTransaction | Transaction | SwiftOrderResult> {
+		return this.driftClientContextWrapper(
+			userAccountPublicKey,
+			async (user) => {
+				const openPerpMarketOrderTxn = await createOpenPerpMarketOrderTxn({
+					driftClient: this.driftClient,
+					user,
+					assetType,
+					marketIndex,
+					direction,
+					amount,
+					dlobServerHttpUrl,
+					auctionParamsOptions,
+					useSwift,
+					swiftOptions,
+					marketType,
+				});
+
+				return openPerpMarketOrderTxn;
 			}
 		);
 	}

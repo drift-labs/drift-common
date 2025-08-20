@@ -134,14 +134,20 @@ export class SwiftClient {
 	): ClientResponse<{
 		hash: string;
 	}> {
-		const response = await this.post('/orders', {
+		const requestPayload = {
 			market_index: marketIndex,
 			market_type: isVariant(marketType, 'perp') ? 'perp' : 'spot',
 			message,
 			signature: signature.toString('base64'),
 			signing_authority: signingAuthority?.toBase58() ?? '',
 			taker_authority: takerPubkey.toBase58(),
-		});
+		};
+		
+		console.log('🔍 [SwiftClient] Request payload:', JSON.stringify(requestPayload, null, 2));
+		console.log(`🔍 [SwiftClient] Message length: ${message.length} chars`);
+		console.log(`🔍 [SwiftClient] Message preview: ${message.substring(0, 100)}...`);
+		
+		const response = await this.post('/orders', requestPayload);
 
 		if (response.status !== 200) {
 			console.error(
@@ -149,7 +155,7 @@ export class SwiftClient {
 			);
 			allEnvDlog('swiftClient', 'full non-200 response body', response.body);
 			return {
-				message: response.body.message,
+				message: response.body?.message || `HTTP ${response.status}: Error from Swift server`,
 				status: response.status,
 				success: false,
 			};
