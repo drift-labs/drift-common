@@ -11,21 +11,29 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 /**
  * Example usage of CentralServerDrift client
  *
- * This example demonstrates how to:
+ * This file contains multiple examples demonstrating how to:
  * 1. Set up an Anchor wallet with a private key
  * 2. Initialize a CentralServerDrift instance
- * 3. Create deposit transactions
- * 4. Create withdraw transactions
- * 5. Sign and send transactions
+ * 3. Create and execute various transaction types
  *
  * Prerequisites:
  * - Create a .env file in the same directory as this example file with:
  *   ANCHOR_WALLET=[private key byte array]
  *   ENDPOINT=https://your-rpc-endpoint.com
+ *
+ * Usage:
+ * - Run all examples: ts-node example.ts
+ * - Run specific example: ts-node example.ts <example-name>
+ *   Available examples: depositWithdraw, settleFunding, settlePnl
  */
 
-async function runCentralServerDriftExample() {
-	console.log('🚀 Starting CentralServerDrift Example...\n');
+// Shared configuration and setup
+let centralServerDrift: CentralServerDrift;
+let wallet: anchor.Wallet;
+const userAccountPublicKey = new PublicKey('11111111111111111111111111111111'); // enter the publickey for the drift account here
+
+async function initializeCentralServerDrift(): Promise<void> {
+	console.log('🚀 Initializing CentralServerDrift...\n');
 
 	// Validate required environment variables
 	if (!process.env.ANCHOR_WALLET) {
@@ -39,16 +47,14 @@ async function runCentralServerDriftExample() {
 	}
 
 	// Set up the wallet
-	const wallet = new anchor.Wallet(
-		loadKeypair(process.env.ANCHOR_WALLET as string)
-	);
+	wallet = new anchor.Wallet(loadKeypair(process.env.ANCHOR_WALLET as string));
 
 	console.log(`✅ Wallet Public Key: ${wallet.publicKey.toString()}`);
 	console.log(`✅ RPC Endpoint: ${process.env.ENDPOINT}\n`);
 
 	// Initialize CentralServerDrift
 	console.log('🏗️  Initializing CentralServerDrift...');
-	const centralServerDrift = new CentralServerDrift({
+	centralServerDrift = new CentralServerDrift({
 		solanaRpcEndpoint: process.env.ENDPOINT as string,
 		driftEnv: 'mainnet-beta', // Change to 'devnet' for devnet testing
 		additionalDriftClientConfig: {
@@ -59,14 +65,6 @@ async function runCentralServerDriftExample() {
 				computeUnitsPrice: 1000,
 			},
 		},
-		// Optional: Specify active trade market for more frequent updates
-		// activeTradeMarket: { kind: 'perp', marketIndex: 0 },
-
-		// Optional: Specify specific markets to subscribe to
-		// marketsToSubscribe: [
-		// 	{ kind: 'spot', marketIndex: 0 }, // USDC
-		// 	{ kind: 'spot', marketIndex: 1 }, // SOL
-		// ],
 	});
 
 	console.log('✅ CentralServerDrift instance created successfully\n');
@@ -75,46 +73,50 @@ async function runCentralServerDriftExample() {
 	console.log('📡 Subscribing to market data...');
 	await centralServerDrift.subscribe();
 	console.log('✅ Successfully subscribed to market data\n');
+}
 
-	// Configuration (shared between examples)
-	const userAccountPublicKey = new PublicKey(
-		'11111111111111111111111111111111'
-	); // enter the publickey for the drift account here
+/**
+ * Reusable function to handle transaction signing and sending
+ */
+async function executeVersionedTransaction(
+	txn: VersionedTransaction,
+	transactionType: string
+): Promise<void> {
+	console.log(`✅ ${transactionType} transaction created successfully`);
+	console.log(`📋 Transaction Type: ${txn.constructor.name}`);
+	console.log('\n📝 Signing Transaction...');
+	// Sign with the wallet's keypair
+	txn.sign([wallet.payer]);
+
+	console.log('✅ Transaction signed successfully');
+	console.log(`  Signatures Count After Signing: ${txn.signatures.length}`);
+	console.log(
+		`  First Signature Present: ${
+			txn.signatures[0] && txn.signatures[0].length > 0
+		}`
+	);
+
+	console.log('\n🚀 Sending transaction to the network...');
+
+	const txSig = await centralServerDrift.sendSignedTransaction(txn);
+
+	console.log('✅ Transaction sent successfully!');
+	console.log(`📋 Transaction Signature: ${txSig}`);
+	console.log(`🔍 View on Solscan: https://solscan.io/tx/${txSig}`);
+}
+
+/**
+ * Example 1: Deposit and Withdraw transactions
+ */
+async function depositWithdrawExample() {
+	console.log('🚀 Starting Deposit/Withdraw Example...\n');
+
+	// Configuration for this example
 	const amount = new BN(1000000); // 1 USDC (6 decimals)
 	const spotMarketIndex = 0; // USDC market index
 
-	/**
-	 * Reusable function to handle transaction signing and sending
-	 */
-	async function executeVersionedTransaction(
-		txn: VersionedTransaction,
-		transactionType: string
-	): Promise<void> {
-		console.log(`✅ ${transactionType} transaction created successfully`);
-		console.log(`📋 Transaction Type: ${txn.constructor.name}`);
-		console.log('\n📝 Signing Transaction...');
-		// Sign with the wallet's keypair
-		txn.sign([wallet.payer]);
-
-		console.log('✅ Transaction signed successfully');
-		console.log(`  Signatures Count After Signing: ${txn.signatures.length}`);
-		console.log(
-			`  First Signature Present: ${
-				txn.signatures[0] && txn.signatures[0].length > 0
-			}`
-		);
-
-		console.log('\n🚀 Sending transaction to the network...');
-
-		const txSig = await centralServerDrift.sendSignedTransaction(txn);
-
-		console.log('✅ Transaction sent successfully!');
-		console.log(`📋 Transaction Signature: ${txSig}`);
-		console.log(`🔍 View on Solscan: https://solscan.io/tx/${txSig}`);
-	}
-
 	// Example 1: Create a deposit transaction
-	console.log('--- 📥 Example 1: Creating Deposit Transaction ---');
+	console.log('--- 📥 Creating Deposit Transaction ---');
 
 	try {
 		console.log(`💰 Deposit Amount: ${amount.toString()} raw units`);
@@ -135,7 +137,7 @@ async function runCentralServerDriftExample() {
 	}
 
 	// Example 2: Create a withdraw transaction
-	console.log('\n--- 📤 Example 2: Creating Withdraw Transaction ---');
+	console.log('\n--- 📤 Creating Withdraw Transaction ---');
 
 	try {
 		console.log(`💰 Withdraw Amount: ${amount.toString()} raw units`);
@@ -160,18 +162,162 @@ async function runCentralServerDriftExample() {
 	}
 }
 
-// Export the example function for use in other files
-export { runCentralServerDriftExample };
+/**
+ * Example 2: Settle Funding Payments
+ */
+async function settleFundingExample() {
+	console.log('🚀 Starting Settle Funding Example...\n');
 
-// Run the example if this file is executed directly
+	console.log('--- 💰 Creating Settle Funding Transaction ---');
+
+	try {
+		console.log(`👤 User Account: ${userAccountPublicKey.toString()}`);
+		console.log('📋 Settling funding payments for all perp positions...');
+
+		const settleFundingTxn = await centralServerDrift.getSettleFundingTxn(
+			userAccountPublicKey
+		);
+
+		await executeVersionedTransaction(
+			settleFundingTxn as VersionedTransaction,
+			'Settle Funding'
+		);
+	} catch (error) {
+		console.error('❌ Error during settle funding transaction flow:', error);
+	}
+}
+
+/**
+ * Example 3: Settle PnL for Multiple Markets
+ */
+async function settlePnlExample() {
+	console.log('🚀 Starting Settle PnL Example...\n');
+
+	// Configuration for this example
+	const marketIndexes = [1]; // BTC-PERP
+
+	console.log('--- 📈 Creating Settle PnL Transaction ---');
+
+	try {
+		console.log(`👤 User Account: ${userAccountPublicKey.toString()}`);
+		console.log(`📊 Market Indexes: ${marketIndexes.join(', ')}`);
+
+		const settlePnlTxn = await centralServerDrift.getSettlePnlTxn(
+			userAccountPublicKey,
+			marketIndexes
+		);
+
+		await executeVersionedTransaction(
+			settlePnlTxn as VersionedTransaction,
+			'Settle PnL'
+		);
+	} catch (error) {
+		console.error('❌ Error during settle PnL transaction flow:', error);
+	}
+}
+
+/**
+ * Run all examples in sequence
+ */
+async function runAllExamples() {
+	console.log('🚀 Running All CentralServerDrift Examples...\n');
+
+	await initializeCentralServerDrift();
+
+	console.log('='.repeat(50));
+	await depositWithdrawExample();
+
+	console.log('\n' + '='.repeat(50));
+	await settleFundingExample();
+
+	console.log('\n' + '='.repeat(50));
+	await settlePnlExample();
+}
+
+// Export example functions for use in other files
+export {
+	initializeCentralServerDrift,
+	depositWithdrawExample,
+	settleFundingExample,
+	settlePnlExample,
+	runAllExamples,
+};
+
+// Legacy export for backward compatibility
+export const runCentralServerDriftExample = runAllExamples;
+
+// Helper functions for command line handling
+function showUsage() {
+	console.log('📋 Usage: ts-node example.ts [example-name]');
+	console.log('\nAvailable examples:');
+	console.log(
+		'  depositWithdraw  - Run deposit and withdraw transaction examples'
+	);
+	console.log(
+		'  settleFunding    - Run settle funding payment transaction example'
+	);
+	console.log('  settlePnl        - Run settle PnL transaction example');
+	console.log('  all              - Run all examples in sequence (default)');
+	console.log('\nExamples:');
+	console.log('  ts-node example.ts                    # Run all examples');
+	console.log(
+		'  ts-node example.ts depositWithdraw    # Run only deposit/withdraw example'
+	);
+	console.log(
+		'  ts-node example.ts settleFunding      # Run only settle funding example'
+	);
+	console.log(
+		'  ts-node example.ts settlePnl          # Run only settle PnL example'
+	);
+}
+
+async function runCliExample(exampleName: string) {
+	const availableExamples = {
+		depositWithdraw: () =>
+			initializeCentralServerDrift().then(() => depositWithdrawExample()),
+		settleFunding: () =>
+			initializeCentralServerDrift().then(() => settleFundingExample()),
+		settlePnl: () =>
+			initializeCentralServerDrift().then(() => settlePnlExample()),
+		all: runAllExamples,
+	};
+
+	if (
+		exampleName === 'help' ||
+		exampleName === '--help' ||
+		exampleName === '-h'
+	) {
+		showUsage();
+		return;
+	}
+
+	const exampleToRun = exampleName
+		? availableExamples[exampleName]
+		: availableExamples['all'];
+
+	if (!exampleToRun) {
+		console.error(`❌ Unknown example: ${exampleName}`);
+		console.error('');
+		showUsage();
+		process.exit(1);
+	}
+
+	console.log(`🚀 Running example: ${exampleName || 'all'}\n`);
+	await exampleToRun();
+}
+
+// Command line argument handling
 if (require.main === module) {
-	runCentralServerDriftExample()
+	const args = process.argv.slice(2);
+	const exampleName = args[0];
+
+	runCliExample(exampleName)
 		.then(() => {
-			console.log('✨ Example execution completed');
+			console.log('\n✨ Example execution completed successfully!');
 			process.exit(0);
 		})
 		.catch((error) => {
-			console.error('💥 Example execution failed:', error);
+			console.error('\n💥 Example execution failed:', error);
 			process.exit(1);
 		});
 }

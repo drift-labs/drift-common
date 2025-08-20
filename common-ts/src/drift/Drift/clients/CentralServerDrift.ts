@@ -14,7 +14,6 @@ import {
 	PerpMarketConfig,
 	PublicKey,
 	SpotMarketConfig,
-	TxParams,
 	User,
 	WhileValidTxSender,
 } from '@drift-labs/sdk';
@@ -29,6 +28,8 @@ import {
 import { MarketId } from '../../../types';
 import { createDepositTxn } from '../../base/actions/spot/deposit';
 import { createWithdrawTxn } from '../../base/actions/spot/withdraw';
+import { createSettleFundingTxn } from '../../base/actions/perp/settleFunding';
+import { createSettlePnlTxn } from '../../base/actions/perp/settlePnl';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.
@@ -221,7 +222,6 @@ export class CentralServerDrift {
 		options?: {
 			isBorrow?: boolean;
 			isMax?: boolean;
-			txParams?: TxParams;
 		}
 	): Promise<VersionedTransaction | Transaction> {
 		return this.driftClientContextWrapper(
@@ -244,10 +244,43 @@ export class CentralServerDrift {
 					spotMarketConfig,
 					isBorrow: options?.isBorrow,
 					isMax: options?.isMax,
-					txParams: options?.txParams,
 				});
 
 				return withdrawTxn;
+			}
+		);
+	}
+
+	public async getSettleFundingTxn(
+		userAccountPublicKey: PublicKey
+	): Promise<VersionedTransaction | Transaction> {
+		return this.driftClientContextWrapper(
+			userAccountPublicKey,
+			async (user) => {
+				const settleFundingTxn = await createSettleFundingTxn({
+					driftClient: this.driftClient,
+					user,
+				});
+
+				return settleFundingTxn;
+			}
+		);
+	}
+
+	public async getSettlePnlTxn(
+		userAccountPublicKey: PublicKey,
+		marketIndexes: number[]
+	): Promise<VersionedTransaction | Transaction> {
+		return this.driftClientContextWrapper(
+			userAccountPublicKey,
+			async (user) => {
+				const settlePnlTxn = await createSettlePnlTxn({
+					driftClient: this.driftClient,
+					user,
+					marketIndexes,
+				});
+
+				return settlePnlTxn;
 			}
 		);
 	}
