@@ -875,6 +875,10 @@ export class UISerializablePositionHistoryRecord extends UISerializableOrderActi
 	baseClosedForPnl: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	userFee: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	userExistingQuoteEntryAmount: BigNum;
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	userExistingBaseAssetAmount: BigNum;
 
 	static onDeserialized(
 		data: JsonObject,
@@ -896,6 +900,7 @@ export class UISerializablePositionHistoryRecord extends UISerializableOrderActi
 			'makerOrderCumulativeBaseAssetAmountFilled',
 			'takerExistingBaseAssetAmount',
 			'makerExistingBaseAssetAmount',
+			'userExistingBaseAssetAmount',
 			'baseClosedForPnl',
 		];
 
@@ -1754,6 +1759,12 @@ export class SerializableRollingPnlData implements RollingPnlData {
 
 export class SerializableAllTimePnlData extends SerializableRollingPnlData {
 	@autoserializeAs(Number) epochTs: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) spotPnlQuote: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) spotPnlPct: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) perpPnlQuote: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) perpPnlPct: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) totalPnlQuote: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) totalPnlPct: BN;
 }
 
 export class UISerializableRollingPnlData extends SerializableRollingPnlData {

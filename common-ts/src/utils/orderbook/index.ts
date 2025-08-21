@@ -1,4 +1,10 @@
-import { MarketType, OraclePriceData, L2OrderBook, BN } from '@drift-labs/sdk';
+import {
+	MarketType,
+	OraclePriceData,
+	L2OrderBook,
+	BN,
+	MMOraclePriceData,
+} from '@drift-labs/sdk';
 
 export interface L2WithOracle extends L2OrderBook {
 	oracleData: OraclePriceData;
@@ -7,6 +13,7 @@ export interface L2WithOracle extends L2OrderBook {
 	bestAskPrice: BN;
 	spreadPct: BN;
 	spreadQuote: BN;
+	mmOracleData?: MMOraclePriceData;
 }
 
 export interface L2WithOracleAndMarketData extends L2WithOracle {
@@ -43,6 +50,13 @@ export type RawL2Output = {
 		twap?: string;
 		twapConfidence?: string;
 		maxPrice?: string;
+	};
+	mmOracleData?: {
+		price: string;
+		slot: string;
+		confidence: string;
+		hasSufficientNumberOfDataPoints: boolean;
+		isMMOracleActive: boolean;
 	};
 	markPrice: string;
 	bestBidPrice: string;
@@ -104,6 +118,21 @@ export const deserializeL2Response = (
 			maxPrice: serializedOrderbook.oracleData.maxPrice
 				? new BN(serializedOrderbook.oracleData.maxPrice)
 				: undefined,
+		},
+		mmOracleData: {
+			price: serializedOrderbook.mmOracleData?.price
+				? new BN(serializedOrderbook.mmOracleData.price)
+				: undefined,
+			slot: serializedOrderbook.mmOracleData?.slot
+				? new BN(serializedOrderbook.mmOracleData.slot)
+				: undefined,
+			confidence: serializedOrderbook.mmOracleData?.confidence
+				? new BN(serializedOrderbook.mmOracleData.confidence)
+				: undefined,
+			hasSufficientNumberOfDataPoints:
+				serializedOrderbook.mmOracleData?.hasSufficientNumberOfDataPoints,
+			isMMOracleActive:
+				serializedOrderbook.mmOracleData?.isMMOracleActive ?? false,
 		},
 		slot: serializedOrderbook.slot,
 		marketSlot: serializedOrderbook.marketSlot,
