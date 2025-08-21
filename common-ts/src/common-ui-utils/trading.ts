@@ -207,9 +207,29 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 		return 0;
 	}
 
-	// cap liq price at the oracle price for ui
-	// ie: long order shouldn't have a liq price above oracle price
-	const cappedLiqPriceBn = capLiqPrice
+	// Check if user has a spot position using the same oracle as the perp market
+	// If so, force capLiqPrice to be false to avoid incorrect price capping
+	// Technically in this case, liq price could be lower for a short or higher for a long
+	const perpMarketOracle =
+		userClient.driftClient.getPerpMarketAccount(perpMarketIndex)?.amm?.oracle;
+
+	const spotMarketWithSameOracle = userClient.driftClient
+		.getSpotMarketAccounts()
+		.find((market) => market.oracle.equals(perpMarketOracle));
+
+	let hasSpotPositionWithSameOracle = false;
+	if (spotMarketWithSameOracle) {
+		const spotPosition = userClient.getSpotPosition(
+			spotMarketWithSameOracle.marketIndex
+		);
+		hasSpotPositionWithSameOracle = !!spotPosition;
+	}
+
+	const effectiveCapLiqPrice = hasSpotPositionWithSameOracle
+		? false
+		: capLiqPrice;
+
+	const cappedLiqPriceBn = effectiveCapLiqPrice
 		? isLong
 			? BN.min(liqPriceBn, oraclePrice)
 			: BN.max(liqPriceBn, oraclePrice)
