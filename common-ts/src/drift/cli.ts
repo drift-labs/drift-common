@@ -1,6 +1,12 @@
 import * as anchor from '@coral-xyz/anchor';
 import { PublicKey, VersionedTransaction } from '@solana/web3.js';
-import { BN, loadKeypair, PositionDirection, BASE_PRECISION, QUOTE_PRECISION } from '@drift-labs/sdk';
+import {
+	BN,
+	loadKeypair,
+	PositionDirection,
+	BASE_PRECISION,
+	QUOTE_PRECISION,
+} from '@drift-labs/sdk';
 import { sign } from 'tweetnacl';
 import { CentralServerDrift } from './Drift/clients/CentralServerDrift';
 import { SwiftOrderResult } from './base/actions/trade/openPerpOrder/openPerpMarketOrder';
@@ -44,7 +50,7 @@ interface CliArgs {
  */
 function parseArgs(args: string[]): CliArgs {
 	const parsed: CliArgs = {};
-	
+
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i];
 		if (arg.startsWith('--')) {
@@ -70,7 +76,7 @@ function parseArgs(args: string[]): CliArgs {
 			}
 		}
 	}
-	
+
 	return parsed;
 }
 
@@ -82,7 +88,7 @@ function parseAmount(amount: string, precision: BN = QUOTE_PRECISION): BN {
 	if (isNaN(floatAmount)) {
 		throw new Error(`Invalid amount: ${amount}`);
 	}
-	
+
 	// Convert to the proper precision
 	const scaledAmount = Math.floor(floatAmount * precision.toNumber());
 	return new BN(scaledAmount);
@@ -98,7 +104,9 @@ function parseDirection(direction: string): PositionDirection {
 	} else if (normalized === 'short' || normalized === 'sell') {
 		return PositionDirection.SHORT;
 	} else {
-		throw new Error(`Invalid direction: ${direction}. Use 'long', 'short', 'buy', or 'sell'`);
+		throw new Error(
+			`Invalid direction: ${direction}. Use 'long', 'short', 'buy', or 'sell'`
+		);
 	}
 }
 
@@ -114,7 +122,9 @@ async function initializeCentralServerDrift(): Promise<void> {
 	}
 
 	if (!process.env.ENDPOINT) {
-		throw new Error('ENDPOINT environment variable must be set to your Solana RPC endpoint');
+		throw new Error(
+			'ENDPOINT environment variable must be set to your Solana RPC endpoint'
+		);
 	}
 
 	// Set up the wallet
@@ -148,15 +158,18 @@ async function initializeCentralServerDrift(): Promise<void> {
 /**
  * Execute a regular transaction
  */
-async function executeTransaction(txn: VersionedTransaction, transactionType: string): Promise<void> {
+async function executeTransaction(
+	txn: VersionedTransaction,
+	transactionType: string
+): Promise<void> {
 	console.log(`✅ ${transactionType} transaction created successfully`);
 	console.log('\n📝 Signing Transaction...');
-	
+
 	txn.sign([wallet.payer]);
 	console.log('✅ Transaction signed successfully');
 
 	console.log('\n🚀 Sending transaction to the network...');
-	const txSig = await centralServerDrift.sendSignedTransaction(txn);
+	const { txSig } = await centralServerDrift.sendSignedTransaction(txn);
 
 	console.log('✅ Transaction sent successfully!');
 	console.log(`📋 Transaction Signature: ${txSig?.toString()}`);
@@ -166,12 +179,19 @@ async function executeTransaction(txn: VersionedTransaction, transactionType: st
 /**
  * Handle Swift order observable
  */
-function handleSwiftOrder(swiftResult: SwiftOrderResult, orderType: string): void {
+function handleSwiftOrder(
+	swiftResult: SwiftOrderResult,
+	orderType: string
+): void {
 	console.log(`✅ ${orderType} Swift order submitted successfully`);
-	console.log(`📋 Order UUID: ${Buffer.from(swiftResult.signedMsgOrderUuid).toString('hex')}`);
-	
+	console.log(
+		`📋 Order UUID: ${Buffer.from(swiftResult.signedMsgOrderUuid).toString(
+			'hex'
+		)}`
+	);
+
 	console.log('\n👁️  Monitoring order status...');
-	
+
 	swiftResult.orderObservable.subscribe({
 		next: (event) => {
 			if (event.type === 'confirmed') {
@@ -190,7 +210,7 @@ function handleSwiftOrder(swiftResult: SwiftOrderResult, orderType: string): voi
 		},
 		complete: () => {
 			console.log('🏁 Order monitoring completed');
-		}
+		},
 	});
 }
 
@@ -203,7 +223,9 @@ async function depositCommand(args: CliArgs): Promise<void> {
 	const amount = args.amount as string;
 
 	if (!userAccount || isNaN(marketIndex) || !amount) {
-		throw new Error('Required arguments: --userAccount, --marketIndex, --amount');
+		throw new Error(
+			'Required arguments: --userAccount, --marketIndex, --amount'
+		);
 	}
 
 	const userAccountPubkey = new PublicKey(userAccount);
@@ -234,7 +256,9 @@ async function withdrawCommand(args: CliArgs): Promise<void> {
 	const isMax = args.isMax === 'true';
 
 	if (!userAccount || isNaN(marketIndex) || !amount) {
-		throw new Error('Required arguments: --userAccount, --marketIndex, --amount');
+		throw new Error(
+			'Required arguments: --userAccount, --marketIndex, --amount'
+		);
 	}
 
 	const userAccountPubkey = new PublicKey(userAccount);
@@ -272,9 +296,14 @@ async function settleFundingCommand(args: CliArgs): Promise<void> {
 	console.log('--- 💰 Settle Funding Transaction ---');
 	console.log(`👤 User Account: ${userAccount}`);
 
-	const settleFundingTxn = await centralServerDrift.getSettleFundingTxn(userAccountPubkey);
+	const settleFundingTxn = await centralServerDrift.getSettleFundingTxn(
+		userAccountPubkey
+	);
 
-	await executeTransaction(settleFundingTxn as VersionedTransaction, 'Settle Funding');
+	await executeTransaction(
+		settleFundingTxn as VersionedTransaction,
+		'Settle Funding'
+	);
 }
 
 /**
@@ -285,19 +314,24 @@ async function settlePnlCommand(args: CliArgs): Promise<void> {
 	const marketIndexesArg = args.marketIndexes;
 
 	if (!userAccount || !marketIndexesArg) {
-		throw new Error('Required arguments: --userAccount, --marketIndexes (comma-separated)');
+		throw new Error(
+			'Required arguments: --userAccount, --marketIndexes (comma-separated)'
+		);
 	}
 
 	const userAccountPubkey = new PublicKey(userAccount);
-	const marketIndexes = Array.isArray(marketIndexesArg) 
-		? marketIndexesArg.map(idx => parseInt(idx))
+	const marketIndexes = Array.isArray(marketIndexesArg)
+		? marketIndexesArg.map((idx) => parseInt(idx))
 		: [parseInt(marketIndexesArg as string)];
 
 	console.log('--- 📈 Settle PnL Transaction ---');
 	console.log(`👤 User Account: ${userAccount}`);
 	console.log(`📊 Market Indexes: ${marketIndexes.join(', ')}`);
 
-	const settlePnlTxn = await centralServerDrift.getSettlePnlTxn(userAccountPubkey, marketIndexes);
+	const settlePnlTxn = await centralServerDrift.getSettlePnlTxn(
+		userAccountPubkey,
+		marketIndexes
+	);
 
 	await executeTransaction(settlePnlTxn as VersionedTransaction, 'Settle PnL');
 }
@@ -311,10 +345,13 @@ async function openPerpOrderCommand(args: CliArgs): Promise<void> {
 	const direction = args.direction as string;
 	const amount = args.amount as string;
 	const assetType = (args.assetType as string) || 'base';
-	const dlobServerHttpUrl = (args.dlobServerUrl as string) || 'https://dlob.drift.trade';
+	const dlobServerHttpUrl =
+		(args.dlobServerUrl as string) || 'https://dlob.drift.trade';
 
 	if (!userAccount || isNaN(marketIndex) || !direction || !amount) {
-		throw new Error('Required arguments: --userAccount, --marketIndex, --direction, --amount');
+		throw new Error(
+			'Required arguments: --userAccount, --marketIndex, --direction, --amount'
+		);
 	}
 
 	const userAccountPubkey = new PublicKey(userAccount);
@@ -325,7 +362,9 @@ async function openPerpOrderCommand(args: CliArgs): Promise<void> {
 	console.log('--- 🎯 Open Perp Order Transaction ---');
 	console.log(`👤 User Account: ${userAccount}`);
 	console.log(`🏪 Market Index: ${marketIndex}`);
-	console.log(`📊 Direction: ${direction} (${ENUM_UTILS.toStr(directionEnum)})`);
+	console.log(
+		`📊 Direction: ${direction} (${ENUM_UTILS.toStr(directionEnum)})`
+	);
 	console.log(`💰 Amount: ${amount} (${amountBN.toString()} raw units)`);
 	console.log(`💱 Asset Type: ${assetType}`);
 	console.log(`🌐 DLOB Server: ${dlobServerHttpUrl}`);
@@ -338,7 +377,7 @@ async function openPerpOrderCommand(args: CliArgs): Promise<void> {
 		amountBN,
 		dlobServerHttpUrl,
 		undefined, // auctionParamsOptions
-		false      // useSwift
+		false // useSwift
 	);
 
 	await executeTransaction(orderTxn as VersionedTransaction, 'Open Perp Order');
@@ -353,11 +392,15 @@ async function openPerpOrderSwiftCommand(args: CliArgs): Promise<void> {
 	const direction = args.direction as string;
 	const amount = args.amount as string;
 	const assetType = (args.assetType as string) || 'base';
-	const dlobServerHttpUrl = (args.dlobServerUrl as string) || 'https://dlob.drift.trade';
-	const swiftServerUrl = (args.swiftServerUrl as string) || 'https://swift.drift.trade';
+	const dlobServerHttpUrl =
+		(args.dlobServerUrl as string) || 'https://dlob.drift.trade';
+	const swiftServerUrl =
+		(args.swiftServerUrl as string) || 'https://swift.drift.trade';
 
 	if (!userAccount || isNaN(marketIndex) || !direction || !amount) {
-		throw new Error('Required arguments: --userAccount, --marketIndex, --direction, --amount');
+		throw new Error(
+			'Required arguments: --userAccount, --marketIndex, --direction, --amount'
+		);
 	}
 
 	const userAccountPubkey = new PublicKey(userAccount);
@@ -368,7 +411,9 @@ async function openPerpOrderSwiftCommand(args: CliArgs): Promise<void> {
 	console.log('--- ⚡ Open Perp Order Swift ---');
 	console.log(`👤 User Account: ${userAccount}`);
 	console.log(`🏪 Market Index: ${marketIndex}`);
-	console.log(`📊 Direction: ${direction} (${ENUM_UTILS.toStr(directionEnum)})`);
+	console.log(
+		`📊 Direction: ${direction} (${ENUM_UTILS.toStr(directionEnum)})`
+	);
 	console.log(`💰 Amount: ${amount} (${amountBN.toString()} raw units)`);
 	console.log(`💱 Asset Type: ${assetType}`);
 	console.log(`🌐 DLOB Server: ${dlobServerHttpUrl}`);
@@ -377,8 +422,7 @@ async function openPerpOrderSwiftCommand(args: CliArgs): Promise<void> {
 
 	let swiftResult: SwiftOrderResult;
 	try {
-		console.log('🚀 [CLI] Calling CentralServerDrift.getOpenPerpMarketOrderTxn...');
-		swiftResult = await centralServerDrift.getOpenPerpMarketOrderTxn(
+		swiftResult = (await centralServerDrift.getOpenPerpMarketOrderTxn(
 			userAccountPubkey,
 			assetType as 'base' | 'quote',
 			marketIndex,
@@ -386,14 +430,12 @@ async function openPerpOrderSwiftCommand(args: CliArgs): Promise<void> {
 			amountBN,
 			dlobServerHttpUrl,
 			undefined, // auctionParamsOptions
-			true,      // useSwift
+			true, // useSwift
 			{
 				wallet: {
 					signMessage: async (message: Uint8Array) => {
-						console.log(`🖊️  [CLI] Signing message of length: ${message.length} bytes`);
 						// Sign the message using the keypair
 						const signature = sign.detached(message, wallet.payer.secretKey);
-						console.log(`✅ [CLI] Message signed, signature length: ${signature.length} bytes`);
 						return new Uint8Array(signature);
 					},
 					publicKey: wallet.publicKey,
@@ -401,7 +443,7 @@ async function openPerpOrderSwiftCommand(args: CliArgs): Promise<void> {
 				swiftServerUrl,
 				confirmDuration: 30000,
 			}
-		) as SwiftOrderResult;
+		)) as SwiftOrderResult;
 		console.log('✅ [CLI] Swift order transaction created successfully!');
 	} catch (error) {
 		console.error('❌ [CLI] Error creating Swift order:', error);
@@ -419,44 +461,70 @@ function showUsage(): void {
 	console.log('');
 	console.log('Available Commands:');
 	console.log('');
-	
+
 	console.log('💰 deposit');
-	console.log('  ts-node cli.ts deposit --userAccount=<pubkey> --marketIndex=<num> --amount=<num>');
-	console.log('  Example: ts-node cli.ts deposit --userAccount=11111111111111111111111111111111 --marketIndex=0 --amount=100');
+	console.log(
+		'  ts-node cli.ts deposit --userAccount=<pubkey> --marketIndex=<num> --amount=<num>'
+	);
+	console.log(
+		'  Example: ts-node cli.ts deposit --userAccount=11111111111111111111111111111111 --marketIndex=0 --amount=100'
+	);
 	console.log('');
-	
+
 	console.log('💸 withdraw');
-	console.log('  ts-node cli.ts withdraw --userAccount=<pubkey> --marketIndex=<num> --amount=<num> [--isBorrow=<bool>] [--isMax=<bool>]');
-	console.log('  Example: ts-node cli.ts withdraw --userAccount=11111111111111111111111111111111 --marketIndex=0 --amount=50');
+	console.log(
+		'  ts-node cli.ts withdraw --userAccount=<pubkey> --marketIndex=<num> --amount=<num> [--isBorrow=<bool>] [--isMax=<bool>]'
+	);
+	console.log(
+		'  Example: ts-node cli.ts withdraw --userAccount=11111111111111111111111111111111 --marketIndex=0 --amount=50'
+	);
 	console.log('');
-	
+
 	console.log('🏦 settleFunding');
 	console.log('  ts-node cli.ts settleFunding --userAccount=<pubkey>');
-	console.log('  Example: ts-node cli.ts settleFunding --userAccount=11111111111111111111111111111111');
+	console.log(
+		'  Example: ts-node cli.ts settleFunding --userAccount=11111111111111111111111111111111'
+	);
 	console.log('');
-	
+
 	console.log('📊 settlePnl');
-	console.log('  ts-node cli.ts settlePnl --userAccount=<pubkey> --marketIndexes=<comma-separated>');
-	console.log('  Example: ts-node cli.ts settlePnl --userAccount=11111111111111111111111111111111 --marketIndexes=0,1');
+	console.log(
+		'  ts-node cli.ts settlePnl --userAccount=<pubkey> --marketIndexes=<comma-separated>'
+	);
+	console.log(
+		'  Example: ts-node cli.ts settlePnl --userAccount=11111111111111111111111111111111 --marketIndexes=0,1'
+	);
 	console.log('');
-	
+
 	console.log('🎯 openPerpOrder');
-	console.log('  ts-node cli.ts openPerpOrder --userAccount=<pubkey> --marketIndex=<num> --direction=<long|short> --amount=<num> [--assetType=<base|quote>] [--dlobServerUrl=<url>]');
-	console.log('  Example: ts-node cli.ts openPerpOrder --userAccount=11111111111111111111111111111111 --marketIndex=0 --direction=long --amount=0.1 --assetType=base');
+	console.log(
+		'  ts-node cli.ts openPerpOrder --userAccount=<pubkey> --marketIndex=<num> --direction=<long|short> --amount=<num> [--assetType=<base|quote>] [--dlobServerUrl=<url>]'
+	);
+	console.log(
+		'  Example: ts-node cli.ts openPerpOrder --userAccount=11111111111111111111111111111111 --marketIndex=0 --direction=long --amount=0.1 --assetType=base'
+	);
 	console.log('');
-	
+
 	console.log('⚡ openPerpOrderSwift');
-	console.log('  ts-node cli.ts openPerpOrderSwift --userAccount=<pubkey> --marketIndex=<num> --direction=<long|short> --amount=<num> [--assetType=<base|quote>] [--swiftServerUrl=<url>]');
-	console.log('  Example: ts-node cli.ts openPerpOrderSwift --userAccount=11111111111111111111111111111111 --marketIndex=0 --direction=short --amount=100 --assetType=quote --swiftServerUrl=https://swift.drift.trade');
+	console.log(
+		'  ts-node cli.ts openPerpOrderSwift --userAccount=<pubkey> --marketIndex=<num> --direction=<long|short> --amount=<num> [--assetType=<base|quote>] [--swiftServerUrl=<url>]'
+	);
+	console.log(
+		'  Example: ts-node cli.ts openPerpOrderSwift --userAccount=11111111111111111111111111111111 --marketIndex=0 --direction=short --amount=100 --assetType=quote --swiftServerUrl=https://swift.drift.trade'
+	);
 	console.log('');
-	
+
 	console.log('Options:');
 	console.log('  --help, -h          Show this help message');
 	console.log('');
 	console.log('Notes:');
-	console.log('  - Amounts are in human-readable format (e.g., 1.5 USDC, 0.1 SOL)');
+	console.log(
+		'  - Amounts are in human-readable format (e.g., 1.5 USDC, 0.1 SOL)'
+	);
 	console.log('  - Direction can be: long, short, buy, sell');
-	console.log('  - Asset type: base (for native tokens like SOL) or quote (for USDC amounts)');
+	console.log(
+		'  - Asset type: base (for native tokens like SOL) or quote (for USDC amounts)'
+	);
 	console.log('  - Ensure your .env file contains ANCHOR_WALLET and ENDPOINT');
 }
 
@@ -465,8 +533,13 @@ function showUsage(): void {
  */
 async function main(): Promise<void> {
 	const args = process.argv.slice(2);
-	
-	if (args.length === 0 || args[0] === '--help' || args[0] === '-h' || args[0] === 'help') {
+
+	if (
+		args.length === 0 ||
+		args[0] === '--help' ||
+		args[0] === '-h' ||
+		args[0] === 'help'
+	) {
 		showUsage();
 		return;
 	}

@@ -5,11 +5,6 @@ import {
 	PositionDirection,
 	OptionalOrderParams,
 	MarketType,
-	OrderParams,
-	getOrderParams,
-	generateSignedMsgUuid,
-	getUserAccountPublicKey,
-	getSignedMsgUserAccountPublicKey,
 } from '@drift-labs/sdk';
 import {
 	Transaction,
@@ -23,6 +18,8 @@ import {
 	ServerAuctionParamsResponse,
 	MappedAuctionParams,
 } from '../../../../../utils/auctionParamsResponseMapper';
+import { prepSwiftOrder, sendSwiftOrder } from '../openSwiftOrder';
+import { MarketId } from '../../../../../../types';
 import { SwiftClient } from '../../../../../../clients/swiftClient';
 import { Observable } from 'rxjs';
 
@@ -85,7 +82,7 @@ interface RegularOrderParams {
 }
 
 export interface SwiftOrderResult {
-	orderObservable: Observable<any>;
+	orderObservable?: Observable<any>;
 	signedMsgOrderUuid: Uint8Array;
 }
 
@@ -151,32 +148,22 @@ async function fetchOrderParamsFromServer({
 		}
 	});
 
-	// Handle special case for auction price caps
-	if (restOptions.auctionPriceCaps) {
-		urlParamsObject.auctionPriceCapsMin = restOptions.auctionPriceCaps.min.toString();
-		urlParamsObject.auctionPriceCapsMax = restOptions.auctionPriceCaps.max.toString();
-	}
-
 	const urlParams = new URLSearchParams(urlParamsObject);
 
 	// Get order params from server
 	const requestUrl = `${dlobServerHttpUrl}/auctionParams?${urlParams.toString()}`;
-	console.log(`🌐 [Server] Requesting auction params from: ${requestUrl}`);
-	
 	const response = await fetch(requestUrl);
 
 	if (!response.ok) {
-		console.error(`❌ [Server] Request failed with status ${response.status}: ${response.statusText}`);
-		throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+		throw new Error(
+			`Server responded with ${response.status}: ${response.statusText}`
+		);
 	}
 
-	console.log(`✅ [Server] Received response with status: ${response.status}`);
 	const serverResponse: ServerAuctionParamsResponse = await response.json();
-	console.log(`📋 [Server] Raw server response:`, JSON.stringify(serverResponse, null, 2));
-	
-	const mappedParams: MappedAuctionParams = mapAuctionParamsResponse(serverResponse);
-	console.log(`🔄 [Server] Mapped auction params:`, JSON.stringify(mappedParams, null, 2));
-	
+	const mappedParams: MappedAuctionParams =
+		mapAuctionParamsResponse(serverResponse);
+
 	// Convert MappedAuctionParams to OptionalOrderParams
 	return {
 		orderType: mappedParams.orderType,
@@ -210,12 +197,10 @@ async function createSwiftOrder({
 	dlobServerHttpUrl,
 	auctionParamsOptions,
 	swiftOptions,
-}: OpenPerpMarketOrderParams & { swiftOptions: SwiftOrderOptions }): Promise<SwiftOrderResult> {
-	console.log('🚀 [Swift Order] Starting Swift order creation...');
-	console.log(`📋 [Swift Order] Parameters: marketIndex=${marketIndex}, direction=${direction}, amount=${amount.toString()}, assetType=${assetType}`);
-	
+}: OpenPerpMarketOrderParams & {
+	swiftOptions: SwiftOrderOptions;
+}): Promise<SwiftOrderResult> {
 	// Get order parameters from server
-	console.log('🌐 [Swift Order] Fetching order parameters from server...');
 	const orderParams = await fetchOrderParamsFromServer({
 		driftClient,
 		user,
@@ -227,145 +212,67 @@ async function createSwiftOrder({
 		dlobServerHttpUrl,
 		auctionParamsOptions,
 	});
-	console.log('✅ [Swift Order] Server order parameters received:', JSON.stringify(orderParams, null, 2));
 
-	// Convert to OrderParams for signed message
-	console.log('🔄 [Swift Order] Converting to final order parameters...');
-	const finalOrderParams: OrderParams = getOrderParams(
-		orderParams,
-		// Swift server expects auctionDuration to be null if not set
-		{
-			...orderParams,
-			auctionDuration: orderParams.auctionDuration || null,
-		}
-	);
-	
-	// Validate critical order parameters
-	console.log('🔍 [Swift Order] Validating order parameters...');
-	console.log('🔍 [Swift Order] baseAssetAmount:', finalOrderParams.baseAssetAmount?.toString());
-	console.log('🔍 [Swift Order] auctionStartPrice:', finalOrderParams.auctionStartPrice?.toString());
-	console.log('🔍 [Swift Order] auctionEndPrice:', finalOrderParams.auctionEndPrice?.toString());
-	console.log('🔍 [Swift Order] auctionDuration:', finalOrderParams.auctionDuration);
-	console.log('🔍 [Swift Order] oraclePriceOffset:', finalOrderParams.oraclePriceOffset);
-
-	const userAccount = user.getUserAccount();
-	const slotBuffer = swiftOptions.signedMessageOrderSlotBuffer || 30;
-	
 	// Fetch current slot programmatically
-	console.log('🕐 [Swift Order] Fetching current slot...');
 	const currentSlot = await driftClient.connection.getSlot();
-	const slotForSignedMsg = new BN(currentSlot + slotBuffer);
-	console.log(`✅ [Swift Order] Current slot: ${currentSlot}, slot for signed message: ${slotForSignedMsg.toString()}`);
-	
-	const signedMsgOrderUuid = generateSignedMsgUuid();
-	console.log(`🔑 [Swift Order] Generated UUID: ${Buffer.from(signedMsgOrderUuid).toString('hex')}`);
+	const userAccount = user.getUserAccount();
 
-	// Get taker public key
-	console.log('👤 [Swift Order] Getting taker public key...');
-	const takerPubkey = await getUserAccountPublicKey(
-		driftClient.program.programId,
-		swiftOptions.wallet.publicKey,
-		userAccount.subAccountId
-	);
-	console.log(`✅ [Swift Order] Taker pubkey: ${takerPubkey.toString()}`);
+	// Use the existing prepSwiftOrder helper function
+	const { hexEncodedSwiftOrderMessage, signedMsgOrderUuid } = prepSwiftOrder({
+		driftClient,
+		takerUserAccount: {
+			pubKey: swiftOptions.wallet.publicKey,
+			subAccountId: userAccount.subAccountId,
+		},
+		currentSlot,
+		isDelegate: swiftOptions.isDelegate || false,
+		orderParams: {
+			main: orderParams,
+			// TODO: Add support for stopLoss and takeProfit
+		},
+		slotBuffer: swiftOptions.signedMessageOrderSlotBuffer || 30,
+	});
 
-	// Create signed message order params
-	console.log(`🏗️  [Swift Order] Creating order message (isDelegate: ${swiftOptions.isDelegate || false})...`);
-	const orderMessage = swiftOptions.isDelegate
-		? {
-				signedMsgOrderParams: finalOrderParams,
-				uuid: signedMsgOrderUuid,
-				slot: slotForSignedMsg,
-				takerPubkey,
-				stopLossOrderParams: null,
-				takeProfitOrderParams: null,
-		  }
-		: {
-				signedMsgOrderParams: finalOrderParams,
-				uuid: signedMsgOrderUuid,
-				slot: slotForSignedMsg,
-				subAccountId: userAccount.subAccountId,
-				stopLossOrderParams: null,
-				takeProfitOrderParams: null,
-		  };
-	console.log('✅ [Swift Order] Order message created:', JSON.stringify(orderMessage, (key, value) => {
-		// Convert BN values to string for logging
-		if (value && typeof value === 'object' && value.constructor && value.constructor.name === 'BN') {
-			return value.toString();
-		}
-		return value;
-	}, 2));
-
-	// Encode the message
-	console.log('🔐 [Swift Order] Encoding order message...');
-	const encodedOrderMessage = driftClient.encodeSignedMsgOrderParamsMessage(
-		orderMessage,
-		swiftOptions.isDelegate || false
-	);
-	console.log(`✅ [Swift Order] Encoded message length: ${encodedOrderMessage.length} bytes`);
-	console.log(`🔍 [Swift Order] Encoded message (first 50 chars): ${encodedOrderMessage.toString().substring(0, 50)}...`);
-
-	// Create hex encoded message for signing (following UI pattern)
-	console.log('🔄 [Swift Order] Creating hex encoded message...');
-	const hexEncodedOrderMessage = Buffer.from(encodedOrderMessage.toString('hex'));
-	console.log(`📄 [Swift Order] Hex encoded message length: ${hexEncodedOrderMessage.length} bytes`);
-	
 	// Sign the message
-	console.log('✍️  [Swift Order] Signing hex encoded message...');
 	const signedMessage = await swiftOptions.wallet.signMessage(
-		new Uint8Array(hexEncodedOrderMessage)
+		hexEncodedSwiftOrderMessage.uInt8Array
 	);
-	console.log(`✅ [Swift Order] Message signed, signature length: ${signedMessage.length} bytes`);
 
-	// Get signed message user orders account
-	console.log('🏦 [Swift Order] Getting signed message user orders account...');
-	const signedMsgUserOrdersAccountPubkey = getSignedMsgUserAccountPublicKey(
-		driftClient.program.programId,
-		swiftOptions.wallet.publicKey
-	);
-	console.log(`✅ [Swift Order] Signed message user orders account: ${signedMsgUserOrdersAccountPubkey.toString()}`);
-
-	// Initialize SwiftClient if needed (should be done elsewhere in a real app)
-	console.log(`🔧 [Swift Order] Initializing SwiftClient with URL: ${swiftOptions.swiftServerUrl}`);
+	// Initialize SwiftClient (required before using sendSwiftOrder)
 	SwiftClient.init(swiftOptions.swiftServerUrl);
 
-	// Send the swift order
-	const confirmDuration = swiftOptions.confirmDuration || 30000; // 30 seconds default
-	console.log(`📡 [Swift Order] Sending Swift order to server...`);
-	console.log(`⏱️  [Swift Order] Confirm duration: ${confirmDuration}ms`);
-	console.log(`🎯 [Swift Order] Market index: ${marketIndex}, Market type: PERP`);
-	console.log(`🔍 [Swift Order] Delegate mode: ${swiftOptions.isDelegate || false}`);
-	console.log(`🔍 [Swift Order] Signing authority: ${swiftOptions.wallet.publicKey.toString()}`);
-	console.log(`🔍 [Swift Order] Taker authority: ${takerPubkey.toString()}`);
-	
-	try {
-		const orderObservable = await SwiftClient.sendAndConfirmSwiftOrderWS(
-			driftClient.connection,
-			driftClient,
-			marketIndex,
-			MarketType.PERP,
-			hexEncodedOrderMessage.toString(), // Send hex encoded message as string (following UI pattern)
-			Buffer.from(signedMessage),
-			takerPubkey,
-			signedMsgUserOrdersAccountPubkey,
-			signedMsgOrderUuid,
-			confirmDuration,
-			swiftOptions.isDelegate ? swiftOptions.wallet.publicKey : undefined // Only pass signing authority for delegate orders
-		);
-		console.log('✅ [Swift Order] Swift order submitted successfully!');
+	// Create a promise-based wrapper for the sendSwiftOrder callback-based API
+	return new Promise((resolve, reject) => {
+		let orderObservable: Observable<any>;
 
-		return {
-			orderObservable,
+		sendSwiftOrder({
+			driftClient,
+			marketId: MarketId.createPerpMarket(marketIndex),
+			hexEncodedSwiftOrderMessageString: hexEncodedSwiftOrderMessage.string,
+			signedMessage,
 			signedMsgOrderUuid,
-		};
-	} catch (error) {
-		console.error('❌ [Swift Order] Error submitting Swift order:', error);
-		console.error('📊 [Swift Order] Error details:', {
-			message: error instanceof Error ? error.message : String(error),
-			stack: error instanceof Error ? error.stack : undefined,
-		});
-		throw error;
-	}
+			takerAuthority: swiftOptions.wallet.publicKey,
+			signingAuthority: swiftOptions.wallet.publicKey,
+			auctionDurationSlot: orderParams.auctionDuration || undefined,
+			swiftConfirmationSlotBuffer: 15,
+			onExpired: (event) => {
+				reject(
+					new Error(`Swift order expired: ${event.message || 'Unknown reason'}`)
+				);
+			},
+			onErrored: (event) => {
+				reject(
+					new Error(`Swift order error: ${event.message || 'Unknown error'}`)
+				);
+			},
+			onConfirmed: (_event) => {
+				resolve({
+					orderObservable,
+					signedMsgOrderUuid,
+				});
+			},
+		}).catch(reject);
+	});
 }
 
 /**
@@ -402,41 +309,49 @@ export const createOpenPerpMarketOrderIx = async ({
 		throw new Error('Amount must be greater than zero');
 	}
 
-	// If useSwift is true, create a Swift order instead
-	if (useSwift) {
-		if (!swiftOptions) {
-			throw new Error('swiftOptions is required when useSwift is true');
-		}
-		await createSwiftOrder({
-			driftClient,
-			user,
-			assetType,
-			marketIndex,
-			direction,
-			amount,
-			dlobServerHttpUrl,
-			auctionParamsOptions,
-			swiftOptions,
-			marketType,
-		});
-		// Swift orders don't return transaction instructions
-		return [];
-	}
-
-	// Regular order flow
+	// First, get order parameters from server (same for both Swift and regular orders)
 	const orderParams = await fetchOrderParamsFromServer({
 		driftClient,
 		user,
 		assetType,
 		marketIndex,
-		marketType: MarketType.PERP,
+		marketType,
 		direction,
 		amount,
 		dlobServerHttpUrl,
 		auctionParamsOptions,
 	});
 
-	// Get the place order instruction
+	// If useSwift is true, use prepSwiftOrder and return empty array
+	if (useSwift) {
+		if (!swiftOptions) {
+			throw new Error('swiftOptions is required when useSwift is true');
+		}
+
+		const currentSlot = await driftClient.connection.getSlot();
+		const userAccount = user.getUserAccount();
+
+		// Use the existing prepSwiftOrder helper function
+		prepSwiftOrder({
+			driftClient,
+			takerUserAccount: {
+				pubKey: swiftOptions.wallet.publicKey,
+				subAccountId: userAccount.subAccountId,
+			},
+			currentSlot,
+			isDelegate: swiftOptions.isDelegate || false,
+			orderParams: {
+				main: orderParams,
+				// TODO: Add support for stopLoss and takeProfit
+			},
+			slotBuffer: swiftOptions.signedMessageOrderSlotBuffer || 30,
+		});
+
+		// Swift orders don't return transaction instructions
+		return [];
+	}
+
+	// Regular order flow - create transaction instruction
 	const placeOrderIx = await driftClient.getPlaceOrdersIx([orderParams]);
 	return [placeOrderIx];
 };
@@ -466,7 +381,26 @@ export const createOpenPerpMarketOrderTxn = async ({
 	useSwift = false,
 	swiftOptions,
 	marketType = MarketType.PERP,
-}: OpenPerpMarketOrderParams): Promise<Transaction | VersionedTransaction | SwiftOrderResult> => {
+}: OpenPerpMarketOrderParams): Promise<
+	Transaction | VersionedTransaction | SwiftOrderResult
+> => {
+	if (!amount || amount.isZero()) {
+		throw new Error('Amount must be greater than zero');
+	}
+
+	// First, get order parameters from server (same for both Swift and regular orders)
+	const orderParams = await fetchOrderParamsFromServer({
+		driftClient,
+		user,
+		assetType,
+		marketIndex,
+		marketType,
+		direction,
+		amount,
+		dlobServerHttpUrl,
+		auctionParamsOptions,
+	});
+
 	// If useSwift is true, return the Swift result directly
 	if (useSwift) {
 		if (!swiftOptions) {
@@ -486,21 +420,10 @@ export const createOpenPerpMarketOrderTxn = async ({
 		});
 	}
 
-	const openPerpMarketOrderIxs = await createOpenPerpMarketOrderIx({
-		driftClient,
-		user,
-		assetType,
-		marketIndex,
-		direction,
-		amount,
-		dlobServerHttpUrl,
-		auctionParamsOptions,
-		useSwift: false, // Explicit false for regular transaction flow
-		marketType,
-	});
-
+	// Regular order flow - create transaction instruction and build transaction
+	const placeOrderIx = await driftClient.getPlaceOrdersIx([orderParams]);
 	const openPerpMarketOrderTxn = await driftClient.txHandler.buildTransaction({
-		instructions: openPerpMarketOrderIxs,
+		instructions: [placeOrderIx],
 		txVersion: 0,
 		connection: driftClient.connection,
 		preFlightCommitment: 'confirmed',
@@ -519,11 +442,13 @@ export const createOpenPerpMarketOrderTxn = async ({
  * @returns Promise resolving to SwiftOrderResult with observable and order UUID
  */
 export const createSwiftPerpMarketOrder = async (
-	params: Omit<OpenPerpMarketOrderParams, 'useSwift'> & { swiftOptions: SwiftOrderOptions }
+	params: Omit<OpenPerpMarketOrderParams, 'useSwift'> & {
+		swiftOptions: SwiftOrderOptions;
+	}
 ): Promise<SwiftOrderResult> => {
-	return await createSwiftOrder({ 
-		...params, 
+	return await createSwiftOrder({
+		...params,
 		useSwift: true,
-		marketType: params.marketType || MarketType.PERP
+		marketType: params.marketType || MarketType.PERP,
 	});
 };

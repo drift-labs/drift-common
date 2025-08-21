@@ -164,12 +164,17 @@ const convertValue = (value: any, type: FieldType): any => {
 						enumResult = OrderTriggerCondition.TRIGGERED_BELOW;
 						break;
 					default:
-						console.warn(`⚠️  [Converter] Unknown enum value: ${value}, using ENUM_UTILS.toObj as fallback`);
+						console.warn(
+							`⚠️  [Converter] Unknown enum value: ${value}, using ENUM_UTILS.toObj as fallback`
+						);
 						enumResult = ENUM_UTILS.toObj(value);
 				}
 				return enumResult;
 			} catch (error) {
-				console.error(`❌ [Converter] Enum conversion failed for ${value}:`, error);
+				console.error(
+					`❌ [Converter] Enum conversion failed for ${value}:`,
+					error
+				);
 				throw error;
 			}
 		case 'bn':
@@ -183,7 +188,9 @@ const convertValue = (value: any, type: FieldType): any => {
 			}
 			return new BN(value.toString());
 		case 'bn_nullable':
-			return value === null || value === undefined ? null : new BN(value.toString());
+			return value === null || value === undefined
+				? null
+				: new BN(value.toString());
 		case 'number':
 			return value;
 		case 'boolean':

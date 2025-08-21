@@ -1,6 +1,6 @@
 import { DriftClient, OptionalOrderParams, User } from '@drift-labs/sdk';
 import { UIOrderType } from '../../../../../types';
-import { openPerpMarketOrder } from './openPerpMarketOrder';
+//import { openPerpMarketOrder } from './openPerpMarketOrder';
 import { OptionalTriggerOrderParams, prepSwiftOrder } from './openSwiftOrder';
 import { SwiftClient } from '../../../../../clients/swiftClient';
 import invariant from 'tiny-invariant';
@@ -35,6 +35,7 @@ type OpenPerpOrderParams =
 	| OpenPerpOrderSwiftParams
 	| OpenPerpOrderOnChainParams;
 
+// TODO: need to figure out how we want architecture here, we are going to be building order params depending on the order type so im not sure if it makes sense to already know them at this entry point
 export const openPerpOrderTxn = async (params: OpenPerpOrderParams) => {
 	const {
 		driftClient,
@@ -71,9 +72,8 @@ export const openPerpOrderTxn = async (params: OpenPerpOrderParams) => {
 	}
 
 	switch (orderType) {
-		case 'market':
-		case 'oracle':
-			return openPerpMarketOrder();
+		case 'market': //return openPerpMarketOrder();
+		case 'oracle': //return openPerpMarketOrder();
 		case 'limit':
 		case 'stopMarket':
 		case 'stopLimit':
