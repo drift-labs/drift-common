@@ -1,4 +1,4 @@
-import { DriftClient, User, SettlePnlMode } from '@drift-labs/sdk';
+import { DriftClient, User, SettlePnlMode, TxParams } from '@drift-labs/sdk';
 import {
 	Transaction,
 	TransactionInstruction,
@@ -41,6 +41,10 @@ export const createSettlePnlIx = async ({
 	return [settlePnlIx];
 };
 
+interface CreateSettlePnlTxnParams extends SettlePnlParams {
+	txParams?: TxParams;
+}
+
 /**
  * Creates a complete transaction for settling PnL for multiple markets.
  *
@@ -48,6 +52,7 @@ export const createSettlePnlIx = async ({
  * @param user - The user account that will settle PnL
  * @param marketIndexes - Array of perp market indexes to settle PnL for
  * @param mode - Settlement mode (defaults to TRY_SETTLE)
+ * @param txParams - Transaction parameters
  *
  * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
  */
@@ -56,7 +61,8 @@ export const createSettlePnlTxn = async ({
 	user,
 	marketIndexes,
 	mode = SettlePnlMode.TRY_SETTLE,
-}: SettlePnlParams): Promise<Transaction | VersionedTransaction> => {
+	txParams,
+}: CreateSettlePnlTxnParams): Promise<Transaction | VersionedTransaction> => {
 	const settlePnlIxs = await createSettlePnlIx({
 		driftClient,
 		user,
@@ -64,14 +70,10 @@ export const createSettlePnlTxn = async ({
 		mode,
 	});
 
-	const settlePnlTxn = await driftClient.txHandler.buildTransaction({
-		instructions: settlePnlIxs,
-		txVersion: 0,
-		connection: driftClient.connection,
-		preFlightCommitment: 'confirmed',
-		fetchAllMarketLookupTableAccounts:
-			driftClient.fetchAllLookupTableAccounts.bind(driftClient),
-	});
+	const settlePnlTxn = await driftClient.buildTransaction(
+		settlePnlIxs,
+		txParams
+	);
 
 	return settlePnlTxn;
 };

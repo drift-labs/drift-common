@@ -16,6 +16,7 @@ import {
 	TransactionInstruction,
 	VersionedTransaction,
 } from '@solana/web3.js';
+import { USER_UTILS } from '../../../../common-ui-utils/user';
 
 interface CreateUserAndDepositCollateralBaseIxsParams {
 	driftClient: DriftClient;
@@ -69,20 +70,38 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 	userAccountPublicKey: PublicKey;
 	ixs: TransactionInstruction[];
 }> => {
+	const nextUserId = userStatsAccount?.numberOfSubAccountsCreated ?? 0; // userId is zero indexed
+
 	const associatedDepositTokenAddressPromise =
 		getTokenAddressForDepositAndWithdraw(spotMarketConfig.mint, authority);
 	const referrerInfoPromise: Promise<ReferrerInfo | undefined> = referrerName
 		? driftClient.fetchReferrerNameAccount(referrerName)
 		: Promise.resolve(undefined);
+	const subaccountExistsPromise = USER_UTILS.checkIfUserAccountExists(
+		driftClient,
+		{
+			type: 'subAccountId',
+			subAccountId: nextUserId,
+			authority,
+		}
+	);
 
-	const [associatedDepositTokenAddress, referrerInfo] = await Promise.all([
-		associatedDepositTokenAddressPromise,
-		referrerInfoPromise,
-	]);
-	const nextUserId = userStatsAccount?.numberOfSubAccountsCreated ?? 0; // userId is zero indexed
+	const [associatedDepositTokenAddress, referrerInfo, subaccountExists] =
+		await Promise.all([
+			associatedDepositTokenAddressPromise,
+			referrerInfoPromise,
+			subaccountExistsPromise,
+		]);
+
+	if (subaccountExists) {
+		throw new Error('Subaccount already exists');
+	}
 
 	const accountNameToUse =
-		accountName ?? DEFAULT_ACCOUNT_NAMES_BY_POOL_ID[poolId];
+		accountName ??
+		(poolId !== MAIN_POOL_ID || nextUserId === 0
+			? DEFAULT_ACCOUNT_NAMES_BY_POOL_ID[poolId]
+			: `Account ${nextUserId}`);
 
 	const { ixs, userAccountPublicKey } =
 		await driftClient.createInitializeUserAccountAndDepositCollateralIxs(
@@ -107,7 +126,7 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 
 interface CreateUserAndDepositCollateralBaseTxnParams
 	extends CreateUserAndDepositCollateralBaseIxsParams {
-	txParams: TxParams;
+	txParams?: TxParams;
 }
 
 /**

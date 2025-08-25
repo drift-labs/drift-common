@@ -8,8 +8,11 @@ import {
 	getMarketsAndOraclesForSubscription,
 	IWallet,
 	MarketType,
+	PerpMarketConfig,
 	PerpMarkets,
+	SpotMarketConfig,
 	SpotMarkets,
+	User,
 	WhileValidTxSender,
 } from '@drift-labs/sdk';
 import { Connection, PublicKey, TransactionSignature } from '@solana/web3.js';
@@ -39,16 +42,17 @@ import {
 } from '../../stores/UserAccountCache';
 import { ENUM_UTILS } from '../../../../utils';
 import { SubscriptionManager } from './SubscriptionManager';
+import { TradingOperations } from './TradingOperations';
 import {
-	TradingOperations,
 	CreateUserAndDepositParams,
 	DepositParams,
 	WithdrawParams,
 	PerpOrderParams,
 	SwapParams,
-	SettlePnlParams,
-} from './TradingOperations';
+	SettleAccountPnlParams,
+} from './TradingOperations/types';
 import { Initialize } from '../../../../Config';
+import { SwiftOrderResult } from 'src/drift/base/actions/trade/openPerpOrder/openPerpMarketOrder';
 
 export interface AuthorityDriftConfig {
 	solanaRpcEndpoint: string;
@@ -132,7 +136,10 @@ export class AuthorityDrift {
 	/**
 	 * The markets that are tradable through this client. This affects oracle price, mark price and market account subscriptions.
 	 */
-	private tradableMarkets: MarketId[] = [];
+	private _tradableMarkets: MarketId[] = [];
+
+	private _spotMarketConfigs: SpotMarketConfig[] = [];
+	private _perpMarketConfigs: PerpMarketConfig[] = [];
 
 	/**
 	 * @param solanaRpcEndpoint - The Solana RPC endpoint to use for reading RPC data.
@@ -152,17 +159,31 @@ export class AuthorityDrift {
 			(marketConfig) => MarketId.createSpotMarket(marketConfig.marketIndex)
 		);
 
-		this.tradableMarkets = config.tradableMarkets ?? [
+		this._tradableMarkets = config.tradableMarkets ?? [
 			...perpTradableMarkets,
 			...spotTradableMarkets,
 		];
+		this._spotMarketConfigs = spotTradableMarkets.map((market) =>
+			MARKET_UTILS.getMarketConfig(
+				config.driftEnv,
+				MarketType.SPOT,
+				market.marketIndex
+			)
+		);
+		this._perpMarketConfigs = perpTradableMarkets.map((market) =>
+			MARKET_UTILS.getMarketConfig(
+				config.driftEnv,
+				MarketType.PERP,
+				market.marketIndex
+			)
+		);
 
 		Initialize(config.driftEnv);
 
 		const driftClient = this.setupDriftClient(config);
 		this.initializePollingDlob(config.driftDlobServerHttpUrl);
 		this.initializeStores(driftClient);
-		this.initializeManagers();
+		this.initializeManagers(config.driftDlobServerHttpUrl);
 	}
 
 	public get oraclePriceCache(): OraclePriceLookup {
@@ -175,6 +196,40 @@ export class AuthorityDrift {
 
 	public get userAccountCache(): UserAccountLookup {
 		return this._userAccountCache.store;
+	}
+
+	public get tradableMarkets(): MarketId[] {
+		return this._tradableMarkets;
+	}
+
+	private set tradableMarkets(tradableMarkets: MarketId[]) {
+		this._tradableMarkets = tradableMarkets;
+		this._spotMarketConfigs = tradableMarkets
+			.filter((market) => !market.isPerp)
+			.map((market) =>
+				MARKET_UTILS.getMarketConfig(
+					this.driftClient.env,
+					MarketType.SPOT,
+					market.marketIndex
+				)
+			);
+		this._perpMarketConfigs = tradableMarkets
+			.filter((market) => market.isPerp)
+			.map((market) =>
+				MARKET_UTILS.getMarketConfig(
+					this.driftClient.env,
+					MarketType.PERP,
+					market.marketIndex
+				)
+			);
+	}
+
+	public get spotMarketConfigs(): SpotMarketConfig[] {
+		return this._spotMarketConfigs;
+	}
+
+	public get perpMarketConfigs(): PerpMarketConfig[] {
+		return this._perpMarketConfigs;
 	}
 
 	private initializeStores(driftClient: DriftClient) {
@@ -284,7 +339,7 @@ export class AuthorityDrift {
 		// add all markets to the user-not-involved interval first, until user-involved markets are known
 		this.pollingDlob.addMarketsToInterval(
 			'user-not-involved',
-			this.tradableMarkets.map((market) => market.key)
+			this._tradableMarkets.map((market) => market.key)
 		);
 		if (this.selectedTradeMarket) {
 			this.pollingDlob.addMarketToInterval(
@@ -318,11 +373,13 @@ export class AuthorityDrift {
 			});
 	}
 
-	private initializeManagers() {
+	private initializeManagers(dlobServerHttpUrl: string) {
 		// Initialize trading operations
 		this.tradingOps = new TradingOperations(
 			this.driftClient,
-			this._userAccountCache
+			() => this._userAccountCache,
+			dlobServerHttpUrl,
+			EnvironmentConstants.swiftServerUrl[this.driftClient.env]
 		);
 
 		// Initialize subscription manager with all subscription and market operations
@@ -331,7 +388,7 @@ export class AuthorityDrift {
 			this.accountLoader,
 			this.pollingDlob,
 			this._userAccountCache,
-			this.tradableMarkets,
+			this._tradableMarkets,
 			this.selectedTradeMarket
 		);
 	}
@@ -347,7 +404,7 @@ export class AuthorityDrift {
 		await this.driftClient.subscribe();
 
 		// filter out markets that are delisted
-		const actualTradableMarkets = this.tradableMarkets.filter((market) => {
+		const actualTradableMarkets = this._tradableMarkets.filter((market) => {
 			const marketAccount = market.isPerp
 				? this.driftClient.getPerpMarketAccount(market.marketIndex)
 				: this.driftClient.getSpotMarketAccount(market.marketIndex);
@@ -364,7 +421,7 @@ export class AuthorityDrift {
 			return true;
 		});
 
-		this.tradableMarkets = actualTradableMarkets;
+		this._tradableMarkets = actualTradableMarkets;
 		this.subscriptionManager.updateTradableMarkets(actualTradableMarkets);
 		this.setupPollingDlob();
 
@@ -443,7 +500,7 @@ export class AuthorityDrift {
 		params: CreateUserAndDepositParams
 	): Promise<{
 		txSig: TransactionSignature;
-		userAccountPublicKey: PublicKey;
+		user: User;
 	}> {
 		return this.tradingOps.createUserAndDeposit(params);
 	}
@@ -474,10 +531,10 @@ export class AuthorityDrift {
 	 * @param params - Parameters for the perp order
 	 * @returns Promise resolving to the transaction signature
 	 */
-	public async openPerpMarketOrder(
+	public async openPerpOrder(
 		params: PerpOrderParams
-	): Promise<TransactionSignature> {
-		return this.tradingOps.openPerpMarketOrder(params);
+	): Promise<TransactionSignature | SwiftOrderResult> {
+		return this.tradingOps.openPerpOrder(params);
 	}
 
 	/**
@@ -497,8 +554,18 @@ export class AuthorityDrift {
 	 * @returns Promise resolving to the transaction signature
 	 */
 	public async settlePnl(
-		params: SettlePnlParams
+		params: SettleAccountPnlParams
 	): Promise<TransactionSignature> {
-		return this.tradingOps.settlePnl(params);
+		return this.tradingOps.settleAccountPnl(params);
+	}
+
+	/**
+	 * Deletes a user account from the Drift protocol.
+	 *
+	 * @param subAccountId - The ID of the sub-account to delete
+	 * @returns Promise resolving to the transaction signature of the deletion
+	 */
+	public async deleteUser(subAccountId: number): Promise<TransactionSignature> {
+		return this.tradingOps.deleteUser(subAccountId);
 	}
 }

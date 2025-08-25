@@ -55,7 +55,7 @@ export interface SwiftOrderOptions {
 	isDelegate?: boolean;
 }
 
-interface OpenPerpMarketOrderParams {
+type OpenPerpMarketOrderParams<T extends boolean = boolean> = {
 	driftClient: DriftClient;
 	user: User;
 	assetType: 'base' | 'quote';
@@ -64,10 +64,11 @@ interface OpenPerpMarketOrderParams {
 	amount: BN;
 	auctionParamsOptions?: AuctionParamsRequestOptions;
 	dlobServerHttpUrl: string;
-	useSwift?: boolean;
-	swiftOptions?: SwiftOrderOptions;
 	marketType?: MarketType;
-}
+	useSwift: T;
+} & (T extends true
+	? { swiftOptions: SwiftOrderOptions }
+	: { swiftOptions?: never });
 
 interface RegularOrderParams {
 	driftClient: DriftClient;
@@ -185,7 +186,7 @@ async function fetchOrderParamsFromServer({
 }
 
 /**
- * Creates and submits a Swift (signed message) order
+ * Creates and submits a Swift (signed message) order. Only available for perp orders.
  */
 async function createSwiftOrder({
 	driftClient,
@@ -197,7 +198,7 @@ async function createSwiftOrder({
 	dlobServerHttpUrl,
 	auctionParamsOptions,
 	swiftOptions,
-}: OpenPerpMarketOrderParams & {
+}: Omit<OpenPerpMarketOrderParams, 'useSwift'> & {
 	swiftOptions: SwiftOrderOptions;
 }): Promise<SwiftOrderResult> {
 	// Get order parameters from server
@@ -303,7 +304,6 @@ export const createOpenPerpMarketOrderIx = async ({
 	auctionParamsOptions = {},
 	useSwift = false,
 	swiftOptions,
-	marketType = MarketType.PERP,
 }: OpenPerpMarketOrderParams): Promise<TransactionInstruction[]> => {
 	if (!amount || amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
@@ -315,7 +315,7 @@ export const createOpenPerpMarketOrderIx = async ({
 		user,
 		assetType,
 		marketIndex,
-		marketType,
+		marketType: MarketType.PERP,
 		direction,
 		amount,
 		dlobServerHttpUrl,
@@ -369,7 +369,7 @@ export const createOpenPerpMarketOrderIx = async ({
  *
  * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
  */
-export const createOpenPerpMarketOrderTxn = async ({
+export const createOpenPerpMarketOrderTxn = async <T extends boolean>({
 	driftClient,
 	user,
 	assetType,
@@ -378,11 +378,10 @@ export const createOpenPerpMarketOrderTxn = async ({
 	amount,
 	dlobServerHttpUrl,
 	auctionParamsOptions,
-	useSwift = false,
+	useSwift,
 	swiftOptions,
-	marketType = MarketType.PERP,
-}: OpenPerpMarketOrderParams): Promise<
-	Transaction | VersionedTransaction | SwiftOrderResult
+}: OpenPerpMarketOrderParams<T>): Promise<
+	T extends true ? SwiftOrderResult : Transaction | VersionedTransaction
 > => {
 	if (!amount || amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
@@ -394,7 +393,7 @@ export const createOpenPerpMarketOrderTxn = async ({
 		user,
 		assetType,
 		marketIndex,
-		marketType,
+		marketType: MarketType.PERP,
 		direction,
 		amount,
 		dlobServerHttpUrl,
@@ -406,7 +405,7 @@ export const createOpenPerpMarketOrderTxn = async ({
 		if (!swiftOptions) {
 			throw new Error('swiftOptions is required when useSwift is true');
 		}
-		return await createSwiftOrder({
+		return (await createSwiftOrder({
 			driftClient,
 			user,
 			assetType,
@@ -416,8 +415,9 @@ export const createOpenPerpMarketOrderTxn = async ({
 			dlobServerHttpUrl,
 			auctionParamsOptions,
 			swiftOptions,
-			marketType,
-		});
+		})) as T extends true
+			? SwiftOrderResult
+			: Transaction | VersionedTransaction;
 	}
 
 	// Regular order flow - create transaction instruction and build transaction
@@ -431,7 +431,9 @@ export const createOpenPerpMarketOrderTxn = async ({
 			driftClient.fetchAllLookupTableAccounts.bind(driftClient),
 	});
 
-	return openPerpMarketOrderTxn;
+	return openPerpMarketOrderTxn as T extends true
+		? SwiftOrderResult
+		: Transaction | VersionedTransaction;
 };
 
 /**
@@ -448,7 +450,5 @@ export const createSwiftPerpMarketOrder = async (
 ): Promise<SwiftOrderResult> => {
 	return await createSwiftOrder({
 		...params,
-		useSwift: true,
-		marketType: params.marketType || MarketType.PERP,
 	});
 };

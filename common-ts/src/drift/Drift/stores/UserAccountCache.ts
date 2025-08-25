@@ -4,6 +4,7 @@ import {
 	OrderStatus,
 	PublicKey,
 	User,
+	ZERO,
 } from '@drift-labs/sdk';
 import { Subject } from 'rxjs';
 import {
@@ -82,28 +83,36 @@ export class UserAccountCache {
 
 	private processAccountData(user: User): AccountData {
 		const userAccount = user.getUserAccount();
-		const positionsInfo = userAccount.perpPositions.map((position) => {
-			const marketId = MarketId.createPerpMarket(position.marketIndex);
-			const oraclePrice = this.oraclePriceStore.getOraclePrice(marketId.key);
-			const markPrice = this.markPriceStore.getMarkPrice(marketId.key);
-			return getPositionInfo(
-				this.driftClient,
-				user,
-				position,
-				oraclePrice,
-				markPrice
-			);
-		});
-		const spotBalances = userAccount.spotPositions.map((spotPosition) => {
-			const marketId = MarketId.createSpotMarket(spotPosition.marketIndex);
-			const oraclePrice = this.oraclePriceStore.getOraclePrice(marketId.key);
-			return getSpotBalanceInfo(
-				this.driftClient,
-				user,
-				spotPosition.marketIndex,
-				oraclePrice
-			);
-		});
+		const positionsInfo = userAccount.perpPositions
+			.filter(
+				(position) =>
+					!position.baseAssetAmount.eq(ZERO) ||
+					!position.quoteAssetAmount.eq(ZERO)
+			)
+			.map((position) => {
+				const marketId = MarketId.createPerpMarket(position.marketIndex);
+				const oraclePrice = this.oraclePriceStore.getOraclePrice(marketId.key);
+				const markPrice = this.markPriceStore.getMarkPrice(marketId.key);
+				return getPositionInfo(
+					this.driftClient,
+					user,
+					position,
+					oraclePrice,
+					markPrice
+				);
+			});
+		const spotBalances = userAccount.spotPositions
+			.filter((spotPosition) => !spotPosition.scaledBalance.eq(ZERO))
+			.map((spotPosition) => {
+				const marketId = MarketId.createSpotMarket(spotPosition.marketIndex);
+				const oraclePrice = this.oraclePriceStore.getOraclePrice(marketId.key);
+				return getSpotBalanceInfo(
+					this.driftClient,
+					user,
+					spotPosition.marketIndex,
+					oraclePrice
+				);
+			});
 		const marginInfo = getAccountMarginInfo(
 			this.driftClient,
 			user,
