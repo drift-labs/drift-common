@@ -1,6 +1,7 @@
 import {
 	BN,
 	BigNum,
+	MARGIN_PRECISION,
 	PRICE_PRECISION_EXP,
 	PositionDirection,
 	QUOTE_PRECISION_EXP,
@@ -242,9 +243,15 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 	return liqPriceNum;
 };
 
-export const TRADING_COMMON_UTILS = {
+const convertLeverageToMarginRatio = (leverage: number): number | undefined => {
+	if (!leverage) return undefined;
+	return (1 / leverage) * MARGIN_PRECISION.toNumber();
+};
+
+export const TRADING_UTILS = {
 	calculatePnlPctFromPosition,
 	calculatePotentialProfit,
 	calculateLiquidationPriceAfterPerpTrade,
 	checkIsMarketOrderType,
+	convertLeverageToMarginRatio,
 };

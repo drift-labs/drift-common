@@ -10,3 +10,4 @@ scratchpad.ts
 lib
 **/*.log
 icons/dist
+.yarn

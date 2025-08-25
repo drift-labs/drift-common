@@ -2,6 +2,7 @@ import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import {
 	DriftClient,
 	MarketType,
+	OrderType,
 	SignedMsgUserOrdersAccount,
 	digestSignature,
 	isVariant,
@@ -20,22 +21,28 @@ type ClientResponse<T = void> = Promise<{
 	status?: number;
 }>;
 
-type SwiftOrderEvent = (
-	| {
-			type: 'sent' | 'expired' | 'errored';
-			hash: string;
-			message?: string;
-	  }
-	| {
-			type: 'confirmed';
-			orderId: string;
-			hash: string;
-	  }
-) & { status?: number };
+type BaseSwiftOrderEvent = {
+	hash: string;
+};
+
+export interface SwiftOrderErroredEvent extends BaseSwiftOrderEvent {
+	type: 'errored' | 'expired';
+	message?: string;
+	status?: number;
+}
+
+export interface SwiftOrderConfirmedEvent extends BaseSwiftOrderEvent {
+	type: 'confirmed';
+	orderId: string;
+}
+
+export type SwiftOrderEvent = SwiftOrderErroredEvent | SwiftOrderConfirmedEvent;
 
 export class SwiftClient {
 	private static baseUrl = '';
 	private static swiftClientConsumer?: string;
+
+	static supportedOrderTypes: OrderType[] = [OrderType.MARKET, OrderType.LIMIT];
 
 	public static init(baseUrl: string, swiftClientConsumer?: string) {
 		this.baseUrl = baseUrl;
@@ -127,14 +134,16 @@ export class SwiftClient {
 	): ClientResponse<{
 		hash: string;
 	}> {
-		const response = await this.post('/orders', {
+		const requestPayload = {
 			market_index: marketIndex,
 			market_type: isVariant(marketType, 'perp') ? 'perp' : 'spot',
 			message,
 			signature: signature.toString('base64'),
 			signing_authority: signingAuthority?.toBase58() ?? '',
 			taker_authority: takerPubkey.toBase58(),
-		});
+		};
+
+		const response = await this.post('/orders', requestPayload);
 
 		if (response.status !== 200) {
 			console.error(
@@ -142,7 +151,9 @@ export class SwiftClient {
 			);
 			allEnvDlog('swiftClient', 'full non-200 response body', response.body);
 			return {
-				message: response.body.message,
+				message:
+					response.body?.message ||
+					`HTTP ${response.status}: Error from Swift server`,
 				status: response.status,
 				success: false,
 			};
@@ -477,5 +488,9 @@ export class SwiftClient {
 			'Content-Type': 'application/json',
 			'X-Swift-Client-Consumer': this.swiftClientConsumer ?? 'default',
 		};
+	}
+
+	public static isSupportedOrderType(orderType: OrderType) {
+		return this.supportedOrderTypes.includes(orderType);
 	}
 }

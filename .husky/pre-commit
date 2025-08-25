@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-yarn lint
-yarn prettify
-yarn typecheck
-cd common-ts && yarn run test
-yarn build
+bun lint
+bun prettify
+bun typecheck
+cd common-ts && bun run test
+bun run build
