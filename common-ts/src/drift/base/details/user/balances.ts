@@ -14,6 +14,7 @@ import { MARKET_UTILS } from '../../../../common-ui-utils/market';
  * Contains the three key metrics needed for balance display and analysis.
  */
 export interface SpotBalanceInfo {
+	marketIndex: number;
 	/**
 	 * Net balance in base asset terms (deposits - borrows).
 	 * Positive values indicate net deposits, negative values indicate net borrows.
@@ -75,6 +76,7 @@ export const getSpotBalanceInfo = (
 	const liquidationPrice = BigNum.from(liqPrice, PRICE_PRECISION_EXP);
 
 	return {
+		marketIndex,
 		baseBalance: baseBalanceBigNum,
 		notionalBalance,
 		liquidationPrice,
