@@ -178,12 +178,18 @@ export class AuthorityDrift {
 			)
 		);
 
+		const driftDlobServerHttpUrlToUse =
+			config.driftDlobServerHttpUrl ??
+			EnvironmentConstants.dlobServerHttpUrl[
+				config.driftEnv === 'devnet' ? 'dev' : 'mainnet'
+			];
+
 		Initialize(config.driftEnv);
 
 		const driftClient = this.setupDriftClient(config);
-		this.initializePollingDlob(config.driftDlobServerHttpUrl);
+		this.initializePollingDlob(driftDlobServerHttpUrlToUse);
 		this.initializeStores(driftClient);
-		this.initializeManagers(config.driftDlobServerHttpUrl);
+		this.initializeManagers(driftDlobServerHttpUrlToUse);
 	}
 
 	public get oraclePriceCache(): OraclePriceLookup {
@@ -242,15 +248,9 @@ export class AuthorityDrift {
 		);
 	}
 
-	private initializePollingDlob(driftDlobServerHttpUrl?: string) {
-		const driftDlobServerHttpUrlToUse =
-			driftDlobServerHttpUrl ??
-			EnvironmentConstants.dlobServerHttpUrl[
-				this.driftClient.env === 'devnet' ? 'dev' : 'mainnet'
-			];
-
+	private initializePollingDlob(driftDlobServerHttpUrl: string) {
 		this.pollingDlob = new PollingDlob({
-			driftDlobServerHttpUrl: driftDlobServerHttpUrlToUse,
+			driftDlobServerHttpUrl: driftDlobServerHttpUrl,
 		});
 	}
 
@@ -379,7 +379,9 @@ export class AuthorityDrift {
 			this.driftClient,
 			() => this._userAccountCache,
 			dlobServerHttpUrl,
-			EnvironmentConstants.swiftServerUrl[this.driftClient.env]
+			EnvironmentConstants.swiftServerUrl[
+				this.driftClient.env === 'mainnet-beta' ? 'mainnet' : 'dev'
+			]
 		);
 
 		// Initialize subscription manager with all subscription and market operations

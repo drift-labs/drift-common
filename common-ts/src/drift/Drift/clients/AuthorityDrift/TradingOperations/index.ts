@@ -315,12 +315,15 @@ export class TradingOperations {
 
 		const user = accountData.userClient;
 
-		switch (params.orderType) {
+		switch (params.orderConfig.orderType) {
 			case 'market': {
-				const useSwift = params.useSwift === undefined ? true : params.useSwift; // default to using SWIFT
+				const useSwift =
+					params.orderConfig.useSwift === undefined
+						? true
+						: params.orderConfig.useSwift; // default to using SWIFT
 
 				if (useSwift) {
-					const result = await createOpenPerpMarketOrderTxn({
+					const swiftOrderResult = await createOpenPerpMarketOrderTxn({
 						driftClient: this.driftClient,
 						user,
 						assetType: params.assetType,
@@ -331,13 +334,13 @@ export class TradingOperations {
 							swiftServerUrl: this.swiftServerUrl,
 						},
 						direction: params.direction,
-						amount: params.amount.val,
+						amount: params.size.val,
 						dlobServerHttpUrl: this.dlobServerHttpUrl,
 						marketIndex: params.marketIndex,
-						auctionParamsOptions: params.auctionParamsOptions,
+						auctionParamsOptions: params.orderConfig.auctionParamsOptions,
 					});
 
-					return result;
+					return swiftOrderResult;
 				} else {
 					const result = await createOpenPerpMarketOrderTxn({
 						driftClient: this.driftClient,
@@ -345,8 +348,8 @@ export class TradingOperations {
 						assetType: params.assetType,
 						marketIndex: params.marketIndex,
 						direction: params.direction,
-						amount: params.amount.val,
-						auctionParamsOptions: params.auctionParamsOptions,
+						amount: params.size.val,
+						auctionParamsOptions: params.orderConfig.auctionParamsOptions,
 						dlobServerHttpUrl: this.dlobServerHttpUrl,
 						useSwift: false,
 					});
@@ -355,6 +358,8 @@ export class TradingOperations {
 
 					return txSig;
 				}
+
+				break;
 			}
 			// TODO: implement limit, TP/SL market/limit, oracle limit
 			default: {

@@ -39,29 +39,30 @@ export interface CreateUserAndDepositParams {
  * Interface for perp market order parameters.
  */
 export type PerpOrderParams = {
+	subAccountId: number;
 	marketIndex: number;
 	direction: PositionDirection;
-	subAccountId: number;
 	assetType: 'base' | 'quote';
-	amount: BigNum;
+	size: BigNum;
 	reduceOnly?: boolean;
-} & (
-	| {
-			orderType: 'market';
-			useSwift?: boolean; // defaults to true
-			auctionParamsOptions?: AuctionParamsRequestOptions;
-			// TODO: isMaxLeverage?
-			// TODO: accompanying tp/sl orders
-	  }
-	| {
-			orderType: 'limit';
-			limitPrice: BigNum;
-			postOnly?: boolean;
-			useSwift?: boolean; // defaults to true
-			// TODO: isMaxLeverage?
-			// TODO: accompanying tp/sl orders
-	  }
-);
+	limitPrice?: BigNum;
+	orderConfig:
+		| {
+				orderType: 'market';
+				useSwift?: boolean; // defaults to true
+				auctionParamsOptions?: AuctionParamsRequestOptions;
+				// TODO: isMaxLeverage?
+				// TODO: accompanying tp/sl orders
+		  }
+		| {
+				orderType: 'limit';
+				limitPrice: BigNum;
+				postOnly?: boolean;
+				useSwift?: boolean; // defaults to true
+				// TODO: isMaxLeverage?
+				// TODO: accompanying tp/sl orders
+		  };
+};
 // TODO: oracle limit
 // TODO: TP/SL market/limit
 
