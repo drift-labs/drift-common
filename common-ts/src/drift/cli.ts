@@ -4,13 +4,17 @@ import {
 	BN,
 	loadKeypair,
 	PositionDirection,
+	OrderType,
+	PostOnlyParams,
 	BASE_PRECISION,
 	QUOTE_PRECISION,
+	PRICE_PRECISION,
 } from '@drift-labs/sdk';
 import { sign } from 'tweetnacl';
 import { CentralServerDrift } from './Drift/clients/CentralServerDrift';
 import { SwiftOrderResult } from './base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { ENUM_UTILS } from '../utils';
+import { API_URLS } from './constants/apiUrls';
 import * as path from 'path';
 
 // Load environment variables from .env file
@@ -33,8 +37,10 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
  *   ts-node cli.ts withdraw --marketIndex=0 --amount=1.5 --userAccount=11111111111111111111111111111111
  *   ts-node cli.ts settleFunding --userAccount=11111111111111111111111111111111
  *   ts-node cli.ts settlePnl --marketIndexes=0,1 --userAccount=11111111111111111111111111111111
- *   ts-node cli.ts openPerpOrder --marketIndex=0 --direction=long --amount=0.1 --assetType=base --userAccount=11111111111111111111111111111111
- *   ts-node cli.ts openPerpOrderSwift --marketIndex=0 --direction=short --amount=100 --assetType=quote --userAccount=11111111111111111111111111111111 --swiftServerUrl=https://swift.drift.trade
+ *   ts-node cli.ts openPerpMarketOrder --marketIndex=0 --direction=long --amount=0.1 --assetType=base --userAccount=11111111111111111111111111111111
+ *   ts-node cli.ts openPerpMarketOrderSwift --marketIndex=0 --direction=short --amount=100 --assetType=quote --userAccount=11111111111111111111111111111111
+ *   ts-node cli.ts openPerpNonMarketOrder --marketIndex=0 --direction=long --baseAssetAmount=0.1 --orderType=limit --limitPrice=100 --userAccount=11111111111111111111111111111111
+ *   ts-node cli.ts openPerpNonMarketOrderSwift --marketIndex=0 --direction=long --baseAssetAmount=0.1 --orderType=limit --limitPrice=99.5 --userAccount=11111111111111111111111111111111
  */
 
 // Shared configuration
@@ -107,6 +113,54 @@ function parseDirection(direction: string): PositionDirection {
 		throw new Error(
 			`Invalid direction: ${direction}. Use 'long', 'short', 'buy', or 'sell'`
 		);
+	}
+}
+
+/**
+ * Parse order type string to OrderType
+ */
+function parseOrderType(orderType: string): OrderType {
+	const normalized = orderType.toLowerCase();
+	switch (normalized) {
+		case 'limit':
+			return OrderType.LIMIT;
+		case 'market':
+			return OrderType.MARKET;
+		case 'oracle':
+			return OrderType.ORACLE;
+		case 'trigger_market':
+		case 'stopmarket':
+			return OrderType.TRIGGER_MARKET;
+		case 'trigger_limit':
+		case 'stoplimit':
+			return OrderType.TRIGGER_LIMIT;
+		default:
+			throw new Error(
+				`Invalid order type: ${orderType}. Use 'limit', 'market', 'oracle', 'trigger_market', or 'trigger_limit'`
+			);
+	}
+}
+
+/**
+ * Parse post only string to PostOnlyParams
+ */
+function parsePostOnly(postOnly: string): PostOnlyParams {
+	const normalized = postOnly.toLowerCase();
+	switch (normalized) {
+		case 'none':
+		case 'false':
+			return PostOnlyParams.NONE;
+		case 'must_post_only':
+		case 'true':
+			return PostOnlyParams.MUST_POST_ONLY;
+		case 'try_post_only':
+			return PostOnlyParams.TRY_POST_ONLY;
+		case 'slide':
+			return PostOnlyParams.SLIDE;
+		default:
+			throw new Error(
+				`Invalid post only: ${postOnly}. Use 'none', 'must_post_only', 'try_post_only', or 'slide'`
+			);
 	}
 }
 
@@ -190,28 +244,32 @@ function handleSwiftOrder(
 		)}`
 	);
 
-	console.log('\n👁️  Monitoring order status...');
+	if (swiftResult.orderObservable) {
+		console.log('\n👁️  Monitoring order status...');
 
-	swiftResult.orderObservable.subscribe({
-		next: (event) => {
-			if (event.type === 'confirmed') {
-				console.log('✅ Order confirmed!');
-				console.log(`📋 Order ID: ${event.orderId}`);
-				console.log(`📋 Hash: ${event.hash}`);
-			} else if (event.type === 'errored') {
-				console.error('❌ Order failed:', event.message);
-				console.error(`📋 Status: ${event.status}`);
-			} else if (event.type === 'expired') {
-				console.error('⏰ Order expired:', event.message);
-			}
-		},
-		error: (error) => {
-			console.error('❌ Observable error:', error);
-		},
-		complete: () => {
-			console.log('🏁 Order monitoring completed');
-		},
-	});
+		swiftResult.orderObservable.subscribe({
+			next: (event) => {
+				if (event.type === 'confirmed') {
+					console.log('✅ Order confirmed!');
+					console.log(`📋 Order ID: ${event.orderId}`);
+					console.log(`📋 Hash: ${event.hash}`);
+				} else if (event.type === 'errored') {
+					console.error('❌ Order failed:', event.message);
+					console.error(`📋 Status: ${event.status}`);
+				} else if (event.type === 'expired') {
+					console.error('⏰ Order expired:', event.message);
+				}
+			},
+			error: (error) => {
+				console.error('❌ Observable error:', error);
+			},
+			complete: () => {
+				console.log('🏁 Order monitoring completed');
+			},
+		});
+	} else {
+		console.log('🏁 Order confirmed and processing complete');
+	}
 }
 
 /**
@@ -337,16 +395,15 @@ async function settlePnlCommand(args: CliArgs): Promise<void> {
 }
 
 /**
- * CLI Command: openPerpOrder (regular transaction)
+ * CLI Command: openPerpMarketOrder (regular transaction)
  */
-async function openPerpOrderCommand(args: CliArgs): Promise<void> {
+async function openPerpMarketOrderCommand(args: CliArgs): Promise<void> {
 	const userAccount = args.userAccount as string;
 	const marketIndex = parseInt(args.marketIndex as string);
 	const direction = args.direction as string;
 	const amount = args.amount as string;
 	const assetType = (args.assetType as string) || 'base';
-	const dlobServerHttpUrl =
-		(args.dlobServerUrl as string) || 'https://dlob.drift.trade';
+	const dlobServerHttpUrl = API_URLS.DLOB;
 
 	if (!userAccount || isNaN(marketIndex) || !direction || !amount) {
 		throw new Error(
@@ -384,18 +441,16 @@ async function openPerpOrderCommand(args: CliArgs): Promise<void> {
 }
 
 /**
- * CLI Command: openPerpOrderSwift (Swift signed message order)
+ * CLI Command: openPerpMarketOrderSwift (Swift signed message order)
  */
-async function openPerpOrderSwiftCommand(args: CliArgs): Promise<void> {
+async function openPerpMarketOrderSwiftCommand(args: CliArgs): Promise<void> {
 	const userAccount = args.userAccount as string;
 	const marketIndex = parseInt(args.marketIndex as string);
 	const direction = args.direction as string;
 	const amount = args.amount as string;
 	const assetType = (args.assetType as string) || 'base';
-	const dlobServerHttpUrl =
-		(args.dlobServerUrl as string) || 'https://dlob.drift.trade';
-	const swiftServerUrl =
-		(args.swiftServerUrl as string) || 'https://swift.drift.trade';
+	const dlobServerHttpUrl = API_URLS.DLOB;
+	const swiftServerUrl = (args.swiftServerUrl as string) || API_URLS.SWIFT;
 
 	if (!userAccount || isNaN(marketIndex) || !direction || !amount) {
 		throw new Error(
@@ -454,6 +509,241 @@ async function openPerpOrderSwiftCommand(args: CliArgs): Promise<void> {
 }
 
 /**
+ * CLI Command: openPerpNonMarketOrder (regular limit/oracle order)
+ */
+async function openPerpNonMarketOrderCommand(args: CliArgs): Promise<void> {
+	const userAccount = args.userAccount as string;
+	const marketIndex = parseInt(args.marketIndex as string);
+	const direction = args.direction as string;
+	const amount = args.amount as string;
+	const assetType = (args.assetType as string) || 'base';
+	const baseAssetAmount = args.baseAssetAmount as string;
+	const orderType = args.orderType as string;
+	const limitPrice = args.limitPrice as string;
+	const triggerPrice = args.triggerPrice as string;
+	const reduceOnly = (args.reduceOnly as string) === 'true';
+	const postOnly = (args.postOnly as string) || 'none';
+
+	if (!userAccount || isNaN(marketIndex) || !direction || !orderType) {
+		throw new Error(
+			'Required arguments: --userAccount, --marketIndex, --direction, --orderType'
+		);
+	}
+
+	if (!amount && !baseAssetAmount) {
+		throw new Error('Either --amount or --baseAssetAmount must be provided');
+	}
+
+	const orderTypeEnum = parseOrderType(orderType);
+
+	// Validate price requirements based on order type
+	if (ENUM_UTILS.match(orderTypeEnum, OrderType.TRIGGER_LIMIT)) {
+		if (!limitPrice || !triggerPrice) {
+			throw new Error(
+				`Order type '${orderType}' requires both --limitPrice and --triggerPrice`
+			);
+		}
+	} else if (ENUM_UTILS.match(orderTypeEnum, OrderType.LIMIT)) {
+		if (!limitPrice) {
+			throw new Error(`Order type '${orderType}' requires --limitPrice`);
+		}
+	} else if (ENUM_UTILS.match(orderTypeEnum, OrderType.TRIGGER_MARKET)) {
+		if (!triggerPrice) {
+			throw new Error(`Order type '${orderType}' requires --triggerPrice`);
+		}
+	}
+
+	const userAccountPubkey = new PublicKey(userAccount);
+	const directionEnum = parseDirection(direction);
+	const postOnlyEnum = parsePostOnly(postOnly);
+	const limitPriceBN = limitPrice
+		? parseAmount(limitPrice, PRICE_PRECISION)
+		: undefined;
+	const triggerPriceBN = triggerPrice
+		? parseAmount(triggerPrice, PRICE_PRECISION)
+		: undefined;
+
+	console.log('--- 📋 Open Perp Non-Market Order ---');
+	console.log(`👤 User Account: ${userAccount}`);
+	console.log(`🏪 Market Index: ${marketIndex}`);
+	console.log(
+		`📊 Direction: ${direction} (${ENUM_UTILS.toStr(directionEnum)})`
+	);
+
+	if (amount) {
+		const precision = assetType === 'base' ? BASE_PRECISION : QUOTE_PRECISION;
+		const amountBN = parseAmount(amount, precision);
+		console.log(`💰 Amount: ${amount} (${amountBN.toString()} raw units)`);
+		console.log(`💱 Asset Type: ${assetType}`);
+	} else {
+		const amountBN = parseAmount(baseAssetAmount, BASE_PRECISION);
+		console.log(
+			`💰 Base Asset Amount: ${baseAssetAmount} (${amountBN.toString()} raw units)`
+		);
+	}
+
+	if (limitPriceBN) {
+		console.log(
+			`💵 Limit Price: ${limitPrice} (${limitPriceBN.toString()} raw units)`
+		);
+	}
+	if (triggerPriceBN) {
+		console.log(
+			`🎯 Trigger Price: ${triggerPrice} (${triggerPriceBN.toString()} raw units)`
+		);
+	}
+	console.log(
+		`📝 Order Type: ${orderType} (${ENUM_UTILS.toStr(orderTypeEnum)})`
+	);
+	console.log(`🔄 Reduce Only: ${reduceOnly}`);
+	console.log(`📌 Post Only: ${postOnly} (${ENUM_UTILS.toStr(postOnlyEnum)})`);
+
+	// Just call the main method - it will handle both approaches internally
+	const orderTxn = await centralServerDrift.getOpenPerpNonMarketOrderTxn(
+		userAccountPubkey,
+		marketIndex,
+		directionEnum,
+		amount
+			? parseAmount(
+					amount,
+					assetType === 'base' ? BASE_PRECISION : QUOTE_PRECISION
+			  )
+			: parseAmount(baseAssetAmount, BASE_PRECISION),
+		amount ? (assetType as 'base' | 'quote') : 'base',
+		limitPriceBN,
+		triggerPriceBN,
+		orderTypeEnum,
+		reduceOnly,
+		postOnlyEnum,
+		false // useSwift
+	);
+
+	await executeTransaction(
+		orderTxn as VersionedTransaction,
+		'Open Perp Non-Market Order'
+	);
+}
+
+/**
+ * CLI Command: openPerpNonMarketOrderSwift (Swift signed message limit order)
+ */
+async function openPerpNonMarketOrderSwiftCommand(
+	args: CliArgs
+): Promise<void> {
+	const userAccount = args.userAccount as string;
+	const marketIndex = parseInt(args.marketIndex as string);
+	const direction = args.direction as string;
+	const amount = args.amount as string;
+	const assetType = (args.assetType as string) || 'base';
+	const baseAssetAmount = args.baseAssetAmount as string;
+	const orderType = args.orderType as string;
+	const limitPrice = args.limitPrice as string;
+	const reduceOnly = (args.reduceOnly as string) === 'true';
+	const postOnly = (args.postOnly as string) || 'none';
+	const swiftServerUrl = API_URLS.SWIFT;
+
+	if (!userAccount || isNaN(marketIndex) || !direction || !orderType) {
+		throw new Error(
+			'Required arguments: --userAccount, --marketIndex, --direction, --orderType'
+		);
+	}
+
+	if (!amount && !baseAssetAmount) {
+		throw new Error('Either --amount or --baseAssetAmount must be provided');
+	}
+
+	// Swift orders only support LIMIT order type
+	if (orderType.toLowerCase() !== 'limit') {
+		throw new Error('Swift orders only support LIMIT order type');
+	}
+
+	// LIMIT orders require limitPrice
+	if (!limitPrice) {
+		throw new Error('LIMIT orders require --limitPrice');
+	}
+
+	const userAccountPubkey = new PublicKey(userAccount);
+	const directionEnum = parseDirection(direction);
+	const orderTypeEnum = parseOrderType(orderType);
+	const postOnlyEnum = parsePostOnly(postOnly);
+	const limitPriceBN = parseAmount(limitPrice, PRICE_PRECISION);
+
+	console.log('--- ⚡ Open Perp Non-Market Order Swift ---');
+	console.log(`👤 User Account: ${userAccount}`);
+	console.log(`🏪 Market Index: ${marketIndex}`);
+	console.log(
+		`📊 Direction: ${direction} (${ENUM_UTILS.toStr(directionEnum)})`
+	);
+
+	if (amount) {
+		const precision = assetType === 'base' ? BASE_PRECISION : QUOTE_PRECISION;
+		const amountBN = parseAmount(amount, precision);
+		console.log(`💰 Amount: ${amount} (${amountBN.toString()} raw units)`);
+		console.log(`💱 Asset Type: ${assetType}`);
+	} else {
+		const amountBN = parseAmount(baseAssetAmount, BASE_PRECISION);
+		console.log(
+			`💰 Base Asset Amount: ${baseAssetAmount} (${amountBN.toString()} raw units)`
+		);
+	}
+
+	console.log(
+		`💵 Limit Price: ${limitPrice} (${limitPriceBN.toString()} raw units)`
+	);
+	console.log(
+		`📝 Order Type: ${orderType} (${ENUM_UTILS.toStr(orderTypeEnum)})`
+	);
+	console.log(`🔄 Reduce Only: ${reduceOnly}`);
+	console.log(`📌 Post Only: ${postOnly} (${ENUM_UTILS.toStr(postOnlyEnum)})`);
+	console.log(`⚡ Swift Server: ${swiftServerUrl}`);
+	console.log(`🔑 Wallet Public Key: ${wallet.publicKey.toString()}`);
+
+	let swiftResult: SwiftOrderResult;
+	try {
+		const swiftOptions = {
+			wallet: {
+				signMessage: async (message: Uint8Array) => {
+					const signature = sign.detached(message, wallet.payer.secretKey);
+					return new Uint8Array(signature);
+				},
+				publicKey: wallet.publicKey,
+			},
+			swiftServerUrl,
+			confirmDuration: 30000,
+		};
+
+		// Use the main method - it handles both approaches internally
+		swiftResult = (await centralServerDrift.getOpenPerpNonMarketOrderTxn(
+			userAccountPubkey,
+			marketIndex,
+			directionEnum,
+			amount
+				? parseAmount(
+						amount,
+						assetType === 'base' ? BASE_PRECISION : QUOTE_PRECISION
+				  )
+				: parseAmount(baseAssetAmount, BASE_PRECISION),
+			amount ? (assetType as 'base' | 'quote') : 'base',
+			limitPriceBN,
+			undefined, // triggerPrice - not used for LIMIT orders
+			orderTypeEnum,
+			reduceOnly,
+			postOnlyEnum,
+			true, // useSwift
+			swiftOptions
+		)) as SwiftOrderResult;
+		console.log(
+			'✅ [CLI] Swift non-market order transaction created successfully!'
+		);
+	} catch (error) {
+		console.error('❌ [CLI] Error creating Swift non-market order:', error);
+		throw error;
+	}
+
+	handleSwiftOrder(swiftResult, 'Open Perp Non-Market Order');
+}
+
+/**
  * Show CLI usage information
  */
 function showUsage(): void {
@@ -496,21 +786,48 @@ function showUsage(): void {
 	);
 	console.log('');
 
-	console.log('🎯 openPerpOrder');
+	console.log('🎯 openPerpMarketOrder');
 	console.log(
-		'  ts-node cli.ts openPerpOrder --userAccount=<pubkey> --marketIndex=<num> --direction=<long|short> --amount=<num> [--assetType=<base|quote>] [--dlobServerUrl=<url>]'
+		'  ts-node cli.ts openPerpMarketOrder --userAccount=<pubkey> --marketIndex=<num> --direction=<long|short> --amount=<num> [--assetType=<base|quote>]'
 	);
 	console.log(
-		'  Example: ts-node cli.ts openPerpOrder --userAccount=11111111111111111111111111111111 --marketIndex=0 --direction=long --amount=0.1 --assetType=base'
+		'  Example: ts-node cli.ts openPerpMarketOrder --userAccount=11111111111111111111111111111111 --marketIndex=0 --direction=long --amount=0.1 --assetType=base'
 	);
 	console.log('');
 
-	console.log('⚡ openPerpOrderSwift');
+	console.log('⚡ openPerpMarketOrderSwift');
 	console.log(
-		'  ts-node cli.ts openPerpOrderSwift --userAccount=<pubkey> --marketIndex=<num> --direction=<long|short> --amount=<num> [--assetType=<base|quote>] [--swiftServerUrl=<url>]'
+		'  ts-node cli.ts openPerpMarketOrderSwift --userAccount=<pubkey> --marketIndex=<num> --direction=<long|short> --amount=<num> [--assetType=<base|quote>]'
 	);
 	console.log(
-		'  Example: ts-node cli.ts openPerpOrderSwift --userAccount=11111111111111111111111111111111 --marketIndex=0 --direction=short --amount=100 --assetType=quote --swiftServerUrl=https://swift.drift.trade'
+		'  Example: ts-node cli.ts openPerpMarketOrderSwift --userAccount=11111111111111111111111111111111 --marketIndex=0 --direction=short --amount=100 --assetType=quote'
+	);
+	console.log('');
+
+	console.log('📋 openPerpNonMarketOrder');
+	console.log(
+		'  ts-node cli.ts openPerpNonMarketOrder --userAccount=<pubkey> --marketIndex=<num> --direction=<long|short> --amount=<num> [--assetType=<base|quote>] --orderType=<limit|trigger_limit|trigger_market|oracle> [--limitPrice=<num>] [--triggerPrice=<num>] [--reduceOnly=<true|false>] [--postOnly=<none|must_post_only|try_post_only|slide>]'
+	);
+	console.log(
+		'  New LIMIT: ts-node cli.ts openPerpNonMarketOrder --userAccount=11111111111111111111111111111111 --marketIndex=0 --direction=long --amount=0.1 --assetType=base --orderType=limit --limitPrice=100'
+	);
+	console.log(
+		'  New QUOTE: ts-node cli.ts openPerpNonMarketOrder --userAccount=11111111111111111111111111111111 --marketIndex=0 --direction=long --amount=100 --assetType=quote --orderType=limit --limitPrice=100'
+	);
+	console.log(
+		'  Legacy: ts-node cli.ts openPerpNonMarketOrder --userAccount=11111111111111111111111111111111 --marketIndex=0 --direction=long --baseAssetAmount=0.1 --orderType=limit --limitPrice=100'
+	);
+	console.log('');
+
+	console.log('⚡ openPerpNonMarketOrderSwift');
+	console.log(
+		'  ts-node cli.ts openPerpNonMarketOrderSwift --userAccount=<pubkey> --marketIndex=<num> --direction=<long|short> --amount=<num> [--assetType=<base|quote>] --orderType=limit --limitPrice=<num> [--reduceOnly=<true|false>] [--postOnly=<none|must_post_only|try_post_only|slide>]'
+	);
+	console.log(
+		'  New: ts-node cli.ts openPerpNonMarketOrderSwift --userAccount=11111111111111111111111111111111 --marketIndex=0 --direction=long --amount=0.1 --assetType=base --orderType=limit --limitPrice=99.5'
+	);
+	console.log(
+		'  Legacy: ts-node cli.ts openPerpNonMarketOrderSwift --userAccount=11111111111111111111111111111111 --marketIndex=0 --direction=long --baseAssetAmount=0.1 --orderType=limit --limitPrice=99.5'
 	);
 	console.log('');
 
@@ -564,11 +881,17 @@ async function main(): Promise<void> {
 		case 'settlePnl':
 			await settlePnlCommand(parsedArgs);
 			break;
-		case 'openPerpOrder':
-			await openPerpOrderCommand(parsedArgs);
+		case 'openPerpMarketOrder':
+			await openPerpMarketOrderCommand(parsedArgs);
 			break;
-		case 'openPerpOrderSwift':
-			await openPerpOrderSwiftCommand(parsedArgs);
+		case 'openPerpMarketOrderSwift':
+			await openPerpMarketOrderSwiftCommand(parsedArgs);
+			break;
+		case 'openPerpNonMarketOrder':
+			await openPerpNonMarketOrderCommand(parsedArgs);
+			break;
+		case 'openPerpNonMarketOrderSwift':
+			await openPerpNonMarketOrderSwiftCommand(parsedArgs);
 			break;
 		default:
 			console.error(`❌ Unknown command: ${command}`);

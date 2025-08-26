@@ -4,7 +4,7 @@ import { UIOrderType } from '../../../../../types';
 import { OptionalTriggerOrderParams, prepSwiftOrder } from './openSwiftOrder';
 import { SwiftClient } from '../../../../../clients/swiftClient';
 import invariant from 'tiny-invariant';
-import { openPerpNonMarketOrder } from './openPerpNonMarketOrder';
+// import { createOpenPerpNonMarketOrderTxn } from './openPerpNonMarketOrder';
 
 interface BaseOpenPerpOrderParams {
 	driftClient: DriftClient;
@@ -81,7 +81,7 @@ export const openPerpOrderTxn = async (params: OpenPerpOrderParams) => {
 		case 'takeProfitLimit':
 		case 'oracleLimit':
 		case 'scaledOrders':
-			return openPerpNonMarketOrder();
+			throw new Error('Non-market orders not implemented yet');
 		default: {
 			const _exhaustiveCheck: never = orderType;
 			throw new Error(`Order type ${_exhaustiveCheck} not supported`);

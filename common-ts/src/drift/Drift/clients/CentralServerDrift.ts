@@ -12,8 +12,10 @@ import {
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
 	MarketType,
+	OrderType,
 	PerpMarketConfig,
 	PositionDirection,
+	PostOnlyParams,
 	PublicKey,
 	SpotMarketConfig,
 	User,
@@ -38,6 +40,7 @@ import {
 	SwiftOrderOptions,
 	SwiftOrderResult,
 } from '../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
+import { createOpenPerpNonMarketOrderTxn } from '../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.
@@ -323,6 +326,51 @@ export class CentralServerDrift {
 				});
 
 				return openPerpMarketOrderTxn;
+			}
+		);
+	}
+
+	/**
+	 * Create a perp non-market order with amount and asset type
+	 */
+	public async getOpenPerpNonMarketOrderTxn(
+		userAccountPublicKey: PublicKey,
+		marketIndex: number,
+		direction: PositionDirection,
+		amount: BN,
+		assetType: 'base' | 'quote',
+		limitPrice?: BN,
+		triggerPrice?: BN,
+		orderType?: OrderType,
+		reduceOnly?: boolean,
+		postOnly?: PostOnlyParams,
+		useSwift?: boolean,
+		swiftOptions?: SwiftOrderOptions,
+		marketType?: MarketType
+	): Promise<VersionedTransaction | Transaction | SwiftOrderResult> {
+		return this.driftClientContextWrapper(
+			userAccountPublicKey,
+			async (user) => {
+				const openPerpNonMarketOrderTxn = await createOpenPerpNonMarketOrderTxn(
+					{
+						driftClient: this.driftClient,
+						user,
+						marketIndex,
+						direction,
+						amount,
+						assetType,
+						limitPrice,
+						triggerPrice,
+						orderType,
+						reduceOnly,
+						postOnly,
+						useSwift,
+						swiftOptions,
+						marketType,
+					}
+				);
+
+				return openPerpNonMarketOrderTxn;
 			}
 		);
 	}

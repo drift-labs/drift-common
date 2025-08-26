@@ -6,6 +6,7 @@ import {
 import { MarkPriceCache } from '../../../Drift';
 import { MarketId } from '../../../../types';
 import { getFundingRate } from '../../../utils/funding';
+import { API_URLS, API_ENDPOINTS } from '../../../constants/apiUrls';
 
 export const getMarketPredictedFunding = (
 	driftClient: DriftClient,
@@ -51,7 +52,7 @@ export const getMarketHistoricalFunding = async (
 	marketSymbol: string = 'SOL-PERP'
 ): Promise<Array<{ slot: number; fundingRatePct: number }>> => {
 	// TODO: if we're hitting the data api a lot we should set up a client file for it.. not sure if necessary
-	const url = `https://data.api.drift.trade/fundingRates?marketName=${marketSymbol}`;
+	const url = `${API_URLS.DATA_API}${API_ENDPOINTS.FUNDING_RATES}?marketName=${marketSymbol}`;
 
 	try {
 		const response = await fetch(url);
