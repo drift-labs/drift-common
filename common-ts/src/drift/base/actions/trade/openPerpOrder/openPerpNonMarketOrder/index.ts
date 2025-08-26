@@ -19,7 +19,10 @@ import { prepSwiftOrder, sendSwiftOrder } from '../openSwiftOrder';
 import { MarketId } from '../../../../../../types';
 import { SwiftClient } from '../../../../../../clients/swiftClient';
 import { ENUM_UTILS } from '../../../../../../utils';
-import { buildNonMarketOrderParams } from '../../../../../utils/nonMarketOrderParams';
+import {
+	buildNonMarketOrderParams,
+	resolveBaseAssetAmount,
+} from '../../../../../utils/orderParams';
 import { Observable } from 'rxjs';
 
 export interface SwiftOrderOptions {
@@ -75,34 +78,13 @@ export const createOpenPerpNonMarketOrderIx = async (
 		marketType = MarketType.PERP,
 	} = params;
 	// Support both new (amount + assetType) and legacy (baseAssetAmount) approaches
-	let finalBaseAssetAmount: BN;
-
-	if ('amount' in params && 'assetType' in params) {
-		// New approach: convert quote to base if needed
-		const { amount, assetType } = params;
-		if (assetType === 'quote') {
-			// For quote amounts, we need to convert to base using limit price
-			if (!limitPrice || limitPrice.isZero()) {
-				throw new Error(
-					'When using quote asset type, limitPrice is required for conversion to base amount'
-				);
-			}
-			// Convert quote amount to base amount: quoteAmount / price = baseAmount
-			// Using PRICE_PRECISION as the limit price is in price precision
-			const PRICE_PRECISION = new BN(10).pow(new BN(6));
-			finalBaseAssetAmount = amount.mul(PRICE_PRECISION).div(limitPrice);
-		} else {
-			// Base amount, use directly
-			finalBaseAssetAmount = amount;
-		}
-	} else if ('baseAssetAmount' in params) {
-		// Legacy approach
-		finalBaseAssetAmount = params.baseAssetAmount;
-	} else {
-		throw new Error(
-			'Either (amount + assetType) or baseAssetAmount must be provided'
-		);
-	}
+	const finalBaseAssetAmount = resolveBaseAssetAmount({
+		amount: 'amount' in params ? params.amount : undefined,
+		assetType: 'assetType' in params ? params.assetType : undefined,
+		baseAssetAmount:
+			'baseAssetAmount' in params ? params.baseAssetAmount : undefined,
+		limitPrice,
+	});
 
 	if (!finalBaseAssetAmount || finalBaseAssetAmount.isZero()) {
 		throw new Error('Final base asset amount must be greater than zero');
@@ -167,27 +149,13 @@ const createSwiftOrder = async (
 	}
 
 	// Support both new (amount + assetType) and legacy (baseAssetAmount) approaches
-	let finalBaseAssetAmount: BN;
-
-	if ('amount' in params && 'assetType' in params) {
-		// New approach: convert quote to base if needed
-		const { amount, assetType } = params;
-		if (assetType === 'quote') {
-			// Convert quote amount to base amount: quoteAmount / price = baseAmount
-			const PRICE_PRECISION = new BN(10).pow(new BN(6));
-			finalBaseAssetAmount = amount.mul(PRICE_PRECISION).div(limitPrice);
-		} else {
-			// Base amount, use directly
-			finalBaseAssetAmount = amount;
-		}
-	} else if ('baseAssetAmount' in params) {
-		// Legacy approach
-		finalBaseAssetAmount = params.baseAssetAmount;
-	} else {
-		throw new Error(
-			'Either (amount + assetType) or baseAssetAmount must be provided'
-		);
-	}
+	const finalBaseAssetAmount = resolveBaseAssetAmount({
+		amount: 'amount' in params ? params.amount : undefined,
+		assetType: 'assetType' in params ? params.assetType : undefined,
+		baseAssetAmount:
+			'baseAssetAmount' in params ? params.baseAssetAmount : undefined,
+		limitPrice,
+	});
 
 	// Build limit order parameters directly like the UI does
 	const orderParams = getLimitOrderParams({
@@ -218,7 +186,7 @@ const createSwiftOrder = async (
 		orderParams: {
 			main: orderParams,
 		},
-		slotBuffer: swiftOptions.signedMessageOrderSlotBuffer || 30,
+		slotBuffer: swiftOptions.signedMessageOrderSlotBuffer || 50,
 	});
 
 	// Sign the message
@@ -269,7 +237,7 @@ export const createOpenPerpNonMarketOrderTxn = async (
 	const { driftClient, useSwift = false, swiftOptions } = params;
 
 	// If useSwift is true, return the Swift result directly
-	if (useSwift) {
+	if (useSwift && params.orderType === OrderType.LIMIT) {
 		if (!swiftOptions) {
 			throw new Error('swiftOptions is required when useSwift is true');
 		}

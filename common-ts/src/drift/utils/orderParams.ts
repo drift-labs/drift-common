@@ -12,6 +12,58 @@ import {
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../../utils';
 
+/**
+ * Converts amount and assetType to base asset amount
+ * @param amount - The amount to convert
+ * @param assetType - 'base' or 'quote'
+ * @param limitPrice - Required when assetType is 'quote' for conversion
+ * @returns Base asset amount
+ */
+export function convertToBaseAssetAmount(
+	amount: BN,
+	assetType: 'base' | 'quote',
+	limitPrice?: BN
+): BN {
+	if (assetType === 'quote') {
+		if (!limitPrice || limitPrice.isZero()) {
+			throw new Error(
+				'When using quote asset type, limitPrice is required for conversion to base amount'
+			);
+		}
+		// Convert quote amount to base amount: quoteAmount / price = baseAmount
+		// Using PRICE_PRECISION as the limit price is in price precision
+		const PRICE_PRECISION = new BN(10).pow(new BN(6));
+		return amount.mul(PRICE_PRECISION).div(limitPrice);
+	} else {
+		// Base amount, use directly
+		return amount;
+	}
+}
+
+/**
+ * Resolves amount parameters from either new (amount + assetType) or legacy (baseAssetAmount) approach
+ */
+export function resolveBaseAssetAmount(params: {
+	amount?: BN;
+	assetType?: 'base' | 'quote';
+	baseAssetAmount?: BN;
+	limitPrice?: BN;
+}): BN {
+	const { amount, assetType, baseAssetAmount, limitPrice } = params;
+
+	if (amount && assetType) {
+		// New approach: convert if needed
+		return convertToBaseAssetAmount(amount, assetType, limitPrice);
+	} else if (baseAssetAmount) {
+		// Legacy approach
+		return baseAssetAmount;
+	} else {
+		throw new Error(
+			'Either (amount + assetType) or baseAssetAmount must be provided'
+		);
+	}
+}
+
 export interface NonMarketOrderParamsConfig {
 	marketIndex: number;
 	marketType: MarketType;
