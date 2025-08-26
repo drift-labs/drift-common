@@ -76,7 +76,7 @@ export class AuthorityDrift {
 	/**
 	 * Handles all Drift program interactions e.g. trading, read account details, etc.
 	 */
-	private driftClient!: DriftClient;
+	private _driftClient!: DriftClient;
 
 	/**
 	 * Handles bulk account loading from the RPC.
@@ -214,6 +214,10 @@ export class AuthorityDrift {
 		this.initializeManagers(driftDlobServerHttpUrlToUse);
 	}
 
+	public get driftClient(): DriftClient {
+		return this._driftClient;
+	}
+
 	public get oraclePriceCache(): OraclePriceLookup {
 		return this._oraclePriceCache.store;
 	}
@@ -246,7 +250,7 @@ export class AuthorityDrift {
 			.filter((market) => !market.isPerp)
 			.map((market) =>
 				MARKET_UTILS.getMarketConfig(
-					this.driftClient.env,
+					this._driftClient.env,
 					MarketType.SPOT,
 					market.marketIndex
 				)
@@ -255,7 +259,7 @@ export class AuthorityDrift {
 			.filter((market) => market.isPerp)
 			.map((market) =>
 				MARKET_UTILS.getMarketConfig(
-					this.driftClient.env,
+					this._driftClient.env,
 					MarketType.PERP,
 					market.marketIndex
 				)
@@ -345,21 +349,21 @@ export class AuthorityDrift {
 			oracleInfos,
 			...config.additionalDriftClientConfig,
 		};
-		this.driftClient = new DriftClient(driftClientConfig);
+		this._driftClient = new DriftClient(driftClientConfig);
 
 		const txSender = new WhileValidTxSender({
 			connection,
 			wallet,
 			additionalConnections: [],
 			additionalTxSenderCallbacks: [],
-			txHandler: this.driftClient.txHandler,
+			txHandler: this._driftClient.txHandler,
 			confirmationStrategy: DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 			retrySleep: DEFAULT_TX_SENDER_RETRY_INTERVAL,
 		});
 
-		this.driftClient.txSender = txSender;
+		this._driftClient.txSender = txSender;
 
-		return this.driftClient;
+		return this._driftClient;
 	}
 
 	private setupPollingDlob() {
@@ -408,17 +412,17 @@ export class AuthorityDrift {
 	private initializeManagers(dlobServerHttpUrl: string) {
 		// Initialize trading operations
 		this.driftOperations = new DriftOperations(
-			this.driftClient,
+			this._driftClient,
 			() => this._userAccountCache,
 			dlobServerHttpUrl,
 			EnvironmentConstants.swiftServerUrl[
-				this.driftClient.env === 'mainnet-beta' ? 'mainnet' : 'dev'
+				this._driftClient.env === 'mainnet-beta' ? 'mainnet' : 'dev'
 			]
 		);
 
 		// Initialize subscription manager with all subscription and market operations
 		this.subscriptionManager = new SubscriptionManager(
-			this.driftClient,
+			this._driftClient,
 			this.accountLoader,
 			this.pollingDlob,
 			this._userAccountCache,
@@ -435,13 +439,13 @@ export class AuthorityDrift {
 	}
 
 	public async subscribe() {
-		await this.driftClient.subscribe();
+		await this._driftClient.subscribe();
 
 		// filter out markets that are delisted
 		const actualTradableMarkets = this._tradableMarkets.filter((market) => {
 			const marketAccount = market.isPerp
-				? this.driftClient.getPerpMarketAccount(market.marketIndex)
-				: this.driftClient.getSpotMarketAccount(market.marketIndex);
+				? this._driftClient.getPerpMarketAccount(market.marketIndex)
+				: this._driftClient.getSpotMarketAccount(market.marketIndex);
 
 			if (
 				!marketAccount ||
@@ -463,7 +467,7 @@ export class AuthorityDrift {
 
 		const subscribeToNonWhitelistedButUserInvolvedMarketsPromise =
 			this.subscriptionManager.subscribeToNonWhitelistedButUserInvolvedMarkets(
-				this.driftClient.getUsers()
+				this._driftClient.getUsers()
 			);
 
 		await Promise.all([
@@ -480,7 +484,7 @@ export class AuthorityDrift {
 		this.unsubscribeFromPollingDlob();
 		this._userAccountCache.reset();
 
-		const driftClientUnsubscribePromise = this.driftClient.unsubscribe();
+		const driftClientUnsubscribePromise = this._driftClient.unsubscribe();
 
 		await Promise.all([driftClientUnsubscribePromise]);
 

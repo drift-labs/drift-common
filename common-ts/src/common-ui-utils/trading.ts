@@ -1,15 +1,19 @@
 import {
 	BN,
 	BigNum,
+	DriftClient,
 	MARGIN_PRECISION,
+	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
+	PerpMarketAccount,
 	PositionDirection,
 	QUOTE_PRECISION_EXP,
+	SpotMarketAccount,
 	User,
 	ZERO,
 	isVariant,
 } from '@drift-labs/sdk';
-import { UIOrderType } from 'src/types';
+import { MarketId, UIOrderType } from 'src/types';
 
 const calculatePnlPctFromPosition = (
 	pnl: BN,
@@ -248,10 +252,70 @@ const convertLeverageToMarginRatio = (leverage: number): number | undefined => {
 	return (1 / leverage) * MARGIN_PRECISION.toNumber();
 };
 
+const getMarketTickSize = (
+	driftClient: DriftClient,
+	marketId: MarketId
+): BN => {
+	const marketAccount = marketId.isPerp
+		? driftClient.getPerpMarketAccount(marketId.marketIndex)
+		: driftClient.getSpotMarketAccount(marketId.marketIndex);
+	if (!marketAccount) return ZERO;
+
+	if (marketId.isPerp) {
+		return (marketAccount as PerpMarketAccount).amm.orderTickSize;
+	} else {
+		return (marketAccount as SpotMarketAccount).orderTickSize;
+	}
+};
+
+const getMarketTickSizeDecimals = (
+	driftClient: DriftClient,
+	marketId: MarketId
+) => {
+	const tickSize = getMarketTickSize(driftClient, marketId);
+
+	const decimalPlaces = Math.max(
+		0,
+		Math.floor(Math.log10(PRICE_PRECISION.div(tickSize).toNumber()))
+	);
+
+	return decimalPlaces;
+};
+
+const getMarketStepSize = (driftClient: DriftClient, marketId: MarketId) => {
+	const marketAccount = marketId.isPerp
+		? driftClient.getPerpMarketAccount(marketId.marketIndex)
+		: driftClient.getSpotMarketAccount(marketId.marketIndex);
+	if (!marketAccount) return ZERO;
+
+	if (marketId.isPerp) {
+		return (marketAccount as PerpMarketAccount).amm.orderStepSize;
+	} else {
+		return (marketAccount as SpotMarketAccount).orderStepSize;
+	}
+};
+
+const getMarketStepSizeDecimals = (
+	driftClient: DriftClient,
+	marketId: MarketId
+) => {
+	const stepSize = getMarketStepSize(driftClient, marketId);
+
+	const decimalPlaces = Math.max(
+		Math.floor(Math.log10(PRICE_PRECISION.div(stepSize).toNumber()))
+	);
+
+	return decimalPlaces;
+};
+
 export const TRADING_UTILS = {
 	calculatePnlPctFromPosition,
 	calculatePotentialProfit,
 	calculateLiquidationPriceAfterPerpTrade,
 	checkIsMarketOrderType,
 	convertLeverageToMarginRatio,
+	getMarketTickSize,
+	getMarketTickSizeDecimals,
+	getMarketStepSize,
+	getMarketStepSizeDecimals,
 };

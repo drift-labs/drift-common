@@ -146,9 +146,9 @@ export const getPriceBasedPositionInfo = (
 
 				const pnlPct =
 					positionNotionalPnlBigNum.val
-						.mul(new BN(10000))
+						.mul(new BN(10_000))
 						.div(quoteAmount)
-						.toNumber() / 100;
+						.toNumber() / 1_000_000;
 				return pnlPct * (accountLeverage || 1);
 		  })()
 		: 0;
