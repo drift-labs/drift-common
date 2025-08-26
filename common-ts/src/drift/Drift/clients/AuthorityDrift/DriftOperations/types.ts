@@ -1,4 +1,4 @@
-import { BigNum, PositionDirection } from '@drift-labs/sdk';
+import { BigNum, PositionDirection, QuoteResponse } from '@drift-labs/sdk';
 import { AuctionParamsRequestOptions } from '../../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 
 /**
@@ -73,8 +73,8 @@ export interface SwapParams {
 	fromMarketIndex: number;
 	toMarketIndex: number;
 	amount: BigNum;
-	subAccountId?: number;
-	minReceiveAmount?: BigNum;
+	subAccountId: number;
+	jupiterQuote?: QuoteResponse;
 }
 
 /**

@@ -1,3 +1,3 @@
 export * from './AuthorityDrift';
-export * from './AuthorityDrift/TradingOperations/types';
+export * from './AuthorityDrift/DriftOperations/types';
 export * from './CentralServerDrift';

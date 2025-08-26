@@ -10,8 +10,10 @@ import {
 	MarketType,
 	PerpMarketConfig,
 	PerpMarkets,
+	QuoteResponse,
 	SpotMarketConfig,
 	SpotMarkets,
+	SwapMode,
 	User,
 	WhileValidTxSender,
 } from '@drift-labs/sdk';
@@ -42,7 +44,7 @@ import {
 } from '../../stores/UserAccountCache';
 import { ENUM_UTILS } from '../../../../utils';
 import { SubscriptionManager } from './SubscriptionManager';
-import { TradingOperations } from './TradingOperations';
+import { DriftOperations } from './DriftOperations';
 import {
 	CreateUserAndDepositParams,
 	DepositParams,
@@ -50,7 +52,7 @@ import {
 	PerpOrderParams,
 	SwapParams,
 	SettleAccountPnlParams,
-} from './TradingOperations/types';
+} from './DriftOperations/types';
 import { Initialize } from '../../../../Config';
 import { SwiftOrderResult } from 'src/drift/base/actions/trade/openPerpOrder/openPerpMarketOrder';
 
@@ -95,7 +97,7 @@ export class AuthorityDrift {
 	/**
 	 * Handles all trading operations including deposits, withdrawals, and position management.
 	 */
-	private tradingOps!: TradingOperations;
+	private driftOperations!: DriftOperations;
 
 	/**
 	 * Manages all subscription operations including user accounts, market subscriptions, and polling optimization.
@@ -142,6 +144,14 @@ export class AuthorityDrift {
 	private _perpMarketConfigs: PerpMarketConfig[] = [];
 
 	/**
+	 * The public endpoints that can be used to retrieve Drift data / interact with the Drift program.
+	 */
+	private _driftEndpoints: {
+		dlobServerHttpUrl: string;
+		swiftServerUrl: string;
+	};
+
+	/**
 	 * @param solanaRpcEndpoint - The Solana RPC endpoint to use for reading RPC data.
 	 * @param driftEnv - The drift environment to use for the drift client.
 	 * @param authority - The authority (wallet) whose user accounts to subscribe to.
@@ -150,6 +160,7 @@ export class AuthorityDrift {
 	 * @param additionalDriftClientConfig - Additional DriftClient config to use for the DriftClient.
 	 */
 	constructor(config: AuthorityDriftConfig) {
+		// set up tradable markets
 		this.selectedTradeMarket = config.selectedTradeMarket ?? null;
 
 		const perpTradableMarkets = PerpMarkets[config.driftEnv].map(
@@ -178,14 +189,25 @@ export class AuthorityDrift {
 			)
 		);
 
+		// set up Drift endpoints
 		const driftDlobServerHttpUrlToUse =
 			config.driftDlobServerHttpUrl ??
 			EnvironmentConstants.dlobServerHttpUrl[
 				config.driftEnv === 'devnet' ? 'dev' : 'mainnet'
 			];
+		const swiftServerUrlToUse =
+			EnvironmentConstants.swiftServerUrl[
+				config.driftEnv === 'devnet' ? 'dev' : 'mainnet'
+			];
+		this._driftEndpoints = {
+			dlobServerHttpUrl: driftDlobServerHttpUrlToUse,
+			swiftServerUrl: swiftServerUrlToUse,
+		};
 
+		// we set this up because SerializableTypes
 		Initialize(config.driftEnv);
 
+		// set up clients and stores
 		const driftClient = this.setupDriftClient(config);
 		this.initializePollingDlob(driftDlobServerHttpUrlToUse);
 		this.initializeStores(driftClient);
@@ -206,6 +228,16 @@ export class AuthorityDrift {
 
 	public get tradableMarkets(): MarketId[] {
 		return this._tradableMarkets;
+	}
+
+	/**
+	 * The public endpoints that can be used to retrieve Drift data / interact with the Drift program.
+	 */
+	public get driftEndpoints(): {
+		dlobServerHttpUrl: string;
+		swiftServerUrl: string;
+	} {
+		return this._driftEndpoints;
 	}
 
 	private set tradableMarkets(tradableMarkets: MarketId[]) {
@@ -375,7 +407,7 @@ export class AuthorityDrift {
 
 	private initializeManagers(dlobServerHttpUrl: string) {
 		// Initialize trading operations
-		this.tradingOps = new TradingOperations(
+		this.driftOperations = new DriftOperations(
 			this.driftClient,
 			() => this._userAccountCache,
 			dlobServerHttpUrl,
@@ -504,7 +536,7 @@ export class AuthorityDrift {
 		txSig: TransactionSignature;
 		user: User;
 	}> {
-		return this.tradingOps.createUserAndDeposit(params);
+		return this.driftOperations.createUserAndDeposit(params);
 	}
 
 	/**
@@ -514,7 +546,7 @@ export class AuthorityDrift {
 	 * @returns Promise resolving to the transaction signature
 	 */
 	public async deposit(params: DepositParams): Promise<TransactionSignature> {
-		return this.tradingOps.deposit(params);
+		return this.driftOperations.deposit(params);
 	}
 
 	/**
@@ -524,7 +556,7 @@ export class AuthorityDrift {
 	 * @returns Promise resolving to the transaction signature
 	 */
 	public async withdraw(params: WithdrawParams): Promise<TransactionSignature> {
-		return this.tradingOps.withdraw(params);
+		return this.driftOperations.withdraw(params);
 	}
 
 	/**
@@ -536,7 +568,7 @@ export class AuthorityDrift {
 	public async openPerpOrder(
 		params: PerpOrderParams
 	): Promise<TransactionSignature | SwiftOrderResult> {
-		return this.tradingOps.openPerpOrder(params);
+		return this.driftOperations.openPerpOrder(params);
 	}
 
 	/**
@@ -546,7 +578,17 @@ export class AuthorityDrift {
 	 * @returns Promise resolving to the transaction signature
 	 */
 	public async swap(params: SwapParams): Promise<TransactionSignature> {
-		return this.tradingOps.swap(params);
+		return this.driftOperations.swap(params);
+	}
+
+	public async getSwapQuote(
+		params: Omit<SwapParams, 'jupiterQuote'> & {
+			slippageBps?: number;
+			swapMode?: SwapMode;
+			onlyDirectRoutes?: boolean;
+		}
+	): Promise<QuoteResponse> {
+		return this.driftOperations.getSwapQuote(params);
 	}
 
 	/**
@@ -558,7 +600,7 @@ export class AuthorityDrift {
 	public async settlePnl(
 		params: SettleAccountPnlParams
 	): Promise<TransactionSignature> {
-		return this.tradingOps.settleAccountPnl(params);
+		return this.driftOperations.settleAccountPnl(params);
 	}
 
 	/**
@@ -568,6 +610,6 @@ export class AuthorityDrift {
 	 * @returns Promise resolving to the transaction signature of the deletion
 	 */
 	public async deleteUser(subAccountId: number): Promise<TransactionSignature> {
-		return this.tradingOps.deleteUser(subAccountId);
+		return this.driftOperations.deleteUser(subAccountId);
 	}
 }

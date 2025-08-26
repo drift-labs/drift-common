@@ -2,13 +2,10 @@ import {
 	BN,
 	DriftClient,
 	JupiterClient,
-	MarketType,
 	QuoteResponse,
 	TxParams,
 	User,
 } from '@drift-labs/sdk';
-import { getTokenAddressForDepositAndWithdraw } from '../../../..//utils/token';
-import { MARKET_UTILS } from '../../../..//common-ui-utils/market';
 import {
 	AddressLookupTableAccount,
 	Transaction,
@@ -64,36 +61,15 @@ export const createSwapIxDetails = async ({
 }> => {
 	const userPublicKey = user.getUserAccountPublicKey();
 
-	const swapFromMarketConfig = MARKET_UTILS.getMarketConfig(
-		driftClient.env,
-		MarketType.SPOT,
-		swapFromMarketIndex
-	);
-	const swapFromAssociatedTokenAccount =
-		await getTokenAddressForDepositAndWithdraw(
-			swapFromMarketConfig.mint,
-			userPublicKey
-		);
-	const swapToMarketConfig = MARKET_UTILS.getMarketConfig(
-		driftClient.env,
-		MarketType.SPOT,
-		swapToMarketIndex
-	);
-	const swapToAssociatedTokenAccount =
-		await getTokenAddressForDepositAndWithdraw(
-			swapToMarketConfig.mint,
-			userPublicKey
-		);
-
 	const swapIxsDetails = await driftClient.getJupiterSwapIxV6({
 		jupiterClient,
-		outMarketIndex: swapFromMarketIndex,
-		inMarketIndex: swapToMarketIndex,
-		outAssociatedTokenAccount: swapFromAssociatedTokenAccount,
-		inAssociatedTokenAccount: swapToAssociatedTokenAccount,
+		outMarketIndex: swapToMarketIndex,
+		inMarketIndex: swapFromMarketIndex,
 		amount,
 		quote,
 		userAccountPublicKey: userPublicKey,
+		// we skip passing in the associated token accounts and have getJupiterSwapIxV6 derive them instead.
+		// getJupiterSwapIxV6 will also add the ixs to create the associated token accounts if they don't exist.
 	});
 
 	return swapIxsDetails;
@@ -105,7 +81,7 @@ export const createSwapIxDetails = async ({
  */
 interface CreateSwapTxnParams extends CreateSwapIxDetailsParams {
 	/** Transaction parameters including compute units, priority fees, and other options */
-	txParams: TxParams;
+	txParams?: TxParams;
 }
 
 /**

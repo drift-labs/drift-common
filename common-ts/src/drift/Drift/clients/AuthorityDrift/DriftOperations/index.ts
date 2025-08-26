@@ -1,4 +1,11 @@
-import { DriftClient, MarketType, User } from '@drift-labs/sdk';
+import {
+	DriftClient,
+	JupiterClient,
+	MarketType,
+	QuoteResponse,
+	SwapMode,
+	User,
+} from '@drift-labs/sdk';
 import { TransactionSignature } from '@solana/web3.js';
 import { MARKET_UTILS } from '../../../../../common-ui-utils/market';
 import { MAIN_POOL_ID } from '../../../../../constants';
@@ -23,18 +30,19 @@ import {
 	createOpenPerpMarketOrderTxn,
 	SwiftOrderResult,
 } from '../../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
+import { createSwapTxn } from '../../../../base/actions/trade/swap';
 
 /**
- * Handles all trading operations for the Drift protocol including deposits,
- * withdrawals, position management, and settlement operations.
+ * Handles majority of the relevant operations on the Drift program including deposits,
+ * withdrawals, position management, and trading operations.
  *
  * This class encapsulates the trading logic and provides a clean API for
  * executing various trading operations while handling common patterns like
  * token address resolution and transaction preparation.
  */
-export class TradingOperations {
+export class DriftOperations {
 	/**
-	 * Creates a new TradingOperations instance.
+	 * Creates a new DriftOperations instance.
 	 *
 	 * @param driftClient - The DriftClient instance for executing transactions
 	 * @param getUserAccountCache - Function to get the user account cache. We lazily load the user account cache, so that we always get the latest user account data.
@@ -368,6 +376,40 @@ export class TradingOperations {
 		}
 	}
 
+	async getSwapQuote(
+		params: Omit<SwapParams, 'jupiterQuote'> & {
+			slippageBps?: number;
+			swapMode?: SwapMode;
+			onlyDirectRoutes?: boolean;
+		}
+	): Promise<QuoteResponse> {
+		const jupiterClient = new JupiterClient({
+			connection: this.driftClient.connection,
+		});
+
+		const inputMint = MARKET_UTILS.getMarketConfig(
+			this.driftClient.env,
+			MarketType.SPOT,
+			params.fromMarketIndex
+		).mint;
+		const outputMint = MARKET_UTILS.getMarketConfig(
+			this.driftClient.env,
+			MarketType.SPOT,
+			params.toMarketIndex
+		).mint;
+
+		const jupiterQuote = await jupiterClient.getQuote({
+			inputMint,
+			outputMint,
+			amount: params.amount.val,
+			slippageBps: params.slippageBps,
+			swapMode: params.swapMode,
+			onlyDirectRoutes: params.onlyDirectRoutes,
+		});
+
+		return jupiterQuote;
+	}
+
 	/**
 	 * Executes a swap between two spot markets (placeholder for future implementation).
 	 *
@@ -388,9 +430,37 @@ export class TradingOperations {
 	 * });
 	 * ```
 	 */
-	async swap(_params: SwapParams): Promise<TransactionSignature> {
-		// TODO: Implement swap functionality
-		throw new Error('executeSwap not yet implemented');
+	async swap(params: SwapParams): Promise<TransactionSignature> {
+		const accountData = this.getUserAccountCache().getUser(
+			params.subAccountId,
+			this.driftClient.wallet.publicKey
+		);
+
+		if (!accountData) {
+			throw new Error('User not found');
+		}
+
+		const jupiterClient = new JupiterClient({
+			connection: this.driftClient.connection,
+		});
+
+		const jupiterQuote = params.jupiterQuote
+			? params.jupiterQuote
+			: await this.getSwapQuote(params);
+
+		const swapTxn = await createSwapTxn({
+			driftClient: this.driftClient,
+			jupiterClient,
+			user: accountData.userClient,
+			swapFromMarketIndex: params.fromMarketIndex,
+			swapToMarketIndex: params.toMarketIndex,
+			amount: params.amount.val,
+			quote: jupiterQuote,
+		});
+
+		const { txSig } = await this.driftClient.sendTransaction(swapTxn);
+
+		return txSig;
 	}
 
 	/**
@@ -467,6 +537,7 @@ export class TradingOperations {
  * - close position?
  * - close multiple positions
  * - edit open order
+ * - create user only
  *
  * - open spot order
  * - rename subaccount
