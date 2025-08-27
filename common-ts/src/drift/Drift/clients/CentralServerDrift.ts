@@ -12,7 +12,6 @@ import {
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
 	MarketType,
-	OrderType,
 	PerpMarketConfig,
 	PositionDirection,
 	PostOnlyParams,
@@ -41,6 +40,7 @@ import {
 	SwiftOrderResult,
 } from '../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { createOpenPerpNonMarketOrderTxn } from '../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
+import { NonMarketOrderParamsConfig } from '../../utils/orderParams';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.
@@ -341,13 +341,42 @@ export class CentralServerDrift {
 		assetType: 'base' | 'quote',
 		limitPrice?: BN,
 		triggerPrice?: BN,
-		orderType?: OrderType,
+		orderType?: 'limit' | 'takeProfit' | 'stopLoss' | 'oracleLimit',
 		reduceOnly?: boolean,
 		postOnly?: PostOnlyParams,
 		useSwift?: boolean,
 		swiftOptions?: SwiftOrderOptions,
-		marketType?: MarketType
+		oraclePriceOffset?: BN
 	): Promise<VersionedTransaction | Transaction | SwiftOrderResult> {
+		let orderConfig: NonMarketOrderParamsConfig['orderConfig'];
+
+		switch (orderType) {
+			case 'limit':
+				orderConfig = {
+					orderType,
+					limitPrice,
+				};
+				break;
+			case 'takeProfit':
+			case 'stopLoss':
+				orderConfig = {
+					orderType,
+					triggerPrice,
+					limitPrice,
+				};
+				break;
+			case 'oracleLimit':
+				orderConfig = {
+					orderType,
+					oraclePriceOffset,
+				};
+				break;
+			default: {
+				const _exhaustiveCheck: never = orderType;
+				throw new Error(`Unsupported order type: ${_exhaustiveCheck}`);
+			}
+		}
+
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
@@ -359,14 +388,11 @@ export class CentralServerDrift {
 						direction,
 						amount,
 						assetType,
-						limitPrice,
-						triggerPrice,
-						orderType,
+						orderConfig,
 						reduceOnly,
 						postOnly,
 						useSwift,
 						swiftOptions,
-						marketType,
 					}
 				);
 

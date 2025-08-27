@@ -6,6 +6,7 @@ import {
 	SwapMode,
 	TxParams,
 	User,
+	ZERO,
 } from '@drift-labs/sdk';
 import { TransactionSignature } from '@solana/web3.js';
 import { MARKET_UTILS } from '../../../../../common-ui-utils/market';
@@ -32,6 +33,7 @@ import {
 	SwiftOrderResult,
 } from '../../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { createSwapTxn } from '../../../../base/actions/trade/swap';
+import { createOpenPerpNonMarketOrderTxn } from '../../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 
 /**
  * Handles majority of the relevant operations on the Drift program including deposits,
@@ -331,11 +333,9 @@ export class DriftOperations {
 
 		switch (params.orderConfig.orderType) {
 			case 'market': {
-				const useSwift =
-					params.orderConfig.useSwift === undefined
-						? true
-						: params.orderConfig.useSwift; // default to using SWIFT
+				const useSwift = !params.orderConfig.disableSwift;
 
+				// we split the logic for SWIFT and non-SWIFT orders to achieve better type inference
 				if (useSwift) {
 					const swiftOrderResult = await createOpenPerpMarketOrderTxn({
 						driftClient: this.driftClient,
@@ -372,11 +372,100 @@ export class DriftOperations {
 
 					return txSig;
 				}
-
-				break;
 			}
-			// TODO: implement limit, TP/SL market/limit, oracle limit
+			case 'limit': {
+				const useSwift = !params.orderConfig.disableSwift;
+
+				// we split the logic for SWIFT and non-SWIFT orders to achieve better type inference
+				if (useSwift) {
+					const swiftOrderResult = await createOpenPerpNonMarketOrderTxn<true>({
+						driftClient: this.driftClient,
+						user,
+						direction: params.direction,
+						marketIndex: params.marketIndex,
+						amount: params.size.val,
+						assetType: params.assetType,
+						orderConfig: {
+							orderType: 'limit',
+							limitPrice: params.orderConfig.limitPrice.val,
+						},
+						reduceOnly: params.reduceOnly,
+						postOnly: params.postOnly,
+						useSwift: true,
+						swiftOptions: {
+							// @ts-ignore TODO: we might want to add signMessage to the IWallet interface
+							wallet: this.driftClient.wallet,
+							swiftServerUrl: this.swiftServerUrl,
+						},
+					});
+
+					return swiftOrderResult;
+				} else {
+					const txn = await createOpenPerpNonMarketOrderTxn({
+						driftClient: this.driftClient,
+						user,
+						direction: params.direction,
+						marketIndex: params.marketIndex,
+						amount: params.size.val,
+						assetType: params.assetType,
+						orderConfig: {
+							orderType: 'limit',
+							limitPrice: params.orderConfig.limitPrice.val,
+						},
+						reduceOnly: params.reduceOnly,
+						postOnly: params.postOnly,
+						useSwift: false,
+					});
+
+					const { txSig } = await this.driftClient.sendTransaction(txn);
+
+					return txSig;
+				}
+			}
+			case 'takeProfit':
+			case 'stopLoss': {
+				const txn = await createOpenPerpNonMarketOrderTxn({
+					driftClient: this.driftClient,
+					user,
+					direction: params.direction,
+					marketIndex: params.marketIndex,
+					amount: params.size.val,
+					assetType: params.assetType,
+					orderConfig: {
+						orderType: params.orderConfig.orderType,
+						triggerPrice: params.orderConfig.triggerPrice.val,
+						limitPrice: params.orderConfig.limitPrice?.val ?? ZERO,
+					},
+					reduceOnly: params.reduceOnly,
+					useSwift: false,
+				});
+
+				const { txSig } = await this.driftClient.sendTransaction(txn);
+
+				return txSig;
+			}
+			case 'oracleLimit': {
+				const txn = await createOpenPerpNonMarketOrderTxn({
+					driftClient: this.driftClient,
+					user,
+					direction: params.direction,
+					marketIndex: params.marketIndex,
+					amount: params.size.val,
+					assetType: params.assetType,
+					orderConfig: {
+						orderType: 'oracleLimit',
+						oraclePriceOffset: params.orderConfig.oraclePriceOffset.val,
+					},
+					reduceOnly: params.reduceOnly,
+					useSwift: false,
+				});
+
+				const { txSig } = await this.driftClient.sendTransaction(txn);
+
+				return txSig;
+			}
 			default: {
+				const _exhaustiveCheck: never = params.orderConfig;
 				throw new Error('Invalid order type');
 			}
 		}
@@ -541,6 +630,9 @@ export class DriftOperations {
 /**
  * TODO:
  * - priority fees / tx params
+ * - open non-market perp order
+ * - open market non-swift perp order
+ * - open non-market non-swift perp order
  * - transfer between subaccounts
  * - close position?
  * - close multiple positions

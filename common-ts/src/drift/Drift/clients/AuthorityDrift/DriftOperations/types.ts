@@ -45,26 +45,33 @@ export type PerpOrderParams = {
 	assetType: 'base' | 'quote';
 	size: BigNum;
 	reduceOnly?: boolean;
-	limitPrice?: BigNum;
+	postOnly?: boolean;
 	orderConfig:
 		| {
 				orderType: 'market';
-				useSwift?: boolean; // defaults to true
+				disableSwift?: boolean;
 				auctionParamsOptions?: AuctionParamsRequestOptions;
+				postOnly?: never;
 				// TODO: isMaxLeverage?
 				// TODO: accompanying tp/sl orders
 		  }
 		| {
 				orderType: 'limit';
 				limitPrice: BigNum;
-				postOnly?: boolean;
-				useSwift?: boolean; // defaults to true
+				disableSwift?: boolean;
 				// TODO: isMaxLeverage?
 				// TODO: accompanying tp/sl orders
+		  }
+		| {
+				orderType: 'takeProfit' | 'stopLoss';
+				triggerPrice: BigNum;
+				limitPrice?: BigNum;
+		  }
+		| {
+				orderType: 'oracleLimit';
+				oraclePriceOffset: BigNum;
 		  };
 };
-// TODO: oracle limit
-// TODO: TP/SL market/limit
 
 /**
  * Interface for swap operation parameters.

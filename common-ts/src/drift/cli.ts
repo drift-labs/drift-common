@@ -16,6 +16,7 @@ import { SwiftOrderResult } from './base/actions/trade/openPerpOrder/openPerpMar
 import { ENUM_UTILS } from '../utils';
 import { API_URLS } from './constants/apiUrls';
 import * as path from 'path';
+import { NonMarketOrderType } from './utils/orderParams';
 
 // Load environment variables from .env file
 const dotenv = require('dotenv');
@@ -119,7 +120,7 @@ function parseDirection(direction: string): PositionDirection {
 /**
  * Parse order type string to OrderType
  */
-function parseOrderType(orderType: string): OrderType {
+function _parseOrderType(orderType: string): OrderType {
 	const normalized = orderType.toLowerCase();
 	switch (normalized) {
 		case 'limit':
@@ -523,6 +524,7 @@ async function openPerpNonMarketOrderCommand(args: CliArgs): Promise<void> {
 	const triggerPrice = args.triggerPrice as string;
 	const reduceOnly = (args.reduceOnly as string) === 'true';
 	const postOnly = (args.postOnly as string) || 'none';
+	const oraclePriceOffset = args.oraclePriceOffset as string;
 
 	if (!userAccount || isNaN(marketIndex) || !direction || !orderType) {
 		throw new Error(
@@ -534,22 +536,18 @@ async function openPerpNonMarketOrderCommand(args: CliArgs): Promise<void> {
 		throw new Error('Either --amount or --baseAssetAmount must be provided');
 	}
 
-	const orderTypeEnum = parseOrderType(orderType);
-
 	// Validate price requirements based on order type
-	if (ENUM_UTILS.match(orderTypeEnum, OrderType.TRIGGER_LIMIT)) {
-		if (!limitPrice || !triggerPrice) {
-			throw new Error(
-				`Order type '${orderType}' requires both --limitPrice and --triggerPrice`
-			);
-		}
-	} else if (ENUM_UTILS.match(orderTypeEnum, OrderType.LIMIT)) {
+	if (orderType === 'limit') {
 		if (!limitPrice) {
 			throw new Error(`Order type '${orderType}' requires --limitPrice`);
 		}
-	} else if (ENUM_UTILS.match(orderTypeEnum, OrderType.TRIGGER_MARKET)) {
+	} else if (orderType === 'takeProfit' || orderType === 'stopLoss') {
 		if (!triggerPrice) {
 			throw new Error(`Order type '${orderType}' requires --triggerPrice`);
+		}
+	} else if (orderType === 'oracleLimit') {
+		if (!oraclePriceOffset) {
+			throw new Error(`Order type '${orderType}' requires --oraclePriceOffset`);
 		}
 	}
 
@@ -592,9 +590,7 @@ async function openPerpNonMarketOrderCommand(args: CliArgs): Promise<void> {
 			`🎯 Trigger Price: ${triggerPrice} (${triggerPriceBN.toString()} raw units)`
 		);
 	}
-	console.log(
-		`📝 Order Type: ${orderType} (${ENUM_UTILS.toStr(orderTypeEnum)})`
-	);
+	console.log(`📝 Order Type: ${orderType}`);
 	console.log(`🔄 Reduce Only: ${reduceOnly}`);
 	console.log(`📌 Post Only: ${postOnly} (${ENUM_UTILS.toStr(postOnlyEnum)})`);
 
@@ -612,7 +608,7 @@ async function openPerpNonMarketOrderCommand(args: CliArgs): Promise<void> {
 		amount ? (assetType as 'base' | 'quote') : 'base',
 		limitPriceBN,
 		triggerPriceBN,
-		orderTypeEnum,
+		orderType as NonMarketOrderType,
 		reduceOnly,
 		postOnlyEnum,
 		false // useSwift
@@ -664,7 +660,6 @@ async function openPerpNonMarketOrderSwiftCommand(
 
 	const userAccountPubkey = new PublicKey(userAccount);
 	const directionEnum = parseDirection(direction);
-	const orderTypeEnum = parseOrderType(orderType);
 	const postOnlyEnum = parsePostOnly(postOnly);
 	const limitPriceBN = parseAmount(limitPrice, PRICE_PRECISION);
 
@@ -690,9 +685,7 @@ async function openPerpNonMarketOrderSwiftCommand(
 	console.log(
 		`💵 Limit Price: ${limitPrice} (${limitPriceBN.toString()} raw units)`
 	);
-	console.log(
-		`📝 Order Type: ${orderType} (${ENUM_UTILS.toStr(orderTypeEnum)})`
-	);
+	console.log(`📝 Order Type: ${orderType})`);
 	console.log(`🔄 Reduce Only: ${reduceOnly}`);
 	console.log(`📌 Post Only: ${postOnly} (${ENUM_UTILS.toStr(postOnlyEnum)})`);
 	console.log(`⚡ Swift Server: ${swiftServerUrl}`);
@@ -726,7 +719,7 @@ async function openPerpNonMarketOrderSwiftCommand(
 			amount ? (assetType as 'base' | 'quote') : 'base',
 			limitPriceBN,
 			undefined, // triggerPrice - not used for LIMIT orders
-			orderTypeEnum,
+			orderType as NonMarketOrderType,
 			reduceOnly,
 			postOnlyEnum,
 			true, // useSwift

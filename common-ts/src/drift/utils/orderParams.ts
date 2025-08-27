@@ -2,13 +2,13 @@ import {
 	BN,
 	MarketType,
 	PositionDirection,
-	OrderType,
 	PostOnlyParams,
 	OptionalOrderParams,
 	getLimitOrderParams,
 	getTriggerMarketOrderParams,
 	getTriggerLimitOrderParams,
 	OrderTriggerCondition,
+	ZERO,
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../../utils';
 
@@ -64,18 +64,63 @@ export function resolveBaseAssetAmount(params: {
 	}
 }
 
+export type NonMarketOrderType =
+	| 'limit'
+	| 'takeProfit'
+	| 'stopLoss'
+	| 'oracleLimit';
+
 export interface NonMarketOrderParamsConfig {
 	marketIndex: number;
 	marketType: MarketType;
 	direction: PositionDirection;
 	baseAssetAmount: BN;
-	orderType: OrderType;
-	limitPrice?: BN;
-	triggerPrice?: BN;
 	reduceOnly?: boolean;
 	postOnly?: PostOnlyParams;
-	userOrderId?: number;
+	orderConfig:
+		| {
+				orderType: Extract<NonMarketOrderType, 'limit'>;
+				limitPrice: BN;
+				disableSwift?: boolean;
+		  }
+		| {
+				orderType: Extract<NonMarketOrderType, 'takeProfit' | 'stopLoss'>;
+				triggerPrice: BN;
+				limitPrice?: BN;
+		  }
+		| {
+				orderType: Extract<NonMarketOrderType, 'oracleLimit'>;
+				oraclePriceOffset: BN;
+		  };
 }
+
+/**
+ * Determine trigger condition based on direction
+ * For stop orders: ABOVE when long, BELOW when short
+ * For take profit orders: BELOW when long, ABOVE when short
+ */
+const getTriggerCondition = (
+	direction: PositionDirection,
+	tpOrSl: 'takeProfit' | 'stopLoss'
+) => {
+	const isTakeProfit = tpOrSl === 'takeProfit';
+	const isLong = ENUM_UTILS.match(direction, PositionDirection.LONG);
+
+	if (isTakeProfit) {
+		if (isLong) {
+			return OrderTriggerCondition.BELOW;
+		} else {
+			return OrderTriggerCondition.ABOVE;
+		}
+	} else {
+		// Stop loss
+		if (isLong) {
+			return OrderTriggerCondition.ABOVE;
+		} else {
+			return OrderTriggerCondition.BELOW;
+		}
+	}
+};
 
 /**
  * Builds proper order parameters for non-market orders using the same logic as the UI
@@ -85,18 +130,15 @@ export function buildNonMarketOrderParams({
 	marketType,
 	direction,
 	baseAssetAmount,
-	orderType,
-	limitPrice,
-	triggerPrice,
+	orderConfig,
 	reduceOnly = false,
 	postOnly = PostOnlyParams.NONE,
-	userOrderId,
 }: NonMarketOrderParamsConfig): OptionalOrderParams {
-	const isLong = ENUM_UTILS.match(direction, PositionDirection.LONG);
+	const orderType = orderConfig.orderType;
 
 	// Build order params based on order type using SDK functions
-	if (ENUM_UTILS.match(orderType, OrderType.LIMIT)) {
-		if (!limitPrice) {
+	if (orderType === 'limit') {
+		if (!orderConfig.limitPrice) {
 			throw new Error('LIMIT orders require limitPrice');
 		}
 
@@ -105,102 +147,59 @@ export function buildNonMarketOrderParams({
 			marketType,
 			direction,
 			baseAssetAmount,
-			price: limitPrice,
+			price: orderConfig.limitPrice,
 			reduceOnly,
 			postOnly,
-			userOrderId,
 		});
 	}
 
-	if (ENUM_UTILS.match(orderType, OrderType.TRIGGER_MARKET)) {
-		if (!triggerPrice) {
+	if (orderType === 'takeProfit' || orderType === 'stopLoss') {
+		if (!orderConfig.triggerPrice) {
 			throw new Error('TRIGGER_MARKET orders require triggerPrice');
 		}
 
-		// Determine trigger condition based on direction
-		// For stop orders: ABOVE when long, BELOW when short
-		// For take profit orders: BELOW when long, ABOVE when short
-		// Note: We don't distinguish between stop and take profit at the OrderType level
-		// This assumes TRIGGER_MARKET is used for stop orders
-		const triggerCondition = isLong
-			? OrderTriggerCondition.ABOVE
-			: OrderTriggerCondition.BELOW;
+		const triggerCondition = getTriggerCondition(direction, orderType);
+		const hasLimitPrice = !!orderConfig.limitPrice;
 
-		return getTriggerMarketOrderParams({
-			marketIndex,
-			marketType,
-			direction,
-			baseAssetAmount,
-			triggerPrice,
-			triggerCondition,
-			reduceOnly,
-			userOrderId,
-		});
+		if (hasLimitPrice) {
+			return getTriggerLimitOrderParams({
+				marketIndex,
+				marketType,
+				direction,
+				baseAssetAmount,
+				triggerPrice: orderConfig.triggerPrice,
+				price: orderConfig.limitPrice,
+				triggerCondition,
+				reduceOnly,
+			});
+		} else {
+			return getTriggerMarketOrderParams({
+				marketIndex,
+				marketType,
+				direction,
+				baseAssetAmount,
+				triggerPrice: orderConfig.triggerPrice,
+				price: orderConfig.limitPrice,
+				triggerCondition,
+				reduceOnly,
+			});
+		}
 	}
 
-	if (ENUM_UTILS.match(orderType, OrderType.TRIGGER_LIMIT)) {
-		if (!limitPrice || !triggerPrice) {
-			throw new Error(
-				'TRIGGER_LIMIT orders require both limitPrice and triggerPrice'
-			);
+	if (orderType === 'oracleLimit') {
+		if (!orderConfig.oraclePriceOffset) {
+			throw new Error('ORACLE orders require oraclePriceOffset');
 		}
 
-		// Same trigger condition logic as TRIGGER_MARKET
-		const triggerCondition = isLong
-			? OrderTriggerCondition.ABOVE
-			: OrderTriggerCondition.BELOW;
-
-		return getTriggerLimitOrderParams({
+		return getLimitOrderParams({
 			marketIndex,
 			marketType,
 			direction,
 			baseAssetAmount,
-			triggerPrice,
-			price: limitPrice,
-			triggerCondition,
-			reduceOnly,
-			userOrderId,
+			price: ZERO,
+			oraclePriceOffset: orderConfig.oraclePriceOffset.toNumber(),
 		});
-	}
-
-	if (ENUM_UTILS.match(orderType, OrderType.ORACLE)) {
-		// TODO
-		throw new Error('Oracle orders are not supported in this context');
 	}
 
 	throw new Error(`Unsupported order type: ${orderType}`);
-}
-
-/**
- * Helper to build limit order parameters specifically
- */
-export function buildLimitOrderParams({
-	marketIndex,
-	marketType,
-	direction,
-	baseAssetAmount,
-	limitPrice,
-	reduceOnly = false,
-	postOnly = PostOnlyParams.NONE,
-	userOrderId,
-}: {
-	marketIndex: number;
-	marketType: MarketType;
-	direction: PositionDirection;
-	baseAssetAmount: BN;
-	limitPrice: BN;
-	reduceOnly?: boolean;
-	postOnly?: PostOnlyParams;
-	userOrderId?: number;
-}): OptionalOrderParams {
-	return getLimitOrderParams({
-		marketIndex,
-		marketType,
-		direction,
-		baseAssetAmount,
-		price: limitPrice,
-		reduceOnly,
-		postOnly,
-		userOrderId,
-	});
 }

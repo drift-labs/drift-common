@@ -2,10 +2,7 @@ import {
 	DriftClient,
 	User,
 	BN,
-	PositionDirection,
-	OptionalOrderParams,
 	MarketType,
-	OrderType,
 	PostOnlyParams,
 	getLimitOrderParams,
 } from '@drift-labs/sdk';
@@ -18,9 +15,9 @@ import {
 import { prepSwiftOrder, sendSwiftOrder } from '../openSwiftOrder';
 import { MarketId } from '../../../../../../types';
 import { SwiftClient } from '../../../../../../clients/swiftClient';
-import { ENUM_UTILS } from '../../../../../../utils';
 import {
 	buildNonMarketOrderParams,
+	NonMarketOrderParamsConfig,
 	resolveBaseAssetAmount,
 } from '../../../../../utils/orderParams';
 import { Observable } from 'rxjs';
@@ -41,25 +38,21 @@ export interface SwiftOrderResult {
 	signedMsgOrderUuid: Uint8Array;
 }
 
-export interface OpenPerpNonMarketOrderParams {
+export interface OpenPerpNonMarketOrderParams<T extends boolean = boolean>
+	extends Omit<NonMarketOrderParamsConfig, 'marketType' | 'baseAssetAmount'> {
 	driftClient: DriftClient;
 	user: User;
-	marketIndex: number;
-	direction: PositionDirection;
 	// Either new approach
 	amount?: BN;
 	assetType?: 'base' | 'quote';
 	// Or legacy approach
 	baseAssetAmount?: BN;
 	// Common optional params
-	limitPrice?: BN;
-	triggerPrice?: BN;
-	orderType?: OrderType;
 	reduceOnly?: boolean;
 	postOnly?: PostOnlyParams;
-	marketType?: MarketType;
-	useSwift?: boolean;
-	swiftOptions?: SwiftOrderOptions;
+
+	useSwift?: T;
+	swiftOptions?: T extends true ? SwiftOrderOptions : never;
 }
 
 export const createOpenPerpNonMarketOrderIx = async (
@@ -70,12 +63,8 @@ export const createOpenPerpNonMarketOrderIx = async (
 		user: _user,
 		marketIndex,
 		direction,
-		limitPrice,
-		triggerPrice,
-		orderType = OrderType.LIMIT,
 		reduceOnly = false,
 		postOnly = PostOnlyParams.NONE,
-		marketType = MarketType.PERP,
 	} = params;
 	// Support both new (amount + assetType) and legacy (baseAssetAmount) approaches
 	const finalBaseAssetAmount = resolveBaseAssetAmount({
@@ -83,43 +72,23 @@ export const createOpenPerpNonMarketOrderIx = async (
 		assetType: 'assetType' in params ? params.assetType : undefined,
 		baseAssetAmount:
 			'baseAssetAmount' in params ? params.baseAssetAmount : undefined,
-		limitPrice,
+		limitPrice:
+			'limitPrice' in params.orderConfig && params.orderConfig.limitPrice,
 	});
 
 	if (!finalBaseAssetAmount || finalBaseAssetAmount.isZero()) {
 		throw new Error('Final base asset amount must be greater than zero');
 	}
 
-	// For regular orders, we can support all non-market order types
-	let orderParams: OptionalOrderParams;
-
-	if (ENUM_UTILS.match(orderType, OrderType.LIMIT)) {
-		if (!limitPrice || limitPrice.isZero()) {
-			throw new Error('LIMIT orders require limitPrice');
-		}
-		orderParams = getLimitOrderParams({
-			marketIndex,
-			marketType,
-			direction,
-			baseAssetAmount: finalBaseAssetAmount,
-			price: limitPrice,
-			reduceOnly,
-			postOnly,
-		});
-	} else {
-		// For trigger orders and other non-market types, use the utility function
-		orderParams = buildNonMarketOrderParams({
-			marketIndex,
-			marketType,
-			direction,
-			baseAssetAmount: finalBaseAssetAmount,
-			orderType,
-			limitPrice,
-			triggerPrice,
-			reduceOnly,
-			postOnly,
-		});
-	}
+	const orderParams = buildNonMarketOrderParams({
+		marketIndex,
+		marketType: MarketType.PERP,
+		direction,
+		baseAssetAmount: finalBaseAssetAmount,
+		orderConfig: params.orderConfig,
+		reduceOnly,
+		postOnly,
+	});
 
 	const placeOrderIx = await driftClient.getPlaceOrdersIx([orderParams]);
 	return [placeOrderIx];
@@ -128,6 +97,11 @@ export const createOpenPerpNonMarketOrderIx = async (
 const createSwiftOrder = async (
 	params: OpenPerpNonMarketOrderParams & {
 		swiftOptions: SwiftOrderOptions;
+	} & {
+		orderConfig: {
+			orderType: 'limit';
+			limitPrice: BN;
+		};
 	}
 ): Promise<SwiftOrderResult> => {
 	const {
@@ -135,16 +109,15 @@ const createSwiftOrder = async (
 		user,
 		marketIndex,
 		direction,
-		limitPrice,
-		triggerPrice: _triggerPrice,
-		orderType: _orderType = OrderType.LIMIT,
 		reduceOnly = false,
 		postOnly = PostOnlyParams.NONE,
-		marketType = MarketType.PERP,
 		swiftOptions,
+		orderConfig,
 	} = params;
 
-	if (!limitPrice || limitPrice.isZero()) {
+	const limitPrice = orderConfig.limitPrice;
+
+	if (limitPrice.isZero()) {
 		throw new Error('LIMIT orders require limitPrice');
 	}
 
@@ -160,7 +133,7 @@ const createSwiftOrder = async (
 	// Build limit order parameters directly like the UI does
 	const orderParams = getLimitOrderParams({
 		marketIndex,
-		marketType,
+		marketType: MarketType.PERP,
 		direction,
 		baseAssetAmount: finalBaseAssetAmount,
 		price: limitPrice,
@@ -231,20 +204,34 @@ const createSwiftOrder = async (
 	});
 };
 
-export const createOpenPerpNonMarketOrderTxn = async (
-	params: OpenPerpNonMarketOrderParams
-): Promise<VersionedTransaction | Transaction | SwiftOrderResult> => {
-	const { driftClient, useSwift = false, swiftOptions } = params;
+export const createOpenPerpNonMarketOrderTxn = async <T extends boolean>(
+	params: OpenPerpNonMarketOrderParams<T>
+): Promise<
+	T extends true ? SwiftOrderResult : Transaction | VersionedTransaction
+> => {
+	const { driftClient, swiftOptions, useSwift, orderConfig } = params;
 
 	// If useSwift is true, return the Swift result directly
-	if (useSwift && params.orderType === OrderType.LIMIT) {
+	if (useSwift) {
 		if (!swiftOptions) {
 			throw new Error('swiftOptions is required when useSwift is true');
 		}
-		return await createSwiftOrder({
-			...params,
+
+		if (orderConfig.orderType !== 'limit') {
+			throw new Error('Only limit orders are supported with Swift');
+		}
+
+		const { orderConfig: _orderConfig, ...rest } = params;
+
+		const swiftOrderResult = await createSwiftOrder({
+			...rest,
 			swiftOptions,
+			orderConfig,
 		});
+
+		return swiftOrderResult as T extends true
+			? SwiftOrderResult
+			: Transaction | VersionedTransaction;
 	}
 
 	const instructions = await createOpenPerpNonMarketOrderIx(params);
@@ -259,25 +246,7 @@ export const createOpenPerpNonMarketOrderTxn = async (
 				driftClient.fetchAllLookupTableAccounts.bind(driftClient),
 		});
 
-	return openPerpNonMarketOrderTxn;
-};
-
-/**
- * Creates a Swift (signed message) perp non-market order directly
- * Only supports LIMIT orders as Swift orders
- *
- * @param params - All the parameters needed for creating a Swift non-market order
- * @returns Promise resolving to SwiftOrderResult with observable and order UUID
- */
-export const createSwiftPerpNonMarketOrder = async (
-	params: Omit<OpenPerpNonMarketOrderParams, 'useSwift'> & {
-		swiftOptions: SwiftOrderOptions;
-	}
-): Promise<SwiftOrderResult> => {
-	return await createSwiftOrder({
-		...params,
-		orderType: params.orderType || OrderType.LIMIT,
-		marketType: params.marketType || MarketType.PERP,
-		swiftOptions: params.swiftOptions,
-	} as OpenPerpNonMarketOrderParams & { swiftOptions: SwiftOrderOptions });
+	return openPerpNonMarketOrderTxn as T extends true
+		? SwiftOrderResult
+		: Transaction | VersionedTransaction;
 };
