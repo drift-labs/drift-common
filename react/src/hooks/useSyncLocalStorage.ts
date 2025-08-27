@@ -36,11 +36,11 @@ export function useSyncLocalStorage<T>(
 
 			const item = storage.getItem(key);
 			if (item != null) {
-				return JSON.parse(item) as T;
+				return parseValueFromStorage<T>(item);
 			}
 
 			if (initialValue != null) {
-				storage.setItem(key, JSON.stringify(initialValue));
+				storage.setItem(key, getValueToStore(initialValue));
 				return initialValue as T;
 			}
 
@@ -64,7 +64,7 @@ export function useSyncLocalStorage<T>(
 
 				// Store the value in `localStorage` if it's not nullish. Else, remove it.
 				if (valueToStore != null) {
-					storage.setItem(key, JSON.stringify(valueToStore));
+					storage.setItem(key, getValueToStore(valueToStore));
 				} else {
 					storage.removeItem(key);
 				}
@@ -79,7 +79,7 @@ export function useSyncLocalStorage<T>(
 
 	const resetValue = useCallback(() => {
 		if (initialValue != null) {
-			storage?.setItem(key, JSON.stringify(initialValue));
+			storage?.setItem(key, getValueToStore(initialValue));
 		}
 
 		setStoredValue(initialValue);
@@ -92,7 +92,7 @@ export function useSyncLocalStorage<T>(
 					return;
 				}
 
-				const newValue = JSON.parse(storage.getItem(key) as string) as T;
+				const newValue = storage.getItem(key);
 
 				// If the item has been removed, reset to the initial value. Note, if the
 				// initial value isn't nullish, the item will be added back to `localStorage`.
@@ -101,7 +101,7 @@ export function useSyncLocalStorage<T>(
 					return;
 				}
 
-				setStoredValue(newValue);
+				setStoredValue(parseValueFromStorage<T>(newValue));
 			} catch (error) {
 				console.log(error);
 			}
@@ -115,4 +115,22 @@ export function useSyncLocalStorage<T>(
 	}, [key, storedValue, storage]);
 
 	return [storedValue, setValue];
+}
+
+function getValueToStore<T>(value: T) {
+	// Don't run `stringify` over strings as it will add extra quotes around them.
+	if (typeof value === 'string') {
+		return value;
+	}
+
+	return JSON.stringify(value);
+}
+
+function parseValueFromStorage<T>(value: string) {
+	// If the value is already a string, `parse` can throw, so just return the value.
+	try {
+		return JSON.parse(value) as T;
+	} catch (_e) {
+		return value as T;
+	}
 }
