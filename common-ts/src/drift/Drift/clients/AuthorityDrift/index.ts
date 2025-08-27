@@ -218,6 +218,10 @@ export class AuthorityDrift {
 		return this._driftClient;
 	}
 
+	public get authority(): PublicKey {
+		return this._driftClient.wallet.publicKey;
+	}
+
 	public get oraclePriceCache(): OraclePriceLookup {
 		return this._oraclePriceCache.store;
 	}
