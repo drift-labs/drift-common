@@ -606,7 +606,7 @@ export class AuthorityDrift {
 	 * @param params - Parameters for the settle PnL operation
 	 * @returns Promise resolving to the transaction signature
 	 */
-	public async settlePnl(
+	public async settleAccountPnl(
 		params: SettleAccountPnlParams
 	): Promise<TransactionSignature> {
 		return this.driftOperations.settleAccountPnl(params);

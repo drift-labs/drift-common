@@ -43,7 +43,7 @@ import { createSwapTxn } from '../../../../base/actions/trade/swap';
  */
 export class DriftOperations {
 	static readonly DEFAULT_TX_PARAMS: TxParams = {
-		computeUnits: 400_000,
+		computeUnits: 800_000,
 		computeUnitsPrice: 10_000,
 	};
 
@@ -503,6 +503,7 @@ export class DriftOperations {
 			driftClient: this.driftClient,
 			user: accountData.userClient,
 			marketIndexes,
+			txParams: DriftOperations.DEFAULT_TX_PARAMS,
 		});
 
 		const { txSig } = await this.driftClient.sendTransaction(settlePnlTxn);
