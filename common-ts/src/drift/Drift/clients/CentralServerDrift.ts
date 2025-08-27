@@ -12,6 +12,7 @@ import {
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
 	MarketType,
+	OrderTriggerCondition,
 	PerpMarketConfig,
 	PositionDirection,
 	PostOnlyParams,
@@ -40,6 +41,8 @@ import {
 	SwiftOrderResult,
 } from '../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { createOpenPerpNonMarketOrderTxn } from '../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
+import { createEditOrderTxn } from '../../base/actions/trade/editOrder';
+import { createCancelOrdersTxn } from '../../base/actions/trade/cancelOrder';
 import { NonMarketOrderParamsConfig } from '../../utils/orderParams';
 
 /**
@@ -397,6 +400,91 @@ export class CentralServerDrift {
 				);
 
 				return openPerpNonMarketOrderTxn;
+			}
+		);
+	}
+
+	/**
+	 * Create a transaction to edit an existing order
+	 */
+	public async getEditOrderTxn(
+		userAccountPublicKey: PublicKey,
+		orderId: number,
+		editOrderParams: {
+			newDirection?: PositionDirection;
+			newBaseAmount?: BN;
+			newLimitPrice?: BN;
+			newOraclePriceOffset?: number;
+			newTriggerPrice?: BN;
+			newTriggerCondition?: OrderTriggerCondition;
+			auctionDuration?: number;
+			auctionStartPrice?: BN;
+			auctionEndPrice?: BN;
+			reduceOnly?: boolean;
+			postOnly?: boolean;
+			bitFlags?: number;
+			maxTs?: BN;
+			policy?: number;
+		}
+	): Promise<VersionedTransaction | Transaction> {
+		return this.driftClientContextWrapper(
+			userAccountPublicKey,
+			async (user) => {
+				const editOrderTxn = await createEditOrderTxn(
+					this.driftClient,
+					user,
+					orderId,
+					editOrderParams
+				);
+
+				return editOrderTxn;
+			}
+		);
+	}
+
+	/**
+	 * Create a transaction to cancel specific orders by their IDs
+	 */
+	public async getCancelOrdersTxn(
+		userAccountPublicKey: PublicKey,
+		orderIds: number[]
+	): Promise<VersionedTransaction | Transaction> {
+		return this.driftClientContextWrapper(
+			userAccountPublicKey,
+			async (user) => {
+				const cancelOrdersTxn = await createCancelOrdersTxn(
+					this.driftClient,
+					user,
+					orderIds
+				);
+
+				return cancelOrdersTxn;
+			}
+		);
+	}
+
+	/**
+	 * Create a transaction to cancel all orders for a user
+	 */
+	public async getCancelAllOrdersTxn(
+		userAccountPublicKey: PublicKey,
+		marketType?: MarketType,
+		marketIndex?: number,
+		direction?: PositionDirection
+	): Promise<VersionedTransaction | Transaction> {
+		return this.driftClientContextWrapper(
+			userAccountPublicKey,
+			async (user) => {
+				const ix = await this.driftClient.getCancelOrdersIx(
+					marketType ?? null,
+					marketIndex ?? null,
+					direction ?? null,
+					user.getUserAccount().subAccountId
+				);
+
+				const cancelAllOrdersTxn = await this.driftClient.buildTransaction(ix);
+
+				return cancelAllOrdersTxn;
 			}
 		);
 	}

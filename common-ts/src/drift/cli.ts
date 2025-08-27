@@ -42,6 +42,9 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
  *   ts-node cli.ts openPerpMarketOrderSwift --marketIndex=0 --direction=short --amount=100 --assetType=quote --userAccount=11111111111111111111111111111111
  *   ts-node cli.ts openPerpNonMarketOrder --marketIndex=0 --direction=long --baseAssetAmount=0.1 --orderType=limit --limitPrice=100 --userAccount=11111111111111111111111111111111
  *   ts-node cli.ts openPerpNonMarketOrderSwift --marketIndex=0 --direction=long --baseAssetAmount=0.1 --orderType=limit --limitPrice=99.5 --userAccount=11111111111111111111111111111111
+ *   ts-node cli.ts editOrder --userAccount=11111111111111111111111111111111 --orderId=123 --newLimitPrice=105.5
+ *   ts-node cli.ts cancelOrder --userAccount=11111111111111111111111111111111 --orderIds=123,456,789
+ *   ts-node cli.ts cancelAllOrders --userAccount=11111111111111111111111111111111 --marketType=perp
  */
 
 // Shared configuration
@@ -824,6 +827,33 @@ function showUsage(): void {
 	);
 	console.log('');
 
+	console.log('✏️ editOrder');
+	console.log(
+		'  ts-node cli.ts editOrder --userAccount=<pubkey> --orderId=<num> [--newDirection=<long|short>] [--newBaseAmount=<num>] [--newLimitPrice=<num>] [--newTriggerPrice=<num>] [--reduceOnly=<true|false>] [--postOnly=<true|false>]'
+	);
+	console.log(
+		'  Example: ts-node cli.ts editOrder --userAccount=11111111111111111111111111111111 --orderId=123 --newLimitPrice=105.5'
+	);
+	console.log('');
+
+	console.log('❌ cancelOrder');
+	console.log(
+		'  ts-node cli.ts cancelOrder --userAccount=<pubkey> --orderIds=<comma-separated-list>'
+	);
+	console.log(
+		'  Example: ts-node cli.ts cancelOrder --userAccount=11111111111111111111111111111111 --orderIds=123,456,789'
+	);
+	console.log('');
+
+	console.log('🧹 cancelAllOrders');
+	console.log(
+		'  ts-node cli.ts cancelAllOrders --userAccount=<pubkey> [--marketType=<perp|spot>] [--marketIndex=<num>] [--direction=<long|short>]'
+	);
+	console.log(
+		'  Example: ts-node cli.ts cancelAllOrders --userAccount=11111111111111111111111111111111 --marketType=perp'
+	);
+	console.log('');
+
 	console.log('Options:');
 	console.log('  --help, -h          Show this help message');
 	console.log('');
@@ -836,6 +866,144 @@ function showUsage(): void {
 		'  - Asset type: base (for native tokens like SOL) or quote (for USDC amounts)'
 	);
 	console.log('  - Ensure your .env file contains ANCHOR_WALLET and ENDPOINT');
+}
+
+/**
+ * CLI Command: editOrder
+ */
+async function editOrderCommand(args: CliArgs): Promise<void> {
+	const userAccount = args.userAccount as string;
+	const orderId = parseInt(args.orderId as string);
+	const newDirection = args.newDirection as string;
+	const newBaseAmount = args.newBaseAmount as string;
+	const newLimitPrice = args.newLimitPrice as string;
+	const newTriggerPrice = args.newTriggerPrice as string;
+	const reduceOnly = (args.reduceOnly as string) === 'true';
+	const postOnly = (args.postOnly as string) === 'true';
+
+	if (!userAccount || isNaN(orderId)) {
+		throw new Error('Required arguments: --userAccount, --orderId');
+	}
+
+	const userAccountPubkey = new PublicKey(userAccount);
+	const editParams: any = {};
+
+	if (newDirection) {
+		editParams.newDirection = parseDirection(newDirection);
+	}
+
+	if (newBaseAmount) {
+		editParams.newBaseAmount = parseAmount(newBaseAmount, BASE_PRECISION);
+	}
+
+	if (newLimitPrice) {
+		editParams.newLimitPrice = parseAmount(newLimitPrice, PRICE_PRECISION);
+	}
+
+	if (newTriggerPrice) {
+		editParams.newTriggerPrice = parseAmount(newTriggerPrice, PRICE_PRECISION);
+	}
+
+	if (reduceOnly) {
+		editParams.reduceOnly = true;
+	}
+
+	if (postOnly) {
+		editParams.postOnly = true;
+	}
+
+	console.log('--- ✏️ Edit Order ---');
+	console.log(`👤 User Account: ${userAccount}`);
+	console.log(`🆔 Order ID: ${orderId}`);
+	console.log(`📝 Edit Parameters:`, editParams);
+
+	const editOrderTxn = await centralServerDrift.getEditOrderTxn(
+		userAccountPubkey,
+		orderId,
+		editParams
+	);
+
+	await executeTransaction(editOrderTxn as VersionedTransaction, 'Edit Order');
+}
+
+/**
+ * CLI Command: cancelOrder
+ */
+async function cancelOrderCommand(args: CliArgs): Promise<void> {
+	const userAccount = args.userAccount as string;
+	const orderIds = args.orderIds as string;
+
+	if (!userAccount || !orderIds) {
+		throw new Error('Required arguments: --userAccount, --orderIds');
+	}
+
+	const userAccountPubkey = new PublicKey(userAccount);
+	const orderIdArray = orderIds.split(',').map((id) => parseInt(id.trim()));
+
+	console.log('--- ❌ Cancel Orders ---');
+	console.log(`👤 User Account: ${userAccount}`);
+	console.log(`🆔 Order IDs: ${orderIdArray.join(', ')}`);
+
+	const cancelOrderTxn = await centralServerDrift.getCancelOrdersTxn(
+		userAccountPubkey,
+		orderIdArray
+	);
+
+	await executeTransaction(
+		cancelOrderTxn as VersionedTransaction,
+		'Cancel Orders'
+	);
+}
+
+/**
+ * CLI Command: cancelAllOrders
+ */
+async function cancelAllOrdersCommand(args: CliArgs): Promise<void> {
+	const userAccount = args.userAccount as string;
+	const marketType = args.marketType as string;
+	const marketIndex = args.marketIndex
+		? parseInt(args.marketIndex as string)
+		: undefined;
+	const direction = args.direction as string;
+
+	if (!userAccount) {
+		throw new Error('Required arguments: --userAccount');
+	}
+
+	const userAccountPubkey = new PublicKey(userAccount);
+	let marketTypeEnum = undefined;
+	let directionEnum = undefined;
+
+	if (marketType) {
+		marketTypeEnum =
+			marketType.toLowerCase() === 'perp' ? { perp: {} } : { spot: {} };
+	}
+
+	if (direction) {
+		directionEnum = parseDirection(direction);
+	}
+
+	console.log('--- 🧹 Cancel All Orders ---');
+	console.log(`👤 User Account: ${userAccount}`);
+	console.log(`🏪 Market Type Filter: ${marketType || 'none'}`);
+	console.log(
+		`📊 Market Index Filter: ${
+			marketIndex !== undefined ? marketIndex : 'none'
+		}`
+	);
+	console.log(`📈 Direction Filter: ${direction || 'none'}`);
+
+	const cancelAllOrdersTxn = await centralServerDrift.getCancelAllOrdersTxn(
+		userAccountPubkey,
+		marketTypeEnum,
+		marketIndex,
+		directionEnum
+	);
+
+	await executeTransaction(
+		cancelAllOrdersTxn as VersionedTransaction,
+		'Cancel All Orders'
+	);
 }
 
 /**
@@ -885,6 +1053,15 @@ async function main(): Promise<void> {
 			break;
 		case 'openPerpNonMarketOrderSwift':
 			await openPerpNonMarketOrderSwiftCommand(parsedArgs);
+			break;
+		case 'editOrder':
+			await editOrderCommand(parsedArgs);
+			break;
+		case 'cancelOrder':
+			await cancelOrderCommand(parsedArgs);
+			break;
+		case 'cancelAllOrders':
+			await cancelAllOrdersCommand(parsedArgs);
 			break;
 		default:
 			console.error(`❌ Unknown command: ${command}`);
