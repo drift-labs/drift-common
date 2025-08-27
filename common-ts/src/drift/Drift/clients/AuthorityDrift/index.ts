@@ -52,6 +52,7 @@ import {
 	PerpOrderParams,
 	SwapParams,
 	SettleAccountPnlParams,
+	CancelOrdersParams,
 } from './DriftOperations/types';
 import { Initialize } from '../../../../Config';
 import { SwiftOrderResult } from 'src/drift/base/actions/trade/openPerpOrder/openPerpMarketOrder';
@@ -619,5 +620,17 @@ export class AuthorityDrift {
 	 */
 	public async deleteUser(subAccountId: number): Promise<TransactionSignature> {
 		return this.driftOperations.deleteUser(subAccountId);
+	}
+
+	/**
+	 * Cancels a list of open orders.
+	 *
+	 * @param params - See `CancelOrdersParams`
+	 * @returns Promise resolving to the transaction signature of the cancellation
+	 */
+	public async cancelOrders(
+		params: CancelOrdersParams
+	): Promise<TransactionSignature> {
+		return this.driftOperations.cancelOrders(params);
 	}
 }

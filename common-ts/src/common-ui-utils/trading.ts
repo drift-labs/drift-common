@@ -3,6 +3,7 @@ import {
 	BigNum,
 	DriftClient,
 	MARGIN_PRECISION,
+	MAX_LEVERAGE_ORDER_SIZE,
 	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
 	PerpMarketAccount,
@@ -308,6 +309,20 @@ const getMarketStepSizeDecimals = (
 	return decimalPlaces;
 };
 
+/**
+ * Checks if a given order amount represents an entire position order
+ * by comparing it with MAX_LEVERAGE_ORDER_SIZE
+ * @param orderAmount - The BigNum order amount to check
+ * @returns true if the order is for the entire position, false otherwise
+ */
+export const isEntirePositionOrder = (orderAmount: BigNum): boolean => {
+	const maxLeverageSize = new BigNum(
+		MAX_LEVERAGE_ORDER_SIZE,
+		orderAmount.precision
+	);
+	return Math.abs(maxLeverageSize.sub(orderAmount).toNum()) < 1;
+};
+
 export const TRADING_UTILS = {
 	calculatePnlPctFromPosition,
 	calculatePotentialProfit,
@@ -318,4 +333,5 @@ export const TRADING_UTILS = {
 	getMarketTickSizeDecimals,
 	getMarketStepSize,
 	getMarketStepSizeDecimals,
+	isEntirePositionOrder,
 };

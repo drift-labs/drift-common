@@ -4,6 +4,7 @@ import {
 	MarketType,
 	QuoteResponse,
 	SwapMode,
+	TxParams,
 	User,
 } from '@drift-labs/sdk';
 import { TransactionSignature } from '@solana/web3.js';
@@ -41,6 +42,11 @@ import { createSwapTxn } from '../../../../base/actions/trade/swap';
  * token address resolution and transaction preparation.
  */
 export class DriftOperations {
+	static readonly DEFAULT_TX_PARAMS: TxParams = {
+		computeUnits: 400_000,
+		computeUnitsPrice: 10_000,
+	};
+
 	/**
 	 * Creates a new DriftOperations instance.
 	 *
@@ -521,7 +527,8 @@ export class DriftOperations {
 		const cancelOrdersTxn = await createCancelOrdersTxn(
 			this.driftClient,
 			accountData.userClient,
-			orderIds
+			orderIds,
+			DriftOperations.DEFAULT_TX_PARAMS
 		);
 
 		const { txSig } = await this.driftClient.sendTransaction(cancelOrdersTxn);
