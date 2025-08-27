@@ -77,14 +77,6 @@ export function useSyncLocalStorage<T>(
 		[storedValue, storage]
 	);
 
-	const resetValue = useCallback(() => {
-		if (initialValue != null) {
-			storage?.setItem(key, getValueToStore(initialValue));
-		}
-
-		setStoredValue(initialValue);
-	}, [initialValue, key, storage]);
-
 	useEffect(() => {
 		const handleStorageChange = () => {
 			try {
@@ -94,10 +86,8 @@ export function useSyncLocalStorage<T>(
 
 				const newValue = storage.getItem(key);
 
-				// If the item has been removed, reset to the initial value. Note, if the
-				// initial value isn't nullish, the item will be added back to `localStorage`.
 				if (newValue == null) {
-					resetValue();
+					setStoredValue(newValue as T | undefined);
 					return;
 				}
 
