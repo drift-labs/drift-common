@@ -25,6 +25,7 @@ import {
 	DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 	DEFAULT_TX_SENDER_RETRY_INTERVAL,
 	DELISTED_MARKET_STATUSES,
+	HIGH_ACTIVITY_MARKET_ACCOUNTS,
 	PollingCategory,
 } from '../../constants';
 import { MarketId } from '../../../../types';
@@ -43,6 +44,11 @@ import {
 	UserAccountLookup,
 } from '../../stores/UserAccountCache';
 import { ENUM_UTILS } from '../../../../utils';
+import {
+	PriorityFeeSubscriber,
+	PriorityFeeSubscriberConfig,
+	PriorityFeeMethod,
+} from '@drift-labs/sdk';
 import { SubscriptionManager } from './SubscriptionManager';
 import { DriftOperations } from './DriftOperations';
 import {
@@ -65,6 +71,7 @@ export interface AuthorityDriftConfig {
 	tradableMarkets?: MarketId[];
 	selectedTradeMarket?: MarketId;
 	additionalDriftClientConfig?: Partial<Omit<DriftClientConfig, 'env'>>;
+	priorityFeeSubscriberConfig?: Partial<PriorityFeeSubscriberConfig>;
 }
 
 /**
@@ -125,6 +132,11 @@ export class AuthorityDrift {
 	 * Stores the fetched user account data for all user accounts.
 	 */
 	private _userAccountCache!: UserAccountCache;
+
+	/**
+	 * Handles priority fee tracking and calculation for optimized transaction costs.
+	 */
+	private priorityFeeSubscriber!: PriorityFeeSubscriber;
 
 	/**
 	 * The selected trade market to use for the drift client. This is used to subscribe to the market account,
@@ -212,6 +224,7 @@ export class AuthorityDrift {
 		const driftClient = this.setupDriftClient(config);
 		this.initializePollingDlob(driftDlobServerHttpUrlToUse);
 		this.initializeStores(driftClient);
+		this.initializePriorityFeeSubscriber(config.priorityFeeSubscriberConfig);
 		this.initializeManagers(driftDlobServerHttpUrlToUse);
 	}
 
@@ -293,6 +306,26 @@ export class AuthorityDrift {
 		this.pollingDlob = new PollingDlob({
 			driftDlobServerHttpUrl: driftDlobServerHttpUrl,
 		});
+	}
+
+	private initializePriorityFeeSubscriber(
+		config?: Partial<PriorityFeeSubscriberConfig>
+	) {
+		// Convert tradable markets to DriftMarketInfo format for priority fee subscriber
+		const driftMarkets = this._tradableMarkets.map((market) => ({
+			marketType: market.marketTypeStr,
+			marketIndex: market.marketIndex,
+		}));
+
+		const priorityFeeConfig: PriorityFeeSubscriberConfig = {
+			connection: this.driftClient.connection,
+			priorityFeeMethod: PriorityFeeMethod.SOLANA,
+			driftMarkets,
+			addresses: HIGH_ACTIVITY_MARKET_ACCOUNTS,
+			...config,
+		};
+
+		this.priorityFeeSubscriber = new PriorityFeeSubscriber(priorityFeeConfig);
 	}
 
 	private setupDriftClient(
@@ -422,7 +455,8 @@ export class AuthorityDrift {
 			dlobServerHttpUrl,
 			EnvironmentConstants.swiftServerUrl[
 				this._driftClient.env === 'mainnet-beta' ? 'mainnet' : 'dev'
-			]
+			],
+			() => this.priorityFeeSubscriber.getCustomStrategyResult()
 		);
 
 		// Initialize subscription manager with all subscription and market operations
@@ -443,6 +477,7 @@ export class AuthorityDrift {
 		this.pollingDlob.stop();
 	}
 
+	// TODO: see if this can be optimized
 	public async subscribe() {
 		await this._driftClient.subscribe();
 
@@ -475,9 +510,12 @@ export class AuthorityDrift {
 				this._driftClient.getUsers()
 			);
 
+		const priorityFeeSubscribePromise = this.priorityFeeSubscriber.subscribe();
+
 		await Promise.all([
 			pollingDlobStartPromise,
 			subscribeToNonWhitelistedButUserInvolvedMarketsPromise,
+			priorityFeeSubscribePromise,
 		]);
 
 		this.subscriptionManager.subscribeToAllUsersUpdates();
@@ -490,8 +528,14 @@ export class AuthorityDrift {
 		this._userAccountCache.reset();
 
 		const driftClientUnsubscribePromise = this._driftClient.unsubscribe();
+		const priorityFeeUnsubscribePromise =
+			this.priorityFeeSubscriber.unsubscribe();
 
-		await Promise.all([driftClientUnsubscribePromise]);
+		await Promise.all(
+			[driftClientUnsubscribePromise, priorityFeeUnsubscribePromise].filter(
+				Boolean
+			)
+		);
 
 		this.pollingDlobSubscription = null;
 	}

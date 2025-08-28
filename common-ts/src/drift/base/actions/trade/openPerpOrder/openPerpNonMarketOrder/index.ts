@@ -5,6 +5,7 @@ import {
 	MarketType,
 	PostOnlyParams,
 	getLimitOrderParams,
+	TxParams,
 } from '@drift-labs/sdk';
 import {
 	Transaction,
@@ -205,7 +206,7 @@ const createSwiftOrder = async (
 };
 
 export const createOpenPerpNonMarketOrderTxn = async <T extends boolean>(
-	params: OpenPerpNonMarketOrderParams<T>
+	params: OpenPerpNonMarketOrderParams<T> & { txParams?: TxParams }
 ): Promise<
 	T extends true ? SwiftOrderResult : Transaction | VersionedTransaction
 > => {
@@ -244,6 +245,7 @@ export const createOpenPerpNonMarketOrderTxn = async <T extends boolean>(
 			preFlightCommitment: 'confirmed',
 			fetchAllMarketLookupTableAccounts:
 				driftClient.fetchAllLookupTableAccounts.bind(driftClient),
+			txParams: params.txParams,
 		});
 
 	return openPerpNonMarketOrderTxn as T extends true

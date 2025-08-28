@@ -1,5 +1,5 @@
 import { ConfirmationStrategy, MarketStatus } from '@drift-labs/sdk';
-import { Commitment } from '@solana/web3.js';
+import { Commitment, PublicKey } from '@solana/web3.js';
 
 export const DEFAULT_ACCOUNT_LOADER_COMMITMENT: Commitment = 'confirmed';
 export const DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS = 1000;
@@ -22,3 +22,13 @@ export enum PollingCategory {
 	USER_INVOLVED = 'user-involved',
 	USER_NOT_INVOLVED = 'user-not-involved',
 }
+
+/**
+ * Accounts that are frequently used for trading.
+ * These accounts can be used to estimate priority fees.
+ */
+export const HIGH_ACTIVITY_MARKET_ACCOUNTS = [
+	new PublicKey('8BnEgHoWFysVcuFFX7QztDmzuH8r5ZFvyP3sYwn1XTh6'), // sol openbook market
+	new PublicKey('8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W'), // sol perp
+	new PublicKey('6gMq3mRCKf8aP3ttTyYhuijVZ2LGi14oDsBbkgubfLB3'), // usdc
+];

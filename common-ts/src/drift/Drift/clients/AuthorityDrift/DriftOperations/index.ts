@@ -45,22 +45,49 @@ import { createOpenPerpNonMarketOrderTxn } from '../../../../base/actions/trade/
  */
 export class DriftOperations {
 	static readonly DEFAULT_TX_PARAMS: TxParams = {
-		computeUnits: 800_000,
-		computeUnitsPrice: 10_000,
+		computeUnitsPrice: 50_000,
+		useSimulatedComputeUnits: true,
+		computeUnitsBufferMultiplier: 1.3,
 	};
+
+	static readonly MAX_COMPUTE_UNITS_PRICE = 1e15 / 10 / 1_400_000; // 1e15 = 1 SOL worth of micro lamports; 1e15 / 10 = 0.1 SOL worth of micro lamports; 1.4M = max compute units;
 
 	/**
 	 * Creates a new DriftOperations instance.
 	 *
 	 * @param driftClient - The DriftClient instance for executing transactions
 	 * @param getUserAccountCache - Function to get the user account cache. We lazily load the user account cache, so that we always get the latest user account data.
+	 * @param getPriorityFee - Function to get current priority fee in micro lamports
 	 */
 	constructor(
 		private driftClient: DriftClient,
 		private getUserAccountCache: () => UserAccountCache,
 		private dlobServerHttpUrl: string,
-		private swiftServerUrl: string
+		private swiftServerUrl: string,
+		private getPriorityFee: () => number
 	) {}
+
+	/**
+	 * Gets transaction parameters with dynamic priority fees.
+	 * Falls back to default if priority fee function is not available.
+	 */
+	private getTxParams(overrides?: Partial<TxParams>): TxParams {
+		const unsafePriorityFee = Math.floor(
+			this.getPriorityFee() ??
+				DriftOperations.DEFAULT_TX_PARAMS.computeUnitsPrice
+		);
+
+		const safePriorityFee = Math.min(
+			unsafePriorityFee,
+			DriftOperations.MAX_COMPUTE_UNITS_PRICE
+		);
+
+		return {
+			...DriftOperations.DEFAULT_TX_PARAMS,
+			computeUnitsPrice: safePriorityFee,
+			...overrides,
+		};
+	}
 
 	/**
 	 * Creates a new user account and deposits initial collateral.
@@ -122,9 +149,7 @@ export class DriftOperations {
 				referrerName,
 				customMaxMarginRatio,
 				poolId,
-				txParams: {
-					useSimulatedComputeUnits: true,
-				},
+				txParams: this.getTxParams(),
 			});
 
 		const { txSig } = await this.driftClient.sendTransaction(transaction);
@@ -178,6 +203,7 @@ export class DriftOperations {
 		const deleteTxn = await deleteUserTxn({
 			driftClient: this.driftClient,
 			user: user.userClient,
+			txParams: this.getTxParams(),
 		});
 
 		const { txSig } = await this.driftClient.sendTransaction(deleteTxn);
@@ -230,6 +256,7 @@ export class DriftOperations {
 			amount: amount,
 			spotMarketConfig: spotMarketConfig,
 			isMaxBorrowRepayment,
+			txParams: this.getTxParams(),
 		});
 
 		const { txSig } = await this.driftClient.sendTransaction(depositTxn);
@@ -290,6 +317,7 @@ export class DriftOperations {
 			user: accountData.userClient,
 			isBorrow,
 			isMax,
+			txParams: this.getTxParams(),
 		});
 
 		const { txSig } = await this.driftClient.sendTransaction(withdrawTxn);
@@ -415,6 +443,7 @@ export class DriftOperations {
 						reduceOnly: params.reduceOnly,
 						postOnly: params.postOnly,
 						useSwift: false,
+						txParams: this.getTxParams(),
 					});
 
 					const { txSig } = await this.driftClient.sendTransaction(txn);
@@ -438,6 +467,7 @@ export class DriftOperations {
 					},
 					reduceOnly: params.reduceOnly,
 					useSwift: false,
+					txParams: this.getTxParams(),
 				});
 
 				const { txSig } = await this.driftClient.sendTransaction(txn);
@@ -458,6 +488,7 @@ export class DriftOperations {
 					},
 					reduceOnly: params.reduceOnly,
 					useSwift: false,
+					txParams: this.getTxParams(),
 				});
 
 				const { txSig } = await this.driftClient.sendTransaction(txn);
@@ -551,6 +582,7 @@ export class DriftOperations {
 			swapToMarketIndex: params.toMarketIndex,
 			amount: params.amount.val,
 			quote: jupiterQuote,
+			txParams: this.getTxParams(),
 		});
 
 		const { txSig } = await this.driftClient.sendTransaction(swapTxn);
@@ -592,7 +624,7 @@ export class DriftOperations {
 			driftClient: this.driftClient,
 			user: accountData.userClient,
 			marketIndexes,
-			txParams: DriftOperations.DEFAULT_TX_PARAMS,
+			txParams: this.getTxParams(),
 		});
 
 		const { txSig } = await this.driftClient.sendTransaction(settlePnlTxn);
@@ -618,7 +650,7 @@ export class DriftOperations {
 			this.driftClient,
 			accountData.userClient,
 			orderIds,
-			DriftOperations.DEFAULT_TX_PARAMS
+			this.getTxParams()
 		);
 
 		const { txSig } = await this.driftClient.sendTransaction(cancelOrdersTxn);
