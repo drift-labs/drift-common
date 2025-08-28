@@ -44,6 +44,7 @@ import {
 	UserAccountLookup,
 } from '../../stores/UserAccountCache';
 import { ENUM_UTILS } from '../../../../utils';
+import { checkGeoBlock } from '../../../../utils/geoblock';
 import {
 	PriorityFeeSubscriber,
 	PriorityFeeSubscriberConfig,
@@ -62,6 +63,43 @@ import {
 } from './DriftOperations/types';
 import { Initialize } from '../../../../Config';
 import { SwiftOrderResult } from 'src/drift/base/actions/trade/openPerpOrder/openPerpMarketOrder';
+
+/**
+ * Error thrown when a method is called while the user is geographically blocked.
+ */
+export class GeoBlockError extends Error {
+	constructor(methodName: string) {
+		super(
+			`Method '${methodName}' is not available due to geographical restrictions.`
+		);
+		this.name = 'GeoBlockError';
+	}
+}
+
+/**
+ * Decorator that prevents method execution if the user is geographically blocked.
+ * Throws a GeoBlockError if the user is blocked.
+ *
+ * @param target - The class prototype
+ * @param propertyName - The method name
+ * @param descriptor - The method descriptor
+ */
+function enforceGeoBlock(
+	_target: any,
+	propertyName: string,
+	descriptor: PropertyDescriptor
+): PropertyDescriptor {
+	const originalMethod = descriptor.value;
+
+	descriptor.value = function (this: AuthorityDrift, ...args: any[]) {
+		if (this._isGeoBlocked) {
+			throw new GeoBlockError(propertyName);
+		}
+		return originalMethod.apply(this, args);
+	};
+
+	return descriptor;
+}
 
 export interface AuthorityDriftConfig {
 	solanaRpcEndpoint: string;
@@ -137,6 +175,12 @@ export class AuthorityDrift {
 	 * Handles priority fee tracking and calculation for optimized transaction costs.
 	 */
 	private priorityFeeSubscriber!: PriorityFeeSubscriber;
+
+	/**
+	 * Stores whether the user is geographically blocked from using the service.
+	 * This is checked during subscription and cached for decorator use.
+	 */
+	protected _isGeoBlocked: boolean = false;
 
 	/**
 	 * The selected trade market to use for the drift client. This is used to subscribe to the market account,
@@ -250,6 +294,15 @@ export class AuthorityDrift {
 
 	public get tradableMarkets(): MarketId[] {
 		return this._tradableMarkets;
+	}
+
+	/**
+	 * Gets the current geoblock status of the user.
+	 *
+	 * @returns True if the user is geographically blocked, false otherwise
+	 */
+	public get isGeoBlocked(): boolean {
+		return this._isGeoBlocked;
 	}
 
 	/**
@@ -477,8 +530,21 @@ export class AuthorityDrift {
 		this.pollingDlob.stop();
 	}
 
-	// TODO: see if this can be optimized
 	public async subscribe() {
+		const handleGeoBlock = async () => {
+			try {
+				this._isGeoBlocked = (await checkGeoBlock()) ?? false;
+			} catch (error) {
+				console.warn('Failed to check geoblock status:', error);
+				this._isGeoBlocked = false; // Default to not blocked if check fails
+			}
+		};
+
+		// async logic that doesn't require DriftClient to be subscribed
+		const handleGeoBlockPromise = handleGeoBlock();
+		const pollingDlobStartPromise = this.pollingDlob.start();
+		const priorityFeeSubscribePromise = this.priorityFeeSubscriber.subscribe();
+
 		await this._driftClient.subscribe();
 
 		// filter out markets that are delisted
@@ -503,19 +569,16 @@ export class AuthorityDrift {
 		this.subscriptionManager.updateTradableMarkets(actualTradableMarkets);
 		this.setupPollingDlob();
 
-		const pollingDlobStartPromise = this.pollingDlob.start();
-
 		const subscribeToNonWhitelistedButUserInvolvedMarketsPromise =
 			this.subscriptionManager.subscribeToNonWhitelistedButUserInvolvedMarkets(
 				this._driftClient.getUsers()
 			);
 
-		const priorityFeeSubscribePromise = this.priorityFeeSubscriber.subscribe();
-
 		await Promise.all([
 			pollingDlobStartPromise,
 			subscribeToNonWhitelistedButUserInvolvedMarketsPromise,
 			priorityFeeSubscribePromise,
+			handleGeoBlockPromise,
 		]);
 
 		this.subscriptionManager.subscribeToAllUsersUpdates();
@@ -618,6 +681,7 @@ export class AuthorityDrift {
 	 * @param params - Parameters for the perp order
 	 * @returns Promise resolving to the transaction signature
 	 */
+	@enforceGeoBlock
 	public async openPerpOrder(
 		params: PerpOrderParams
 	): Promise<TransactionSignature | SwiftOrderResult> {
