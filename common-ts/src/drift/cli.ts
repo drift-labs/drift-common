@@ -6,9 +6,12 @@ import {
 	PositionDirection,
 	OrderType,
 	PostOnlyParams,
+	SwapMode,
 	BASE_PRECISION,
 	QUOTE_PRECISION,
 	PRICE_PRECISION,
+	MainnetSpotMarkets,
+	DevnetSpotMarkets,
 } from '@drift-labs/sdk';
 import { sign } from 'tweetnacl';
 import { CentralServerDrift } from './Drift/clients/CentralServerDrift';
@@ -45,6 +48,8 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
  *   ts-node cli.ts editOrder --userAccount=11111111111111111111111111111111 --orderId=123 --newLimitPrice=105.5
  *   ts-node cli.ts cancelOrder --userAccount=11111111111111111111111111111111 --orderIds=123,456,789
  *   ts-node cli.ts cancelAllOrders --userAccount=11111111111111111111111111111111 --marketType=perp
+ *   ts-node cli.ts swap --userAccount=11111111111111111111111111111111 --fromMarketIndex=1 --toMarketIndex=0 --fromAmount=1.5 --slippage=100 --swapMode=ExactIn
+ *   ts-node cli.ts swap --userAccount=11111111111111111111111111111111 --fromMarketIndex=1 --toMarketIndex=0 --toAmount=150 --slippage=100 --swapMode=ExactOut
  */
 
 // Shared configuration
@@ -166,6 +171,45 @@ function parsePostOnly(postOnly: string): PostOnlyParams {
 				`Invalid post only: ${postOnly}. Use 'none', 'must_post_only', 'try_post_only', or 'slide'`
 			);
 	}
+}
+
+/**
+ * Parse swap mode string to SwapMode
+ */
+function parseSwapMode(swapMode: string): SwapMode {
+	const normalized = swapMode.toLowerCase();
+	switch (normalized) {
+		case 'exactin':
+		case 'exact_in':
+			return 'ExactIn';
+		case 'exactout':
+		case 'exact_out':
+			return 'ExactOut';
+		default:
+			throw new Error(
+				`Invalid swap mode: ${swapMode}. Use 'ExactIn' or 'ExactOut'`
+			);
+	}
+}
+
+/**
+ * Get the precision for a spot market based on environment and market index
+ */
+function getMarketPrecision(
+	marketIndex: number,
+	isMainnet: boolean = true
+): BN {
+	const markets = isMainnet ? MainnetSpotMarkets : DevnetSpotMarkets;
+	const market = markets.find((m) => m.marketIndex === marketIndex);
+
+	if (!market) {
+		console.warn(
+			`⚠️  Market ${marketIndex} not found, using QUOTE_PRECISION as fallback`
+		);
+		return QUOTE_PRECISION;
+	}
+
+	return market.precision;
 }
 
 /**
@@ -854,6 +898,18 @@ function showUsage(): void {
 	);
 	console.log('');
 
+	console.log('🔄 swap');
+	console.log(
+		'  ts-node cli.ts swap --userAccount=<pubkey> --fromMarketIndex=<num> --toMarketIndex=<num> [--fromAmount=<num>] [--toAmount=<num>] [--slippage=<bps>] [--swapMode=<ExactIn|ExactOut>]'
+	);
+	console.log(
+		'  ExactIn:  ts-node cli.ts swap --userAccount=11111111111111111111111111111111 --fromMarketIndex=1 --toMarketIndex=0 --fromAmount=1.5 --swapMode=ExactIn'
+	);
+	console.log(
+		'  ExactOut: ts-node cli.ts swap --userAccount=11111111111111111111111111111111 --fromMarketIndex=1 --toMarketIndex=0 --toAmount=150 --swapMode=ExactOut'
+	);
+	console.log('');
+
 	console.log('Options:');
 	console.log('  --help, -h          Show this help message');
 	console.log('');
@@ -864,6 +920,13 @@ function showUsage(): void {
 	console.log('  - Direction can be: long, short, buy, sell');
 	console.log(
 		'  - Asset type: base (for native tokens like SOL) or quote (for USDC amounts)'
+	);
+	console.log('  - Swap modes:');
+	console.log(
+		'    * ExactIn: Specify --fromAmount (how much input token to swap)'
+	);
+	console.log(
+		'    * ExactOut: Specify --toAmount (how much output token to receive)'
 	);
 	console.log('  - Ensure your .env file contains ANCHOR_WALLET and ENDPOINT');
 }
@@ -1007,6 +1070,96 @@ async function cancelAllOrdersCommand(args: CliArgs): Promise<void> {
 }
 
 /**
+ * CLI Command: swap
+ */
+async function swapCommand(args: CliArgs): Promise<void> {
+	const userAccount = args.userAccount as string;
+	const fromMarketIndex = parseInt(args.fromMarketIndex as string);
+	const toMarketIndex = parseInt(args.toMarketIndex as string);
+	const fromAmount = args.fromAmount as string;
+	const toAmount = args.toAmount as string;
+	const slippage = args.slippage ? parseInt(args.slippage as string) : 10; // Default 0.1%
+	const swapMode = (args.swapMode as string) || 'ExactIn';
+
+	if (!userAccount || isNaN(fromMarketIndex) || isNaN(toMarketIndex)) {
+		throw new Error(
+			'Required arguments: --userAccount, --fromMarketIndex, --toMarketIndex'
+		);
+	}
+
+	const swapModeEnum = parseSwapMode(swapMode);
+
+	// Validate amount parameters based on swap mode
+	if (swapModeEnum === 'ExactIn') {
+		if (!fromAmount) {
+			throw new Error('ExactIn swap mode requires --fromAmount');
+		}
+		if (toAmount) {
+			console.warn(
+				'⚠️  Warning: --toAmount ignored in ExactIn mode, using --fromAmount'
+			);
+		}
+	} else if (swapModeEnum === 'ExactOut') {
+		if (!toAmount) {
+			throw new Error('ExactOut swap mode requires --toAmount');
+		}
+		if (fromAmount) {
+			console.warn(
+				'⚠️  Warning: --fromAmount ignored in ExactOut mode, using --toAmount'
+			);
+		}
+	}
+
+	const userAccountPubkey = new PublicKey(userAccount);
+
+	// Use the appropriate amount based on swap mode
+	const amount = swapModeEnum === 'ExactIn' ? fromAmount : toAmount;
+
+	// Determine which market to use for precision (input market for ExactIn, output market for ExactOut)
+	const precisionMarketIndex =
+		swapModeEnum === 'ExactIn' ? fromMarketIndex : toMarketIndex;
+
+	// Get the appropriate precision for the amount based on the market
+	const isMainnet = true; // Default to mainnet, could be made configurable
+	const precision = getMarketPrecision(precisionMarketIndex, isMainnet);
+	const amountBN = parseAmount(amount, precision);
+
+	console.log('--- 🔄 Swap Transaction ---');
+	console.log(`👤 User Account: ${userAccount}`);
+	console.log(`📤 From Market Index: ${fromMarketIndex}`);
+	console.log(`📥 To Market Index: ${toMarketIndex}`);
+	console.log(`🔄 Swap Mode: ${swapMode}`);
+	console.log(
+		`🎯 Using precision from market ${precisionMarketIndex}: ${precision.toString()}`
+	);
+
+	if (swapModeEnum === 'ExactIn') {
+		console.log(
+			`💰 From Amount: ${fromAmount} (${amountBN.toString()} raw units)`
+		);
+		console.log(`💰 To Amount: Will be calculated based on quote`);
+	} else {
+		console.log(`💰 From Amount: Will be calculated based on quote`);
+		console.log(`💰 To Amount: ${toAmount} (${amountBN.toString()} raw units)`);
+	}
+
+	console.log(`📊 Slippage: ${slippage} BPS (${slippage / 100}%)`);
+
+	const swapTxn = await centralServerDrift.getSwapTxn(
+		userAccountPubkey,
+		fromMarketIndex,
+		toMarketIndex,
+		amountBN,
+		{
+			slippageBps: slippage,
+			swapMode: swapModeEnum,
+		}
+	);
+
+	await executeTransaction(swapTxn as VersionedTransaction, 'Swap');
+}
+
+/**
  * Main CLI entry point
  */
 async function main(): Promise<void> {
@@ -1063,6 +1216,9 @@ async function main(): Promise<void> {
 		case 'cancelAllOrders':
 			await cancelAllOrdersCommand(parsedArgs);
 			break;
+		case 'swap':
+			await swapCommand(parsedArgs);
+			break;
 		default:
 			console.error(`❌ Unknown command: ${command}`);
 			console.error('');
@@ -1085,4 +1241,4 @@ if (require.main === module) {
 		});
 }
 
-export { main, parseArgs, parseAmount, parseDirection };
+export { main, parseArgs, parseAmount, parseDirection, parseSwapMode };
