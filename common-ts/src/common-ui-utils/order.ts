@@ -46,7 +46,7 @@ const getOrderLabelFromOrderDetails = (
 		return UI_ORDER_TYPES.oracle.label;
 
 	if (matchEnum(orderDetails.orderType, OrderType.TRIGGER_MARKET)) {
-		if (
+		const isTriggered =
 			matchEnum(
 				orderDetails.triggerCondition,
 				OrderTriggerCondition.TRIGGERED_ABOVE
@@ -54,38 +54,45 @@ const getOrderLabelFromOrderDetails = (
 			matchEnum(
 				orderDetails.triggerCondition,
 				OrderTriggerCondition.TRIGGERED_BELOW
-			)
-		) {
+			);
+		if (isTriggered) {
 			return 'Market (Triggered)';
 		}
 
-		if (matchEnum(orderDetails.triggerCondition, OrderTriggerCondition.ABOVE)) {
-			return matchEnum(
-				orderDetails.existingPositionDirection,
-				PositionDirection.SHORT
-			)
-				? matchEnum(orderDetails.direction, PositionDirection.SHORT)
-					? 'Trigger Market'
-					: UI_ORDER_TYPES.stopMarket.label
-				: matchEnum(orderDetails.direction, PositionDirection.SHORT)
-				? UI_ORDER_TYPES.takeProfitMarket.label
-				: UI_ORDER_TYPES.stopMarket.label;
+		const isTriggerAbove = matchEnum(
+			orderDetails.triggerCondition,
+			OrderTriggerCondition.ABOVE
+		);
+		const isExistingPositionShort = matchEnum(
+			orderDetails.existingPositionDirection,
+			PositionDirection.SHORT
+		);
+		const isOrderDirectionShort = matchEnum(
+			orderDetails.direction,
+			PositionDirection.SHORT
+		);
+
+		if (isTriggerAbove) {
+			return isExistingPositionShort
+				? isOrderDirectionShort
+					? 'Trigger Market' // trigger above, existing position short, order direction short
+					: UI_ORDER_TYPES.stopMarket.label // trigger above, existing position short, order direction long
+				: isOrderDirectionShort
+				? UI_ORDER_TYPES.takeProfitMarket.label // trigger above, existing position long, order direction short
+				: 'Trigger Market'; // trigger above, existing position long, order direction long
 		} else {
-			return matchEnum(
-				orderDetails.existingPositionDirection,
-				PositionDirection.SHORT
-			)
-				? matchEnum(orderDetails.direction, PositionDirection.SHORT)
-					? 'Trigger Market'
-					: UI_ORDER_TYPES.takeProfitMarket.label
-				: matchEnum(orderDetails.direction, PositionDirection.SHORT)
-				? UI_ORDER_TYPES.stopMarket.label
-				: UI_ORDER_TYPES.takeProfitMarket.label;
+			return isExistingPositionShort
+				? isOrderDirectionShort
+					? 'Trigger Market' // trigger below, existing position short, order direction short
+					: UI_ORDER_TYPES.takeProfitMarket.label // trigger below, existing position short, order direction long
+				: isOrderDirectionShort
+				? UI_ORDER_TYPES.stopMarket.label // trigger below, existing position long, order direction short
+				: 'Trigger Market'; // trigger below, existing position long, order direction long
 		}
 	}
 
 	if (matchEnum(orderDetails.orderType, OrderType.TRIGGER_LIMIT)) {
-		if (
+		const isTriggered =
 			matchEnum(
 				orderDetails.triggerCondition,
 				OrderTriggerCondition.TRIGGERED_ABOVE
@@ -93,29 +100,41 @@ const getOrderLabelFromOrderDetails = (
 			matchEnum(
 				orderDetails.triggerCondition,
 				OrderTriggerCondition.TRIGGERED_BELOW
-			)
-		) {
+			);
+
+		const isTriggerAbove = matchEnum(
+			orderDetails.triggerCondition,
+			OrderTriggerCondition.ABOVE
+		);
+		const isExistingPositionLong = matchEnum(
+			orderDetails.existingPositionDirection,
+			PositionDirection.LONG
+		);
+		const isOrderDirectionLong = matchEnum(
+			orderDetails.direction,
+			PositionDirection.LONG
+		);
+
+		if (isTriggered) {
 			return 'Limit (Triggered)';
 		}
 
-		if (matchEnum(orderDetails.triggerCondition, OrderTriggerCondition.ABOVE)) {
-			return matchEnum(
-				orderDetails.existingPositionDirection,
-				PositionDirection.LONG
-			)
-				? matchEnum(orderDetails.direction, PositionDirection.LONG)
-					? 'Stop Limit'
-					: UI_ORDER_TYPES.takeProfitLimit.label
-				: UI_ORDER_TYPES.stopLimit.label;
+		if (isTriggerAbove) {
+			return isExistingPositionLong
+				? isOrderDirectionLong
+					? 'Trigger Limit' // trigger above, existing position long, order direction long
+					: UI_ORDER_TYPES.takeProfitLimit.label // trigger above, existing position long, order direction short
+				: isExistingPositionLong
+				? UI_ORDER_TYPES.stopLimit.label // trigger above, existing position short, order direction long
+				: 'Trigger Limit'; // trigger above, existing position short, order direction short
 		} else {
-			return matchEnum(
-				orderDetails.existingPositionDirection,
-				PositionDirection.LONG
-			)
-				? UI_ORDER_TYPES.stopLimit.label
-				: matchEnum(orderDetails.direction, PositionDirection.SHORT)
-				? 'Stop Limit'
-				: UI_ORDER_TYPES.takeProfitLimit.label;
+			return isExistingPositionLong
+				? isOrderDirectionLong
+					? 'Trigger Limit' // trigger below, existing position long, order direction long
+					: UI_ORDER_TYPES.stopLimit.label // trigger below, existing position long, order direction short
+				: isExistingPositionLong
+				? UI_ORDER_TYPES.takeProfitLimit.label // trigger below, existing position short, order direction long
+				: 'Trigger Limit'; // trigger below, existing position short, order direction short
 		}
 	}
 
