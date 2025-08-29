@@ -19,18 +19,18 @@ export class OraclePriceCache {
 	}
 
 	public updateOraclePrices(
-		...oraclePrices: { marketKey: MarketKey; price: BN; lastUpdateSlot: BN }[]
+		...oraclePrices: (OraclePriceData & { marketKey: MarketKey })[]
 	) {
-		const updatedOraclePrices = {};
+		const updatedOraclePrices: OraclePriceLookup = {};
 
-		oraclePrices.forEach(({ marketKey, price, lastUpdateSlot }) => {
+		oraclePrices.forEach(({ marketKey, ...oraclePriceData }) => {
 			const prevOraclePriceState = this._store[marketKey];
 
 			if (
 				!prevOraclePriceState?.slot ||
-				prevOraclePriceState.slot.lt(lastUpdateSlot)
+				prevOraclePriceState.slot.lt(oraclePriceData.slot)
 			) {
-				updatedOraclePrices[marketKey] = { price, lastUpdateSlot };
+				updatedOraclePrices[marketKey] = oraclePriceData;
 			}
 		});
 

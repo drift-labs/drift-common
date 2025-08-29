@@ -490,8 +490,7 @@ export class AuthorityDrift {
 				const updatedOraclePrices = data.map((marketData) => {
 					return {
 						marketKey: marketData.marketId.key,
-						price: marketData.data.oracleData.price,
-						lastUpdateSlot: marketData.data.oracleData.slot,
+						...marketData.data.oracleData,
 					};
 				});
 
@@ -588,7 +587,7 @@ export class AuthorityDrift {
 
 	public async unsubscribe() {
 		this.unsubscribeFromPollingDlob();
-		this._userAccountCache.reset();
+		this._userAccountCache.destroy();
 
 		const driftClientUnsubscribePromise = this._driftClient.unsubscribe();
 		const priorityFeeUnsubscribePromise =
@@ -632,7 +631,7 @@ export class AuthorityDrift {
 	 *
 	 * @param selectedTradeMarket - The new market to prioritize for trading
 	 */
-	public async updateSelectedTradeMarket(selectedTradeMarket: MarketId) {
+	public updateSelectedTradeMarket(selectedTradeMarket: MarketId) {
 		// Update the local reference
 		this.selectedTradeMarket = selectedTradeMarket;
 

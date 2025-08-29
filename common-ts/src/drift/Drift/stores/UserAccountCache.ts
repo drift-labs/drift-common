@@ -6,7 +6,7 @@ import {
 	User,
 	ZERO,
 } from '@drift-labs/sdk';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import {
 	getSpotBalanceInfo,
 	SpotBalanceInfo,
@@ -55,6 +55,7 @@ export class UserAccountCache {
 	private driftClient: DriftClient;
 	private oraclePriceStore: OraclePriceCache;
 	private markPriceStore: MarkPriceCache;
+	private subscriptions: Subscription[] = [];
 
 	constructor(
 		driftClient: DriftClient,
@@ -64,6 +65,19 @@ export class UserAccountCache {
 		this.driftClient = driftClient;
 		this.oraclePriceStore = oraclePriceStore;
 		this.markPriceStore = markPriceStore;
+
+		// Subscribe to price store updates to re-process all users
+		this.subscriptions.push(
+			this.oraclePriceStore.onUpdate(() => {
+				this.reprocessAllUsers();
+			})
+		);
+
+		this.subscriptions.push(
+			this.markPriceStore.onUpdate(() => {
+				this.reprocessAllUsers();
+			})
+		);
 	}
 
 	get store() {
@@ -154,8 +168,22 @@ export class UserAccountCache {
 		this.updatesSubject$.next(accountData);
 	}
 
+	private reprocessAllUsers(): void {
+		Object.values(this._store).forEach((accountData) => {
+			this.updateUserAccount(accountData.userClient);
+		});
+	}
+
 	public reset(): void {
 		this._store = {};
+	}
+
+	public destroy(): void {
+		this.reset();
+		this.subscriptions.forEach((subscription) => {
+			subscription.unsubscribe();
+		});
+		this.subscriptions = [];
 	}
 
 	public getUser(
