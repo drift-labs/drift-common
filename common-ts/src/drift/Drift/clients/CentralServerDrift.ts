@@ -9,6 +9,7 @@ import {
 	DriftClient,
 	DriftClientConfig,
 	DriftEnv,
+	JupiterClient,
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
 	MarketType,
@@ -17,7 +18,9 @@ import {
 	PositionDirection,
 	PostOnlyParams,
 	PublicKey,
+	QuoteResponse,
 	SpotMarketConfig,
+	SwapMode,
 	User,
 	WhileValidTxSender,
 } from '@drift-labs/sdk';
@@ -43,6 +46,7 @@ import {
 import { createOpenPerpNonMarketOrderTxn } from '../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 import { createEditOrderTxn } from '../../base/actions/trade/editOrder';
 import { createCancelOrdersTxn } from '../../base/actions/trade/cancelOrder';
+import { createSwapTxn } from '../../base/actions/trade/swap';
 import { NonMarketOrderParamsConfig } from '../../utils/orderParams';
 
 /**
@@ -176,8 +180,9 @@ export class CentralServerDrift {
 
 			// Update wallet in all places that reference it
 			this.driftClient.wallet = userWallet;
+			//@ts-ignore
+			this.driftClient.provider.wallet = userWallet;
 			this.driftClient.txHandler.updateWallet(userWallet);
-			// Note: We don't update provider.wallet because it's readonly, but TxHandler should be sufficient
 
 			// Execute the operation
 			const result = await operation(user);
@@ -485,6 +490,80 @@ export class CentralServerDrift {
 				const cancelAllOrdersTxn = await this.driftClient.buildTransaction(ix);
 
 				return cancelAllOrdersTxn;
+			}
+		);
+	}
+
+	/**
+	 * Create a swap transaction between two spot markets using Jupiter
+	 */
+	public async getSwapTxn(
+		userAccountPublicKey: PublicKey,
+		fromMarketIndex: number,
+		toMarketIndex: number,
+		amount: BN,
+		options?: {
+			slippageBps?: number;
+			swapMode?: SwapMode;
+			onlyDirectRoutes?: boolean;
+			quote?: QuoteResponse;
+		}
+	): Promise<VersionedTransaction | Transaction> {
+		return this.driftClientContextWrapper(
+			userAccountPublicKey,
+			async (user) => {
+				const fromSpotMarketConfig = this.spotMarketConfigs.find(
+					(market) => market.marketIndex === fromMarketIndex
+				);
+				const toSpotMarketConfig = this.spotMarketConfigs.find(
+					(market) => market.marketIndex === toMarketIndex
+				);
+
+				if (!fromSpotMarketConfig) {
+					throw new Error(
+						`From spot market config not found for index ${fromMarketIndex}`
+					);
+				}
+
+				if (!toSpotMarketConfig) {
+					throw new Error(
+						`To spot market config not found for index ${toMarketIndex}`
+					);
+				}
+
+				// Initialize Jupiter client
+				const jupiterClient = new JupiterClient({
+					connection: this.driftClient.connection,
+				});
+
+				// Get quote if not provided
+				let quote = options?.quote;
+				if (!quote) {
+					quote = await jupiterClient.getQuote({
+						inputMint: fromSpotMarketConfig.mint,
+						outputMint: toSpotMarketConfig.mint,
+						amount,
+						slippageBps: options?.slippageBps ?? 10, // Default 0.1%
+						swapMode: options?.swapMode ?? 'ExactIn',
+						onlyDirectRoutes: options?.onlyDirectRoutes ?? false,
+					});
+				}
+
+				const swapTxn = await createSwapTxn({
+					driftClient: this.driftClient,
+					jupiterClient,
+					user,
+					swapFromMarketIndex: fromMarketIndex,
+					swapToMarketIndex: toMarketIndex,
+					amount,
+					quote,
+					txParams: {
+						useSimulatedComputeUnits: true,
+						computeUnitsBufferMultiplier: 1.5,
+					},
+				});
+
+				return swapTxn;
 			}
 		);
 	}
