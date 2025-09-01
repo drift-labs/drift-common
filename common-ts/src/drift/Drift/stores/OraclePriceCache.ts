@@ -14,10 +14,6 @@ export class OraclePriceCache {
 		return { ...this._store };
 	}
 
-	get updatesSubject() {
-		return this.updatesSubject$;
-	}
-
 	public updateOraclePrices(
 		...oraclePrices: (OraclePriceData & { marketKey: MarketKey })[]
 	) {
@@ -70,5 +66,9 @@ export class OraclePriceCache {
 		});
 
 		return subscription;
+	}
+
+	public destroy(): void {
+		this.updatesSubject$.complete();
 	}
 }

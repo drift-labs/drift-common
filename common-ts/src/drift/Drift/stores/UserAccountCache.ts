@@ -184,6 +184,7 @@ export class UserAccountCache {
 			subscription.unsubscribe();
 		});
 		this.subscriptions = [];
+		this.updatesSubject$.complete();
 	}
 
 	public getUser(

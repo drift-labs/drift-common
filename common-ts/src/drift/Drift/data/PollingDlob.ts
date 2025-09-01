@@ -18,6 +18,11 @@ export interface PollingInterval {
 	intervalMultiplier: number;
 	depth: number;
 	markets: Set<MarketKey>;
+	/**
+	 * Used to track markets that were added to an interval in the current tick, so that they get polled on the next tick regardless of interval multiplier.
+	 * Otherwise, they would only get polled on the next interval, which could be a long time if the interval multiplier is high.
+	 */
+	newlyAddedMarkets: Set<MarketKey>;
 }
 
 export interface MarketPollingData {
@@ -128,8 +133,15 @@ export class PollingDlob {
 		};
 	}
 
-	get marketToIntervalMap(): Map<MarketKey, string> {
-		return this._marketToIntervalMap;
+	public getPollingIntervalForMarket(
+		marketKey: MarketKey
+	): PollingInterval | undefined {
+		const intervalId = this._marketToIntervalMap.get(marketKey);
+		if (!intervalId) {
+			return undefined;
+		}
+
+		return this.intervals.get(intervalId);
 	}
 
 	public addInterval(
@@ -146,6 +158,7 @@ export class PollingDlob {
 			intervalMultiplier,
 			depth,
 			markets: new Set(),
+			newlyAddedMarkets: new Set(),
 		});
 	}
 
@@ -166,6 +179,7 @@ export class PollingDlob {
 	/**
 	 * Add a market to an interval.
 	 * If the market is already in an interval, it will be removed from the existing interval.
+	 * Newly added markets will be polled on the next tick regardless of interval multiplier.
 	 */
 	public addMarketToInterval(intervalId: string, marketKey: MarketKey): void {
 		const interval = this.intervals.get(intervalId);
@@ -186,6 +200,8 @@ export class PollingDlob {
 		}
 
 		interval.markets.add(marketKey);
+		// Mark as newly added so it gets polled on the next tick
+		interval.newlyAddedMarkets.add(marketKey);
 		this._marketToIntervalMap.set(marketKey, intervalId);
 	}
 
@@ -208,6 +224,7 @@ export class PollingDlob {
 		}
 
 		interval.markets.delete(marketKey);
+		interval.newlyAddedMarkets.delete(marketKey);
 		this._marketToIntervalMap.delete(marketKey);
 	}
 
@@ -351,10 +368,15 @@ export class PollingDlob {
 		// Find intervals that should be polled this tick
 		const intervalsToPoll = Array.from(this.intervals.values()).filter(
 			(interval) => {
+				const hasMarkets = interval.markets.size > 0;
+				const hasNewlyAddedMarkets = interval.newlyAddedMarkets.size > 0;
+				const isFirstTick = this.tickCounter === 1;
+				const isRegularInterval =
+					this.tickCounter % interval.intervalMultiplier === 0;
+
 				return (
-					interval.markets.size > 0 &&
-					(this.tickCounter === 1 || // run all intervals on first tick
-						this.tickCounter % interval.intervalMultiplier === 0)
+					hasMarkets &&
+					(isFirstTick || isRegularInterval || hasNewlyAddedMarkets)
 				);
 			}
 		);
@@ -413,6 +435,11 @@ export class PollingDlob {
 				this.consecutiveEmptyResponseCount = 0;
 				this.consecutiveErrorCount = 0;
 				this.dataSubject.next(allMarketPollingData);
+
+				// Clear newly added markets flags for intervals that were polled
+				intervalsToPoll.forEach((interval) => {
+					interval.newlyAddedMarkets.clear();
+				});
 			} else {
 				this.consecutiveEmptyResponseCount++;
 				if (

@@ -133,7 +133,7 @@ export class AuthorityDrift {
 	 * Handles polling the DLOB server for mark price and oracle price data for markets.
 	 * It is also the fallback source for orderbook data, if the websocket DLOB subscriber is unavailable.
 	 */
-	private pollingDlob!: PollingDlob;
+	private _pollingDlob!: PollingDlob;
 
 	/**
 	 * Subscription to the polling DLOB data.
@@ -280,6 +280,10 @@ export class AuthorityDrift {
 		return this._driftClient.wallet.publicKey;
 	}
 
+	public get pollingDlob(): PollingDlob {
+		return this._pollingDlob;
+	}
+
 	public get oraclePriceCache(): OraclePriceLookup {
 		return this._oraclePriceCache.store;
 	}
@@ -356,7 +360,7 @@ export class AuthorityDrift {
 	}
 
 	private initializePollingDlob(driftDlobServerHttpUrl: string) {
-		this.pollingDlob = new PollingDlob({
+		this._pollingDlob = new PollingDlob({
 			driftDlobServerHttpUrl: driftDlobServerHttpUrl,
 		});
 	}
@@ -458,24 +462,24 @@ export class AuthorityDrift {
 	}
 
 	private setupPollingDlob() {
-		this.pollingDlob.addInterval(PollingCategory.ORDERBOOK, 1, 100); // used to get orderbook data. this is mainly used as a fallback from the Websocket DLOB subscriber
-		this.pollingDlob.addInterval(PollingCategory.SELECTED_MARKET, 1, 1); // used to get the mark price at a higher frequency for the current active market (e.g. market that the user is trading on). this won't be needed when the websocket DLOB is set up
-		this.pollingDlob.addInterval(PollingCategory.USER_INVOLVED, 2, 1); // markets that the user is involved in
-		this.pollingDlob.addInterval(PollingCategory.USER_NOT_INVOLVED, 30, 1); // markets that the user is not involved in
+		this._pollingDlob.addInterval(PollingCategory.ORDERBOOK, 1, 100); // used to get orderbook data. this is mainly used as a fallback from the Websocket DLOB subscriber
+		this._pollingDlob.addInterval(PollingCategory.SELECTED_MARKET, 1, 1); // used to get the mark price at a higher frequency for the current active market (e.g. market that the user is trading on). this won't be needed when the websocket DLOB is set up
+		this._pollingDlob.addInterval(PollingCategory.USER_INVOLVED, 2, 1); // markets that the user is involved in
+		this._pollingDlob.addInterval(PollingCategory.USER_NOT_INVOLVED, 30, 1); // markets that the user is not involved in
 
 		// add all markets to the user-not-involved interval first, until user-involved markets are known
-		this.pollingDlob.addMarketsToInterval(
+		this._pollingDlob.addMarketsToInterval(
 			'user-not-involved',
 			this._tradableMarkets.map((market) => market.key)
 		);
 		if (this.selectedTradeMarket) {
-			this.pollingDlob.addMarketToInterval(
+			this._pollingDlob.addMarketToInterval(
 				'active-market',
 				this.selectedTradeMarket.key
 			);
 		}
 
-		this.pollingDlobSubscription = this.pollingDlob
+		this.pollingDlobSubscription = this._pollingDlob
 			.onData()
 			.subscribe((data) => {
 				const updatedMarkPrices = data.map((marketData) => {
@@ -515,7 +519,7 @@ export class AuthorityDrift {
 		this.subscriptionManager = new SubscriptionManager(
 			this._driftClient,
 			this.accountLoader,
-			this.pollingDlob,
+			this._pollingDlob,
 			this._userAccountCache,
 			this._tradableMarkets,
 			this.selectedTradeMarket
@@ -526,7 +530,7 @@ export class AuthorityDrift {
 		this.pollingDlobSubscription?.unsubscribe();
 		this.pollingDlobSubscription = null;
 
-		this.pollingDlob.stop();
+		this._pollingDlob.stop();
 	}
 
 	public async subscribe() {
@@ -541,7 +545,7 @@ export class AuthorityDrift {
 
 		// async logic that doesn't require DriftClient to be subscribed
 		const handleGeoBlockPromise = handleGeoBlock();
-		const pollingDlobStartPromise = this.pollingDlob.start();
+		const pollingDlobStartPromise = this._pollingDlob.start();
 		const priorityFeeSubscribePromise = this.priorityFeeSubscriber.subscribe();
 
 		await this._driftClient.subscribe();
@@ -588,6 +592,8 @@ export class AuthorityDrift {
 	public async unsubscribe() {
 		this.unsubscribeFromPollingDlob();
 		this._userAccountCache.destroy();
+		this._markPriceCache.destroy();
+		this._oraclePriceCache.destroy();
 
 		const driftClientUnsubscribePromise = this._driftClient.unsubscribe();
 		const priorityFeeUnsubscribePromise =

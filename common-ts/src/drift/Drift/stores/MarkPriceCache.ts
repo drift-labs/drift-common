@@ -21,10 +21,6 @@ export class MarkPriceCache {
 		return { ...this._store };
 	}
 
-	get updatesSubject() {
-		return this.updatesSubject$;
-	}
-
 	public updateMarkPrices(
 		...markPrices: ({
 			marketKey: MarketKey;
@@ -83,5 +79,9 @@ export class MarkPriceCache {
 		});
 
 		return subscription;
+	}
+
+	public destroy(): void {
+		this.updatesSubject$.complete();
 	}
 }
