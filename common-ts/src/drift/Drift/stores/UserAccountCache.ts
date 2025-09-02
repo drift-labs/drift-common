@@ -26,7 +26,7 @@ import { MarkPriceCache } from './MarkPriceCache';
 import { getOrderDetails } from '../../base/details/user/orders';
 import { ENUM_UTILS } from '../../../utils';
 
-export type AccountData = {
+export type EnhancedAccountData = {
 	authority: PublicKey;
 	pubKey: PublicKey;
 	subAccountId: number;
@@ -47,11 +47,11 @@ export type AccountData = {
  */
 export type UserAccountKey = `${number}_${string}`;
 
-export type UserAccountLookup = Record<UserAccountKey, AccountData>; // we use UserAccountKey because this store can store multiple accounts with the same subAccountId, but from different authorities
+export type UserAccountLookup = Record<UserAccountKey, EnhancedAccountData>; // we use UserAccountKey because this store can store multiple accounts with the same subAccountId, but from different authorities
 
 export class UserAccountCache {
 	private _store: UserAccountLookup = {};
-	private updatesSubject$ = new Subject<AccountData>();
+	private updatesSubject$ = new Subject<EnhancedAccountData>();
 	private driftClient: DriftClient;
 	private oraclePriceStore: OraclePriceCache;
 	private markPriceStore: MarkPriceCache;
@@ -95,7 +95,7 @@ export class UserAccountCache {
 		return `${subAccountId}_${authority.toString()}`;
 	}
 
-	private processAccountData(user: User): AccountData {
+	private processAccountData(user: User): EnhancedAccountData {
 		const userAccount = user.getUserAccount();
 		const positionsInfo = userAccount.perpPositions
 			.filter(
@@ -190,13 +190,13 @@ export class UserAccountCache {
 	public getUser(
 		subAccountId: number,
 		authority: PublicKey | string
-	): AccountData | undefined {
+	): EnhancedAccountData | undefined {
 		return this._store[
 			UserAccountCache.getUserAccountKey(subAccountId, authority)
 		];
 	}
 
-	public onUpdate(callback: (userAccount: AccountData) => void) {
+	public onUpdate(callback: (userAccount: EnhancedAccountData) => void) {
 		const subscription = this.updatesSubject$.subscribe((userAccount) => {
 			callback(userAccount);
 		});

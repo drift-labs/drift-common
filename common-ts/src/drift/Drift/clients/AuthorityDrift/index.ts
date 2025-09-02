@@ -44,7 +44,7 @@ import {
 import { DriftL2OrderbookManager } from './DriftL2OrderbookManager';
 import { Subscription } from 'rxjs';
 import {
-	AccountData,
+	EnhancedAccountData,
 	UserAccountCache,
 	UserAccountLookup,
 } from '../../stores/UserAccountCache';
@@ -690,7 +690,9 @@ export class AuthorityDrift {
 		return this._markPriceCache.onUpdate(callback);
 	}
 
-	public onUserAccountUpdate(callback: (userAccount: AccountData) => void) {
+	public onUserAccountUpdate(
+		callback: (userAccount: EnhancedAccountData) => void
+	) {
 		return this._userAccountCache.onUpdate(callback);
 	}
 
