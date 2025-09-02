@@ -17,7 +17,6 @@ export const DELISTED_MARKET_STATUSES = [
 ];
 
 export enum PollingCategory {
-	ORDERBOOK = 'orderbook',
 	SELECTED_MARKET = 'selected-market',
 	USER_INVOLVED = 'user-involved',
 	USER_NOT_INVOLVED = 'user-not-involved',

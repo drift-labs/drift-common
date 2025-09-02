@@ -16,6 +16,8 @@ import {
 	USER_NOT_INVOLVED_MARKET_ACCOUNT_POLLING_CADENCE,
 } from '../../constants';
 import { UserAccountCache } from '../../stores/UserAccountCache';
+import { DriftL2OrderbookManager } from './DriftL2OrderbookManager';
+import { DEFAULT_ORDERBOOK_SUBSCRIPTION_CONFIG } from '../../constants/orderbook';
 
 /**
  * Comprehensive subscription and market operations manager for the Drift protocol.
@@ -23,9 +25,10 @@ import { UserAccountCache } from '../../stores/UserAccountCache';
  * This class handles all aspects of subscription management including:
  * - User account subscriptions and event listeners
  * - Market account and oracle polling optimization
- * - DLOB server polling configuration
+ * 	- Markets are categorized based on user involvement, and polling cadences are updated accordingly
+ * - DLOB server polling configuration (for lesser used markets)
+ * - DLOB server websocket subscription configuration (for selected trade market). Used to get orderbook data too.
  * - Authority (wallet) management with full resubscription
- * - Market categorization based on user involvement
  *
  * By combining subscription and market operations, this provides a unified
  * interface for all subscription-related optimizations.
@@ -45,6 +48,7 @@ export class SubscriptionManager {
 		private driftClient: DriftClient,
 		private accountLoader: CustomizedCadenceBulkAccountLoader,
 		private pollingDlob: PollingDlob,
+		private orderbookManager: DriftL2OrderbookManager,
 		private userAccountCache: UserAccountCache,
 		private tradableMarkets: MarketId[],
 		private selectedTradeMarket: MarketId | null
@@ -210,15 +214,8 @@ export class SubscriptionManager {
 	 */
 	private updatePollingDlobIntervals(
 		userInvolvedMarkets: MarketKey[],
-		userNotInvolvedMarkets: MarketKey[],
-		selectedTradeMarket?: MarketId | null
+		userNotInvolvedMarkets: MarketKey[]
 	): void {
-		if (selectedTradeMarket) {
-			this.pollingDlob.addMarketToInterval(
-				PollingCategory.SELECTED_MARKET,
-				selectedTradeMarket.key
-			);
-		}
 		this.pollingDlob.addMarketsToInterval(
 			PollingCategory.USER_INVOLVED,
 			userInvolvedMarkets
@@ -264,8 +261,8 @@ export class SubscriptionManager {
 		// Handle polling dlob polling intervals
 		this.updatePollingDlobIntervals(
 			filteredUserInvolvedMarkets.map((market) => market.key),
-			filteredUserNotInvolvedMarkets.map((market) => market.key),
-			this.selectedTradeMarket
+			filteredUserNotInvolvedMarkets.map((market) => market.key)
+			// this.selectedTradeMarket
 		);
 	}
 
@@ -319,6 +316,32 @@ export class SubscriptionManager {
 		).subscribe();
 	}
 
+	private checkIsUserInvolvedInMarket(marketId: MarketId): boolean {
+		let isUserInvolvedInPreviousSelectedTradeMarket = false;
+		const allUsers = this.userAccountCache.allUsers;
+		for (const user of allUsers) {
+			const { activePerpPositions, activeSpotPositions } =
+				user.userClient.getActivePositions();
+
+			if (
+				marketId.isPerp &&
+				activePerpPositions.includes(marketId.marketIndex)
+			) {
+				isUserInvolvedInPreviousSelectedTradeMarket = true;
+				break;
+			}
+			if (
+				marketId.isSpot &&
+				activeSpotPositions.includes(marketId.marketIndex)
+			) {
+				isUserInvolvedInPreviousSelectedTradeMarket = true;
+				break;
+			}
+		}
+
+		return isUserInvolvedInPreviousSelectedTradeMarket;
+	}
+
 	/**
 	 * Updates the selected trade market and optimizes all subscription polling accordingly.
 	 *
@@ -331,46 +354,14 @@ export class SubscriptionManager {
 	 *
 	 * @param newSelectedTradeMarket - The new market to prioritize for trading
 	 */
-	updateSelectedTradeMarket(newSelectedTradeMarket: MarketId): void {
+	updateSelectedTradeMarket(newSelectedTradeMarket: MarketId | null): void {
 		const previousSelectedTradeMarket = this.selectedTradeMarket;
 
+		this.orderbookManager.unsubscribe();
+
 		if (previousSelectedTradeMarket) {
-			this.pollingDlob.removeMarketFromInterval(
-				PollingCategory.SELECTED_MARKET,
-				previousSelectedTradeMarket.key
-			);
-		}
-
-		// Update the selected trade market
-		this.selectedTradeMarket = newSelectedTradeMarket;
-
-		this.pollingDlob.addMarketToInterval(
-			PollingCategory.SELECTED_MARKET,
-			newSelectedTradeMarket.key
-		);
-		this.updateMarketAccountCadence(
-			newSelectedTradeMarket,
-			SELECTED_MARKET_ACCOUNT_POLLING_CADENCE
-		);
-
-		// Handle the previous selected market if it exists
-		if (previousSelectedTradeMarket) {
-			// Determine if user is involved in the previous market
-			let isUserInvolvedInPreviousSelectedTradeMarket = false;
-			const allUsers = this.userAccountCache.allUsers;
-			for (const user of allUsers) {
-				const { activePerpPositions, activeSpotPositions } =
-					user.userClient.getActivePositions();
-				if (
-					activePerpPositions.includes(
-						previousSelectedTradeMarket.marketIndex
-					) ||
-					activeSpotPositions.includes(previousSelectedTradeMarket.marketIndex)
-				) {
-					isUserInvolvedInPreviousSelectedTradeMarket = true;
-					break;
-				}
-			}
+			const isUserInvolvedInPreviousSelectedTradeMarket =
+				this.checkIsUserInvolvedInMarket(previousSelectedTradeMarket);
 
 			const pollingCategoryOfPreviousSelectedMarket =
 				isUserInvolvedInPreviousSelectedTradeMarket
@@ -378,7 +369,7 @@ export class SubscriptionManager {
 					: PollingCategory.USER_NOT_INVOLVED;
 			this.pollingDlob.addMarketToInterval(
 				pollingCategoryOfPreviousSelectedMarket,
-				newSelectedTradeMarket.key
+				previousSelectedTradeMarket.key
 			);
 
 			const pollingCadenceOfPreviousSelectedMarket =
@@ -389,6 +380,33 @@ export class SubscriptionManager {
 				previousSelectedTradeMarket,
 				pollingCadenceOfPreviousSelectedMarket
 			);
+		}
+
+		// Update the selected trade market
+		this.selectedTradeMarket = newSelectedTradeMarket;
+
+		if (newSelectedTradeMarket) {
+			const isUserInvolvedInNewSelectedTradeMarket =
+				this.checkIsUserInvolvedInMarket(newSelectedTradeMarket);
+
+			const pollingCategoryOfNewsSelectedMarket =
+				isUserInvolvedInNewSelectedTradeMarket
+					? PollingCategory.USER_INVOLVED
+					: PollingCategory.USER_NOT_INVOLVED;
+			this.pollingDlob.removeMarketFromInterval(
+				pollingCategoryOfNewsSelectedMarket,
+				newSelectedTradeMarket.key
+			);
+
+			this.updateMarketAccountCadence(
+				newSelectedTradeMarket,
+				SELECTED_MARKET_ACCOUNT_POLLING_CADENCE
+			);
+
+			this.orderbookManager.updateSubscription({
+				...DEFAULT_ORDERBOOK_SUBSCRIPTION_CONFIG,
+				marketId: newSelectedTradeMarket,
+			});
 		}
 	}
 

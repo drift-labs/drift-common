@@ -30,13 +30,18 @@ import {
 } from '../../constants';
 import { MarketId } from '../../../../types';
 import { MARKET_UTILS } from '../../../../common-ui-utils/market';
-import { PollingDlob } from '../../data/PollingDlob';
+import {
+	POLLING_DEPTHS,
+	POLLING_INTERVALS,
+	PollingDlob,
+} from '../../data/PollingDlob';
 import { EnvironmentConstants } from '../../../../EnvironmentConstants';
 import { MarkPriceLookup, MarkPriceCache } from '../../stores/MarkPriceCache';
 import {
 	OraclePriceLookup,
 	OraclePriceCache,
 } from '../../stores/OraclePriceCache';
+import { DriftL2OrderbookManager } from './DriftL2OrderbookManager';
 import { Subscription } from 'rxjs';
 import {
 	AccountData,
@@ -63,18 +68,9 @@ import {
 } from './DriftOperations/types';
 import { Initialize } from '../../../../Config';
 import { SwiftOrderResult } from 'src/drift/base/actions/trade/openPerpOrder/openPerpMarketOrder';
-
-/**
- * Error thrown when a method is called while the user is geographically blocked.
- */
-export class GeoBlockError extends Error {
-	constructor(methodName: string) {
-		super(
-			`Method '${methodName}' is not available due to geographical restrictions.`
-		);
-		this.name = 'GeoBlockError';
-	}
-}
+import { L2WithOracleAndMarketData } from 'src/utils/orderbook';
+import { GeoBlockError } from '../../constants/errors';
+import { DEFAULT_ORDERBOOK_SUBSCRIPTION_CONFIG } from '../../constants/orderbook';
 
 /**
  * Decorator that prevents method execution if the user is geographically blocked.
@@ -106,6 +102,7 @@ export interface AuthorityDriftConfig {
 	driftEnv: DriftEnv;
 	wallet?: IWallet;
 	driftDlobServerHttpUrl?: string;
+	orderbookWebsocketUrl?: string;
 	tradableMarkets?: MarketId[];
 	selectedTradeMarket?: MarketId;
 	additionalDriftClientConfig?: Partial<Omit<DriftClientConfig, 'env'>>;
@@ -141,6 +138,11 @@ export class AuthorityDrift {
 	private pollingDlobSubscription: Subscription | null = null;
 
 	/**
+	 * Subscription to the orderbook data.
+	 */
+	private orderbookSubscription: Subscription | null = null;
+
+	/**
 	 * Handles all trading operations including deposits, withdrawals, and position management.
 	 */
 	private driftOperations!: DriftOperations;
@@ -170,6 +172,11 @@ export class AuthorityDrift {
 	 * Stores the fetched user account data for all user accounts.
 	 */
 	private _userAccountCache!: UserAccountCache;
+
+	/**
+	 * Manages real-time orderbook subscriptions via websocket.
+	 */
+	private _orderbookManager!: DriftL2OrderbookManager;
 
 	/**
 	 * Handles priority fee tracking and calculation for optimized transaction costs.
@@ -206,6 +213,7 @@ export class AuthorityDrift {
 	private _driftEndpoints: {
 		dlobServerHttpUrl: string;
 		swiftServerUrl: string;
+		orderbookWebsocketUrl: string;
 	};
 
 	/**
@@ -254,11 +262,17 @@ export class AuthorityDrift {
 			];
 		const swiftServerUrlToUse =
 			EnvironmentConstants.swiftServerUrl[
+				config.driftEnv === 'devnet' ? 'staging' : 'mainnet'
+			];
+		const orderbookWebsocketUrlToUse =
+			config.orderbookWebsocketUrl ??
+			EnvironmentConstants.dlobServerWsUrl[
 				config.driftEnv === 'devnet' ? 'dev' : 'mainnet'
 			];
 		this._driftEndpoints = {
 			dlobServerHttpUrl: driftDlobServerHttpUrlToUse,
 			swiftServerUrl: swiftServerUrlToUse,
+			orderbookWebsocketUrl: orderbookWebsocketUrlToUse,
 		};
 
 		// we set this up because SerializableTypes
@@ -268,8 +282,9 @@ export class AuthorityDrift {
 		const driftClient = this.setupDriftClient(config);
 		this.initializePollingDlob(driftDlobServerHttpUrlToUse);
 		this.initializeStores(driftClient);
+		this.initializeOrderbookManager(orderbookWebsocketUrlToUse);
 		this.initializePriorityFeeSubscriber(config.priorityFeeSubscriberConfig);
-		this.initializeManagers(driftDlobServerHttpUrlToUse);
+		this.initializeManagers(driftDlobServerHttpUrlToUse, swiftServerUrlToUse);
 	}
 
 	public get driftClient(): DriftClient {
@@ -294,6 +309,10 @@ export class AuthorityDrift {
 
 	public get userAccountCache(): UserAccountLookup {
 		return this._userAccountCache.store;
+	}
+
+	public get orderbookCache(): L2WithOracleAndMarketData | null {
+		return this._orderbookManager.store;
 	}
 
 	public get tradableMarkets(): MarketId[] {
@@ -357,6 +376,18 @@ export class AuthorityDrift {
 			this._oraclePriceCache,
 			this._markPriceCache
 		);
+	}
+
+	private initializeOrderbookManager(orderbookWebsocketUrl: string) {
+		this._orderbookManager = new DriftL2OrderbookManager({
+			wsUrl: orderbookWebsocketUrl,
+			subscriptionConfig: this.selectedTradeMarket
+				? {
+						...DEFAULT_ORDERBOOK_SUBSCRIPTION_CONFIG,
+						marketId: this.selectedTradeMarket,
+				  }
+				: undefined,
+		});
 	}
 
 	private initializePollingDlob(driftDlobServerHttpUrl: string) {
@@ -461,23 +492,51 @@ export class AuthorityDrift {
 		return this._driftClient;
 	}
 
+	private setupOrderbookManager() {
+		this.orderbookSubscription = this._orderbookManager.onUpdate(
+			(orderbookData) => {
+				const marketKey = new MarketId(
+					orderbookData.marketIndex,
+					ENUM_UTILS.toObj(orderbookData.marketType as string) as MarketType
+				).key;
+
+				const markPrice = orderbookData.markPrice;
+
+				this._markPriceCache.updateMarkPrices({
+					marketKey,
+					markPrice,
+					bestAsk: orderbookData.bestAskPrice,
+					bestBid: orderbookData.bestBidPrice,
+					lastUpdateSlot: orderbookData.slot ?? 0,
+				});
+
+				this._oraclePriceCache.updateOraclePrices({
+					...orderbookData.oracleData,
+					marketKey,
+				});
+			}
+		);
+	}
+
 	private setupPollingDlob() {
-		this._pollingDlob.addInterval(PollingCategory.ORDERBOOK, 1, 100); // used to get orderbook data. this is mainly used as a fallback from the Websocket DLOB subscriber
-		this._pollingDlob.addInterval(PollingCategory.SELECTED_MARKET, 1, 1); // used to get the mark price at a higher frequency for the current active market (e.g. market that the user is trading on). this won't be needed when the websocket DLOB is set up
-		this._pollingDlob.addInterval(PollingCategory.USER_INVOLVED, 2, 1); // markets that the user is involved in
-		this._pollingDlob.addInterval(PollingCategory.USER_NOT_INVOLVED, 30, 1); // markets that the user is not involved in
+		// DriftL2OrderbookManager will handle the fetching of data for the selected trade market through websocket
+
+		this._pollingDlob.addInterval(
+			PollingCategory.USER_INVOLVED,
+			POLLING_INTERVALS.BACKGROUND_DEEP,
+			POLLING_DEPTHS.DEEP
+		); // markets that the user is involved in
+		this._pollingDlob.addInterval(
+			PollingCategory.USER_NOT_INVOLVED,
+			POLLING_INTERVALS.BACKGROUND_SHALLOW,
+			POLLING_DEPTHS.SHALLOW
+		); // markets that the user is not involved in
 
 		// add all markets to the user-not-involved interval first, until user-involved markets are known
 		this._pollingDlob.addMarketsToInterval(
-			'user-not-involved',
+			PollingCategory.USER_NOT_INVOLVED,
 			this._tradableMarkets.map((market) => market.key)
 		);
-		if (this.selectedTradeMarket) {
-			this._pollingDlob.addMarketToInterval(
-				'active-market',
-				this.selectedTradeMarket.key
-			);
-		}
 
 		this.pollingDlobSubscription = this._pollingDlob
 			.onData()
@@ -503,15 +562,16 @@ export class AuthorityDrift {
 			});
 	}
 
-	private initializeManagers(dlobServerHttpUrl: string) {
+	private initializeManagers(
+		dlobServerHttpUrl: string,
+		swiftServerUrl: string
+	) {
 		// Initialize trading operations
 		this.driftOperations = new DriftOperations(
 			this._driftClient,
 			() => this._userAccountCache,
 			dlobServerHttpUrl,
-			EnvironmentConstants.swiftServerUrl[
-				this._driftClient.env === 'mainnet-beta' ? 'mainnet' : 'dev'
-			],
+			swiftServerUrl,
 			() => this.priorityFeeSubscriber.getCustomStrategyResult()
 		);
 
@@ -520,6 +580,7 @@ export class AuthorityDrift {
 			this._driftClient,
 			this.accountLoader,
 			this._pollingDlob,
+			this._orderbookManager,
 			this._userAccountCache,
 			this._tradableMarkets,
 			this.selectedTradeMarket
@@ -531,6 +592,13 @@ export class AuthorityDrift {
 		this.pollingDlobSubscription = null;
 
 		this._pollingDlob.stop();
+	}
+
+	private unsubscribeFromOrderbook() {
+		this.orderbookSubscription?.unsubscribe();
+		this.orderbookSubscription = null;
+
+		this._orderbookManager.unsubscribe();
 	}
 
 	public async subscribe() {
@@ -547,6 +615,7 @@ export class AuthorityDrift {
 		const handleGeoBlockPromise = handleGeoBlock();
 		const pollingDlobStartPromise = this._pollingDlob.start();
 		const priorityFeeSubscribePromise = this.priorityFeeSubscriber.subscribe();
+		const orderbookSubscribePromise = this._orderbookManager.subscribe();
 
 		await this._driftClient.subscribe();
 
@@ -571,6 +640,7 @@ export class AuthorityDrift {
 		this._tradableMarkets = actualTradableMarkets;
 		this.subscriptionManager.updateTradableMarkets(actualTradableMarkets);
 		this.setupPollingDlob();
+		this.setupOrderbookManager();
 
 		const subscribeToNonWhitelistedButUserInvolvedMarketsPromise =
 			this.subscriptionManager.subscribeToNonWhitelistedButUserInvolvedMarkets(
@@ -582,6 +652,7 @@ export class AuthorityDrift {
 			subscribeToNonWhitelistedButUserInvolvedMarketsPromise,
 			priorityFeeSubscribePromise,
 			handleGeoBlockPromise,
+			orderbookSubscribePromise,
 		]);
 
 		this.subscriptionManager.subscribeToAllUsersUpdates();
@@ -591,9 +662,10 @@ export class AuthorityDrift {
 
 	public async unsubscribe() {
 		this.unsubscribeFromPollingDlob();
+		this.unsubscribeFromOrderbook();
 		this._userAccountCache.destroy();
 		this._markPriceCache.destroy();
-		this._oraclePriceCache.destroy();
+		this._orderbookManager.destroy();
 
 		const driftClientUnsubscribePromise = this._driftClient.unsubscribe();
 		const priorityFeeUnsubscribePromise =
@@ -622,6 +694,12 @@ export class AuthorityDrift {
 		return this._userAccountCache.onUpdate(callback);
 	}
 
+	public onOrderbookUpdate(
+		callback: (orderbook: L2WithOracleAndMarketData) => void
+	) {
+		return this._orderbookManager.onUpdate(callback);
+	}
+
 	/**
 	 * Updates the authority (wallet) for the drift client and reestablishes subscriptions.
 	 *
@@ -635,14 +713,24 @@ export class AuthorityDrift {
 	/**
 	 * Updates the selected trade market and optimizes subscription polling.
 	 *
-	 * @param selectedTradeMarket - The new market to prioritize for trading
+	 * @param newSelectedTradeMarket - The new market to prioritize for trading
 	 */
-	public updateSelectedTradeMarket(selectedTradeMarket: MarketId) {
+	public updateSelectedTradeMarket(newSelectedTradeMarket: MarketId | null) {
+		const isNewSelectedTradeMarket =
+			!!newSelectedTradeMarket !== !!this.selectedTradeMarket || // only one of them is null
+			(!!newSelectedTradeMarket && // or both are not null and are different
+				!!this.selectedTradeMarket &&
+				!this.selectedTradeMarket.equals(newSelectedTradeMarket));
+
+		if (!isNewSelectedTradeMarket) {
+			return;
+		}
+
 		// Update the local reference
-		this.selectedTradeMarket = selectedTradeMarket;
+		this.selectedTradeMarket = newSelectedTradeMarket;
 
 		// Delegate to subscription manager for all polling optimization
-		this.subscriptionManager.updateSelectedTradeMarket(selectedTradeMarket);
+		this.subscriptionManager.updateSelectedTradeMarket(newSelectedTradeMarket);
 	}
 
 	/**

@@ -6,6 +6,7 @@ import {
 	deserializeL2Response,
 } from '../../../utils/orderbook';
 import { PollingSequenceGuard } from '../../../utils/pollingSequenceGuard';
+import { PollingCategory } from '../constants/blockchain';
 
 export interface PollingConfig {
 	driftDlobServerHttpUrl: string;
@@ -334,28 +335,18 @@ export class PollingDlob {
 
 		// Add common intervals based on the original React hook
 		pollingDlob.addInterval(
-			'live',
+			PollingCategory.SELECTED_MARKET,
 			POLLING_INTERVALS.LIVE_MARKET,
 			POLLING_DEPTHS.ORDERBOOK
 		);
 		pollingDlob.addInterval(
-			'backgroundDeep',
+			PollingCategory.USER_INVOLVED,
 			POLLING_INTERVALS.BACKGROUND_DEEP,
 			POLLING_DEPTHS.DEEP
 		);
 		pollingDlob.addInterval(
-			'backgroundShallow',
+			PollingCategory.USER_NOT_INVOLVED,
 			POLLING_INTERVALS.BACKGROUND_SHALLOW,
-			POLLING_DEPTHS.SHALLOW
-		);
-		pollingDlob.addInterval(
-			'idle1',
-			POLLING_INTERVALS.IDLE_1,
-			POLLING_DEPTHS.SHALLOW
-		);
-		pollingDlob.addInterval(
-			'idle2',
-			POLLING_INTERVALS.IDLE_2,
 			POLLING_DEPTHS.SHALLOW
 		);
 

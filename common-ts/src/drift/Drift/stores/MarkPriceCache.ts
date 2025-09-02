@@ -26,7 +26,7 @@ export class MarkPriceCache {
 			marketKey: MarketKey;
 		} & MarkPriceData)[]
 	) {
-		const updatedMarkPrices = {};
+		const updatedMarkPrices: MarkPriceLookup = {};
 
 		markPrices.forEach(
 			({ marketKey, markPrice, bestBid, bestAsk, lastUpdateSlot }) => {
