@@ -34,11 +34,11 @@ import { createCancelOrdersTxn } from '../../../../base/actions/trade/cancelOrde
 import {
 	createOpenPerpMarketOrderTxn,
 	OpenPerpMarketOrderParams,
-	SwiftOrderResult,
 } from '../../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { createSwapTxn } from '../../../../base/actions/trade/swap';
 import { createOpenPerpNonMarketOrderTxn } from '../../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 import { ENUM_UTILS } from '../../../../../utils';
+import { SwiftOrderResult } from 'src/drift/base/actions/trade/openPerpOrder/openSwiftOrder';
 
 /**
  * Handles majority of the relevant operations on the Drift program including deposits,

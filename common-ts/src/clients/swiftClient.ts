@@ -25,6 +25,10 @@ type BaseSwiftOrderEvent = {
 	hash: string;
 };
 
+export interface SwiftOrderSentEvent extends BaseSwiftOrderEvent {
+	type: 'sent';
+}
+
 export interface SwiftOrderErroredEvent extends BaseSwiftOrderEvent {
 	type: 'errored' | 'expired';
 	message?: string;
@@ -36,7 +40,10 @@ export interface SwiftOrderConfirmedEvent extends BaseSwiftOrderEvent {
 	orderId: string;
 }
 
-export type SwiftOrderEvent = SwiftOrderErroredEvent | SwiftOrderConfirmedEvent;
+export type SwiftOrderEvent =
+	| SwiftOrderErroredEvent
+	| SwiftOrderConfirmedEvent
+	| SwiftOrderSentEvent;
 
 export class SwiftClient {
 	private static baseUrl = '';
@@ -330,7 +337,13 @@ export class SwiftClient {
 				message: sendResponse.message,
 				status: sendResponse.status,
 			});
+			subscriber.error();
 			return;
+		} else {
+			subscriber.next({
+				type: 'sent',
+				hash: sendResponse.body.hash,
+			});
 		}
 
 		const hash = sendResponse.body.hash;
@@ -345,6 +358,7 @@ export class SwiftClient {
 				message: confirmResponse.message,
 				status: confirmResponse.status,
 			});
+			subscriber.error();
 		}
 		if (confirmResponse.body.status === 'confirmed') {
 			subscriber.next({
@@ -352,6 +366,7 @@ export class SwiftClient {
 				orderId: confirmResponse.body.orderId,
 				hash,
 			});
+			subscriber.complete();
 		}
 	}
 	static async handleSwiftOrderSubscriberWS(
@@ -386,7 +401,13 @@ export class SwiftClient {
 				message: 'Error from swift node: ' + sendResponse.message,
 				status: sendResponse.status,
 			});
+			subscriber.error();
 			return;
+		} else {
+			subscriber.next({
+				type: 'sent',
+				hash: sendResponse.body.hash,
+			});
 		}
 
 		const hash = sendResponse.body.hash;
@@ -406,6 +427,7 @@ export class SwiftClient {
 				message: 'Order failed to confirm',
 				status: 408,
 			});
+			subscriber.error();
 		});
 
 		if (!orderID) {
@@ -415,16 +437,18 @@ export class SwiftClient {
 				message: 'Order failed to confirm',
 				status: 408,
 			});
+			subscriber.error();
 		} else {
 			subscriber.next({
 				type: 'confirmed',
 				orderId: orderID.toString(),
 				hash,
 			});
+			subscriber.complete();
 		}
 	}
 
-	public static async sendAndConfirmSwiftOrder(
+	public static sendAndConfirmSwiftOrder(
 		marketIndex: number,
 		marketType: MarketType,
 		message: string,
@@ -432,7 +456,7 @@ export class SwiftClient {
 		takerPubkey: PublicKey,
 		confirmDuration: number,
 		signingAuthority: PublicKey
-	): Promise<Observable<SwiftOrderEvent>> {
+	): Observable<SwiftOrderEvent> {
 		return new Observable<SwiftOrderEvent>((subscriber) => {
 			this.handleSwiftOrderSubscriber(
 				subscriber,
@@ -447,7 +471,7 @@ export class SwiftClient {
 		});
 	}
 
-	public static async sendAndConfirmSwiftOrderWS(
+	public static sendAndConfirmSwiftOrderWS(
 		connection: Connection,
 		client: DriftClient,
 		marketIndex: number,
@@ -459,7 +483,7 @@ export class SwiftClient {
 		signedMsgOrderUuid: Uint8Array,
 		confirmDuration: number,
 		signingAuthority: PublicKey
-	): Promise<Observable<SwiftOrderEvent>> {
+	): Observable<SwiftOrderEvent> {
 		return new Observable<SwiftOrderEvent>((subscriber) => {
 			this.handleSwiftOrderSubscriberWS(
 				subscriber,

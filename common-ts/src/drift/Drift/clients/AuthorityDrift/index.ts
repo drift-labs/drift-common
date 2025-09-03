@@ -67,10 +67,10 @@ import {
 	CancelOrdersParams,
 } from './DriftOperations/types';
 import { Initialize } from '../../../../Config';
-import { SwiftOrderResult } from 'src/drift/base/actions/trade/openPerpOrder/openPerpMarketOrder';
-import { L2WithOracleAndMarketData } from 'src/utils/orderbook';
+import { L2WithOracleAndMarketData } from '../../../../utils/orderbook';
 import { GeoBlockError } from '../../constants/errors';
 import { DEFAULT_ORDERBOOK_SUBSCRIPTION_CONFIG } from '../../constants/orderbook';
+import { SwiftOrderResult } from '../../../base/actions/trade/openPerpOrder/openSwiftOrder';
 
 /**
  * Decorator that prevents method execution if the user is geographically blocked.

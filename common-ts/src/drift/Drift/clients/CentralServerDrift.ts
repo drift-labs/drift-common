@@ -40,14 +40,16 @@ import { createSettlePnlTxn } from '../../base/actions/perp/settlePnl';
 import {
 	createOpenPerpMarketOrderTxn,
 	AuctionParamsRequestOptions,
-	SwiftOrderOptions,
-	SwiftOrderResult,
 } from '../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { createOpenPerpNonMarketOrderTxn } from '../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 import { createEditOrderTxn } from '../../base/actions/trade/editOrder';
 import { createCancelOrdersTxn } from '../../base/actions/trade/cancelOrder';
 import { createSwapTxn } from '../../base/actions/trade/swap';
 import { NonMarketOrderParamsConfig } from '../../utils/orderParams';
+import {
+	SwiftOrderResult,
+	SwiftOrderOptions,
+} from '../../base/actions/trade/openPerpOrder/openSwiftOrder';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.

@@ -14,11 +14,26 @@ import {
 } from '@drift-labs/sdk';
 import {
 	SwiftClient,
-	SwiftOrderConfirmedEvent,
-	SwiftOrderErroredEvent,
-} from '../../../../../clients/swiftClient';
-import { MarketId } from '../../../../../types';
-import { firstValueFrom } from 'rxjs';
+	SwiftOrderEvent,
+} from '../../../../../../clients/swiftClient';
+import { MarketId } from '../../../../../../types';
+import { Observable } from 'rxjs';
+
+export interface SwiftOrderOptions {
+	wallet: {
+		signMessage: (message: Uint8Array) => Promise<Uint8Array>;
+		publicKey: PublicKey;
+	};
+	swiftServerUrl: string;
+	signedMessageOrderSlotBuffer?: number;
+	confirmDuration?: number;
+	isDelegate?: boolean;
+}
+
+export type SwiftOrderResult = {
+	swiftOrderObservable: Observable<SwiftOrderEvent>;
+	swiftOrderUuid: Uint8Array;
+};
 
 export interface OptionalTriggerOrderParams extends OptionalOrderParams {
 	/** The trigger price for the order */
@@ -254,13 +269,6 @@ interface SendSwiftOrderParams {
 	 * @default 15
 	 */
 	swiftConfirmationSlotBuffer?: number;
-
-	/** Callback function called when the order expires */
-	onExpired: (event: SwiftOrderErroredEvent) => void;
-	/** Callback function called when the order encounters an error */
-	onErrored: (event: SwiftOrderErroredEvent) => void;
-	/** Callback function called when the order is confirmed */
-	onConfirmed: (event: SwiftOrderConfirmedEvent) => void;
 }
 
 // TODO: Sending the swift order should be part of the Drift wrapper, not here
@@ -284,7 +292,7 @@ interface SendSwiftOrderParams {
  * @returns Promise that resolves when the order processing is complete
  *
  */
-export const sendSwiftOrder = async ({
+export const sendSwiftOrder = ({
 	driftClient,
 	marketId,
 	hexEncodedSwiftOrderMessageString: hexEncodedSwiftOrderMessage,
@@ -294,16 +302,13 @@ export const sendSwiftOrder = async ({
 	signingAuthority,
 	auctionDurationSlot,
 	swiftConfirmationSlotBuffer = 15,
-	onExpired,
-	onErrored,
-	onConfirmed,
-}: SendSwiftOrderParams): Promise<void> => {
+}: SendSwiftOrderParams): SwiftOrderResult => {
 	const signedMsgUserOrdersAccountPubkey = getSignedMsgUserAccountPublicKey(
 		driftClient.program.programId,
 		takerAuthority
 	);
 
-	const swiftResponseObservable = await SwiftClient.sendAndConfirmSwiftOrderWS(
+	const swiftOrderObservable = SwiftClient.sendAndConfirmSwiftOrderWS(
 		driftClient.connection,
 		driftClient,
 		marketId.marketIndex,
@@ -318,21 +323,5 @@ export const sendSwiftOrder = async ({
 		signingAuthority
 	);
 
-	const swiftResponse = await firstValueFrom(swiftResponseObservable); // `sendAndConfirmSwiftOrderWS` could be better designed to return a promise rather than an observable
-
-	switch (swiftResponse.type) {
-		case 'expired':
-			onExpired(swiftResponse);
-			break;
-		case 'errored':
-			onErrored(swiftResponse);
-			break;
-		case 'confirmed':
-			onConfirmed(swiftResponse);
-			break;
-		default: {
-			const _exhaustiveCheck: never = swiftResponse;
-			throw new Error(`Unknown swift response type: ${_exhaustiveCheck}`);
-		}
-	}
+	return { swiftOrderObservable, swiftOrderUuid: signedMsgOrderUuid };
 };

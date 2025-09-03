@@ -10,7 +10,6 @@ import {
 	Transaction,
 	TransactionInstruction,
 	VersionedTransaction,
-	PublicKey,
 } from '@solana/web3.js';
 import { ENUM_UTILS } from '../../../../../../utils';
 import {
@@ -22,10 +21,11 @@ import {
 	OptionalTriggerOrderParams,
 	prepSwiftOrder,
 	sendSwiftOrder,
+	SwiftOrderOptions,
+	SwiftOrderResult,
 } from '../openSwiftOrder';
 import { MarketId } from '../../../../../../types';
 import { SwiftClient } from '../../../../../../clients/swiftClient';
-import { Observable } from 'rxjs';
 import { buildNonMarketOrderParams } from '../../../../../utils/orderParams';
 
 export interface AuctionParamsRequestOptions {
@@ -47,17 +47,6 @@ export interface AuctionParamsRequestOptions {
 	additionalEndPriceBuffer?: BN;
 	forceUpToSlippage?: boolean;
 	orderType?: 'market' | 'oracle';
-}
-
-export interface SwiftOrderOptions {
-	wallet: {
-		signMessage: (message: Uint8Array) => Promise<Uint8Array>;
-		publicKey: PublicKey;
-	};
-	swiftServerUrl: string;
-	signedMessageOrderSlotBuffer?: number;
-	confirmDuration?: number;
-	isDelegate?: boolean;
 }
 
 export type OpenPerpMarketOrderParams<T extends boolean = boolean> = {
@@ -89,11 +78,6 @@ interface RegularOrderParams {
 	amount: BN;
 	auctionParamsOptions?: AuctionParamsRequestOptions;
 	dlobServerHttpUrl: string;
-}
-
-export interface SwiftOrderResult {
-	orderObservable?: Observable<any>;
-	signedMsgOrderUuid: Uint8Array;
 }
 
 /**
@@ -253,38 +237,19 @@ async function createSwiftOrder({
 	// Initialize SwiftClient (required before using sendSwiftOrder)
 	SwiftClient.init(swiftOptions.swiftServerUrl);
 
-	// Create a promise-based wrapper for the sendSwiftOrder callback-based API
-	return new Promise((resolve, reject) => {
-		let orderObservable: Observable<any>;
-
-		sendSwiftOrder({
-			driftClient,
-			marketId: MarketId.createPerpMarket(marketIndex),
-			hexEncodedSwiftOrderMessageString: hexEncodedSwiftOrderMessage.string,
-			signedMessage,
-			signedMsgOrderUuid,
-			takerAuthority: swiftOptions.wallet.publicKey,
-			signingAuthority: swiftOptions.wallet.publicKey,
-			auctionDurationSlot: orderParams.auctionDuration || undefined,
-			swiftConfirmationSlotBuffer: 15,
-			onExpired: (event) => {
-				reject(
-					new Error(`Swift order expired: ${event.message || 'Unknown reason'}`)
-				);
-			},
-			onErrored: (event) => {
-				reject(
-					new Error(`Swift order error: ${event.message || 'Unknown error'}`)
-				);
-			},
-			onConfirmed: (_event) => {
-				resolve({
-					orderObservable,
-					signedMsgOrderUuid,
-				});
-			},
-		}).catch(reject);
+	const swiftOrderResult = sendSwiftOrder({
+		driftClient,
+		marketId: MarketId.createPerpMarket(marketIndex),
+		hexEncodedSwiftOrderMessageString: hexEncodedSwiftOrderMessage.string,
+		signedMessage,
+		signedMsgOrderUuid,
+		takerAuthority: swiftOptions.wallet.publicKey,
+		signingAuthority: swiftOptions.wallet.publicKey,
+		auctionDurationSlot: orderParams.auctionDuration || undefined,
+		swiftConfirmationSlotBuffer: 15,
 	});
+
+	return swiftOrderResult;
 }
 
 /**

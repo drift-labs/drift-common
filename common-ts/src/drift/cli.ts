@@ -15,7 +15,7 @@ import {
 } from '@drift-labs/sdk';
 import { sign } from 'tweetnacl';
 import { CentralServerDrift } from './Drift/clients/CentralServerDrift';
-import { SwiftOrderResult } from './base/actions/trade/openPerpOrder/openPerpMarketOrder';
+import { SwiftOrderResult } from './base/actions/trade/openPerpOrder/openSwiftOrder';
 import { ENUM_UTILS } from '../utils';
 import { API_URLS } from './constants/apiUrls';
 import * as path from 'path';
@@ -285,19 +285,14 @@ function handleSwiftOrder(
 	swiftResult: SwiftOrderResult,
 	orderType: string
 ): void {
-	console.log(`✅ ${orderType} Swift order submitted successfully`);
-	console.log(
-		`📋 Order UUID: ${Buffer.from(swiftResult.signedMsgOrderUuid).toString(
-			'hex'
-		)}`
-	);
-
-	if (swiftResult.orderObservable) {
+	if (swiftResult.swiftOrderObservable) {
 		console.log('\n👁️  Monitoring order status...');
 
-		swiftResult.orderObservable.subscribe({
+		swiftResult.swiftOrderObservable.subscribe({
 			next: (event) => {
-				if (event.type === 'confirmed') {
+				if (event.type === 'sent') {
+					console.log(`✅ ${orderType} Swift order submitted successfully`);
+				} else if (event.type === 'confirmed') {
 					console.log('✅ Order confirmed!');
 					console.log(`📋 Order ID: ${event.orderId}`);
 					console.log(`📋 Hash: ${event.hash}`);
