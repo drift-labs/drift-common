@@ -1,5 +1,5 @@
 export * from './auctionParamsResponseMapper';
-export * from './nonMarketOrderParams';
+export * from './orderParams';
 export {
 	convertToBaseAssetAmount,
 	resolveBaseAssetAmount,

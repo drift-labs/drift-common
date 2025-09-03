@@ -1,7 +1,10 @@
 import {
+	BigNum,
 	DriftClient,
 	JupiterClient,
 	MarketType,
+	OrderType,
+	PositionDirection,
 	QuoteResponse,
 	SwapMode,
 	TxParams,
@@ -30,10 +33,12 @@ import {
 import { createCancelOrdersTxn } from '../../../../base/actions/trade/cancelOrder';
 import {
 	createOpenPerpMarketOrderTxn,
+	OpenPerpMarketOrderParams,
 	SwiftOrderResult,
 } from '../../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { createSwapTxn } from '../../../../base/actions/trade/swap';
 import { createOpenPerpNonMarketOrderTxn } from '../../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
+import { ENUM_UTILS } from '../../../../../utils';
 
 /**
  * Handles majority of the relevant operations on the Drift program including deposits,
@@ -359,9 +364,49 @@ export class DriftOperations {
 
 		const user = accountData.userClient;
 
+		const processBracketOrders = (bracketOrdersInput?: {
+			takeProfitPrice?: BigNum;
+			stopLossPrice?: BigNum;
+		}) => {
+			const bracketOrders: OpenPerpMarketOrderParams['bracketOrders'] = {};
+
+			const oppositeDirection = ENUM_UTILS.match(
+				params.direction,
+				PositionDirection.LONG
+			)
+				? PositionDirection.SHORT
+				: PositionDirection.LONG;
+
+			if (bracketOrdersInput?.takeProfitPrice) {
+				bracketOrders.takeProfit = {
+					orderType: OrderType.TRIGGER_MARKET,
+					triggerPrice: bracketOrdersInput.takeProfitPrice.val,
+					baseAssetAmount: params.size.val,
+					marketIndex: params.marketIndex,
+					direction: oppositeDirection,
+				};
+			}
+
+			if (bracketOrdersInput?.stopLossPrice) {
+				bracketOrders.stopLoss = {
+					orderType: OrderType.TRIGGER_MARKET,
+					triggerPrice: bracketOrdersInput.stopLossPrice.val,
+					baseAssetAmount: params.size.val,
+					marketIndex: params.marketIndex,
+					direction: oppositeDirection,
+				};
+			}
+
+			return bracketOrders;
+		};
+
 		switch (params.orderConfig.orderType) {
 			case 'market': {
 				const useSwift = !params.orderConfig.disableSwift;
+
+				const bracketOrders = processBracketOrders(
+					params.orderConfig.bracketOrders
+				);
 
 				// we split the logic for SWIFT and non-SWIFT orders to achieve better type inference
 				if (useSwift) {
@@ -377,6 +422,7 @@ export class DriftOperations {
 						},
 						direction: params.direction,
 						amount: params.size.val,
+						bracketOrders,
 						dlobServerHttpUrl: this.dlobServerHttpUrl,
 						marketIndex: params.marketIndex,
 						auctionParamsOptions: params.orderConfig.auctionParamsOptions,
@@ -391,6 +437,7 @@ export class DriftOperations {
 						marketIndex: params.marketIndex,
 						direction: params.direction,
 						amount: params.size.val,
+						bracketOrders,
 						auctionParamsOptions: params.orderConfig.auctionParamsOptions,
 						dlobServerHttpUrl: this.dlobServerHttpUrl,
 						useSwift: false,
@@ -404,6 +451,10 @@ export class DriftOperations {
 			case 'limit': {
 				const useSwift = !params.orderConfig.disableSwift;
 
+				const bracketOrders = processBracketOrders(
+					params.orderConfig.bracketOrders
+				);
+
 				// we split the logic for SWIFT and non-SWIFT orders to achieve better type inference
 				if (useSwift) {
 					const swiftOrderResult = await createOpenPerpNonMarketOrderTxn<true>({
@@ -416,6 +467,7 @@ export class DriftOperations {
 						orderConfig: {
 							orderType: 'limit',
 							limitPrice: params.orderConfig.limitPrice.val,
+							bracketOrders,
 						},
 						reduceOnly: params.reduceOnly,
 						postOnly: params.postOnly,
@@ -439,6 +491,7 @@ export class DriftOperations {
 						orderConfig: {
 							orderType: 'limit',
 							limitPrice: params.orderConfig.limitPrice.val,
+							bracketOrders,
 						},
 						reduceOnly: params.reduceOnly,
 						postOnly: params.postOnly,

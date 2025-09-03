@@ -11,6 +11,7 @@ import {
 	ZERO,
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../../utils';
+import { OptionalTriggerOrderParams } from '../base/actions/trade/openPerpOrder/openSwiftOrder';
 
 /**
  * Converts amount and assetType to base asset amount
@@ -82,6 +83,10 @@ export interface NonMarketOrderParamsConfig {
 				orderType: Extract<NonMarketOrderType, 'limit'>;
 				limitPrice: BN;
 				disableSwift?: boolean;
+				bracketOrders?: {
+					takeProfit?: OptionalTriggerOrderParams;
+					stopLoss?: OptionalTriggerOrderParams;
+				};
 		  }
 		| {
 				orderType: Extract<NonMarketOrderType, 'takeProfit' | 'stopLoss'>;

@@ -1,4 +1,9 @@
-import { BigNum, PositionDirection, QuoteResponse } from '@drift-labs/sdk';
+import {
+	BigNum,
+	PositionDirection,
+	PostOnlyParams,
+	QuoteResponse,
+} from '@drift-labs/sdk';
 import { AuctionParamsRequestOptions } from '../../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 
 /**
@@ -45,22 +50,28 @@ export type PerpOrderParams = {
 	assetType: 'base' | 'quote';
 	size: BigNum;
 	reduceOnly?: boolean;
-	postOnly?: boolean;
+	postOnly?: PostOnlyParams;
 	orderConfig:
 		| {
 				orderType: 'market';
 				disableSwift?: boolean;
 				auctionParamsOptions?: AuctionParamsRequestOptions;
 				postOnly?: never;
+				bracketOrders?: {
+					takeProfitPrice?: BigNum;
+					stopLossPrice?: BigNum;
+				};
 				// TODO: isMaxLeverage?
-				// TODO: accompanying tp/sl orders
 		  }
 		| {
 				orderType: 'limit';
 				limitPrice: BigNum;
 				disableSwift?: boolean;
+				bracketOrders?: {
+					takeProfitPrice?: BigNum;
+					stopLossPrice?: BigNum;
+				};
 				// TODO: isMaxLeverage?
-				// TODO: accompanying tp/sl orders
 		  }
 		| {
 				orderType: 'takeProfit' | 'stopLoss';

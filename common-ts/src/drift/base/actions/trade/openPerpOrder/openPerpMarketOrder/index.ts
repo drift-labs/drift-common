@@ -18,10 +18,15 @@ import {
 	ServerAuctionParamsResponse,
 	MappedAuctionParams,
 } from '../../../../../utils/auctionParamsResponseMapper';
-import { prepSwiftOrder, sendSwiftOrder } from '../openSwiftOrder';
+import {
+	OptionalTriggerOrderParams,
+	prepSwiftOrder,
+	sendSwiftOrder,
+} from '../openSwiftOrder';
 import { MarketId } from '../../../../../../types';
 import { SwiftClient } from '../../../../../../clients/swiftClient';
 import { Observable } from 'rxjs';
+import { buildNonMarketOrderParams } from '../../../../../utils/orderParams';
 
 export interface AuctionParamsRequestOptions {
 	// Optional parameters that can override defaults or provide additional configuration
@@ -55,7 +60,7 @@ export interface SwiftOrderOptions {
 	isDelegate?: boolean;
 }
 
-type OpenPerpMarketOrderParams<T extends boolean = boolean> = {
+export type OpenPerpMarketOrderParams<T extends boolean = boolean> = {
 	driftClient: DriftClient;
 	user: User;
 	assetType: 'base' | 'quote';
@@ -64,6 +69,10 @@ type OpenPerpMarketOrderParams<T extends boolean = boolean> = {
 	amount: BN;
 	auctionParamsOptions?: AuctionParamsRequestOptions;
 	dlobServerHttpUrl: string;
+	bracketOrders?: {
+		takeProfit?: OptionalTriggerOrderParams;
+		stopLoss?: OptionalTriggerOrderParams;
+	};
 	marketType?: MarketType;
 	useSwift: T;
 } & (T extends true
@@ -195,6 +204,7 @@ async function createSwiftOrder({
 	marketIndex,
 	direction,
 	amount,
+	bracketOrders,
 	dlobServerHttpUrl,
 	auctionParamsOptions,
 	swiftOptions,
@@ -229,7 +239,8 @@ async function createSwiftOrder({
 		isDelegate: swiftOptions.isDelegate || false,
 		orderParams: {
 			main: orderParams,
-			// TODO: Add support for stopLoss and takeProfit
+			takeProfit: bracketOrders?.takeProfit,
+			stopLoss: bracketOrders?.stopLoss,
 		},
 		slotBuffer: swiftOptions.signedMessageOrderSlotBuffer || 30,
 	});
@@ -378,6 +389,7 @@ export const createOpenPerpMarketOrderTxn = async <T extends boolean>({
 	amount,
 	dlobServerHttpUrl,
 	auctionParamsOptions,
+	bracketOrders,
 	useSwift,
 	swiftOptions,
 }: OpenPerpMarketOrderParams<T>): Promise<
@@ -413,6 +425,7 @@ export const createOpenPerpMarketOrderTxn = async <T extends boolean>({
 			direction,
 			amount,
 			dlobServerHttpUrl,
+			bracketOrders,
 			auctionParamsOptions,
 			swiftOptions,
 		})) as T extends true
@@ -420,8 +433,40 @@ export const createOpenPerpMarketOrderTxn = async <T extends boolean>({
 			: Transaction | VersionedTransaction;
 	}
 
+	const allOrders: OptionalOrderParams[] = [orderParams];
+
+	if (bracketOrders?.takeProfit) {
+		const takeProfitParams = buildNonMarketOrderParams({
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction: bracketOrders.takeProfit.direction,
+			baseAssetAmount: amount,
+			orderConfig: {
+				orderType: 'takeProfit',
+				triggerPrice: bracketOrders.takeProfit.triggerPrice,
+			},
+			reduceOnly: true,
+		});
+		allOrders.push(takeProfitParams);
+	}
+
+	if (bracketOrders?.stopLoss) {
+		const stopLossParams = buildNonMarketOrderParams({
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction: bracketOrders.stopLoss.direction,
+			baseAssetAmount: amount,
+			orderConfig: {
+				orderType: 'stopLoss',
+				triggerPrice: bracketOrders.stopLoss.triggerPrice,
+			},
+			reduceOnly: true,
+		});
+		allOrders.push(stopLossParams);
+	}
+
 	// Regular order flow - create transaction instruction and build transaction
-	const placeOrderIx = await driftClient.getPlaceOrdersIx([orderParams]);
+	const placeOrderIx = await driftClient.getPlaceOrdersIx(allOrders);
 	const openPerpMarketOrderTxn = await driftClient.txHandler.buildTransaction({
 		instructions: [placeOrderIx],
 		txVersion: 0,

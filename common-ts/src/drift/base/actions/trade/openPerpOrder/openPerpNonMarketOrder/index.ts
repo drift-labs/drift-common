@@ -6,6 +6,7 @@ import {
 	PostOnlyParams,
 	getLimitOrderParams,
 	TxParams,
+	OptionalOrderParams,
 } from '@drift-labs/sdk';
 import {
 	Transaction,
@@ -22,6 +23,7 @@ import {
 	resolveBaseAssetAmount,
 } from '../../../../../utils/orderParams';
 import { Observable } from 'rxjs';
+import { ENUM_UTILS } from '../../../../../../utils';
 
 export interface SwiftOrderOptions {
 	wallet: {
@@ -51,14 +53,14 @@ export interface OpenPerpNonMarketOrderParams<T extends boolean = boolean>
 	// Common optional params
 	reduceOnly?: boolean;
 	postOnly?: PostOnlyParams;
-
+	// Swift
 	useSwift?: T;
 	swiftOptions?: T extends true ? SwiftOrderOptions : never;
 }
 
 export const createOpenPerpNonMarketOrderIx = async (
 	params: Omit<OpenPerpNonMarketOrderParams, 'useSwift' | 'swiftOptions'>
-): Promise<TransactionInstruction[]> => {
+): Promise<TransactionInstruction> => {
 	const {
 		driftClient,
 		user: _user,
@@ -66,6 +68,7 @@ export const createOpenPerpNonMarketOrderIx = async (
 		direction,
 		reduceOnly = false,
 		postOnly = PostOnlyParams.NONE,
+		orderConfig,
 	} = params;
 	// Support both new (amount + assetType) and legacy (baseAssetAmount) approaches
 	const finalBaseAssetAmount = resolveBaseAssetAmount({
@@ -81,18 +84,51 @@ export const createOpenPerpNonMarketOrderIx = async (
 		throw new Error('Final base asset amount must be greater than zero');
 	}
 
+	const allOrders: OptionalOrderParams[] = [];
+
 	const orderParams = buildNonMarketOrderParams({
 		marketIndex,
 		marketType: MarketType.PERP,
 		direction,
 		baseAssetAmount: finalBaseAssetAmount,
-		orderConfig: params.orderConfig,
+		orderConfig,
 		reduceOnly,
 		postOnly,
 	});
+	allOrders.push(orderParams);
 
-	const placeOrderIx = await driftClient.getPlaceOrdersIx([orderParams]);
-	return [placeOrderIx];
+	if ('bracketOrders' in orderConfig && orderConfig.bracketOrders?.takeProfit) {
+		const takeProfitParams = buildNonMarketOrderParams({
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction: orderConfig.bracketOrders.takeProfit.direction,
+			baseAssetAmount: finalBaseAssetAmount,
+			orderConfig: {
+				orderType: 'takeProfit',
+				triggerPrice: orderConfig.bracketOrders.takeProfit.triggerPrice,
+			},
+			reduceOnly: true,
+		});
+		allOrders.push(takeProfitParams);
+	}
+
+	if ('bracketOrders' in orderConfig && orderConfig.bracketOrders?.stopLoss) {
+		const stopLossParams = buildNonMarketOrderParams({
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction: orderConfig.bracketOrders.stopLoss.direction,
+			baseAssetAmount: finalBaseAssetAmount,
+			orderConfig: {
+				orderType: 'stopLoss',
+				triggerPrice: orderConfig.bracketOrders.stopLoss.triggerPrice,
+			},
+			reduceOnly: true,
+		});
+		allOrders.push(stopLossParams);
+	}
+
+	const placeOrderIx = await driftClient.getPlaceOrdersIx(allOrders);
+	return placeOrderIx;
 };
 
 const createSwiftOrder = async (
@@ -111,7 +147,6 @@ const createSwiftOrder = async (
 		marketIndex,
 		direction,
 		reduceOnly = false,
-		postOnly = PostOnlyParams.NONE,
 		swiftOptions,
 		orderConfig,
 	} = params;
@@ -139,7 +174,7 @@ const createSwiftOrder = async (
 		baseAssetAmount: finalBaseAssetAmount,
 		price: limitPrice,
 		reduceOnly,
-		postOnly,
+		postOnly: PostOnlyParams.NONE, // we don't allow post only orders for SWIFT
 	});
 
 	console.log('🔧 Order params:', JSON.stringify(orderParams, null, 2));
@@ -159,6 +194,8 @@ const createSwiftOrder = async (
 		isDelegate: swiftOptions.isDelegate || false,
 		orderParams: {
 			main: orderParams,
+			takeProfit: orderConfig.bracketOrders?.takeProfit,
+			stopLoss: orderConfig.bracketOrders?.stopLoss,
 		},
 		slotBuffer: swiftOptions.signedMessageOrderSlotBuffer || 50,
 	});
@@ -222,10 +259,15 @@ export const createOpenPerpNonMarketOrderTxn = async <T extends boolean>(
 			throw new Error('Only limit orders are supported with Swift');
 		}
 
-		const { orderConfig: _orderConfig, ...rest } = params;
+		if (
+			params.postOnly &&
+			!ENUM_UTILS.match(params.postOnly, PostOnlyParams.NONE)
+		) {
+			throw new Error('Post only orders are not supported with Swift');
+		}
 
 		const swiftOrderResult = await createSwiftOrder({
-			...rest,
+			...params,
 			swiftOptions,
 			orderConfig,
 		});
