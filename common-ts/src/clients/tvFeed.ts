@@ -2,7 +2,6 @@ import {
 	CandleResolution,
 	DriftClient,
 	PerpMarketConfig,
-	PRICE_PRECISION_EXP,
 	SpotMarketConfig,
 } from '@drift-labs/sdk';
 import { CandleType, JsonCandle, JsonTrade, MarketId } from '../types';
@@ -10,8 +9,11 @@ import { UIEnv } from '../types/UIEnv';
 import { Candle } from '../utils/candles/Candle';
 import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
 import { CandleClient } from './candleClient';
+import { MARKET_COMMON_UTILS } from '../common-ui-utils/market';
 
 const DRIFT_V2_START_TS = 1668470400; // 15th November 2022 ... 2022-11-15T00:00:00.000Z
+
+type MarketDecimalConfig = Record<string, number>;
 
 const resolutions = [
 	'1',
@@ -194,6 +196,7 @@ export class DriftTvFeed {
 	private perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
 	private tvAppTradeDataManager: TvAppTradeDataManager | undefined;
+	private marketDecimalConfig: MarketDecimalConfig;
 
 	constructor(
 		env: UIEnv,
@@ -201,6 +204,7 @@ export class DriftTvFeed {
 		driftClient: DriftClient,
 		perpMarketConfigs: PerpMarketConfig[],
 		spotMarketConfigs: SpotMarketConfig[],
+		marketDecimalConfig: MarketDecimalConfig,
 		tvAppTradeDataManager?: TvAppTradeDataManager
 	) {
 		this.env = env;
@@ -209,6 +213,7 @@ export class DriftTvFeed {
 		this.driftClient = driftClient;
 		this.perpMarketConfigs = perpMarketConfigs;
 		this.spotMarketConfigs = spotMarketConfigs;
+		this.marketDecimalConfig = marketDecimalConfig;
 		this.tvAppTradeDataManager = tvAppTradeDataManager;
 	}
 
@@ -282,22 +287,11 @@ export class DriftTvFeed {
 		if (targetMarket) {
 			const tvMarketName = targetMarket.config.symbol;
 
-			let tickSize: number;
-
-			if (targetMarket.type === 'perp') {
-				tickSize = this.driftClient
-					.getPerpMarketAccount(targetMarket.config.marketIndex)
-					.amm.orderTickSize.toNumber();
-			} else {
-				tickSize = this.driftClient
-					.getSpotMarketAccount(targetMarket.config.marketIndex)
-					.orderTickSize.toNumber();
-			}
-
-			const pricePrecisionExp = PRICE_PRECISION_EXP.toNumber();
-			const tickSizeExp = Math.ceil(Math.log10(tickSize));
-			const priceScaleExponent = Math.max(0, pricePrecisionExp - tickSizeExp);
-			const priceScale = 10 ** priceScaleExponent;
+			// Use market-specific decimal precision from configuration
+			const baseAssetSymbol =
+				MARKET_COMMON_UTILS.getBaseAssetSymbol(symbolName);
+			const marketDecimals = this.marketDecimalConfig[baseAssetSymbol] ?? 2; // Default to 2 decimal places
+			const priceScale = 10 ** marketDecimals;
 
 			onResolve({
 				name: tvMarketName,
