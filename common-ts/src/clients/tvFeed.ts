@@ -2,6 +2,7 @@ import {
 	CandleResolution,
 	DriftClient,
 	PerpMarketConfig,
+	PRICE_PRECISION_EXP,
 	SpotMarketConfig,
 } from '@drift-labs/sdk';
 import { CandleType, JsonCandle, JsonTrade, MarketId } from '../types';
@@ -290,8 +291,32 @@ export class DriftTvFeed {
 			// Use market-specific decimal precision from configuration
 			const baseAssetSymbol =
 				MARKET_COMMON_UTILS.getBaseAssetSymbol(symbolName);
-			const marketDecimals = this.marketDecimalConfig[baseAssetSymbol] ?? 2; // Default to 2 decimal places
-			const priceScale = 10 ** marketDecimals;
+			const marketDecimals = this.marketDecimalConfig[baseAssetSymbol];
+
+			let priceScale: number;
+
+			if (marketDecimals !== undefined) {
+				// Use configured market decimals
+				priceScale = 10 ** marketDecimals;
+			} else {
+				// Fall back to original tick size calculation
+				let tickSize: number;
+
+				if (targetMarket.type === 'perp') {
+					tickSize = this.driftClient
+						.getPerpMarketAccount(targetMarket.config.marketIndex)
+						.amm.orderTickSize.toNumber();
+				} else {
+					tickSize = this.driftClient
+						.getSpotMarketAccount(targetMarket.config.marketIndex)
+						.orderTickSize.toNumber();
+				}
+
+				const pricePrecisionExp = PRICE_PRECISION_EXP.toNumber();
+				const tickSizeExp = Math.ceil(Math.log10(tickSize));
+				const priceScaleExponent = Math.max(0, pricePrecisionExp - tickSizeExp);
+				priceScale = 10 ** priceScaleExponent;
+			}
 
 			onResolve({
 				name: tvMarketName,
