@@ -10,7 +10,6 @@ import {
 	DLOB_SERVER_WEBSOCKET_UTILS,
 	OrderbookGrouping,
 } from '../../../../utils/dlob-server/DlobServerWebsocketUtils';
-import { DEFAULT_ORDERBOOK_SUBSCRIPTION_CONFIG } from '../../constants/orderbook';
 
 interface DriftL2OrderbookSubscription {
 	marketId: MarketId;
@@ -63,7 +62,7 @@ export class DriftL2OrderbookManager {
 		}
 
 		const subscriptionId = `orderbook-${Date.now()}`;
-		const grouping = 100;
+		const grouping = this._subscriptionConfig.grouping;
 
 		const subscribeMessage = JSON.stringify(
 			DLOB_SERVER_WEBSOCKET_UTILS.getSubscriptionProps({
@@ -135,7 +134,6 @@ export class DriftL2OrderbookManager {
 		this._subscriptionConfig = {
 			...this._subscriptionConfig,
 			...orderbookSubscription,
-			...DEFAULT_ORDERBOOK_SUBSCRIPTION_CONFIG,
 		};
 
 		this.unsubscribe();

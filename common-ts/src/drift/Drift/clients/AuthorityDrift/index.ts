@@ -69,8 +69,12 @@ import {
 import { Initialize } from '../../../../Config';
 import { L2WithOracleAndMarketData } from '../../../../utils/orderbook';
 import { GeoBlockError } from '../../constants/errors';
-import { DEFAULT_ORDERBOOK_SUBSCRIPTION_CONFIG } from '../../constants/orderbook';
+import {
+	DEFAULT_ORDERBOOK_GROUPING,
+	DEFAULT_ORDERBOOK_SUBSCRIPTION_CONFIG,
+} from '../../constants/orderbook';
 import { SwiftOrderResult } from '../../../base/actions/trade/openPerpOrder/openSwiftOrder';
+import { OrderbookGrouping } from '../../../../utils/dlob-server/DlobServerWebsocketUtils';
 
 /**
  * Decorator that prevents method execution if the user is geographically blocked.
@@ -102,11 +106,14 @@ export interface AuthorityDriftConfig {
 	driftEnv: DriftEnv;
 	wallet?: IWallet;
 	driftDlobServerHttpUrl?: string;
-	orderbookWebsocketUrl?: string;
 	tradableMarkets?: MarketId[];
 	selectedTradeMarket?: MarketId;
 	additionalDriftClientConfig?: Partial<Omit<DriftClientConfig, 'env'>>;
 	priorityFeeSubscriberConfig?: Partial<PriorityFeeSubscriberConfig>;
+	orderbookConfig?: {
+		dlobWebSocketUrl?: string;
+		orderbookGrouping?: OrderbookGrouping;
+	};
 }
 
 /**
@@ -265,7 +272,7 @@ export class AuthorityDrift {
 				config.driftEnv === 'devnet' ? 'staging' : 'mainnet'
 			];
 		const orderbookWebsocketUrlToUse =
-			config.orderbookWebsocketUrl ??
+			config.orderbookConfig?.dlobWebSocketUrl ??
 			EnvironmentConstants.dlobServerWsUrl[
 				config.driftEnv === 'devnet' ? 'dev' : 'mainnet'
 			];
@@ -282,7 +289,10 @@ export class AuthorityDrift {
 		const driftClient = this.setupDriftClient(config);
 		this.initializePollingDlob(driftDlobServerHttpUrlToUse);
 		this.initializeStores(driftClient);
-		this.initializeOrderbookManager(orderbookWebsocketUrlToUse);
+		this.initializeOrderbookManager(
+			orderbookWebsocketUrlToUse,
+			config.orderbookConfig?.orderbookGrouping
+		);
 		this.initializePriorityFeeSubscriber(config.priorityFeeSubscriberConfig);
 		this.initializeManagers(driftDlobServerHttpUrlToUse, swiftServerUrlToUse);
 	}
@@ -313,6 +323,10 @@ export class AuthorityDrift {
 
 	public get orderbookCache(): L2WithOracleAndMarketData | null {
 		return this._orderbookManager.store;
+	}
+
+	public get orderbookManager(): DriftL2OrderbookManager {
+		return this._orderbookManager;
 	}
 
 	public get tradableMarkets(): MarketId[] {
@@ -378,12 +392,16 @@ export class AuthorityDrift {
 		);
 	}
 
-	private initializeOrderbookManager(orderbookWebsocketUrl: string) {
+	private initializeOrderbookManager(
+		orderbookWebsocketUrl: string,
+		orderbookGrouping: OrderbookGrouping = DEFAULT_ORDERBOOK_GROUPING
+	) {
 		this._orderbookManager = new DriftL2OrderbookManager({
 			wsUrl: orderbookWebsocketUrl,
 			subscriptionConfig: this.selectedTradeMarket
 				? {
 						...DEFAULT_ORDERBOOK_SUBSCRIPTION_CONFIG,
+						grouping: orderbookGrouping,
 						marketId: this.selectedTradeMarket,
 				  }
 				: undefined,

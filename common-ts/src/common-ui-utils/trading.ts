@@ -1,4 +1,5 @@
 import {
+	AMM_RESERVE_PRECISION,
 	BN,
 	BigNum,
 	DriftClient,
@@ -303,7 +304,8 @@ const getMarketStepSizeDecimals = (
 	const stepSize = getMarketStepSize(driftClient, marketId);
 
 	const decimalPlaces = Math.max(
-		Math.floor(Math.log10(PRICE_PRECISION.div(stepSize).toNumber()))
+		0,
+		Math.floor(Math.log10(AMM_RESERVE_PRECISION.div(stepSize).toNumber()))
 	);
 
 	return decimalPlaces;
