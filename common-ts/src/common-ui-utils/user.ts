@@ -18,8 +18,8 @@ import {
 	calculateCostBasis,
 	calculateEntryPrice,
 	calculateFeesAndFundingPnl,
-	calculatePositionFundingPNL,
 	calculatePositionPNL,
+	calculateUnsettledFundingPnl,
 	isOracleValid,
 } from '@drift-labs/sdk';
 import { OpenPosition, UIMarket } from '../types';
@@ -61,31 +61,14 @@ const getOpenPositionData = (
 				? markPriceCallback(position.marketIndex) ?? oraclePriceData.price
 				: oraclePriceData.price;
 
-			const perpPositionWithLpSettle = user.getPerpPositionWithLPSettle(
-				position.marketIndex,
-				position,
-				false
-			)[0];
-
-			const perpPositionWithRemainderBaseAdded =
-				user.getPerpPositionWithLPSettle(
-					position.marketIndex,
-					position,
-					false,
-					true
-				)[0];
-
 			let estExitPrice = user.getPositionEstimatedExitPriceAndPnl(
-				perpPositionWithRemainderBaseAdded,
-				perpPositionWithRemainderBaseAdded.baseAssetAmount
+				position,
+				position.baseAssetAmount
 			)[0];
 
-			const entryPrice = calculateEntryPrice(
-				perpPositionWithRemainderBaseAdded
-			);
+			const entryPrice = calculateEntryPrice(position);
 
-			const isShort =
-				perpPositionWithRemainderBaseAdded.baseAssetAmount.isNeg();
+			const isShort = position.baseAssetAmount.isNeg();
 
 			if (UIMarket.checkIsPredictionMarket(perpMarketConfig)) {
 				const isResolved =
@@ -118,7 +101,7 @@ const getOpenPositionData = (
 
 			const pnlVsMark = TRADING_COMMON_UTILS.calculatePotentialProfit({
 				currentPositionSize: BigNum.from(
-					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
+					position.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				currentPositionDirection: isShort
@@ -129,7 +112,7 @@ const getOpenPositionData = (
 					? PositionDirection.LONG
 					: PositionDirection.SHORT,
 				exitBaseSize: BigNum.from(
-					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
+					position.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				exitPrice: BigNum.from(markPrice, PRICE_PRECISION_EXP),
@@ -138,7 +121,7 @@ const getOpenPositionData = (
 
 			const pnlVsOracle = TRADING_COMMON_UTILS.calculatePotentialProfit({
 				currentPositionSize: BigNum.from(
-					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
+					position.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				currentPositionDirection: isShort
@@ -149,7 +132,7 @@ const getOpenPositionData = (
 					? PositionDirection.LONG
 					: PositionDirection.SHORT,
 				exitBaseSize: BigNum.from(
-					perpPositionWithRemainderBaseAdded.baseAssetAmount.abs(),
+					position.baseAssetAmount.abs(),
 					BASE_PRECISION_EXP
 				),
 				exitPrice: BigNum.from(oraclePrice, PRICE_PRECISION_EXP),
@@ -157,60 +140,51 @@ const getOpenPositionData = (
 			}).estimatedProfit.shiftTo(QUOTE_PRECISION_EXP).val;
 
 			return {
-				marketIndex: perpPositionWithLpSettle.marketIndex,
+				marketIndex: position.marketIndex,
 				marketSymbol: perpMarketConfig.symbol,
 				direction: isShort ? 'short' : 'long',
 				notional: user
 					.getPerpPositionValue(position.marketIndex, oraclePriceData)
 					.abs(),
-				baseSize: perpPositionWithRemainderBaseAdded.baseAssetAmount,
+				baseSize: position.baseAssetAmount,
 				markPrice,
 				entryPrice,
 				exitPrice: estExitPrice,
 				liqPrice: user.liquidationPrice(position.marketIndex, ZERO),
-				quoteAssetNotionalAmount:
-					perpPositionWithRemainderBaseAdded.quoteAssetAmount,
-				quoteEntryAmount: perpPositionWithRemainderBaseAdded.quoteEntryAmount,
-				quoteBreakEvenAmount:
-					perpPositionWithRemainderBaseAdded.quoteBreakEvenAmount,
+				quoteAssetNotionalAmount: position.quoteAssetAmount,
+				quoteEntryAmount: position.quoteEntryAmount,
+				quoteBreakEvenAmount: position.quoteBreakEvenAmount,
 				pnlVsMark,
 				pnlVsOracle,
 				unsettledPnl: calculateClaimablePnl(
 					perpMarket,
 					usdcSpotMarket,
-					perpPositionWithLpSettle,
+					position,
 					oraclePriceData
 				),
-				unsettledFundingPnl: calculatePositionFundingPNL(
-					perpMarket,
-					perpPositionWithLpSettle
-				),
+				unsettledFundingPnl: calculateUnsettledFundingPnl(perpMarket, position),
 				// Includes both settled and unsettled funding as well as fees
-				feesAndFundingPnl: calculateFeesAndFundingPnl(
-					perpMarket,
-					perpPositionWithLpSettle
-				),
+				feesAndFundingPnl: calculateFeesAndFundingPnl(perpMarket, position),
 				totalUnrealizedPnl: calculatePositionPNL(
 					perpMarket,
-					perpPositionWithLpSettle,
+					position,
 					true,
 					oraclePriceData
 				),
 				unrealizedFundingPnl: user.getUnrealizedFundingPNL(
-					perpPositionWithLpSettle.marketIndex
+					position.marketIndex
 				),
-				lastCumulativeFundingRate:
-					perpPositionWithLpSettle.lastCumulativeFundingRate,
-				openOrders: perpPositionWithLpSettle.openOrders,
-				costBasis: calculateCostBasis(perpPositionWithRemainderBaseAdded),
-				realizedPnl: perpPositionWithLpSettle.settledPnl,
+				lastCumulativeFundingRate: position.lastCumulativeFundingRate,
+				openOrders: position.openOrders,
+				costBasis: calculateCostBasis(position),
+				realizedPnl: position.settledPnl,
 				pnlIsClaimable: isOracleValid(
 					perpMarket,
 					oraclePriceData,
 					oracleGuardRails,
 					perpMarket.amm.lastUpdateSlot?.toNumber()
 				),
-				lpShares: perpPositionWithLpSettle.lpShares,
+				lpShares: position.lpShares,
 				remainderBaseAmount: position.remainderBaseAssetAmount ?? 0,
 				lpDeriskPrice: user.liquidationPrice(
 					position.marketIndex,
