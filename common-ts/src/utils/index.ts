@@ -27,6 +27,7 @@ import {
 	UISerializableOrderActionRecord,
 } from '../serializableTypes';
 import { getIfStakingVaultApr, getIfVaultBalance } from './insuranceFund';
+import { AccountInfo, Connection } from '@solana/web3.js';
 
 export const matchEnum = (enum1: any, enum2) => {
 	return JSON.stringify(enum1) === JSON.stringify(enum2);
@@ -869,6 +870,17 @@ const chunks = <T>(array: readonly T[], size: number): T[][] => {
 		.map((begin) => array.slice(begin, begin + size));
 };
 
+const getMultipleAccountsInfoChunked = async (
+	connection: Connection,
+	accounts: PublicKey[]
+): Promise<(AccountInfo<Buffer> | null)[]> => {
+	const accountChunks = chunks(accounts, 100); // 100 is limit for getMultipleAccountsInfo
+	const responses = await Promise.all(
+		accountChunks.map((chunk) => connection.getMultipleAccountsInfo(chunk))
+	);
+	return responses.flat();
+};
+
 export const COMMON_UTILS = {
 	getIfVaultBalance,
 	getIfStakingVaultApr,
@@ -886,6 +898,7 @@ export const COMMON_UTILS = {
 	glueArray,
 	timedPromise,
 	chunks,
+	getMultipleAccountsInfoChunked,
 	MATH: {
 		NUM: {
 			mean: calculateMean,
