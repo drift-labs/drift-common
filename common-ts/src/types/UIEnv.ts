@@ -39,10 +39,10 @@ export class UIEnv {
 	}
 
 	/**
-	 * Returns the SDK environment type. Note that 'staging' maps to 'mainnet' for SDK purposes.
+	 * Returns the SDK environment type. Note that 'staging' maps to 'mainnet-beta' for SDK purposes.
 	 */
 	get sdkEnv(): DriftEnv {
-		return this.isStaging ? ('mainnet' as DriftEnv) : (this.env as DriftEnv);
+		return this.isStaging ? 'mainnet-beta' : (this.env as DriftEnv);
 	}
 
 	/**

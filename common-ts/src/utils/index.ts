@@ -27,6 +27,7 @@ import {
 	UISerializableOrderActionRecord,
 } from '../serializableTypes';
 import { getIfStakingVaultApr, getIfVaultBalance } from './insuranceFund';
+import { AccountInfo, Connection } from '@solana/web3.js';
 
 export const matchEnum = (enum1: any, enum2) => {
 	return JSON.stringify(enum1) === JSON.stringify(enum2);
@@ -439,40 +440,6 @@ export class Counter {
 }
 
 /**
- * Limits async callbacks to only have one running at a time
- */
-export class CallbackLimiter {
-	private callbackQueue: any[] = [];
-
-	async send<T>(callback: () => Promise<T>): Promise<
-		| {
-				status: 'SKIPPED';
-		  }
-		| {
-				status: 'RESULT';
-				result: T;
-		  }
-	> {
-		if (this.callbackQueue.length > 0) {
-			return {
-				status: 'SKIPPED',
-			};
-		}
-
-		this.callbackQueue.push(1);
-
-		const response = await callback();
-
-		this.callbackQueue.pop();
-
-		return {
-			status: 'RESULT',
-			result: response,
-		};
-	}
-}
-
-/**
  * A class which allows a group of switches to seperately turn a multiswitch on or off. The base state is the state of the "multiswitch" when all of the constituent switches are off. When any of the switches are "on" then the multiswitch flips to the opposite state
  *
  * If baseState is on  => any switch being "on" will turn the multiswitch off.
@@ -869,6 +836,17 @@ const chunks = <T>(array: readonly T[], size: number): T[][] => {
 		.map((begin) => array.slice(begin, begin + size));
 };
 
+const getMultipleAccountsInfoChunked = async (
+	connection: Connection,
+	accounts: PublicKey[]
+): Promise<(AccountInfo<Buffer> | null)[]> => {
+	const accountChunks = chunks(accounts, 100); // 100 is limit for getMultipleAccountsInfo
+	const responses = await Promise.all(
+		accountChunks.map((chunk) => connection.getMultipleAccountsInfo(chunk))
+	);
+	return responses.flat();
+};
+
 export const COMMON_UTILS = {
 	getIfVaultBalance,
 	getIfStakingVaultApr,
@@ -886,6 +864,7 @@ export const COMMON_UTILS = {
 	glueArray,
 	timedPromise,
 	chunks,
+	getMultipleAccountsInfoChunked,
 	MATH: {
 		NUM: {
 			mean: calculateMean,

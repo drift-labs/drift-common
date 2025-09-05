@@ -2,6 +2,7 @@ import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import {
 	DriftClient,
 	MarketType,
+	OrderType,
 	SignedMsgUserOrdersAccount,
 	digestSignature,
 	isVariant,
@@ -20,22 +21,35 @@ type ClientResponse<T = void> = Promise<{
 	status?: number;
 }>;
 
-type SwiftOrderEvent = (
-	| {
-			type: 'sent' | 'expired' | 'errored';
-			hash: string;
-			message?: string;
-	  }
-	| {
-			type: 'confirmed';
-			orderId: string;
-			hash: string;
-	  }
-) & { status?: number };
+type BaseSwiftOrderEvent = {
+	hash: string;
+};
+
+export interface SwiftOrderSentEvent extends BaseSwiftOrderEvent {
+	type: 'sent';
+}
+
+export interface SwiftOrderErroredEvent extends BaseSwiftOrderEvent {
+	type: 'errored' | 'expired';
+	message?: string;
+	status?: number;
+}
+
+export interface SwiftOrderConfirmedEvent extends BaseSwiftOrderEvent {
+	type: 'confirmed';
+	orderId: string;
+}
+
+export type SwiftOrderEvent =
+	| SwiftOrderErroredEvent
+	| SwiftOrderConfirmedEvent
+	| SwiftOrderSentEvent;
 
 export class SwiftClient {
 	private static baseUrl = '';
 	private static swiftClientConsumer?: string;
+
+	static supportedOrderTypes: OrderType[] = [OrderType.MARKET, OrderType.LIMIT];
 
 	public static init(baseUrl: string, swiftClientConsumer?: string) {
 		this.baseUrl = baseUrl;
@@ -127,14 +141,16 @@ export class SwiftClient {
 	): ClientResponse<{
 		hash: string;
 	}> {
-		const response = await this.post('/orders', {
+		const requestPayload = {
 			market_index: marketIndex,
 			market_type: isVariant(marketType, 'perp') ? 'perp' : 'spot',
 			message,
 			signature: signature.toString('base64'),
 			signing_authority: signingAuthority?.toBase58() ?? '',
 			taker_authority: takerPubkey.toBase58(),
-		});
+		};
+
+		const response = await this.post('/orders', requestPayload);
 
 		if (response.status !== 200) {
 			console.error(
@@ -142,7 +158,9 @@ export class SwiftClient {
 			);
 			allEnvDlog('swiftClient', 'full non-200 response body', response.body);
 			return {
-				message: response.body.message,
+				message:
+					response.body?.message ||
+					`HTTP ${response.status}: Error from Swift server`,
 				status: response.status,
 				success: false,
 			};
@@ -319,7 +337,13 @@ export class SwiftClient {
 				message: sendResponse.message,
 				status: sendResponse.status,
 			});
+			subscriber.error();
 			return;
+		} else {
+			subscriber.next({
+				type: 'sent',
+				hash: sendResponse.body.hash,
+			});
 		}
 
 		const hash = sendResponse.body.hash;
@@ -334,6 +358,7 @@ export class SwiftClient {
 				message: confirmResponse.message,
 				status: confirmResponse.status,
 			});
+			subscriber.error();
 		}
 		if (confirmResponse.body.status === 'confirmed') {
 			subscriber.next({
@@ -341,6 +366,7 @@ export class SwiftClient {
 				orderId: confirmResponse.body.orderId,
 				hash,
 			});
+			subscriber.complete();
 		}
 	}
 	static async handleSwiftOrderSubscriberWS(
@@ -375,7 +401,13 @@ export class SwiftClient {
 				message: 'Error from swift node: ' + sendResponse.message,
 				status: sendResponse.status,
 			});
+			subscriber.error();
 			return;
+		} else {
+			subscriber.next({
+				type: 'sent',
+				hash: sendResponse.body.hash,
+			});
 		}
 
 		const hash = sendResponse.body.hash;
@@ -395,6 +427,7 @@ export class SwiftClient {
 				message: 'Order failed to confirm',
 				status: 408,
 			});
+			subscriber.error();
 		});
 
 		if (!orderID) {
@@ -404,16 +437,18 @@ export class SwiftClient {
 				message: 'Order failed to confirm',
 				status: 408,
 			});
+			subscriber.error();
 		} else {
 			subscriber.next({
 				type: 'confirmed',
 				orderId: orderID.toString(),
 				hash,
 			});
+			subscriber.complete();
 		}
 	}
 
-	public static async sendAndConfirmSwiftOrder(
+	public static sendAndConfirmSwiftOrder(
 		marketIndex: number,
 		marketType: MarketType,
 		message: string,
@@ -421,7 +456,7 @@ export class SwiftClient {
 		takerPubkey: PublicKey,
 		confirmDuration: number,
 		signingAuthority: PublicKey
-	): Promise<Observable<SwiftOrderEvent>> {
+	): Observable<SwiftOrderEvent> {
 		return new Observable<SwiftOrderEvent>((subscriber) => {
 			this.handleSwiftOrderSubscriber(
 				subscriber,
@@ -436,7 +471,7 @@ export class SwiftClient {
 		});
 	}
 
-	public static async sendAndConfirmSwiftOrderWS(
+	public static sendAndConfirmSwiftOrderWS(
 		connection: Connection,
 		client: DriftClient,
 		marketIndex: number,
@@ -448,7 +483,7 @@ export class SwiftClient {
 		signedMsgOrderUuid: Uint8Array,
 		confirmDuration: number,
 		signingAuthority: PublicKey
-	): Promise<Observable<SwiftOrderEvent>> {
+	): Observable<SwiftOrderEvent> {
 		return new Observable<SwiftOrderEvent>((subscriber) => {
 			this.handleSwiftOrderSubscriberWS(
 				subscriber,
@@ -477,5 +512,9 @@ export class SwiftClient {
 			'Content-Type': 'application/json',
 			'X-Swift-Client-Consumer': this.swiftClientConsumer ?? 'default',
 		};
+	}
+
+	public static isSupportedOrderType(orderType: OrderType) {
+		return this.supportedOrderTypes.includes(orderType);
 	}
 }
