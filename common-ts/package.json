@@ -5,6 +5,17 @@
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/drift-labs/drift-common/tree/master/common-ts"
+	},
+	"homepage": "https://www.drift.trade/",
+	"keywords": [
+		"drift-labs",
+		"drift",
+		"perps"
+	],
+	"author": "Drift Labs",
 	"dependencies": {
 		"@slack/web-api": "6.4.0",
 		"@solana/spl-token": "0.3.8",
