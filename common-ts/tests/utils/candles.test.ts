@@ -9,9 +9,9 @@ import {
 	QUOTE_PRECISION_EXP,
 } from '@drift-labs/sdk';
 import { describe, expect, test } from '@jest/globals';
-import { PartialUISerializableOrderActionRecord } from '..';
-import { Serializer, UISerializableCandle } from '../../serializableTypes';
-import { Candle } from '../candles/Candle';
+import { PartialUISerializableOrderActionRecord } from '../../src/utils';
+import { Serializer, UISerializableCandle } from '../../src/serializableTypes';
+import { Candle } from '../../src/utils/candles/Candle';
 
 const timestampFromDateString = (dateString: string) =>
 	Math.floor(new Date(Date.parse(dateString + ' GMT')).getTime());

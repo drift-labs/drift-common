@@ -1,5 +1,5 @@
 import { describe, expect, test, jest } from '@jest/globals';
-import { CallbackLimiter, sleep } from '..';
+import { CallbackLimiter, sleep } from '../../src/utils';
 
 jest.useRealTimers();
 
