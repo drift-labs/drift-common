@@ -13,6 +13,7 @@ type WebSocketSubscriptionProps<T = Record<string, unknown>> = {
 	messageFilter: (message: WebSocketMessage<T>) => boolean;
 	errorMessageFilter: (message: WebSocketMessage<T>) => boolean;
 	onClose?: () => void;
+	enableHeartbeatMonitoring?: boolean;
 };
 
 type WebSocketSubscriptionState<T = Record<string, unknown>> =
@@ -26,7 +27,28 @@ type SubscriptionId = string;
 
 const DEFAULT_MAX_RECONNECT_ATTEMPTS = 5;
 const DEFAULT_MAX_RECONNECT_WINDOW_MS = 60 * 1000;
+const DEFAULT_CONNECTION_CLOSE_DELAY_MS = 2 * 1000; // 2 seconds delay before closing connection
+const DEFAULT_HEARTBEAT_TIMEOUT_MS = 60 * 1000; // Consider connection dead if no heartbeat within 60 seconds
 
+/**
+ * Manages reconnection logic for WebSocket connections with exponential backoff and rate limiting.
+ *
+ * Features:
+ * - Tracks reconnection attempts within a time window
+ * - Implements exponential backoff (1s, 2s, 4s, 8s max)
+ * - Resets attempt counter after configurable time window
+ * - Throws error when max attempts exceeded
+ * - Provides configurable limits for attempts and time window
+ *
+ * @example
+ * ```ts
+ * const manager = new ReconnectionManager(5, 60000); // 5 attempts in 60s
+ * const { shouldReconnect, delay } = manager.attemptReconnection('ws://example.com');
+ * if (shouldReconnect) {
+ *   setTimeout(() => reconnect(), delay);
+ * }
+ * ```
+ */
 class ReconnectionManager {
 	private reconnectAttempts: number = 0;
 	private lastReconnectWindow: number = Date.now();
@@ -104,6 +126,7 @@ type IMultiplexWebSocket<T = Record<string, unknown>> = {
  * This implementation assumes the following:
  * - All websocket streams are treated equally - reconnection attempts are performed at the same standards
  * - All messages returned are in the `WebSocketMessage` format
+ * - A single instance of the websocket manager is created for each websocket URL - this means all subscriptions to the same websocket URL will share the same websocket instance
  *
  * Internal implementation details:
  * - The websocket is closed when the number of subscriptions is 0
@@ -137,8 +160,14 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 		Omit<WebSocketSubscriptionState<T>, 'wsUrl' | 'subscriptionId'>
 	>;
 	private reconnectionManager: ReconnectionManager;
+	private closeTimeout: NodeJS.Timeout | null = null;
+	private heartbeatTimeout: NodeJS.Timeout | null = null;
+	private heartbeatMonitoringEnabled: boolean = false;
 
-	private constructor(wsUrl: WebSocketUrl) {
+	private constructor(
+		wsUrl: WebSocketUrl,
+		enableHeartbeatMonitoring: boolean = false
+	) {
 		if (MultiplexWebSocket.URL_TO_WEBSOCKETS_LOOKUP.has(wsUrl)) {
 			throw new Error(
 				`Attempting to create a new websocket for ${wsUrl}, but it already exists`
@@ -154,6 +183,7 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 		>();
 
 		this.reconnectionManager = new ReconnectionManager();
+		this.heartbeatMonitoringEnabled = enableHeartbeatMonitoring;
 
 		this.webSocket = new WebSocket(wsUrl);
 
@@ -183,7 +213,10 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 	private static handleNewSubForNewWsUrl<T = Record<string, unknown>>(
 		newSubscriptionProps: WebSocketSubscriptionProps<T>
 	) {
-		const newMWS = new MultiplexWebSocket<T>(newSubscriptionProps.wsUrl);
+		const newMWS = new MultiplexWebSocket<T>(
+			newSubscriptionProps.wsUrl,
+			newSubscriptionProps.enableHeartbeatMonitoring ?? false
+		);
 
 		newMWS.subscribe(newSubscriptionProps);
 
@@ -209,6 +242,20 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 			wsUrl
 		) as MultiplexWebSocket<T>;
 
+		// Check if heartbeat monitoring settings match
+		const requestedHeartbeat =
+			newSubscriptionProps.enableHeartbeatMonitoring ?? false;
+		if (existingMWS.heartbeatMonitoringEnabled !== requestedHeartbeat) {
+			console.warn(
+				`WebSocket for ${wsUrl} already exists with heartbeat monitoring ${
+					existingMWS.heartbeatMonitoringEnabled ? 'enabled' : 'disabled'
+				}, ` +
+					`but new subscription requests ${
+						requestedHeartbeat ? 'enabled' : 'disabled'
+					}. Using existing setting.`
+			);
+		}
+
 		// Track new subscription for existing websocket
 		existingMWS.subscribe(newSubscriptionProps);
 
@@ -230,6 +277,13 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 	set webSocket(webSocket: WebSocket) {
 		webSocket.onopen = () => {
 			this.customConnectionState = WebSocketConnectionState.CONNECTED;
+			this.reconnectionManager.reset(); // Reset reconnection attempts on successful connection
+
+			// Start heartbeat monitoring if enabled
+			if (this.heartbeatMonitoringEnabled) {
+				this.startHeartbeatMonitoring();
+			}
+
 			// sends subscription message for each subscription for those that are added before the websocket is connected
 			for (const [subscriptionId] of this.subscriptions.entries()) {
 				this.subscribeToWebSocket(subscriptionId);
@@ -240,11 +294,23 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 			const message = JSON.parse(
 				messageEvent.data as string
 			) as WebSocketMessage<T>;
+
+			// Check for heartbeat message from server (only if heartbeat monitoring is enabled)
+			if (this.heartbeatMonitoringEnabled && this.isHeartbeatMessage(message)) {
+				this.handleHeartbeat(message);
+				return; // Don't forward heartbeat messages to subscriptions
+			}
+
 			this.subject.next(message);
 		};
 
 		webSocket.onclose = (event) => {
 			this.customConnectionState = WebSocketConnectionState.DISCONNECTED;
+
+			// Stop heartbeat monitoring when connection closes (if enabled)
+			if (this.heartbeatMonitoringEnabled) {
+				this.stopHeartbeatMonitoring();
+			}
 
 			// Restart websocket if it was closed unexpectedly (not by us)
 			if (!event.wasClean && this.subscriptions.size > 0) {
@@ -348,6 +414,9 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 			);
 		}
 
+		// Cancel any pending delayed close since we're adding a new subscription
+		this.cancelDelayedClose();
+
 		this.subscriptions.set(subscriptionId, {
 			subscribeMessage,
 			unsubscribeMessage,
@@ -405,14 +474,39 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 				subscriptionIds.delete(subscriptionId);
 				if (subscriptionIds.size === 0) {
 					MultiplexWebSocket.URL_TO_SUBSCRIPTION_IDS_LOOKUP.delete(this.wsUrl);
-					// Close websocket when last subscriber unsubscribes
-					this.close();
+					// Schedule delayed close when last subscriber unsubscribes
+					this.scheduleDelayedClose();
 				}
 			}
 		}
 	}
 
+	private scheduleDelayedClose() {
+		// Cancel any existing delayed close timeout
+		this.cancelDelayedClose();
+
+		// Schedule new delayed close
+		this.closeTimeout = setTimeout(() => {
+			this.close();
+		}, DEFAULT_CONNECTION_CLOSE_DELAY_MS);
+	}
+
+	private cancelDelayedClose() {
+		if (this.closeTimeout) {
+			clearTimeout(this.closeTimeout);
+			this.closeTimeout = null;
+		}
+	}
+
 	private close() {
+		// Cancel any pending delayed close
+		this.cancelDelayedClose();
+
+		// Stop heartbeat monitoring (if enabled)
+		if (this.heartbeatMonitoringEnabled) {
+			this.stopHeartbeatMonitoring();
+		}
+
 		for (const [subscriptionId] of this.subscriptions.entries()) {
 			this.unsubscribe(subscriptionId);
 		}
@@ -424,7 +518,52 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 		this.reconnectionManager.reset();
 	}
 
+	private startHeartbeatMonitoring() {
+		// Start the heartbeat timeout - if we don't receive a heartbeat message within the timeout, refresh connection
+		this.resetHeartbeatTimeout();
+	}
+
+	private stopHeartbeatMonitoring() {
+		if (this.heartbeatTimeout) {
+			clearTimeout(this.heartbeatTimeout);
+			this.heartbeatTimeout = null;
+		}
+	}
+
+	private resetHeartbeatTimeout() {
+		// Clear existing timeout
+		if (this.heartbeatTimeout) {
+			clearTimeout(this.heartbeatTimeout);
+		}
+
+		// Set new timeout
+		this.heartbeatTimeout = setTimeout(() => {
+			console.warn(
+				`No heartbeat received within ${DEFAULT_HEARTBEAT_TIMEOUT_MS}ms - connection appears dead`
+			);
+			this.refreshWebSocket();
+		}, DEFAULT_HEARTBEAT_TIMEOUT_MS);
+	}
+
+	private isHeartbeatMessage(message: WebSocketMessage<T>): boolean {
+		// Check if message is a heartbeat message from server
+		return (message as any)?.channel === 'heartbeat';
+	}
+
+	private handleHeartbeat(_message: WebSocketMessage<T>) {
+		// Reset the heartbeat timeout
+		this.resetHeartbeatTimeout();
+	}
+
 	private refreshWebSocket() {
+		// Cancel any pending delayed close since we're refreshing
+		this.cancelDelayedClose();
+
+		// Reset heartbeat monitoring during refresh (if enabled) - it will restart when the new connection opens
+		if (this.heartbeatMonitoringEnabled) {
+			this.stopHeartbeatMonitoring();
+		}
+
 		const { shouldReconnect, delay } =
 			this.reconnectionManager.attemptReconnection(this.wsUrl);
 

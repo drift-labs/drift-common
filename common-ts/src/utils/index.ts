@@ -440,40 +440,6 @@ export class Counter {
 }
 
 /**
- * Limits async callbacks to only have one running at a time
- */
-export class CallbackLimiter {
-	private callbackQueue: any[] = [];
-
-	async send<T>(callback: () => Promise<T>): Promise<
-		| {
-				status: 'SKIPPED';
-		  }
-		| {
-				status: 'RESULT';
-				result: T;
-		  }
-	> {
-		if (this.callbackQueue.length > 0) {
-			return {
-				status: 'SKIPPED',
-			};
-		}
-
-		this.callbackQueue.push(1);
-
-		const response = await callback();
-
-		this.callbackQueue.pop();
-
-		return {
-			status: 'RESULT',
-			result: response,
-		};
-	}
-}
-
-/**
  * A class which allows a group of switches to seperately turn a multiswitch on or off. The base state is the state of the "multiswitch" when all of the constituent switches are off. When any of the switches are "on" then the multiswitch flips to the opposite state
  *
  * If baseState is on  => any switch being "on" will turn the multiswitch off.

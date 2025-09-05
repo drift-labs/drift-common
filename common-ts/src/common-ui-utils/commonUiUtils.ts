@@ -33,9 +33,9 @@ import bcrypt from 'bcryptjs-react';
 import nacl, { sign } from 'tweetnacl';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { AuctionParams, TradeOffsetPrice } from 'src/types';
-import { USER_COMMON_UTILS } from './user';
-import { TRADING_COMMON_UTILS } from './trading';
-import { MARKET_COMMON_UTILS } from './market';
+import { USER_UTILS } from './user';
+import { TRADING_UTILS } from './trading';
+import { MARKET_UTILS } from './market';
 import { ORDER_COMMON_UTILS } from './order';
 import { EMPTY_AUCTION_PARAMS } from '../constants/trade';
 
@@ -225,7 +225,37 @@ async function updateUserAccount(user: User): Promise<void> {
 const getMarketKey = (marketIndex: number, marketType: MarketType) =>
 	`${ENUM_UTILS.toStr(marketType)}_${marketIndex}`;
 
+/**
+ * @deprecated Use createPlaceholderIWallet instead, since this is poorly named.
+ */
 const createThrowawayIWallet = (walletPubKey?: PublicKey) => {
+	const newKeypair = walletPubKey
+		? new Keypair({
+				publicKey: walletPubKey.toBytes(),
+				secretKey: new Keypair().publicKey.toBytes(),
+		  })
+		: new Keypair();
+
+	const newWallet: IWallet = {
+		publicKey: newKeypair.publicKey,
+		//@ts-ignore
+		signTransaction: () => {
+			return Promise.resolve();
+		},
+		//@ts-ignore
+		signAllTransactions: () => {
+			return Promise.resolve();
+		},
+	};
+
+	return newWallet;
+};
+
+/**
+ * Creates an IWallet wrapper, with redundant methods. If a `walletPubKey` is passed in,
+ * the `publicKey` will be based on that.
+ */
+const createPlaceholderIWallet = (walletPubKey?: PublicKey) => {
 	const newKeypair = walletPubKey
 		? new Keypair({
 				publicKey: walletPubKey.toBytes(),
@@ -932,6 +962,7 @@ export const COMMON_UI_UTILS = {
 	chunks,
 	compareSignatures,
 	createThrowawayIWallet,
+	createPlaceholderIWallet,
 	deriveMarketOrderParams,
 	fetchCurrentSubaccounts,
 	fetchUserClientsAndAccounts,
@@ -956,8 +987,8 @@ export const COMMON_UI_UTILS = {
 	userExists,
 	verifySignature,
 	trimTrailingZeros,
-	...USER_COMMON_UTILS,
-	...TRADING_COMMON_UTILS,
-	...MARKET_COMMON_UTILS,
+	...USER_UTILS,
+	...TRADING_UTILS,
+	...MARKET_UTILS,
 	...ORDER_COMMON_UTILS,
 };
