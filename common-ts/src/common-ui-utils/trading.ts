@@ -5,6 +5,7 @@ import {
 	DriftClient,
 	MARGIN_PRECISION,
 	MAX_LEVERAGE_ORDER_SIZE,
+	ONE,
 	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
 	PerpMarketAccount,
@@ -278,7 +279,11 @@ const getMarketTickSizeDecimals = (
 
 	const decimalPlaces = Math.max(
 		0,
-		Math.floor(Math.log10(PRICE_PRECISION.div(tickSize).toNumber()))
+		Math.floor(
+			Math.log10(
+				PRICE_PRECISION.div(tickSize.eq(ZERO) ? ONE : tickSize).toNumber()
+			)
+		)
 	);
 
 	return decimalPlaces;
@@ -305,7 +310,11 @@ const getMarketStepSizeDecimals = (
 
 	const decimalPlaces = Math.max(
 		0,
-		Math.floor(Math.log10(AMM_RESERVE_PRECISION.div(stepSize).toNumber()))
+		Math.floor(
+			Math.log10(
+				AMM_RESERVE_PRECISION.div(stepSize.eq(ZERO) ? ONE : stepSize).toNumber()
+			)
+		)
 	);
 
 	return decimalPlaces;

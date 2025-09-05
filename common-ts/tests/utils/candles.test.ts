@@ -8,7 +8,7 @@ import {
 	PublicKey,
 	QUOTE_PRECISION_EXP,
 } from '@drift-labs/sdk';
-import { describe, expect, test } from '@jest/globals';
+import { expect } from 'chai';
 import { PartialUISerializableOrderActionRecord } from '../../src/utils';
 import { Serializer, UISerializableCandle } from '../../src/serializableTypes';
 import { Candle } from '../../src/utils/candles/Candle';
@@ -105,7 +105,7 @@ const generateCandle = (
 };
 
 describe('candles-tests', () => {
-	test('creates-candles-from-trades-correctly', async () => {
+	it('creates-candles-from-trades-correctly', async () => {
 		/**
 		 * Things to test:
 		 * 1: Creating a new candle from trades without any previous one
@@ -146,7 +146,7 @@ describe('candles-tests', () => {
 				'1'
 			);
 
-			expect(Serializer.Serialize.Candle(newCandle)).toEqual(
+			expect(Serializer.Serialize.Candle(newCandle)).to.deep.equal(
 				Serializer.Serialize.Candle(expectedCandle)
 			);
 		})();
@@ -194,7 +194,7 @@ describe('candles-tests', () => {
 				'1'
 			);
 
-			expect(Serializer.Serialize.Candle(newCandle)).toEqual(
+			expect(Serializer.Serialize.Candle(newCandle)).to.deep.equal(
 				Serializer.Serialize.Candle(expectedCandle)
 			);
 		})();
@@ -243,7 +243,7 @@ describe('candles-tests', () => {
 				'1'
 			);
 
-			expect(Serializer.Serialize.Candle(newCandle)).toEqual(
+			expect(Serializer.Serialize.Candle(newCandle)).to.deep.equal(
 				Serializer.Serialize.Candle(expectedCandle)
 			);
 		})();
@@ -301,17 +301,17 @@ describe('candles-tests', () => {
 				'1'
 			);
 
-			expect(Serializer.Serialize.Candle(newCandleOne)).toEqual(
+			expect(Serializer.Serialize.Candle(newCandleOne)).to.deep.equal(
 				Serializer.Serialize.Candle(expectedCandleOne)
 			);
 
-			expect(Serializer.Serialize.Candle(newCandleTwo)).toEqual(
+			expect(Serializer.Serialize.Candle(newCandleTwo)).to.deep.equal(
 				Serializer.Serialize.Candle(expectedCandleTwo)
 			);
 		})();
 	});
 
-	test('Unit test candle creation utility methods', () => {
+	it('Unit test candle creation utility methods', () => {
 		/**
 		 * Things to test:
 		 *
@@ -351,7 +351,7 @@ describe('candles-tests', () => {
 			const outputOne = Candle.mergeTradesIntoCandle([], candleOne);
 			const expectedOutputOne = generateCandle(now, 0, 0, 0, 0, 0, 0, '1');
 
-			expect(Serializer.Serialize.Candle(outputOne)).toEqual(
+			expect(Serializer.Serialize.Candle(outputOne)).to.deep.equal(
 				Serializer.Serialize.Candle(expectedOutputOne)
 			);
 
@@ -368,7 +368,7 @@ describe('candles-tests', () => {
 				'1'
 			);
 
-			expect(Serializer.Serialize.Candle(outputTwo)).toEqual(
+			expect(Serializer.Serialize.Candle(outputTwo)).to.deep.equal(
 				Serializer.Serialize.Candle(expectedOutputTwo)
 			);
 
@@ -385,7 +385,7 @@ describe('candles-tests', () => {
 				'1'
 			);
 
-			expect(Serializer.Serialize.Candle(outputThree)).toEqual(
+			expect(Serializer.Serialize.Candle(outputThree)).to.deep.equal(
 				Serializer.Serialize.Candle(expectedOutputThree)
 			);
 
@@ -402,7 +402,7 @@ describe('candles-tests', () => {
 				'1'
 			);
 
-			expect(Serializer.Serialize.Candle(outputFour)).toEqual(
+			expect(Serializer.Serialize.Candle(outputFour)).to.deep.equal(
 				Serializer.Serialize.Candle(expectedOutputFour)
 			);
 		})();
