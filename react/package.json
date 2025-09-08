@@ -7,7 +7,7 @@
 	"author": "Drift Labs",
 	"license": "MIT",
 	"scripts": {
-		"lint": "eslint './**/*.{ts,tsx}' --quiet",
+		"lint": "eslint './**/*.{ts,tsx}' --quiet --format unix",
 		"build": "bun clean && tsc && bun copy-files",
 		"build:watch": "bun clean && tsc --watch",
 		"copy-files": "copyfiles -u 1 src/**/*.html src/**/*.css lib/",
