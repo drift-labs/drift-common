@@ -197,7 +197,7 @@ export class DriftTvFeed {
 	private perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
 	private tvAppTradeDataManager: TvAppTradeDataManager | undefined;
-	private marketDecimalConfig: MarketDecimalConfig;
+	private marketDecimalConfig: MarketDecimalConfig | undefined;
 
 	constructor(
 		env: UIEnv,
@@ -205,8 +205,8 @@ export class DriftTvFeed {
 		driftClient: DriftClient,
 		perpMarketConfigs: PerpMarketConfig[],
 		spotMarketConfigs: SpotMarketConfig[],
-		marketDecimalConfig: MarketDecimalConfig,
-		tvAppTradeDataManager?: TvAppTradeDataManager
+		tvAppTradeDataManager?: TvAppTradeDataManager,
+		marketDecimalConfig?: MarketDecimalConfig
 	) {
 		this.env = env;
 		this.candleType = candleType;
@@ -214,8 +214,8 @@ export class DriftTvFeed {
 		this.driftClient = driftClient;
 		this.perpMarketConfigs = perpMarketConfigs;
 		this.spotMarketConfigs = spotMarketConfigs;
-		this.marketDecimalConfig = marketDecimalConfig;
 		this.tvAppTradeDataManager = tvAppTradeDataManager;
+		this.marketDecimalConfig = marketDecimalConfig;
 	}
 
 	public resetCache() {
@@ -290,7 +290,7 @@ export class DriftTvFeed {
 
 			// Use market-specific decimal precision from configuration
 			const baseAssetSymbol = MARKET_UTILS.getBaseAssetSymbol(symbolName);
-			const marketDecimals = this.marketDecimalConfig[baseAssetSymbol];
+			const marketDecimals = this.marketDecimalConfig?.[baseAssetSymbol];
 
 			let priceScale: number;
 
