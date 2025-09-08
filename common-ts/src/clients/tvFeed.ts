@@ -10,8 +10,11 @@ import { UIEnv } from '../types/UIEnv';
 import { Candle } from '../utils/candles/Candle';
 import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
 import { CandleClient } from './candleClient';
+import { MARKET_UTILS } from '../common-ui-utils/market';
 
 const DRIFT_V2_START_TS = 1668470400; // 15th November 2022 ... 2022-11-15T00:00:00.000Z
+
+type MarketDecimalConfig = Record<string, number>;
 
 const resolutions = [
 	'1',
@@ -194,6 +197,7 @@ export class DriftTvFeed {
 	private perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
 	private tvAppTradeDataManager: TvAppTradeDataManager | undefined;
+	private marketDecimalConfig: MarketDecimalConfig | undefined;
 
 	constructor(
 		env: UIEnv,
@@ -201,7 +205,8 @@ export class DriftTvFeed {
 		driftClient: DriftClient,
 		perpMarketConfigs: PerpMarketConfig[],
 		spotMarketConfigs: SpotMarketConfig[],
-		tvAppTradeDataManager?: TvAppTradeDataManager
+		tvAppTradeDataManager?: TvAppTradeDataManager,
+		marketDecimalConfig?: MarketDecimalConfig
 	) {
 		this.env = env;
 		this.candleType = candleType;
@@ -210,6 +215,7 @@ export class DriftTvFeed {
 		this.perpMarketConfigs = perpMarketConfigs;
 		this.spotMarketConfigs = spotMarketConfigs;
 		this.tvAppTradeDataManager = tvAppTradeDataManager;
+		this.marketDecimalConfig = marketDecimalConfig;
 	}
 
 	public resetCache() {
@@ -282,22 +288,34 @@ export class DriftTvFeed {
 		if (targetMarket) {
 			const tvMarketName = targetMarket.config.symbol;
 
-			let tickSize: number;
+			// Use market-specific decimal precision from configuration
+			const baseAssetSymbol = MARKET_UTILS.getBaseAssetSymbol(symbolName);
+			const marketDecimals = this.marketDecimalConfig?.[baseAssetSymbol];
 
-			if (targetMarket.type === 'perp') {
-				tickSize = this.driftClient
-					.getPerpMarketAccount(targetMarket.config.marketIndex)
-					.amm.orderTickSize.toNumber();
+			let priceScale: number;
+
+			if (marketDecimals !== undefined) {
+				// Use configured market decimals
+				priceScale = 10 ** marketDecimals;
 			} else {
-				tickSize = this.driftClient
-					.getSpotMarketAccount(targetMarket.config.marketIndex)
-					.orderTickSize.toNumber();
-			}
+				// Fall back to original tick size calculation
+				let tickSize: number;
 
-			const pricePrecisionExp = PRICE_PRECISION_EXP.toNumber();
-			const tickSizeExp = Math.ceil(Math.log10(tickSize));
-			const priceScaleExponent = Math.max(0, pricePrecisionExp - tickSizeExp);
-			const priceScale = 10 ** priceScaleExponent;
+				if (targetMarket.type === 'perp') {
+					tickSize = this.driftClient
+						.getPerpMarketAccount(targetMarket.config.marketIndex)
+						.amm.orderTickSize.toNumber();
+				} else {
+					tickSize = this.driftClient
+						.getSpotMarketAccount(targetMarket.config.marketIndex)
+						.orderTickSize.toNumber();
+				}
+
+				const pricePrecisionExp = PRICE_PRECISION_EXP.toNumber();
+				const tickSizeExp = Math.ceil(Math.log10(tickSize));
+				const priceScaleExponent = Math.max(0, pricePrecisionExp - tickSizeExp);
+				priceScale = 10 ** priceScaleExponent;
+			}
 
 			onResolve({
 				name: tvMarketName,
