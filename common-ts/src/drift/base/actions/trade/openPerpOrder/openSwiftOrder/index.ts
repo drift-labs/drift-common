@@ -65,6 +65,8 @@ interface PrepSwiftOrderParams {
 	};
 	/** Buffer slots to account for signing time (default: 2 slots ~1 second). If a user is required to manually sign the message, this should be a higher number. */
 	slotBuffer?: number;
+	// set a max leverage on this position
+	positionMaxLev?: number;
 }
 
 /**
@@ -91,6 +93,7 @@ export const prepSwiftOrder = ({
 	isDelegate,
 	orderParams,
 	slotBuffer = 2, // ~1 second
+	positionMaxLev,
 }: PrepSwiftOrderParams): {
 	hexEncodedSwiftOrderMessage: {
 		uInt8Array: Uint8Array;
@@ -136,10 +139,12 @@ export const prepSwiftOrder = ({
 		? {
 				...baseSignedMsgOrderParamsMessage,
 				takerPubkey: takerUserAccount.pubKey,
+				maxMarginRatio: positionMaxLev ? 1 / positionMaxLev : null,
 		  }
 		: {
 				...baseSignedMsgOrderParamsMessage,
 				subAccountId: takerUserAccount.subAccountId,
+				maxMarginRatio: positionMaxLev ? 1 / positionMaxLev : null,
 		  };
 
 	const encodedOrderMessage = driftClient.encodeSignedMsgOrderParamsMessage(
