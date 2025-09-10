@@ -39,17 +39,14 @@ import { createSettleFundingTxn } from '../../base/actions/perp/settleFunding';
 import { createSettlePnlTxn } from '../../base/actions/perp/settlePnl';
 import {
 	createOpenPerpMarketOrderTxn,
-	AuctionParamsRequestOptions,
+	OptionalAuctionParamsRequestInputs,
 } from '../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { createOpenPerpNonMarketOrderTxn } from '../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 import { createEditOrderTxn } from '../../base/actions/trade/editOrder';
 import { createCancelOrdersTxn } from '../../base/actions/trade/cancelOrder';
 import { createSwapTxn } from '../../base/actions/trade/swap';
 import { NonMarketOrderParamsConfig } from '../../utils/orderParams';
-import {
-	SwiftOrderResult,
-	SwiftOrderOptions,
-} from '../../base/actions/trade/openPerpOrder/openSwiftOrder';
+import { SwiftOrderOptions } from '../../base/actions/trade/openPerpOrder/openSwiftOrder';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.
@@ -313,11 +310,11 @@ export class CentralServerDrift {
 		direction: PositionDirection,
 		amount: BN,
 		dlobServerHttpUrl: string,
-		auctionParamsOptions?: AuctionParamsRequestOptions,
+		optionalAuctionParamsInputs?: OptionalAuctionParamsRequestInputs,
 		useSwift?: boolean,
 		swiftOptions?: SwiftOrderOptions,
 		marketType?: MarketType
-	): Promise<VersionedTransaction | Transaction | SwiftOrderResult> {
+	): Promise<VersionedTransaction | Transaction | void> {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
@@ -329,7 +326,7 @@ export class CentralServerDrift {
 					direction,
 					amount,
 					dlobServerHttpUrl,
-					auctionParamsOptions,
+					optionalAuctionParamsInputs,
 					useSwift,
 					swiftOptions,
 					marketType,
@@ -357,7 +354,7 @@ export class CentralServerDrift {
 		useSwift?: boolean,
 		swiftOptions?: SwiftOrderOptions,
 		oraclePriceOffset?: BN
-	): Promise<VersionedTransaction | Transaction | SwiftOrderResult> {
+	): Promise<VersionedTransaction | Transaction | void> {
 		let orderConfig: NonMarketOrderParamsConfig['orderConfig'];
 
 		switch (orderType) {

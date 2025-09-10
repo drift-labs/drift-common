@@ -3,6 +3,8 @@ import {
 	DriftClient,
 	MarketType,
 	OrderType,
+	SignedMsgOrderParamsDelegateMessage,
+	SignedMsgOrderParamsMessage,
 	SignedMsgUserOrdersAccount,
 	digestSignature,
 	isVariant,
@@ -44,6 +46,13 @@ export type SwiftOrderEvent =
 	| SwiftOrderErroredEvent
 	| SwiftOrderConfirmedEvent
 	| SwiftOrderSentEvent;
+
+export type SwiftOrderEventWithParams<T extends SwiftOrderEvent> = T & {
+	swiftOrderUuid: Uint8Array;
+	orderParamsMessage:
+		| SignedMsgOrderParamsMessage
+		| SignedMsgOrderParamsDelegateMessage;
+};
 
 export class SwiftClient {
 	private static baseUrl = '';

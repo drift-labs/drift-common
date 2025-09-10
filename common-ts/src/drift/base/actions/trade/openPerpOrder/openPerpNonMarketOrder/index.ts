@@ -14,13 +14,9 @@ import {
 	VersionedTransaction,
 } from '@solana/web3.js';
 import {
-	prepSwiftOrder,
-	sendSwiftOrder,
+	prepSignAndSendSwiftOrder,
 	SwiftOrderOptions,
-	SwiftOrderResult,
 } from '../openSwiftOrder';
-import { MarketId } from '../../../../../../types';
-import { SwiftClient } from '../../../../../../clients/swiftClient';
 import {
 	buildNonMarketOrderParams,
 	NonMarketOrderParamsConfig,
@@ -127,7 +123,7 @@ const createSwiftOrder = async (
 			limitPrice: BN;
 		};
 	}
-): Promise<SwiftOrderResult> => {
+): Promise<void> => {
 	const {
 		driftClient,
 		user,
@@ -164,58 +160,28 @@ const createSwiftOrder = async (
 		postOnly: PostOnlyParams.NONE, // we don't allow post only orders for SWIFT
 	});
 
-	console.log('🔧 Order params:', JSON.stringify(orderParams, null, 2));
-
-	// Fetch current slot programmatically
-	const currentSlot = await driftClient.connection.getSlot();
 	const userAccount = user.getUserAccount();
+	const slotBuffer =
+		(swiftOptions.signedMessageOrderSlotBuffer || 0) +
+			(orderParams.auctionDuration || 0) || 35; // limit orders require a much larger buffer, to replace the auction duration usually found in market orders
 
-	// Use the existing prepSwiftOrder helper function
-	const { hexEncodedSwiftOrderMessage, signedMsgOrderUuid } = prepSwiftOrder({
+	await prepSignAndSendSwiftOrder({
 		driftClient,
-		takerUserAccount: {
-			pubKey: swiftOptions.wallet.publicKey,
-			subAccountId: userAccount.subAccountId,
-		},
-		currentSlot,
-		isDelegate: swiftOptions.isDelegate || false,
+		subAccountId: userAccount.subAccountId,
+		marketIndex,
+		slotBuffer,
+		swiftOptions,
 		orderParams: {
 			main: orderParams,
 			takeProfit: orderConfig.bracketOrders?.takeProfit,
 			stopLoss: orderConfig.bracketOrders?.stopLoss,
 		},
-		slotBuffer: swiftOptions.signedMessageOrderSlotBuffer || 50,
 	});
-
-	// Sign the message
-	const signedMessage = await swiftOptions.wallet.signMessage(
-		hexEncodedSwiftOrderMessage.uInt8Array
-	);
-
-	// Initialize SwiftClient (required before using sendSwiftOrder)
-	SwiftClient.init(swiftOptions.swiftServerUrl);
-
-	// Create a promise-based wrapper for the sendSwiftOrder callback-based API
-	const swiftOrderResult = sendSwiftOrder({
-		driftClient,
-		marketId: MarketId.createPerpMarket(marketIndex),
-		hexEncodedSwiftOrderMessageString: hexEncodedSwiftOrderMessage.string,
-		signedMessage,
-		signedMsgOrderUuid,
-		takerAuthority: swiftOptions.wallet.publicKey,
-		signingAuthority: swiftOptions.wallet.publicKey,
-		auctionDurationSlot: orderParams.auctionDuration || undefined,
-		swiftConfirmationSlotBuffer: 30,
-	});
-
-	return swiftOrderResult;
 };
 
 export const createOpenPerpNonMarketOrderTxn = async <T extends boolean>(
 	params: OpenPerpNonMarketOrderParams<T> & { txParams?: TxParams }
-): Promise<
-	T extends true ? SwiftOrderResult : Transaction | VersionedTransaction
-> => {
+): Promise<T extends true ? void : Transaction | VersionedTransaction> => {
 	const { driftClient, swiftOptions, useSwift, orderConfig } = params;
 
 	// If useSwift is true, return the Swift result directly
@@ -242,7 +208,7 @@ export const createOpenPerpNonMarketOrderTxn = async <T extends boolean>(
 		});
 
 		return swiftOrderResult as T extends true
-			? SwiftOrderResult
+			? void
 			: Transaction | VersionedTransaction;
 	}
 
@@ -260,6 +226,6 @@ export const createOpenPerpNonMarketOrderTxn = async <T extends boolean>(
 		});
 
 	return openPerpNonMarketOrderTxn as T extends true
-		? SwiftOrderResult
+		? void
 		: Transaction | VersionedTransaction;
 };

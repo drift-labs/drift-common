@@ -38,7 +38,6 @@ import {
 import { createSwapTxn } from '../../../../base/actions/trade/swap';
 import { createOpenPerpNonMarketOrderTxn } from '../../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 import { ENUM_UTILS } from '../../../../../utils';
-import { SwiftOrderResult } from 'src/drift/base/actions/trade/openPerpOrder/openSwiftOrder';
 
 /**
  * Handles majority of the relevant operations on the Drift program including deposits,
@@ -352,7 +351,7 @@ export class DriftOperations {
 	 */
 	async openPerpOrder(
 		params: PerpOrderParams
-	): Promise<TransactionSignature | SwiftOrderResult> {
+	): Promise<TransactionSignature | void> {
 		const accountData = this.getUserAccountCache().getUser(
 			params.subAccountId,
 			this.driftClient.wallet.publicKey
@@ -425,7 +424,8 @@ export class DriftOperations {
 						bracketOrders,
 						dlobServerHttpUrl: this.dlobServerHttpUrl,
 						marketIndex: params.marketIndex,
-						auctionParamsOptions: params.orderConfig.auctionParamsOptions,
+						optionalAuctionParamsInputs:
+							params.orderConfig.optionalAuctionParamsInputs,
 					});
 
 					return swiftOrderResult;
@@ -438,7 +438,8 @@ export class DriftOperations {
 						direction: params.direction,
 						amount: params.size.val,
 						bracketOrders,
-						auctionParamsOptions: params.orderConfig.auctionParamsOptions,
+						optionalAuctionParamsInputs:
+							params.orderConfig.optionalAuctionParamsInputs,
 						dlobServerHttpUrl: this.dlobServerHttpUrl,
 						useSwift: false,
 					});
@@ -714,10 +715,6 @@ export class DriftOperations {
 
 /**
  * TODO:
- * - priority fees / tx params
- * - open non-market perp order
- * - open market non-swift perp order
- * - open non-market non-swift perp order
  * - transfer between subaccounts
  * - close position?
  * - close multiple positions

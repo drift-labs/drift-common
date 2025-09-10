@@ -15,7 +15,7 @@ import {
 } from '@drift-labs/sdk';
 import { sign } from 'tweetnacl';
 import { CentralServerDrift } from './Drift/clients/CentralServerDrift';
-import { SwiftOrderResult } from './base/actions/trade/openPerpOrder/openSwiftOrder';
+import { SwiftOrderOptions } from './base/actions/trade/openPerpOrder/openSwiftOrder';
 import { ENUM_UTILS } from '../utils';
 import { API_URLS } from './constants/apiUrls';
 import * as path from 'path';
@@ -278,42 +278,45 @@ async function executeTransaction(
 	console.log(`🔍 View on Solscan: https://solscan.io/tx/${txSig?.toString()}`);
 }
 
-/**
- * Handle Swift order observable
- */
-function handleSwiftOrder(
-	swiftResult: SwiftOrderResult,
+const createSwiftOrderCallbacks = (
 	orderType: string
-): void {
-	if (swiftResult.swiftOrderObservable) {
-		console.log('\n👁️  Monitoring order status...');
+): SwiftOrderOptions['callbacks'] => {
+	const terminalCall = () => {
+		console.log('🏁 Order monitoring completed');
+	};
 
-		swiftResult.swiftOrderObservable.subscribe({
-			next: (event) => {
-				if (event.type === 'sent') {
-					console.log(`✅ ${orderType} Swift order submitted successfully`);
-				} else if (event.type === 'confirmed') {
-					console.log('✅ Order confirmed!');
-					console.log(`📋 Order ID: ${event.orderId}`);
-					console.log(`📋 Hash: ${event.hash}`);
-				} else if (event.type === 'errored') {
-					console.error('❌ Order failed:', event.message);
-					console.error(`📋 Status: ${event.status}`);
-				} else if (event.type === 'expired') {
-					console.error('⏰ Order expired:', event.message);
-				}
-			},
-			error: (error) => {
-				console.error('❌ Observable error:', error);
-			},
-			complete: () => {
-				console.log('🏁 Order monitoring completed');
-			},
-		});
-	} else {
-		console.log('🏁 Order confirmed and processing complete');
-	}
-}
+	return {
+		onSigningExpiry: () => {
+			console.log('Swift order signing expired');
+		},
+		onSigningSuccess: (signedMessage, orderUuid, orderParamsMessage) => {
+			console.log(
+				'Swift order signed successfully. Signed message:',
+				signedMessage,
+				orderUuid,
+				orderParamsMessage
+			);
+		},
+		onSent: () => {
+			console.log(`✅ ${orderType} Swift order submitted successfully`);
+		},
+		onConfirmed: (event) => {
+			console.log('✅ Order confirmed!');
+			console.log(`📋 Order ID: ${event.orderId}`);
+			console.log(`📋 Hash: ${event.hash}`);
+			terminalCall();
+		},
+		onExpired: (event) => {
+			console.error('⏰ Order expired:', event.message);
+			terminalCall();
+		},
+		onErrored: (event) => {
+			console.error('❌ Order failed:', event.message);
+			console.error(`📋 Status: ${event.status}`);
+			terminalCall();
+		},
+	};
+};
 
 /**
  * CLI Command: deposit
@@ -518,9 +521,10 @@ async function openPerpMarketOrderSwiftCommand(args: CliArgs): Promise<void> {
 	console.log(`⚡ Swift Server: ${swiftServerUrl}`);
 	console.log(`🔑 Wallet Public Key: ${wallet.publicKey.toString()}`);
 
-	let swiftResult: SwiftOrderResult;
+	console.log('\n👁️  Monitoring order status...');
+
 	try {
-		swiftResult = (await centralServerDrift.getOpenPerpMarketOrderTxn(
+		await centralServerDrift.getOpenPerpMarketOrderTxn(
 			userAccountPubkey,
 			assetType as 'base' | 'quote',
 			marketIndex,
@@ -539,16 +543,14 @@ async function openPerpMarketOrderSwiftCommand(args: CliArgs): Promise<void> {
 					publicKey: wallet.publicKey,
 				},
 				swiftServerUrl,
-				confirmDuration: 30000,
+				callbacks: createSwiftOrderCallbacks('Open Perp Order'),
 			}
-		)) as SwiftOrderResult;
-		console.log('✅ [CLI] Swift order transaction created successfully!');
+		);
+		console.log('✅ [CLI] Swift order finished');
 	} catch (error) {
 		console.error('❌ [CLI] Error creating Swift order:', error);
 		throw error;
 	}
-
-	handleSwiftOrder(swiftResult, 'Open Perp Order');
 }
 
 /**
@@ -733,9 +735,8 @@ async function openPerpNonMarketOrderSwiftCommand(
 	console.log(`⚡ Swift Server: ${swiftServerUrl}`);
 	console.log(`🔑 Wallet Public Key: ${wallet.publicKey.toString()}`);
 
-	let swiftResult: SwiftOrderResult;
 	try {
-		const swiftOptions = {
+		const swiftOptions: SwiftOrderOptions = {
 			wallet: {
 				signMessage: async (message: Uint8Array) => {
 					const signature = sign.detached(message, wallet.payer.secretKey);
@@ -744,11 +745,13 @@ async function openPerpNonMarketOrderSwiftCommand(
 				publicKey: wallet.publicKey,
 			},
 			swiftServerUrl,
-			confirmDuration: 30000,
+			callbacks: createSwiftOrderCallbacks('Open Perp Non-Market Order'),
 		};
 
+		console.log('\n👁️  Monitoring order status...');
+
 		// Use the main method - it handles both approaches internally
-		swiftResult = (await centralServerDrift.getOpenPerpNonMarketOrderTxn(
+		await centralServerDrift.getOpenPerpNonMarketOrderTxn(
 			userAccountPubkey,
 			marketIndex,
 			directionEnum,
@@ -766,16 +769,13 @@ async function openPerpNonMarketOrderSwiftCommand(
 			postOnlyEnum,
 			true, // useSwift
 			swiftOptions
-		)) as SwiftOrderResult;
-		console.log(
-			'✅ [CLI] Swift non-market order transaction created successfully!'
 		);
+
+		console.log('✅ [CLI] Swift order finished');
 	} catch (error) {
 		console.error('❌ [CLI] Error creating Swift non-market order:', error);
 		throw error;
 	}
-
-	handleSwiftOrder(swiftResult, 'Open Perp Non-Market Order');
 }
 
 /**
