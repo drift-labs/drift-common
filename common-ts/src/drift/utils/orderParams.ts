@@ -82,7 +82,6 @@ export interface NonMarketOrderParamsConfig {
 		| {
 				orderType: Extract<NonMarketOrderType, 'limit'>;
 				limitPrice: BN;
-				disableSwift?: boolean;
 				bracketOrders?: {
 					takeProfit?: OptionalTriggerOrderParams;
 					stopLoss?: OptionalTriggerOrderParams;

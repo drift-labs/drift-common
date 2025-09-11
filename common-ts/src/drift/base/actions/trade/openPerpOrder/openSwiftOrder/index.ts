@@ -24,7 +24,7 @@ import { MarketId } from '../../../../../../types';
 import { Observable, Subscription } from 'rxjs';
 
 export const SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 5;
-const MINIMUM_SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 5;
+export const MINIMUM_SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 5;
 
 export interface SwiftOrderOptions {
 	wallet: {

@@ -146,7 +146,7 @@ async function fetchOrderParamsFromServer({
 /**
  * Creates and submits a Swift (signed message) order. Only available for perp orders.
  */
-async function createAndSendSwiftOrder({
+export async function createSwiftMarketOrder({
 	driftClient,
 	user,
 	assetType,
@@ -302,25 +302,12 @@ export const createOpenPerpMarketOrderTxn = async <T extends boolean>({
 		throw new Error('Amount must be greater than zero');
 	}
 
-	// First, get order parameters from server (same for both Swift and regular orders)
-	const orderParams = await fetchOrderParamsFromServer({
-		driftClient,
-		user,
-		assetType,
-		marketIndex,
-		marketType: MarketType.PERP,
-		direction,
-		amount,
-		dlobServerHttpUrl,
-		optionalAuctionParamsInputs,
-	});
-
 	// If useSwift is true, return the Swift result directly
 	if (useSwift) {
 		if (!swiftOptions) {
 			throw new Error('swiftOptions is required when useSwift is true');
 		}
-		return (await createAndSendSwiftOrder({
+		return (await createSwiftMarketOrder({
 			driftClient,
 			user,
 			assetType,
@@ -333,6 +320,19 @@ export const createOpenPerpMarketOrderTxn = async <T extends boolean>({
 			swiftOptions,
 		})) as T extends true ? void : Transaction | VersionedTransaction;
 	}
+
+	// First, get order parameters from server (same for both Swift and regular orders)
+	const orderParams = await fetchOrderParamsFromServer({
+		driftClient,
+		user,
+		assetType,
+		marketIndex,
+		marketType: MarketType.PERP,
+		direction,
+		amount,
+		dlobServerHttpUrl,
+		optionalAuctionParamsInputs,
+	});
 
 	const allOrders: OptionalOrderParams[] = [orderParams];
 
@@ -380,20 +380,4 @@ export const createOpenPerpMarketOrderTxn = async <T extends boolean>({
 	return openPerpMarketOrderTxn as T extends true
 		? void
 		: Transaction | VersionedTransaction;
-};
-
-/**
- * Creates a Swift (signed message) order directly.
- * This is a convenience function for when you only want to create Swift orders.
- *
- * @param params - All the parameters needed for creating a Swift order
- */
-export const createSwiftPerpMarketOrder = async (
-	params: Omit<OpenPerpMarketOrderParams, 'useSwift'> & {
-		swiftOptions: SwiftOrderOptions;
-	}
-): Promise<void> => {
-	return await createAndSendSwiftOrder({
-		...params,
-	});
 };

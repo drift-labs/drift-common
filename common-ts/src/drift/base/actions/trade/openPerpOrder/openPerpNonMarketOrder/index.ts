@@ -114,7 +114,9 @@ export const createOpenPerpNonMarketOrderIx = async (
 	return placeOrderIx;
 };
 
-const createSwiftOrder = async (
+export const MINIMUM_SWIFT_LIMIT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 35;
+
+export const createSwiftLimitOrder = async (
 	params: OpenPerpNonMarketOrderParams & {
 		swiftOptions: SwiftOrderOptions;
 	} & {
@@ -161,9 +163,11 @@ const createSwiftOrder = async (
 	});
 
 	const userAccount = user.getUserAccount();
-	const slotBuffer =
+	const slotBuffer = Math.max(
 		(swiftOptions.signedMessageOrderSlotBuffer || 0) +
-			(orderParams.auctionDuration || 0) || 35; // limit orders require a much larger buffer, to replace the auction duration usually found in market orders
+			(orderParams.auctionDuration || 0),
+		MINIMUM_SWIFT_LIMIT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS
+	); // limit orders require a much larger buffer, to replace the auction duration usually found in market orders
 
 	await prepSignAndSendSwiftOrder({
 		driftClient,
@@ -201,7 +205,7 @@ export const createOpenPerpNonMarketOrderTxn = async <T extends boolean>(
 			throw new Error('Post only orders are not supported with Swift');
 		}
 
-		const swiftOrderResult = await createSwiftOrder({
+		const swiftOrderResult = await createSwiftLimitOrder({
 			...params,
 			swiftOptions,
 			orderConfig,
