@@ -7,6 +7,7 @@ import {
 } from '../../../utils/orderbook';
 import { PollingSequenceGuard } from '../../../utils/pollingSequenceGuard';
 import { PollingCategory } from '../constants/blockchain';
+import { encodeQueryParams } from '../../../utils/fetch';
 
 export interface PollingConfig {
 	driftDlobServerHttpUrl: string;
@@ -519,7 +520,7 @@ export class PollingDlob {
 				.join(','),
 		};
 
-		const queryParams = this.encodeQueryParams(queryParamsMap);
+		const queryParams = encodeQueryParams(queryParamsMap);
 
 		// Use cached endpoint when exclusively fetching background markets
 		const useCachedEndpoint = !params.markets.some(
@@ -544,17 +545,5 @@ export class PollingDlob {
 					reject(error);
 				});
 		});
-	}
-
-	private encodeQueryParams(
-		params: Record<string, string | undefined>
-	): string {
-		return Object.entries(params)
-			.filter(([_, value]) => value !== undefined)
-			.map(
-				([key, value]) =>
-					`${encodeURIComponent(key)}=${encodeURIComponent(value!)}`
-			)
-			.join('&');
 	}
 }

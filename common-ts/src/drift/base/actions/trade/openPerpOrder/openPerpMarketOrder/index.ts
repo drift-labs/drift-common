@@ -6,6 +6,10 @@ import {
 	OptionalOrderParams,
 	MarketType,
 	TxParams,
+	UserAccount,
+	PublicKey,
+	decodeUser,
+	getUserStatsAccountPublicKey,
 } from '@drift-labs/sdk';
 import {
 	Transaction,
@@ -24,6 +28,7 @@ import {
 	SwiftOrderOptions,
 } from '../openSwiftOrder';
 import { buildNonMarketOrderParams } from '../../../../../utils/orderParams';
+import { encodeQueryParams } from '../../../../../../utils/fetch';
 
 export interface OptionalAuctionParamsRequestInputs {
 	// Optional parameters that can override defaults or provide additional configuration
@@ -46,6 +51,11 @@ export interface OptionalAuctionParamsRequestInputs {
 	orderType?: 'market' | 'oracle';
 }
 
+interface PlaceAndTakeParams {
+	enable: boolean;
+	auctionDurationPercentage?: number;
+}
+
 export interface OpenPerpMarketOrderBaseParams {
 	driftClient: DriftClient;
 	user: User;
@@ -54,6 +64,7 @@ export interface OpenPerpMarketOrderBaseParams {
 	direction: PositionDirection;
 	amount: BN;
 	dlobServerHttpUrl: string;
+	placeAndTake?: PlaceAndTakeParams;
 	optionalAuctionParamsInputs?: OptionalAuctionParamsRequestInputs;
 	bracketOrders?: {
 		takeProfit?: OptionalTriggerOrderParams;
@@ -62,7 +73,7 @@ export interface OpenPerpMarketOrderBaseParams {
 }
 
 export interface OpenPerpMarketOrderBaseParamsWithSwift
-	extends OpenPerpMarketOrderBaseParams {
+	extends Omit<OpenPerpMarketOrderBaseParams, 'placeAndTake'> {
 	swiftOptions: SwiftOrderOptions;
 }
 
@@ -70,6 +81,7 @@ export interface OpenPerpMarketOrderParams<T extends boolean = boolean>
 	extends OpenPerpMarketOrderBaseParams {
 	useSwift: T;
 	swiftOptions?: T extends true ? SwiftOrderOptions : never;
+	placeAndTake?: T extends true ? never : PlaceAndTakeParams;
 }
 
 interface RegularOrderParams {
@@ -114,7 +126,7 @@ async function fetchOrderParamsFromServer({
 		}
 	});
 
-	const urlParams = new URLSearchParams(urlParamsObject);
+	const urlParams = encodeQueryParams(urlParamsObject);
 
 	// Get order params from server
 	const requestUrl = `${dlobServerHttpUrl}/auctionParams?${urlParams.toString()}`;
@@ -148,6 +160,62 @@ async function fetchOrderParamsFromServer({
 		auctionStartPrice: mappedParams.auctionStartPrice,
 		auctionEndPrice: mappedParams.auctionEndPrice,
 	};
+}
+
+type FetchTopMakersParams = {
+	dlobServerHttpUrl: string;
+	marketIndex: number;
+	marketType: MarketType;
+	side: 'bid' | 'ask';
+	limit: number;
+};
+
+/**
+ * Fetches the top makers information, for use as inputs in place and take market orders.
+ */
+async function fetchTopMakers(params: FetchTopMakersParams): Promise<
+	{
+		userAccountPubKey: PublicKey;
+		userAccount: UserAccount;
+	}[]
+> {
+	try {
+		const { dlobServerHttpUrl, marketIndex, marketType, side, limit } = params;
+
+		const urlParams = encodeQueryParams({
+			marketIndex: marketIndex.toString(),
+			marketType: ENUM_UTILS.toStr(marketType),
+			side,
+			limit: limit.toString(),
+			includeAccounts: 'true',
+		});
+
+		const requestUrl = `${dlobServerHttpUrl}/topMakers?${urlParams}`;
+		const response = await fetch(requestUrl);
+
+		if (!response.ok) {
+			throw new Error(
+				`Server responded with ${response.status}: ${response.statusText}`
+			);
+		}
+
+		const serverResponse: {
+			userAccountPubKey: string;
+			accountBase64: string;
+		}[] = await response.json();
+		const mappedParams: {
+			userAccountPubKey: PublicKey;
+			userAccount: UserAccount;
+		}[] = serverResponse.map((value) => ({
+			userAccountPubKey: new PublicKey(value.userAccountPubKey),
+			userAccount: decodeUser(Buffer.from(value.accountBase64, 'base64')),
+		}));
+
+		return mappedParams;
+	} catch (e) {
+		console.error(e);
+		return [];
+	}
 }
 
 /**
@@ -199,6 +267,54 @@ export async function createSwiftMarketOrder({
 	});
 }
 
+const createPlaceAndTakePerpMarketOrderIx = async ({
+	orderParams,
+	direction,
+	dlobServerHttpUrl,
+	marketIndex,
+	driftClient,
+	user,
+	auctionDurationPercentage,
+}: {
+	orderParams: OptionalOrderParams;
+	direction: PositionDirection;
+	dlobServerHttpUrl: string;
+	marketIndex: number;
+	driftClient: DriftClient;
+	user: User;
+	auctionDurationPercentage?: number;
+}) => {
+	const counterPartySide = ENUM_UTILS.match(direction, PositionDirection.LONG)
+		? 'ask'
+		: 'bid';
+	const topMakersResult = await fetchTopMakers({
+		dlobServerHttpUrl,
+		marketIndex,
+		marketType: MarketType.PERP,
+		side: counterPartySide,
+		limit: 4,
+	});
+	const topMakersInfo = topMakersResult.map((maker) => ({
+		maker: maker.userAccountPubKey,
+		makerUserAccount: maker.userAccount,
+		makerStats: getUserStatsAccountPublicKey(
+			driftClient.program.programId,
+			maker.userAccount.authority
+		),
+	}));
+
+	const placeAndTakeIx = await driftClient.getPlaceAndTakePerpOrderIx(
+		orderParams,
+		topMakersInfo,
+		undefined, // TODO: referrerInfo,
+		undefined,
+		auctionDurationPercentage,
+		user.getUserAccount().subAccountId
+	);
+
+	return placeAndTakeIx;
+};
+
 /**
  * Creates transaction instructions for opening a perp market order.
  * If swiftOptions is provided, it will create a Swift (signed message) order instead.
@@ -216,7 +332,7 @@ export async function createSwiftMarketOrder({
  *
  * @returns Promise resolving to an array of transaction instructions for regular orders, or empty array for Swift orders
  */
-export const createOpenPerpMarketOrderIx = async ({
+export const createOpenPerpMarketOrderIxs = async ({
 	driftClient,
 	user,
 	assetType,
@@ -225,8 +341,9 @@ export const createOpenPerpMarketOrderIx = async ({
 	amount,
 	bracketOrders,
 	dlobServerHttpUrl,
+	placeAndTake,
 	optionalAuctionParamsInputs = {},
-}: OpenPerpMarketOrderBaseParams): Promise<TransactionInstruction> => {
+}: OpenPerpMarketOrderBaseParams): Promise<TransactionInstruction[]> => {
 	if (!amount || amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
 	}
@@ -244,7 +361,23 @@ export const createOpenPerpMarketOrderIx = async ({
 		optionalAuctionParamsInputs,
 	});
 
-	const allOrders: OptionalOrderParams[] = [orderParams];
+	const allOrders: OptionalOrderParams[] = [];
+	const allIxs: TransactionInstruction[] = [];
+
+	if (placeAndTake.enable) {
+		const placeAndTakeIx = await createPlaceAndTakePerpMarketOrderIx({
+			orderParams,
+			direction,
+			dlobServerHttpUrl,
+			marketIndex,
+			driftClient,
+			user,
+			auctionDurationPercentage: placeAndTake.auctionDurationPercentage,
+		});
+		allIxs.push(placeAndTakeIx);
+	} else {
+		allOrders.push(orderParams);
+	}
 
 	if (bracketOrders?.takeProfit) {
 		const takeProfitParams = buildNonMarketOrderParams({
@@ -278,7 +411,9 @@ export const createOpenPerpMarketOrderIx = async ({
 
 	// Regular order flow - create transaction instruction
 	const placeOrderIx = await driftClient.getPlaceOrdersIx(allOrders);
-	return placeOrderIx;
+	allIxs.push(placeOrderIx);
+
+	return allIxs;
 };
 
 /**
@@ -300,7 +435,7 @@ export const createOpenPerpMarketOrderTxn = async (
 	const { driftClient } = params;
 
 	// Regular order flow - create transaction instruction and build transaction
-	const placeOrderIx = await createOpenPerpMarketOrderIx(params);
+	const placeOrderIx = await createOpenPerpMarketOrderIxs(params);
 	const openPerpMarketOrderTxn = await driftClient.txHandler.buildTransaction({
 		instructions: placeOrderIx,
 		txVersion: 0,

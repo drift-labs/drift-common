@@ -21,6 +21,7 @@ export * from './utils/SharedInterval';
 export * from './utils/Stopwatch';
 export * from './utils/priority-fees';
 export * from './utils/superstake';
+export * from './utils/fetch';
 export * from './utils/dlob-server/DlobServerWebsocketUtils';
 export * from './common-ui-utils/settings/settings';
 export * from './utils/priority-fees';
