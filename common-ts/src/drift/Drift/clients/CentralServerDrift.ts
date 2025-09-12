@@ -38,10 +38,10 @@ import { createWithdrawTxn } from '../../base/actions/spot/withdraw';
 import { createSettleFundingTxn } from '../../base/actions/perp/settleFunding';
 import { createSettlePnlTxn } from '../../base/actions/perp/settlePnl';
 import {
-	createOpenPerpMarketOrderTxn,
+	createOpenPerpMarketOrder,
 	OptionalAuctionParamsRequestInputs,
 } from '../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
-import { createOpenPerpNonMarketOrderTxn } from '../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
+import { createOpenPerpNonMarketOrder } from '../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 import { createEditOrderTxn } from '../../base/actions/trade/editOrder';
 import { createCancelOrdersTxn } from '../../base/actions/trade/cancelOrder';
 import { createSwapTxn } from '../../base/actions/trade/swap';
@@ -312,13 +312,12 @@ export class CentralServerDrift {
 		dlobServerHttpUrl: string,
 		optionalAuctionParamsInputs?: OptionalAuctionParamsRequestInputs,
 		useSwift?: boolean,
-		swiftOptions?: SwiftOrderOptions,
-		marketType?: MarketType
+		swiftOptions?: SwiftOrderOptions
 	): Promise<VersionedTransaction | Transaction | void> {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const openPerpMarketOrderTxn = await createOpenPerpMarketOrderTxn({
+				const openPerpMarketOrderTxn = await createOpenPerpMarketOrder({
 					driftClient: this.driftClient,
 					user,
 					assetType,
@@ -329,7 +328,6 @@ export class CentralServerDrift {
 					optionalAuctionParamsInputs,
 					useSwift,
 					swiftOptions,
-					marketType,
 				});
 
 				return openPerpMarketOrderTxn;
@@ -387,21 +385,19 @@ export class CentralServerDrift {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const openPerpNonMarketOrderTxn = await createOpenPerpNonMarketOrderTxn(
-					{
-						driftClient: this.driftClient,
-						user,
-						marketIndex,
-						direction,
-						amount,
-						assetType,
-						orderConfig,
-						reduceOnly,
-						postOnly,
-						useSwift,
-						swiftOptions,
-					}
-				);
+				const openPerpNonMarketOrderTxn = await createOpenPerpNonMarketOrder({
+					driftClient: this.driftClient,
+					user,
+					marketIndex,
+					direction,
+					amount,
+					assetType,
+					orderConfig,
+					reduceOnly,
+					postOnly,
+					useSwift,
+					swiftOptions,
+				});
 
 				return openPerpNonMarketOrderTxn;
 			}

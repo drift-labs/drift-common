@@ -5,6 +5,7 @@ import {
 	PositionDirection,
 	OptionalOrderParams,
 	MarketType,
+	TxParams,
 } from '@drift-labs/sdk';
 import {
 	Transaction,
@@ -20,7 +21,6 @@ import {
 import {
 	OptionalTriggerOrderParams,
 	prepSignAndSendSwiftOrder,
-	prepSwiftOrder,
 	SwiftOrderOptions,
 } from '../openSwiftOrder';
 import { buildNonMarketOrderParams } from '../../../../../utils/orderParams';
@@ -46,24 +46,31 @@ export interface OptionalAuctionParamsRequestInputs {
 	orderType?: 'market' | 'oracle';
 }
 
-export type OpenPerpMarketOrderParams<T extends boolean = boolean> = {
+export interface OpenPerpMarketOrderBaseParams {
 	driftClient: DriftClient;
 	user: User;
 	assetType: 'base' | 'quote';
 	marketIndex: number;
 	direction: PositionDirection;
 	amount: BN;
-	optionalAuctionParamsInputs?: OptionalAuctionParamsRequestInputs;
 	dlobServerHttpUrl: string;
+	optionalAuctionParamsInputs?: OptionalAuctionParamsRequestInputs;
 	bracketOrders?: {
 		takeProfit?: OptionalTriggerOrderParams;
 		stopLoss?: OptionalTriggerOrderParams;
 	};
-	marketType?: MarketType;
+}
+
+export interface OpenPerpMarketOrderBaseParamsWithSwift
+	extends OpenPerpMarketOrderBaseParams {
+	swiftOptions: SwiftOrderOptions;
+}
+
+export interface OpenPerpMarketOrderParams<T extends boolean = boolean>
+	extends OpenPerpMarketOrderBaseParams {
 	useSwift: T;
-} & (T extends true
-	? { swiftOptions: SwiftOrderOptions }
-	: { swiftOptions?: never });
+	swiftOptions?: T extends true ? SwiftOrderOptions : never;
+}
 
 interface RegularOrderParams {
 	driftClient: DriftClient;
@@ -157,9 +164,11 @@ export async function createSwiftMarketOrder({
 	dlobServerHttpUrl,
 	optionalAuctionParamsInputs,
 	swiftOptions,
-}: Omit<OpenPerpMarketOrderParams, 'useSwift'> & {
-	swiftOptions: SwiftOrderOptions;
-}): Promise<void> {
+}: OpenPerpMarketOrderBaseParamsWithSwift): Promise<void> {
+	if (amount.isZero()) {
+		throw new Error('Amount must be greater than zero');
+	}
+
 	// Get order parameters from server
 	const orderParams = await fetchOrderParamsFromServer({
 		driftClient,
@@ -214,111 +223,12 @@ export const createOpenPerpMarketOrderIx = async ({
 	marketIndex,
 	direction,
 	amount,
+	bracketOrders,
 	dlobServerHttpUrl,
 	optionalAuctionParamsInputs = {},
-	useSwift = false,
-	swiftOptions,
-}: OpenPerpMarketOrderParams): Promise<TransactionInstruction[]> => {
+}: OpenPerpMarketOrderBaseParams): Promise<TransactionInstruction> => {
 	if (!amount || amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
-	}
-
-	// First, get order parameters from server (same for both Swift and regular orders)
-	const orderParams = await fetchOrderParamsFromServer({
-		driftClient,
-		user,
-		assetType,
-		marketIndex,
-		marketType: MarketType.PERP,
-		direction,
-		amount,
-		dlobServerHttpUrl,
-		optionalAuctionParamsInputs,
-	});
-
-	// If useSwift is true, use prepSwiftOrder and return empty array
-	if (useSwift) {
-		if (!swiftOptions) {
-			throw new Error('swiftOptions is required when useSwift is true');
-		}
-
-		const currentSlot = await driftClient.connection.getSlot();
-		const userAccount = user.getUserAccount();
-
-		// Use the existing prepSwiftOrder helper function
-		prepSwiftOrder({
-			driftClient,
-			takerUserAccount: {
-				pubKey: swiftOptions.wallet.publicKey,
-				subAccountId: userAccount.subAccountId,
-			},
-			currentSlot,
-			isDelegate: swiftOptions.isDelegate || false,
-			orderParams: {
-				main: orderParams,
-				// TODO: Add support for stopLoss and takeProfit
-			},
-			slotBuffer: swiftOptions.signedMessageOrderSlotBuffer || 7,
-		});
-
-		// Swift orders don't return transaction instructions
-		return [];
-	}
-
-	// Regular order flow - create transaction instruction
-	const placeOrderIx = await driftClient.getPlaceOrdersIx([orderParams]);
-	return [placeOrderIx];
-};
-
-/**
- * Creates a complete transaction for opening a perp market order.
- *
- * @param driftClient - The Drift client instance for interacting with the protocol
- * @param user - The user account that will place the order
- * @param marketIndex - The perp market index to trade
- * @param direction - The direction of the trade (long/short)
- * @param amount - The amount to trade
- * @param optionalAuctionParamsInputs - Optional parameters for auction params endpoint and order configuration
- * @param dlobServerHttpUrl - Server URL for the auction params endpoint
- *
- * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
- */
-export const createOpenPerpMarketOrderTxn = async <T extends boolean>({
-	driftClient,
-	user,
-	assetType,
-	marketIndex,
-	direction,
-	amount,
-	dlobServerHttpUrl,
-	optionalAuctionParamsInputs,
-	bracketOrders,
-	useSwift,
-	swiftOptions,
-}: OpenPerpMarketOrderParams<T>): Promise<
-	T extends true ? void : Transaction | VersionedTransaction
-> => {
-	if (!amount || amount.isZero()) {
-		throw new Error('Amount must be greater than zero');
-	}
-
-	// If useSwift is true, return the Swift result directly
-	if (useSwift) {
-		if (!swiftOptions) {
-			throw new Error('swiftOptions is required when useSwift is true');
-		}
-		return (await createSwiftMarketOrder({
-			driftClient,
-			user,
-			assetType,
-			marketIndex,
-			direction,
-			amount,
-			dlobServerHttpUrl,
-			bracketOrders,
-			optionalAuctionParamsInputs,
-			swiftOptions,
-		})) as T extends true ? void : Transaction | VersionedTransaction;
 	}
 
 	// First, get order parameters from server (same for both Swift and regular orders)
@@ -366,16 +276,81 @@ export const createOpenPerpMarketOrderTxn = async <T extends boolean>({
 		allOrders.push(stopLossParams);
 	}
 
-	// Regular order flow - create transaction instruction and build transaction
+	// Regular order flow - create transaction instruction
 	const placeOrderIx = await driftClient.getPlaceOrdersIx(allOrders);
+	return placeOrderIx;
+};
+
+/**
+ * Creates a complete transaction for opening a perp market order.
+ *
+ * @param driftClient - The Drift client instance for interacting with the protocol
+ * @param user - The user account that will place the order
+ * @param marketIndex - The perp market index to trade
+ * @param direction - The direction of the trade (long/short)
+ * @param amount - The amount to trade
+ * @param optionalAuctionParamsInputs - Optional parameters for auction params endpoint and order configuration
+ * @param dlobServerHttpUrl - Server URL for the auction params endpoint
+ *
+ * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
+ */
+export const createOpenPerpMarketOrderTxn = async (
+	params: OpenPerpMarketOrderBaseParams & { txParams?: TxParams }
+): Promise<Transaction | VersionedTransaction> => {
+	const { driftClient } = params;
+
+	// Regular order flow - create transaction instruction and build transaction
+	const placeOrderIx = await createOpenPerpMarketOrderIx(params);
 	const openPerpMarketOrderTxn = await driftClient.txHandler.buildTransaction({
-		instructions: [placeOrderIx],
+		instructions: placeOrderIx,
 		txVersion: 0,
 		connection: driftClient.connection,
 		preFlightCommitment: 'confirmed',
 		fetchAllMarketLookupTableAccounts:
 			driftClient.fetchAllLookupTableAccounts.bind(driftClient),
+		txParams: params.txParams,
 	});
+
+	return openPerpMarketOrderTxn;
+};
+
+/**
+ * Creates a transaction or swift order for a perp market order.
+ *
+ * @param driftClient - The Drift client instance for interacting with the protocol
+ * @param user - The user account that will place the order
+ * @param marketIndex - The perp market index to trade
+ * @param direction - The direction of the trade (long/short)
+ * @param amount - The amount to trade
+ * @param optionalAuctionParamsInputs - Optional parameters for auction params endpoint and order configuration
+ * @param dlobServerHttpUrl - Server URL for the auction params endpoint
+ * @param useSwift - Whether to use Swift (signed message) orders instead of regular transactions
+ * @param swiftOptions - Options for Swift (signed message) orders. Required if useSwift is true
+ *
+ * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
+ */
+export const createOpenPerpMarketOrder = async <T extends boolean>(
+	params: OpenPerpMarketOrderParams<T>
+): Promise<T extends true ? void : Transaction | VersionedTransaction> => {
+	const { useSwift, swiftOptions, ...rest } = params;
+
+	// If useSwift is true, return the Swift result directly
+	if (useSwift) {
+		if (!swiftOptions) {
+			throw new Error('swiftOptions is required when useSwift is true');
+		}
+
+		const swiftOrderResult = await createSwiftMarketOrder({
+			...rest,
+			swiftOptions,
+		});
+
+		return swiftOrderResult as T extends true
+			? void
+			: Transaction | VersionedTransaction;
+	}
+
+	const openPerpMarketOrderTxn = await createOpenPerpMarketOrderTxn(rest);
 
 	return openPerpMarketOrderTxn as T extends true
 		? void

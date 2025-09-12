@@ -32,11 +32,11 @@ import {
 } from './types';
 import { createCancelOrdersTxn } from '../../../../base/actions/trade/cancelOrder';
 import {
-	createOpenPerpMarketOrderTxn,
+	createOpenPerpMarketOrder,
 	OpenPerpMarketOrderParams,
 } from '../../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { createSwapTxn } from '../../../../base/actions/trade/swap';
-import { createOpenPerpNonMarketOrderTxn } from '../../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
+import { createOpenPerpNonMarketOrder } from '../../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 import { ENUM_UTILS } from '../../../../../utils';
 
 /**
@@ -409,7 +409,7 @@ export class DriftOperations {
 
 				// we split the logic for SWIFT and non-SWIFT orders to achieve better type inference
 				if (useSwift) {
-					const swiftOrderResult = await createOpenPerpMarketOrderTxn({
+					const swiftOrderResult = await createOpenPerpMarketOrder({
 						driftClient: this.driftClient,
 						user,
 						assetType: params.assetType,
@@ -430,7 +430,7 @@ export class DriftOperations {
 
 					return swiftOrderResult;
 				} else {
-					const result = await createOpenPerpMarketOrderTxn({
+					const result = await createOpenPerpMarketOrder({
 						driftClient: this.driftClient,
 						user,
 						assetType: params.assetType,
@@ -458,7 +458,7 @@ export class DriftOperations {
 
 				// we split the logic for SWIFT and non-SWIFT orders to achieve better type inference
 				if (useSwift) {
-					const swiftOrderResult = await createOpenPerpNonMarketOrderTxn<true>({
+					const swiftOrderResult = await createOpenPerpNonMarketOrder<true>({
 						driftClient: this.driftClient,
 						user,
 						direction: params.direction,
@@ -482,7 +482,7 @@ export class DriftOperations {
 
 					return swiftOrderResult;
 				} else {
-					const txn = await createOpenPerpNonMarketOrderTxn({
+					const txn = await createOpenPerpNonMarketOrder({
 						driftClient: this.driftClient,
 						user,
 						direction: params.direction,
@@ -507,7 +507,7 @@ export class DriftOperations {
 			}
 			case 'takeProfit':
 			case 'stopLoss': {
-				const txn = await createOpenPerpNonMarketOrderTxn({
+				const txn = await createOpenPerpNonMarketOrder({
 					driftClient: this.driftClient,
 					user,
 					direction: params.direction,
@@ -529,7 +529,7 @@ export class DriftOperations {
 				return txSig;
 			}
 			case 'oracleLimit': {
-				const txn = await createOpenPerpNonMarketOrderTxn({
+				const txn = await createOpenPerpNonMarketOrder({
 					driftClient: this.driftClient,
 					user,
 					direction: params.direction,

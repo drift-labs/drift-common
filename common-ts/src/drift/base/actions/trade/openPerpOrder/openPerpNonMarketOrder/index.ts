@@ -24,7 +24,7 @@ import {
 } from '../../../../../utils/orderParams';
 import { ENUM_UTILS } from '../../../../../../utils';
 
-export interface OpenPerpNonMarketOrderParams<T extends boolean = boolean>
+export interface OpenPerpNonMarketOrderBaseParams
 	extends Omit<NonMarketOrderParamsConfig, 'marketType' | 'baseAssetAmount'> {
 	driftClient: DriftClient;
 	user: User;
@@ -36,13 +36,21 @@ export interface OpenPerpNonMarketOrderParams<T extends boolean = boolean>
 	// Common optional params
 	reduceOnly?: boolean;
 	postOnly?: PostOnlyParams;
-	// Swift
-	useSwift?: T;
+}
+
+export interface OpenPerpNonMarketOrderParamsWithSwift
+	extends OpenPerpNonMarketOrderBaseParams {
+	swiftOptions: SwiftOrderOptions;
+}
+
+export interface OpenPerpNonMarketOrderParams<T extends boolean = boolean>
+	extends OpenPerpNonMarketOrderBaseParams {
+	useSwift: T;
 	swiftOptions?: T extends true ? SwiftOrderOptions : never;
 }
 
 export const createOpenPerpNonMarketOrderIx = async (
-	params: Omit<OpenPerpNonMarketOrderParams, 'useSwift' | 'swiftOptions'>
+	params: OpenPerpNonMarketOrderBaseParams
 ): Promise<TransactionInstruction> => {
 	const {
 		driftClient,
@@ -117,9 +125,7 @@ export const createOpenPerpNonMarketOrderIx = async (
 export const MINIMUM_SWIFT_LIMIT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 35;
 
 export const createSwiftLimitOrder = async (
-	params: OpenPerpNonMarketOrderParams & {
-		swiftOptions: SwiftOrderOptions;
-	} & {
+	params: OpenPerpNonMarketOrderParamsWithSwift & {
 		orderConfig: {
 			orderType: 'limit';
 			limitPrice: BN;
@@ -183,10 +189,31 @@ export const createSwiftLimitOrder = async (
 	});
 };
 
-export const createOpenPerpNonMarketOrderTxn = async <T extends boolean>(
+export const createOpenPerpNonMarketOrderTxn = async (
+	params: OpenPerpNonMarketOrderBaseParams & { txParams?: TxParams }
+): Promise<Transaction | VersionedTransaction> => {
+	const { driftClient } = params;
+
+	const instructions = await createOpenPerpNonMarketOrderIx(params);
+
+	const openPerpNonMarketOrderTxn =
+		await driftClient.txHandler.buildTransaction({
+			instructions,
+			txVersion: 0,
+			connection: driftClient.connection,
+			preFlightCommitment: 'confirmed',
+			fetchAllMarketLookupTableAccounts:
+				driftClient.fetchAllLookupTableAccounts.bind(driftClient),
+			txParams: params.txParams,
+		});
+
+	return openPerpNonMarketOrderTxn;
+};
+
+export const createOpenPerpNonMarketOrder = async <T extends boolean>(
 	params: OpenPerpNonMarketOrderParams<T> & { txParams?: TxParams }
 ): Promise<T extends true ? void : Transaction | VersionedTransaction> => {
-	const { driftClient, swiftOptions, useSwift, orderConfig } = params;
+	const { swiftOptions, useSwift, orderConfig } = params;
 
 	// If useSwift is true, return the Swift result directly
 	if (useSwift) {
@@ -216,20 +243,9 @@ export const createOpenPerpNonMarketOrderTxn = async <T extends boolean>(
 			: Transaction | VersionedTransaction;
 	}
 
-	const instructions = await createOpenPerpNonMarketOrderIx(params);
+	const marketOrderTxn = await createOpenPerpNonMarketOrderTxn(params);
 
-	const openPerpNonMarketOrderTxn =
-		await driftClient.txHandler.buildTransaction({
-			instructions,
-			txVersion: 0,
-			connection: driftClient.connection,
-			preFlightCommitment: 'confirmed',
-			fetchAllMarketLookupTableAccounts:
-				driftClient.fetchAllLookupTableAccounts.bind(driftClient),
-			txParams: params.txParams,
-		});
-
-	return openPerpNonMarketOrderTxn as T extends true
+	return marketOrderTxn as T extends true
 		? void
 		: Transaction | VersionedTransaction;
 };

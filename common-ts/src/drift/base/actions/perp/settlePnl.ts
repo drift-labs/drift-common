@@ -22,7 +22,7 @@ interface SettlePnlParams {
  *
  * @returns Promise resolving to an array of transaction instructions for settling PnL
  */
-export const createSettlePnlIx = async ({
+export const createSettlePnlIxs = async ({
 	driftClient,
 	user,
 	marketIndexes,
@@ -63,7 +63,7 @@ export const createSettlePnlTxn = async ({
 	mode = SettlePnlMode.TRY_SETTLE,
 	txParams,
 }: CreateSettlePnlTxnParams): Promise<Transaction | VersionedTransaction> => {
-	const settlePnlIxs = await createSettlePnlIx({
+	const settlePnlIxs = await createSettlePnlIxs({
 		driftClient,
 		user,
 		marketIndexes,
