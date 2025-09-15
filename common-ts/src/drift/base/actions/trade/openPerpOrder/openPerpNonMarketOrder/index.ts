@@ -22,14 +22,12 @@ import {
 } from '../openSwiftOrder';
 import {
 	buildNonMarketOrderParams,
+	LimitOrderParamsOrderConfig,
 	NonMarketOrderParamsConfig,
 	resolveBaseAssetAmount,
 } from '../../../../../utils/orderParams';
 import { ENUM_UTILS } from '../../../../../../utils';
-import {
-	fetchOrderParamsFromServer,
-	OptionalAuctionParamsRequestInputs,
-} from '../dlobServer';
+import { fetchOrderParamsFromServer } from '../dlobServer';
 import {
 	COMMON_UI_UTILS,
 	ORDER_COMMON_UTILS,
@@ -61,6 +59,66 @@ export interface OpenPerpNonMarketOrderParams<T extends boolean = boolean>
 	swiftOptions?: T extends true ? SwiftOrderOptions : never;
 }
 
+const getLimitAuctionOrderParams = async ({
+	driftClient,
+	user,
+	marketIndex,
+	direction,
+	baseAssetAmount,
+	reduceOnly = false,
+	postOnly = PostOnlyParams.NONE,
+	orderConfig,
+}: OpenPerpNonMarketOrderBaseParams & {
+	baseAssetAmount: BN;
+	orderConfig: LimitOrderParamsOrderConfig;
+}) => {
+	const orderParams = await fetchOrderParamsFromServer({
+		driftClient,
+		user,
+		assetType: 'base',
+		marketIndex,
+		marketType: MarketType.PERP,
+		direction,
+		amount: baseAssetAmount,
+		dlobServerHttpUrl: orderConfig.limitAuction.dlobServerHttpUrl,
+		optionalAuctionParamsInputs:
+			orderConfig.limitAuction.optionalLimitAuctionParams,
+	});
+
+	const perpMarketAccount = driftClient.getPerpMarketAccount(marketIndex);
+	const oraclePriceBands = orderConfig.limitAuction.oraclePrice
+		? getOraclePriceBands(perpMarketAccount, {
+				price: orderConfig.limitAuction.oraclePrice,
+		  })
+		: undefined;
+	const auctionDuration = ORDER_COMMON_UTILS.getPerpAuctionDuration(
+		orderConfig.limitPrice.sub(orderParams.auctionStartPrice).abs(),
+		orderConfig.limitAuction.oraclePrice,
+		driftClient.getPerpMarketAccount(marketIndex).contractTier
+	);
+	const limitAuctionParams = COMMON_UI_UTILS.getLimitAuctionParams({
+		direction,
+		inputPrice: BigNum.from(orderConfig.limitPrice, PRICE_PRECISION_EXP),
+		startPriceFromSettings: orderParams.auctionStartPrice,
+		duration: auctionDuration,
+		auctionStartPriceOffset: orderConfig.limitAuction.auctionStartPriceOffset,
+		oraclePriceBands,
+	});
+
+	const limitAuctionOrderParams = getLimitOrderParams({
+		marketIndex,
+		marketType: MarketType.PERP,
+		direction,
+		baseAssetAmount: baseAssetAmount,
+		reduceOnly,
+		postOnly,
+		price: orderConfig.limitPrice,
+		...limitAuctionParams,
+	});
+
+	return limitAuctionOrderParams;
+};
+
 export const createOpenPerpNonMarketOrderIx = async (
 	params: OpenPerpNonMarketOrderBaseParams
 ): Promise<TransactionInstruction> => {
@@ -89,56 +147,17 @@ export const createOpenPerpNonMarketOrderIx = async (
 
 	const allOrders: OptionalOrderParams[] = [];
 
-	// TODO: need to do the same for SWIFT orders
 	// handle limit auction
 	if (orderConfig.orderType === 'limit' && orderConfig.limitAuction?.enable) {
-		const orderParams = await fetchOrderParamsFromServer({
-			driftClient,
-			user,
-			assetType: 'base',
-			marketIndex,
-			marketType: MarketType.PERP,
-			direction,
-			amount: finalBaseAssetAmount,
-			dlobServerHttpUrl: orderConfig.limitAuction.dlobServerHttpUrl,
-			optionalAuctionParamsInputs:
-				orderConfig.limitAuction.optionalLimitAuctionParams,
-		});
-
-		const perpMarketAccount = driftClient.getPerpMarketAccount(marketIndex);
-		const oraclePriceBands = orderConfig.limitAuction.oraclePrice
-			? getOraclePriceBands(perpMarketAccount, {
-					price: orderConfig.limitAuction.oraclePrice,
-			  })
-			: undefined;
-		const auctionDuration = ORDER_COMMON_UTILS.getPerpAuctionDuration(
-			orderConfig.limitPrice.sub(orderParams.auctionStartPrice).abs(),
-			orderConfig.limitAuction.oraclePrice,
-			driftClient.getPerpMarketAccount(marketIndex).contractTier
-		);
-		const limitAuctionParams = COMMON_UI_UTILS.getLimitAuctionParams({
-			direction,
-			inputPrice: BigNum.from(orderConfig.limitPrice, PRICE_PRECISION_EXP),
-			startPriceFromSettings: orderParams.auctionStartPrice,
-			duration: auctionDuration,
-			auctionStartPriceOffset: orderConfig.limitAuction.auctionStartPriceOffset,
-			oraclePriceBands,
-		});
-
-		const limitAuctionOrderParams = getLimitOrderParams({
-			marketIndex,
-			marketType: MarketType.PERP,
-			direction,
+		const limitAuctionOrderParams = await getLimitAuctionOrderParams({
+			...params,
 			baseAssetAmount: finalBaseAssetAmount,
-			reduceOnly,
-			postOnly,
-			price: orderConfig.limitPrice,
-			...limitAuctionParams,
+			orderConfig: orderConfig,
 		});
 
 		// if it is a limit auction order, we create a placeAndTake order to simulate a market order.
 		// this is useful when a limit order is crossing, and we want to achieve the best fill price through an auction.
-		if (limitAuctionParams.auctionDuration > 0) {
+		if (limitAuctionOrderParams.auctionDuration > 0) {
 			const placeAndTakeIx = await createPlaceAndTakePerpMarketOrderIx({
 				orderParams: limitAuctionOrderParams,
 				direction,
@@ -207,23 +226,10 @@ export const MINIMUM_SWIFT_LIMIT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 35;
 
 export const createSwiftLimitOrder = async (
 	params: OpenPerpNonMarketOrderParamsWithSwift & {
-		orderConfig: {
-			orderType: 'limit';
-			limitPrice: BN;
-			enableLimitAuction?: boolean;
-			optionalLimitAuctionParams?: OptionalAuctionParamsRequestInputs;
-		};
+		orderConfig: LimitOrderParamsOrderConfig;
 	}
 ): Promise<void> => {
-	const {
-		driftClient,
-		user,
-		marketIndex,
-		direction,
-		reduceOnly = false,
-		swiftOptions,
-		orderConfig,
-	} = params;
+	const { driftClient, user, marketIndex, swiftOptions, orderConfig } = params;
 
 	const limitPrice = orderConfig.limitPrice;
 
@@ -240,15 +246,10 @@ export const createSwiftLimitOrder = async (
 		limitPrice,
 	});
 
-	// Build limit order parameters directly like the UI does
-	const orderParams = getLimitOrderParams({
-		marketIndex,
-		marketType: MarketType.PERP,
-		direction,
+	const orderParams = await getLimitAuctionOrderParams({
+		...params,
 		baseAssetAmount: finalBaseAssetAmount,
-		price: limitPrice,
-		reduceOnly,
-		postOnly: PostOnlyParams.NONE, // we don't allow post only orders for SWIFT
+		orderConfig: orderConfig,
 	});
 
 	const userAccount = user.getUserAccount();
