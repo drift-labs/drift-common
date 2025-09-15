@@ -37,10 +37,8 @@ import { createDepositTxn } from '../../base/actions/spot/deposit';
 import { createWithdrawTxn } from '../../base/actions/spot/withdraw';
 import { createSettleFundingTxn } from '../../base/actions/perp/settleFunding';
 import { createSettlePnlTxn } from '../../base/actions/perp/settlePnl';
-import {
-	createOpenPerpMarketOrder,
-	OptionalAuctionParamsRequestInputs,
-} from '../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
+import { createOpenPerpMarketOrder } from '../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
+import { OptionalAuctionParamsRequestInputs } from '../../base/actions/trade/openPerpOrder/dlobServer';
 import { createOpenPerpNonMarketOrder } from '../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 import { createEditOrderTxn } from '../../base/actions/trade/editOrder';
 import { createCancelOrdersTxn } from '../../base/actions/trade/cancelOrder';

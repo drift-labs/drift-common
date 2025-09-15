@@ -12,6 +12,7 @@ import {
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../../utils';
 import { OptionalTriggerOrderParams } from '../base/actions/trade/openPerpOrder/openSwiftOrder';
+import { OptionalAuctionParamsRequestInputs } from '../base/actions/trade/openPerpOrder/dlobServer';
 
 /**
  * Converts amount and assetType to base asset amount
@@ -85,6 +86,19 @@ export interface NonMarketOrderParamsConfig {
 				bracketOrders?: {
 					takeProfit?: OptionalTriggerOrderParams;
 					stopLoss?: OptionalTriggerOrderParams;
+				};
+				/**
+				 * Limit orders can have an optional auction that allows it to go through the auction process.
+				 * Usually, the auction params are set up to the limit price, to allow for a possible improved
+				 * fill price. This is useful for when a limit order is crossing the orderbook.
+				 */
+				limitAuction?: {
+					enable: boolean;
+					dlobServerHttpUrl: string;
+					auctionStartPriceOffset: number;
+					oraclePrice?: BN; // used to calculate oracle price bands
+					optionalLimitAuctionParams?: OptionalAuctionParamsRequestInputs;
+					auctionDurationPercentage?: number;
 				};
 		  }
 		| {

@@ -4,7 +4,7 @@ import {
 	PostOnlyParams,
 	QuoteResponse,
 } from '@drift-labs/sdk';
-import { OptionalAuctionParamsRequestInputs } from '../../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
+import { OptionalAuctionParamsRequestInputs } from '../../../../base/actions/trade/openPerpOrder/dlobServer';
 
 /**
  * Interface for deposit operation parameters.

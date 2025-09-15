@@ -7,6 +7,9 @@ import {
 	getLimitOrderParams,
 	TxParams,
 	OptionalOrderParams,
+	PRICE_PRECISION_EXP,
+	BigNum,
+	oraclePriceBands as getOraclePriceBands,
 } from '@drift-labs/sdk';
 import {
 	Transaction,
@@ -23,6 +26,15 @@ import {
 	resolveBaseAssetAmount,
 } from '../../../../../utils/orderParams';
 import { ENUM_UTILS } from '../../../../../../utils';
+import {
+	fetchOrderParamsFromServer,
+	OptionalAuctionParamsRequestInputs,
+} from '../dlobServer';
+import {
+	COMMON_UI_UTILS,
+	ORDER_COMMON_UTILS,
+} from '../../../../../../common-ui-utils';
+import { createPlaceAndTakePerpMarketOrderIx } from '../openPerpMarketOrder';
 
 export interface OpenPerpNonMarketOrderBaseParams
 	extends Omit<NonMarketOrderParamsConfig, 'marketType' | 'baseAssetAmount'> {
@@ -54,7 +66,7 @@ export const createOpenPerpNonMarketOrderIx = async (
 ): Promise<TransactionInstruction> => {
 	const {
 		driftClient,
-		user: _user,
+		user,
 		marketIndex,
 		direction,
 		reduceOnly = false,
@@ -77,16 +89,82 @@ export const createOpenPerpNonMarketOrderIx = async (
 
 	const allOrders: OptionalOrderParams[] = [];
 
-	const orderParams = buildNonMarketOrderParams({
-		marketIndex,
-		marketType: MarketType.PERP,
-		direction,
-		baseAssetAmount: finalBaseAssetAmount,
-		orderConfig,
-		reduceOnly,
-		postOnly,
-	});
-	allOrders.push(orderParams);
+	// TODO: need to do the same for SWIFT orders
+	// handle limit auction
+	if (orderConfig.orderType === 'limit' && orderConfig.limitAuction?.enable) {
+		const orderParams = await fetchOrderParamsFromServer({
+			driftClient,
+			user,
+			assetType: 'base',
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction,
+			amount: finalBaseAssetAmount,
+			dlobServerHttpUrl: orderConfig.limitAuction.dlobServerHttpUrl,
+			optionalAuctionParamsInputs:
+				orderConfig.limitAuction.optionalLimitAuctionParams,
+		});
+
+		const perpMarketAccount = driftClient.getPerpMarketAccount(marketIndex);
+		const oraclePriceBands = orderConfig.limitAuction.oraclePrice
+			? getOraclePriceBands(perpMarketAccount, {
+					price: orderConfig.limitAuction.oraclePrice,
+			  })
+			: undefined;
+		const auctionDuration = ORDER_COMMON_UTILS.getPerpAuctionDuration(
+			orderConfig.limitPrice.sub(orderParams.auctionStartPrice).abs(),
+			orderConfig.limitAuction.oraclePrice,
+			driftClient.getPerpMarketAccount(marketIndex).contractTier
+		);
+		const limitAuctionParams = COMMON_UI_UTILS.getLimitAuctionParams({
+			direction,
+			inputPrice: BigNum.from(orderConfig.limitPrice, PRICE_PRECISION_EXP),
+			startPriceFromSettings: orderParams.auctionStartPrice,
+			duration: auctionDuration,
+			auctionStartPriceOffset: orderConfig.limitAuction.auctionStartPriceOffset,
+			oraclePriceBands,
+		});
+
+		const limitAuctionOrderParams = getLimitOrderParams({
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction,
+			baseAssetAmount: finalBaseAssetAmount,
+			reduceOnly,
+			postOnly,
+			price: orderConfig.limitPrice,
+			...limitAuctionParams,
+		});
+
+		// if it is a limit auction order, we create a placeAndTake order to simulate a market order.
+		// this is useful when a limit order is crossing, and we want to achieve the best fill price through an auction.
+		if (limitAuctionParams.auctionDuration > 0) {
+			const placeAndTakeIx = await createPlaceAndTakePerpMarketOrderIx({
+				orderParams: limitAuctionOrderParams,
+				direction,
+				dlobServerHttpUrl: orderConfig.limitAuction.dlobServerHttpUrl,
+				marketIndex,
+				driftClient,
+				user,
+				auctionDurationPercentage:
+					orderConfig.limitAuction.auctionDurationPercentage,
+			});
+			return placeAndTakeIx;
+		} else {
+			allOrders.push(limitAuctionOrderParams);
+		}
+	} else {
+		const orderParams = buildNonMarketOrderParams({
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction,
+			baseAssetAmount: finalBaseAssetAmount,
+			orderConfig,
+			reduceOnly,
+			postOnly,
+		});
+		allOrders.push(orderParams);
+	}
 
 	if ('bracketOrders' in orderConfig && orderConfig.bracketOrders?.takeProfit) {
 		const takeProfitParams = buildNonMarketOrderParams({
@@ -118,6 +196,9 @@ export const createOpenPerpNonMarketOrderIx = async (
 		allOrders.push(stopLossParams);
 	}
 
+	// TODO: handle scaled orders
+	// TODO: handle auto-enter HLM
+
 	const placeOrderIx = await driftClient.getPlaceOrdersIx(allOrders);
 	return placeOrderIx;
 };
@@ -129,6 +210,8 @@ export const createSwiftLimitOrder = async (
 		orderConfig: {
 			orderType: 'limit';
 			limitPrice: BN;
+			enableLimitAuction?: boolean;
+			optionalLimitAuctionParams?: OptionalAuctionParamsRequestInputs;
 		};
 	}
 ): Promise<void> => {
