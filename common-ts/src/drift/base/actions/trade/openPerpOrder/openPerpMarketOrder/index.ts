@@ -25,6 +25,7 @@ import {
 	fetchTopMakers,
 	OptionalAuctionParamsRequestInputs,
 } from '../dlobServer';
+import { ORDER_COMMON_UTILS } from '../../../../../../common-ui-utils/order';
 
 interface PlaceAndTakeParams {
 	enable: boolean;
@@ -79,7 +80,7 @@ export async function createSwiftMarketOrder({
 	}
 
 	// Get order parameters from server
-	const orderParams = await fetchOrderParamsFromServer({
+	const fetchedOrderParams = await fetchOrderParamsFromServer({
 		driftClient,
 		user,
 		assetType,
@@ -90,6 +91,19 @@ export async function createSwiftMarketOrder({
 		dlobServerHttpUrl,
 		optionalAuctionParamsInputs,
 	});
+
+	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
+		marketIndex,
+		driftClient,
+		user,
+		amount,
+		direction
+	);
+
+	const orderParams = {
+		...fetchedOrderParams,
+		bitFlags,
+	};
 
 	const userAccount = user.getUserAccount();
 	const slotBuffer = swiftOptions.signedMessageOrderSlotBuffer || 7;
@@ -190,7 +204,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 	}
 
 	// First, get order parameters from server (same for both Swift and regular orders)
-	const orderParams = await fetchOrderParamsFromServer({
+	const fetchedOrderParams = await fetchOrderParamsFromServer({
 		driftClient,
 		user,
 		assetType,
@@ -201,6 +215,19 @@ export const createOpenPerpMarketOrderIxs = async ({
 		dlobServerHttpUrl,
 		optionalAuctionParamsInputs,
 	});
+
+	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
+		marketIndex,
+		driftClient,
+		user,
+		amount,
+		direction
+	);
+
+	const orderParams = {
+		...fetchedOrderParams,
+		bitFlags,
+	};
 
 	const allOrders: OptionalOrderParams[] = [];
 	const allIxs: TransactionInstruction[] = [];

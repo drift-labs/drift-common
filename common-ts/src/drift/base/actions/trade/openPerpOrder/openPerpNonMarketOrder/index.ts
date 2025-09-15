@@ -46,6 +46,7 @@ export interface OpenPerpNonMarketOrderBaseParams
 	// Common optional params
 	reduceOnly?: boolean;
 	postOnly?: PostOnlyParams;
+	autoEnterHighLeverageModeBufferPct?: number;
 }
 
 export interface OpenPerpNonMarketOrderParamsWithSwift
@@ -116,7 +117,18 @@ const getLimitAuctionOrderParams = async ({
 		...limitAuctionParams,
 	});
 
-	return limitAuctionOrderParams;
+	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
+		marketIndex,
+		driftClient,
+		user,
+		baseAssetAmount,
+		direction
+	);
+
+	return {
+		...limitAuctionOrderParams,
+		bitFlags,
+	};
 };
 
 export const createOpenPerpNonMarketOrderIx = async (
@@ -182,6 +194,16 @@ export const createOpenPerpNonMarketOrderIx = async (
 			reduceOnly,
 			postOnly,
 		});
+
+		const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
+			marketIndex,
+			driftClient,
+			user,
+			finalBaseAssetAmount,
+			direction
+		);
+		orderParams.bitFlags = bitFlags;
+
 		allOrders.push(orderParams);
 	}
 
@@ -214,9 +236,6 @@ export const createOpenPerpNonMarketOrderIx = async (
 		});
 		allOrders.push(stopLossParams);
 	}
-
-	// TODO: handle scaled orders
-	// TODO: handle auto-enter HLM
 
 	const placeOrderIx = await driftClient.getPlaceOrdersIx(allOrders);
 	return placeOrderIx;
