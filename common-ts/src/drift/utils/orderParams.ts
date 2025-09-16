@@ -9,6 +9,7 @@ import {
 	getTriggerLimitOrderParams,
 	OrderTriggerCondition,
 	ZERO,
+	ReferrerInfo,
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../../utils';
 import { OptionalTriggerOrderParams } from '../base/actions/trade/openPerpOrder/openSwiftOrder';
@@ -66,6 +67,12 @@ export function resolveBaseAssetAmount(params: {
 	}
 }
 
+export interface PlaceAndTakeParams {
+	enable: boolean;
+	auctionDurationPercentage?: number;
+	referrerInfo?: ReferrerInfo;
+}
+
 export type NonMarketOrderType =
 	| 'limit'
 	| 'takeProfit'
@@ -90,7 +97,11 @@ export interface LimitOrderParamsOrderConfig {
 		auctionStartPriceOffset: number;
 		oraclePrice?: BN; // used to calculate oracle price bands
 		optionalLimitAuctionParams?: OptionalAuctionParamsRequestInputs;
-		auctionDurationPercentage?: number;
+		usePlaceAndTake?: {
+			enable: boolean;
+			referrerInfo?: ReferrerInfo; // needed for place and take fallback
+			auctionDurationPercentage?: number;
+		};
 	};
 }
 

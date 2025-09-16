@@ -20,19 +20,16 @@ import {
 	prepSignAndSendSwiftOrder,
 	SwiftOrderOptions,
 } from '../openSwiftOrder';
-import { buildNonMarketOrderParams } from '../../../../../utils/orderParams';
+import {
+	buildNonMarketOrderParams,
+	PlaceAndTakeParams,
+} from '../../../../../utils/orderParams';
 import {
 	fetchOrderParamsFromServer,
 	fetchTopMakers,
 	OptionalAuctionParamsRequestInputs,
 } from '../dlobServer';
 import { ORDER_COMMON_UTILS } from '../../../../../../common-ui-utils/order';
-
-interface PlaceAndTakeParams {
-	enable: boolean;
-	auctionDurationPercentage?: number;
-	referrerInfo?: ReferrerInfo;
-}
 
 export interface OpenPerpMarketOrderBaseParams {
 	driftClient: DriftClient;
@@ -129,16 +126,17 @@ export async function createSwiftMarketOrder({
 }
 
 export const createPlaceAndTakePerpMarketOrderIx = async ({
-	orderParams,
+	assetType,
 	direction,
 	dlobServerHttpUrl,
 	marketIndex,
 	driftClient,
 	user,
+	amount,
 	referrerInfo,
 	auctionDurationPercentage,
-}: {
-	orderParams: OptionalOrderParams;
+	optionalAuctionParamsInputs,
+}: OpenPerpMarketOrderBaseParams & {
 	direction: PositionDirection;
 	dlobServerHttpUrl: string;
 	marketIndex: number;
@@ -150,13 +148,28 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	const counterPartySide = ENUM_UTILS.match(direction, PositionDirection.LONG)
 		? 'ask'
 		: 'bid';
-	const topMakersResult = await fetchTopMakers({
-		dlobServerHttpUrl,
-		marketIndex,
-		marketType: MarketType.PERP,
-		side: counterPartySide,
-		limit: 4,
-	});
+
+	const [fetchedOrderParams, topMakersResult] = await Promise.all([
+		fetchOrderParamsFromServer({
+			driftClient,
+			user,
+			assetType,
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction,
+			amount,
+			dlobServerHttpUrl,
+			optionalAuctionParamsInputs,
+		}),
+		fetchTopMakers({
+			dlobServerHttpUrl,
+			marketIndex,
+			marketType: MarketType.PERP,
+			side: counterPartySide,
+			limit: 4,
+		}),
+	]);
+
 	const topMakersInfo = topMakersResult.map((maker) => ({
 		maker: maker.userAccountPubKey,
 		makerUserAccount: maker.userAccount,
@@ -166,8 +179,17 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		),
 	}));
 
+	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
+		marketIndex,
+		driftClient,
+		user,
+		amount,
+		direction
+	);
+	fetchedOrderParams.bitFlags = bitFlags;
+
 	const placeAndTakeIx = await driftClient.getPlaceAndTakePerpOrderIx(
-		orderParams,
+		fetchedOrderParams,
 		topMakersInfo,
 		referrerInfo,
 		undefined,
@@ -213,38 +235,14 @@ export const createOpenPerpMarketOrderIxs = async ({
 	}
 
 	// First, get order parameters from server (same for both Swift and regular orders)
-	const fetchedOrderParams = await fetchOrderParamsFromServer({
-		driftClient,
-		user,
-		assetType,
-		marketIndex,
-		marketType: MarketType.PERP,
-		direction,
-		amount,
-		dlobServerHttpUrl,
-		optionalAuctionParamsInputs,
-	});
-
-	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
-		marketIndex,
-		driftClient,
-		user,
-		amount,
-		direction
-	);
-
-	const orderParams = {
-		...fetchedOrderParams,
-		userOrderId,
-		bitFlags,
-	};
 
 	const allOrders: OptionalOrderParams[] = [];
 	const allIxs: TransactionInstruction[] = [];
 
 	if (placeAndTake?.enable) {
 		const placeAndTakeIx = await createPlaceAndTakePerpMarketOrderIx({
-			orderParams,
+			assetType,
+			amount,
 			direction,
 			dlobServerHttpUrl,
 			marketIndex,
@@ -255,6 +253,32 @@ export const createOpenPerpMarketOrderIxs = async ({
 		});
 		allIxs.push(placeAndTakeIx);
 	} else {
+		const fetchedOrderParams = await fetchOrderParamsFromServer({
+			driftClient,
+			user,
+			assetType,
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction,
+			amount,
+			dlobServerHttpUrl,
+			optionalAuctionParamsInputs,
+		});
+
+		const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
+			marketIndex,
+			driftClient,
+			user,
+			amount,
+			direction
+		);
+
+		const orderParams = {
+			...fetchedOrderParams,
+			userOrderId,
+			bitFlags,
+		};
+
 		allOrders.push(orderParams);
 	}
 

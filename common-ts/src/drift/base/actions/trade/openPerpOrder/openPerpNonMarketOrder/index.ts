@@ -205,16 +205,23 @@ export const createOpenPerpNonMarketOrderIx = async (
 
 		// if it is a limit auction order, we create a placeAndTake order to simulate a market order.
 		// this is useful when a limit order is crossing, and we want to achieve the best fill price through an auction.
-		if (limitAuctionOrderParams.auctionDuration > 0) {
+		if (
+			limitAuctionOrderParams.auctionDuration > 0 &&
+			orderConfig.limitAuction?.usePlaceAndTake?.enable
+		) {
 			const placeAndTakeIx = await createPlaceAndTakePerpMarketOrderIx({
-				orderParams: limitAuctionOrderParams,
+				assetType: 'base',
+				amount: finalBaseAssetAmount,
 				direction,
 				dlobServerHttpUrl: orderConfig.limitAuction.dlobServerHttpUrl,
 				marketIndex,
 				driftClient,
 				user,
+				optionalAuctionParamsInputs:
+					orderConfig.limitAuction.optionalLimitAuctionParams,
 				auctionDurationPercentage:
-					orderConfig.limitAuction.auctionDurationPercentage,
+					orderConfig.limitAuction.usePlaceAndTake.auctionDurationPercentage,
+				referrerInfo: orderConfig.limitAuction.usePlaceAndTake.referrerInfo,
 			});
 			return placeAndTakeIx;
 		} else {
