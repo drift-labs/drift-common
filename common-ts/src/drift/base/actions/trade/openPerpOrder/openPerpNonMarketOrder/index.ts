@@ -10,6 +10,8 @@ import {
 	PRICE_PRECISION_EXP,
 	BigNum,
 	oraclePriceBands as getOraclePriceBands,
+	PositionDirection,
+	OrderParamsBitFlag,
 } from '@drift-labs/sdk';
 import {
 	Transaction,
@@ -134,6 +136,36 @@ const getLimitAuctionOrderParams = async ({
 	};
 };
 
+/**
+ * Creates a transaction instruction to open multiple non-market orders.
+ */
+export const createMultipleOpenPerpNonMarketOrderIx = async (params: {
+	driftClient: DriftClient;
+	user: User;
+	marketIndex: number;
+	direction: PositionDirection;
+	orderParamsConfigs: NonMarketOrderParamsConfig[];
+	enterHighLeverageMode?: boolean;
+}): Promise<TransactionInstruction> => {
+	const { driftClient, orderParamsConfigs } = params;
+
+	const orderParams = orderParamsConfigs.map(buildNonMarketOrderParams);
+
+	if (params.enterHighLeverageMode && orderParams.length > 0) {
+		orderParams[0].bitFlags = OrderParamsBitFlag.UpdateHighLeverageMode;
+	}
+
+	const placeOrderIx = await driftClient.getPlaceOrdersIx(orderParams);
+	return placeOrderIx;
+};
+
+/**
+ * Creates a transaction instruction to open a non-market order.
+ * Allows for bracket orders to be opened in the same transaction.
+ *
+ * If `limitAuction` is enabled, a placeAndTake order is created to simulate a market auction order,
+ * with the end price being the limit price.
+ */
 export const createOpenPerpNonMarketOrderIx = async (
 	params: OpenPerpNonMarketOrderBaseParams
 ): Promise<TransactionInstruction> => {
