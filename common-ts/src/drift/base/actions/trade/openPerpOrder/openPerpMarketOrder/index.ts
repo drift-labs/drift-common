@@ -7,6 +7,7 @@ import {
 	MarketType,
 	TxParams,
 	getUserStatsAccountPublicKey,
+	ReferrerInfo,
 } from '@drift-labs/sdk';
 import {
 	Transaction,
@@ -30,6 +31,7 @@ import { ORDER_COMMON_UTILS } from '../../../../../../common-ui-utils/order';
 interface PlaceAndTakeParams {
 	enable: boolean;
 	auctionDurationPercentage?: number;
+	referrerInfo?: ReferrerInfo;
 }
 
 export interface OpenPerpMarketOrderBaseParams {
@@ -133,6 +135,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	marketIndex,
 	driftClient,
 	user,
+	referrerInfo,
 	auctionDurationPercentage,
 }: {
 	orderParams: OptionalOrderParams;
@@ -141,6 +144,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	marketIndex: number;
 	driftClient: DriftClient;
 	user: User;
+	referrerInfo?: ReferrerInfo;
 	auctionDurationPercentage?: number;
 }) => {
 	const counterPartySide = ENUM_UTILS.match(direction, PositionDirection.LONG)
@@ -165,7 +169,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	const placeAndTakeIx = await driftClient.getPlaceAndTakePerpOrderIx(
 		orderParams,
 		topMakersInfo,
-		undefined, // TODO: referrerInfo,
+		referrerInfo,
 		undefined,
 		auctionDurationPercentage,
 		user.getUserAccount().subAccountId
@@ -238,7 +242,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 	const allOrders: OptionalOrderParams[] = [];
 	const allIxs: TransactionInstruction[] = [];
 
-	if (placeAndTake.enable) {
+	if (placeAndTake?.enable) {
 		const placeAndTakeIx = await createPlaceAndTakePerpMarketOrderIx({
 			orderParams,
 			direction,
@@ -246,6 +250,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 			marketIndex,
 			driftClient,
 			user,
+			referrerInfo: placeAndTake.referrerInfo,
 			auctionDurationPercentage: placeAndTake.auctionDurationPercentage,
 		});
 		allIxs.push(placeAndTakeIx);
