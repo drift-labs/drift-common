@@ -40,6 +40,8 @@ export interface OpenPerpMarketOrderBaseParams {
 	direction: PositionDirection;
 	amount: BN;
 	dlobServerHttpUrl: string;
+	// mainly used for UI order identification
+	userOrderId?: number;
 	placeAndTake?: PlaceAndTakeParams;
 	optionalAuctionParamsInputs?: OptionalAuctionParamsRequestInputs;
 	bracketOrders?: {
@@ -74,6 +76,7 @@ export async function createSwiftMarketOrder({
 	dlobServerHttpUrl,
 	optionalAuctionParamsInputs,
 	swiftOptions,
+	userOrderId = 0,
 }: OpenPerpMarketOrderBaseParamsWithSwift): Promise<void> {
 	if (amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
@@ -102,6 +105,7 @@ export async function createSwiftMarketOrder({
 
 	const orderParams = {
 		...fetchedOrderParams,
+		userOrderId,
 		bitFlags,
 	};
 
@@ -197,6 +201,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 	bracketOrders,
 	dlobServerHttpUrl,
 	placeAndTake,
+	userOrderId,
 	optionalAuctionParamsInputs = {},
 }: OpenPerpMarketOrderBaseParams): Promise<TransactionInstruction[]> => {
 	if (!amount || amount.isZero()) {
@@ -226,6 +231,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 
 	const orderParams = {
 		...fetchedOrderParams,
+		userOrderId,
 		bitFlags,
 	};
 
@@ -278,8 +284,10 @@ export const createOpenPerpMarketOrderIxs = async ({
 	}
 
 	// Regular order flow - create transaction instruction
-	const placeOrderIx = await driftClient.getPlaceOrdersIx(allOrders);
-	allIxs.push(placeOrderIx);
+	if (allOrders.length > 0) {
+		const placeOrderIx = await driftClient.getPlaceOrdersIx(allOrders);
+		allIxs.push(placeOrderIx);
+	}
 
 	return allIxs;
 };
@@ -329,6 +337,7 @@ export const createOpenPerpMarketOrderTxn = async (
  * @param dlobServerHttpUrl - Server URL for the auction params endpoint
  * @param useSwift - Whether to use Swift (signed message) orders instead of regular transactions
  * @param swiftOptions - Options for Swift (signed message) orders. Required if useSwift is true
+ * @param userOrderId - The user order id for UI identification
  *
  * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
  */

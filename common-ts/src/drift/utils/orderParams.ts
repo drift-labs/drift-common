@@ -101,6 +101,7 @@ export interface NonMarketOrderParamsConfig {
 	baseAssetAmount: BN;
 	reduceOnly?: boolean;
 	postOnly?: PostOnlyParams;
+	userOrderId?: number;
 	orderConfig:
 		| LimitOrderParamsOrderConfig
 		| {
@@ -153,6 +154,7 @@ export function buildNonMarketOrderParams({
 	orderConfig,
 	reduceOnly = false,
 	postOnly = PostOnlyParams.NONE,
+	userOrderId = 0,
 }: NonMarketOrderParamsConfig): OptionalOrderParams {
 	const orderType = orderConfig.orderType;
 
@@ -170,6 +172,7 @@ export function buildNonMarketOrderParams({
 			price: orderConfig.limitPrice,
 			reduceOnly,
 			postOnly,
+			userOrderId,
 		});
 	}
 
@@ -191,6 +194,7 @@ export function buildNonMarketOrderParams({
 				price: orderConfig.limitPrice,
 				triggerCondition,
 				reduceOnly,
+				userOrderId,
 			});
 		} else {
 			return getTriggerMarketOrderParams({
@@ -202,6 +206,7 @@ export function buildNonMarketOrderParams({
 				price: orderConfig.limitPrice,
 				triggerCondition,
 				reduceOnly,
+				userOrderId,
 			});
 		}
 	}
@@ -218,6 +223,7 @@ export function buildNonMarketOrderParams({
 			baseAssetAmount,
 			price: ZERO,
 			oraclePriceOffset: orderConfig.oraclePriceOffset.toNumber(),
+			userOrderId,
 		});
 	}
 

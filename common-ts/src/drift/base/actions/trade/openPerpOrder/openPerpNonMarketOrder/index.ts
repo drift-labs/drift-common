@@ -46,6 +46,7 @@ export interface OpenPerpNonMarketOrderBaseParams
 	// Common optional params
 	reduceOnly?: boolean;
 	postOnly?: PostOnlyParams;
+	userOrderId?: number;
 	autoEnterHighLeverageModeBufferPct?: number;
 }
 
@@ -66,6 +67,7 @@ const getLimitAuctionOrderParams = async ({
 	marketIndex,
 	direction,
 	baseAssetAmount,
+	userOrderId = 0,
 	reduceOnly = false,
 	postOnly = PostOnlyParams.NONE,
 	orderConfig,
@@ -114,6 +116,7 @@ const getLimitAuctionOrderParams = async ({
 		reduceOnly,
 		postOnly,
 		price: orderConfig.limitPrice,
+		userOrderId,
 		...limitAuctionParams,
 	});
 
@@ -142,6 +145,7 @@ export const createOpenPerpNonMarketOrderIx = async (
 		reduceOnly = false,
 		postOnly = PostOnlyParams.NONE,
 		orderConfig,
+		userOrderId = 0,
 	} = params;
 	// Support both new (amount + assetType) and legacy (baseAssetAmount) approaches
 	const finalBaseAssetAmount = resolveBaseAssetAmount({
@@ -193,6 +197,7 @@ export const createOpenPerpNonMarketOrderIx = async (
 			orderConfig,
 			reduceOnly,
 			postOnly,
+			userOrderId,
 		});
 
 		const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
