@@ -83,6 +83,19 @@ export type NonMarketOrderType =
 	| 'stopLoss'
 	| 'oracleLimit';
 
+export interface LimitAuctionConfig {
+	enable: boolean;
+	dlobServerHttpUrl: string;
+	auctionStartPriceOffset: number;
+	oraclePrice?: BN; // used to calculate oracle price bands
+	optionalLimitAuctionParams?: OptionalAuctionParamsRequestInputs;
+	usePlaceAndTake?: {
+		enable: boolean;
+		referrerInfo?: ReferrerInfo; // needed for place and take fallback
+		auctionDurationPercentage?: number;
+	};
+}
+
 export interface LimitOrderParamsOrderConfig {
 	orderType: Extract<NonMarketOrderType, 'limit'>;
 	limitPrice: BN;
@@ -95,18 +108,7 @@ export interface LimitOrderParamsOrderConfig {
 	 * Usually, the auction params are set up to the limit price, to allow for a possible improved
 	 * fill price. This is useful for when a limit order is crossing the orderbook.
 	 */
-	limitAuction?: {
-		enable: boolean;
-		dlobServerHttpUrl: string;
-		auctionStartPriceOffset: number;
-		oraclePrice?: BN; // used to calculate oracle price bands
-		optionalLimitAuctionParams?: OptionalAuctionParamsRequestInputs;
-		usePlaceAndTake?: {
-			enable: boolean;
-			referrerInfo?: ReferrerInfo; // needed for place and take fallback
-			auctionDurationPercentage?: number;
-		};
-	};
+	limitAuction?: LimitAuctionConfig;
 }
 
 export interface NonMarketOrderParamsConfig {
@@ -206,9 +208,10 @@ export function buildNonMarketOrderParams({
 				direction,
 				baseAssetAmount,
 				triggerPrice: orderConfig.triggerPrice,
-				price: orderConfig.limitPrice,
+				price: orderConfig.limitPrice!,
 				triggerCondition,
 				reduceOnly,
+				postOnly,
 				userOrderId,
 			});
 		} else {
@@ -221,6 +224,7 @@ export function buildNonMarketOrderParams({
 				price: orderConfig.limitPrice,
 				triggerCondition,
 				reduceOnly,
+				postOnly,
 				userOrderId,
 			});
 		}
@@ -239,6 +243,8 @@ export function buildNonMarketOrderParams({
 			price: ZERO,
 			oraclePriceOffset: orderConfig.oraclePriceOffset.toNumber(),
 			userOrderId,
+			postOnly,
+			reduceOnly,
 		});
 	}
 

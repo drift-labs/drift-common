@@ -5,9 +5,9 @@ import {
 	PositionDirection,
 	OptionalOrderParams,
 	MarketType,
-	TxParams,
 	getUserStatsAccountPublicKey,
 	ReferrerInfo,
+	PRICE_PRECISION,
 } from '@drift-labs/sdk';
 import {
 	Transaction,
@@ -30,6 +30,7 @@ import {
 	OptionalAuctionParamsRequestInputs,
 } from '../dlobServer';
 import { ORDER_COMMON_UTILS } from '../../../../../../common-ui-utils/order';
+import { TxnOrSwiftResult, WithTxnParams } from '../types';
 
 export interface OpenPerpMarketOrderBaseParams {
 	driftClient: DriftClient;
@@ -94,11 +95,14 @@ export async function createSwiftMarketOrder({
 		optionalAuctionParamsInputs,
 	});
 
+	const oraclePrice = driftClient.getOracleDataForPerpMarket(marketIndex).price;
+	const totalQuoteAmount = amount.mul(oraclePrice).div(PRICE_PRECISION);
+
 	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 		marketIndex,
 		driftClient,
 		user,
-		amount,
+		totalQuoteAmount,
 		direction
 	);
 
@@ -145,6 +149,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	marketIndex,
 	driftClient,
 	user,
+	userOrderId,
 	amount,
 	referrerInfo,
 	auctionDurationPercentage,
@@ -183,6 +188,19 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		}),
 	]);
 
+	const oraclePrice = driftClient.getOracleDataForPerpMarket(marketIndex).price;
+	const totalQuoteAmount = amount.mul(oraclePrice).div(PRICE_PRECISION);
+
+	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
+		marketIndex,
+		driftClient,
+		user,
+		totalQuoteAmount,
+		direction
+	);
+	fetchedOrderParams.bitFlags = bitFlags;
+	fetchedOrderParams.userOrderId = userOrderId;
+
 	if (!topMakersResult || topMakersResult.length === 0) {
 		throw new NoTopMakersError('No top makers found', fetchedOrderParams);
 	}
@@ -195,15 +213,6 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 			maker.userAccount.authority
 		),
 	}));
-
-	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
-		marketIndex,
-		driftClient,
-		user,
-		amount,
-		direction
-	);
-	fetchedOrderParams.bitFlags = bitFlags;
 
 	const placeAndTakeIx = await driftClient.getPlaceAndTakePerpOrderIx(
 		fetchedOrderParams,
@@ -266,8 +275,10 @@ export const createOpenPerpMarketOrderIxs = async ({
 				marketIndex,
 				driftClient,
 				user,
+				userOrderId,
 				referrerInfo: placeAndTake.referrerInfo,
 				auctionDurationPercentage: placeAndTake.auctionDurationPercentage,
+				optionalAuctionParamsInputs,
 			});
 			allIxs.push(placeAndTakeIx);
 		} catch (e) {
@@ -291,11 +302,15 @@ export const createOpenPerpMarketOrderIxs = async ({
 			optionalAuctionParamsInputs,
 		});
 
+		const oraclePrice =
+			driftClient.getOracleDataForPerpMarket(marketIndex).price;
+		const totalQuoteAmount = amount.mul(oraclePrice).div(PRICE_PRECISION);
+
 		const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 			marketIndex,
 			driftClient,
 			user,
-			amount,
+			totalQuoteAmount,
 			direction
 		);
 
@@ -361,7 +376,7 @@ export const createOpenPerpMarketOrderIxs = async ({
  * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
  */
 export const createOpenPerpMarketOrderTxn = async (
-	params: OpenPerpMarketOrderBaseParams & { txParams?: TxParams }
+	params: WithTxnParams<OpenPerpMarketOrderBaseParams>
 ): Promise<Transaction | VersionedTransaction> => {
 	const { driftClient } = params;
 
@@ -397,8 +412,8 @@ export const createOpenPerpMarketOrderTxn = async (
  * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
  */
 export const createOpenPerpMarketOrder = async <T extends boolean>(
-	params: OpenPerpMarketOrderParams<T>
-): Promise<T extends true ? void : Transaction | VersionedTransaction> => {
+	params: WithTxnParams<OpenPerpMarketOrderParams<T>>
+): Promise<TxnOrSwiftResult<T>> => {
 	const { useSwift, swiftOptions, ...rest } = params;
 
 	// If useSwift is true, return the Swift result directly

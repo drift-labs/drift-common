@@ -247,7 +247,7 @@ export const signSwiftOrderMsg = async ({
 	expirationTimeMs,
 	onExpired,
 }: SignOrderMsgParams): Promise<Uint8Array> => {
-	let timeoutId: ReturnType<typeof setTimeout>;
+	let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
 	try {
 		// Sign the message
@@ -269,9 +269,10 @@ export const signSwiftOrderMsg = async ({
 		]);
 
 		return signedMessage;
-	} catch (error) {
-		clearTimeout(timeoutId);
-		throw error;
+	} finally {
+		if (timeoutId) {
+			clearTimeout(timeoutId);
+		}
 	}
 };
 
@@ -447,7 +448,7 @@ export const prepSignAndSendSwiftOrder = async ({
 		};
 	};
 
-	let promiseResolver;
+	let promiseResolver: (value: void | PromiseLike<void>) => void;
 	const promise = new Promise<void>((resolve) => {
 		promiseResolver = resolve;
 	});

@@ -19,7 +19,11 @@ import { SwiftOrderOptions } from './base/actions/trade/openPerpOrder/openSwiftO
 import { ENUM_UTILS } from '../utils';
 import { API_URLS } from './constants/apiUrls';
 import * as path from 'path';
-import { NonMarketOrderType } from './utils/orderParams';
+import {
+	LimitOrderParamsOrderConfig,
+	NonMarketOrderParamsConfig,
+	NonMarketOrderType,
+} from './utils/orderParams';
 
 // Load environment variables from .env file
 const dotenv = require('dotenv');
@@ -472,16 +476,16 @@ async function openPerpMarketOrderCommand(args: CliArgs): Promise<void> {
 	console.log(`💱 Asset Type: ${assetType}`);
 	console.log(`🌐 DLOB Server: ${dlobServerHttpUrl}`);
 
-	const orderTxn = await centralServerDrift.getOpenPerpMarketOrderTxn(
-		userAccountPubkey,
-		assetType as 'base' | 'quote',
+	const orderTxn = await centralServerDrift.getOpenPerpMarketOrderTxn({
+		userAccountPublicKey: userAccountPubkey,
+		assetType: assetType as 'base' | 'quote',
 		marketIndex,
-		directionEnum,
-		amountBN,
+		direction: directionEnum,
+		amount: amountBN,
 		dlobServerHttpUrl,
-		undefined, // auctionParamsOptions
-		false // useSwift
-	);
+		useSwift: false,
+		// TODO: why doesn't TS throw an error here for undefined swiftOptions?
+	});
 
 	await executeTransaction(orderTxn as VersionedTransaction, 'Open Perp Order');
 }
@@ -524,19 +528,17 @@ async function openPerpMarketOrderSwiftCommand(args: CliArgs): Promise<void> {
 	console.log('\n👁️  Monitoring order status...');
 
 	try {
-		await centralServerDrift.getOpenPerpMarketOrderTxn(
-			userAccountPubkey,
-			assetType as 'base' | 'quote',
+		await centralServerDrift.getOpenPerpMarketOrderTxn({
+			userAccountPublicKey: userAccountPubkey,
+			assetType: assetType as 'base' | 'quote',
 			marketIndex,
-			directionEnum,
-			amountBN,
+			direction: directionEnum,
+			amount: amountBN,
 			dlobServerHttpUrl,
-			undefined, // auctionParamsOptions
-			true, // useSwift
-			{
+			useSwift: true,
+			swiftOptions: {
 				wallet: {
 					signMessage: async (message: Uint8Array) => {
-						// Sign the message using the keypair
 						const signature = sign.detached(message, wallet.payer.secretKey);
 						return new Uint8Array(signature);
 					},
@@ -544,8 +546,8 @@ async function openPerpMarketOrderSwiftCommand(args: CliArgs): Promise<void> {
 				},
 				swiftServerUrl,
 				callbacks: createSwiftOrderCallbacks('Open Perp Order'),
-			}
-		);
+			},
+		});
 		console.log('✅ [CLI] Swift order finished');
 	} catch (error) {
 		console.error('❌ [CLI] Error creating Swift order:', error);
@@ -563,7 +565,7 @@ async function openPerpNonMarketOrderCommand(args: CliArgs): Promise<void> {
 	const amount = args.amount as string;
 	const assetType = (args.assetType as string) || 'base';
 	const baseAssetAmount = args.baseAssetAmount as string;
-	const orderType = args.orderType as string;
+	const orderType = args.orderType as NonMarketOrderType;
 	const limitPrice = args.limitPrice as string;
 	const triggerPrice = args.triggerPrice as string;
 	const reduceOnly = (args.reduceOnly as string) === 'true';
@@ -604,6 +606,25 @@ async function openPerpNonMarketOrderCommand(args: CliArgs): Promise<void> {
 	const triggerPriceBN = triggerPrice
 		? parseAmount(triggerPrice, PRICE_PRECISION)
 		: undefined;
+	const oraclePriceOffsetBN = oraclePriceOffset
+		? parseAmount(oraclePriceOffset, PRICE_PRECISION)
+		: undefined;
+
+	const orderConfig: NonMarketOrderParamsConfig['orderConfig'] =
+		orderType === 'limit'
+			? {
+					orderType,
+					limitPrice: limitPriceBN!,
+			  }
+			: orderType === 'takeProfit' || orderType === 'stopLoss'
+			? {
+					orderType,
+					triggerPrice: triggerPriceBN!,
+			  }
+			: {
+					orderType,
+					oraclePriceOffset: oraclePriceOffsetBN!,
+			  };
 
 	console.log('--- 📋 Open Perp Non-Market Order ---');
 	console.log(`👤 User Account: ${userAccount}`);
@@ -612,13 +633,14 @@ async function openPerpNonMarketOrderCommand(args: CliArgs): Promise<void> {
 		`📊 Direction: ${direction} (${ENUM_UTILS.toStr(directionEnum)})`
 	);
 
+	let amountBN: BN;
 	if (amount) {
 		const precision = assetType === 'base' ? BASE_PRECISION : QUOTE_PRECISION;
-		const amountBN = parseAmount(amount, precision);
+		amountBN = parseAmount(amount, precision);
 		console.log(`💰 Amount: ${amount} (${amountBN.toString()} raw units)`);
 		console.log(`💱 Asset Type: ${assetType}`);
 	} else {
-		const amountBN = parseAmount(baseAssetAmount, BASE_PRECISION);
+		amountBN = parseAmount(baseAssetAmount, BASE_PRECISION);
 		console.log(
 			`💰 Base Asset Amount: ${baseAssetAmount} (${amountBN.toString()} raw units)`
 		);
@@ -639,24 +661,17 @@ async function openPerpNonMarketOrderCommand(args: CliArgs): Promise<void> {
 	console.log(`📌 Post Only: ${postOnly} (${ENUM_UTILS.toStr(postOnlyEnum)})`);
 
 	// Just call the main method - it will handle both approaches internally
-	const orderTxn = await centralServerDrift.getOpenPerpNonMarketOrderTxn(
-		userAccountPubkey,
+	const orderTxn = await centralServerDrift.getOpenPerpNonMarketOrderTxn({
+		userAccountPublicKey: userAccountPubkey,
 		marketIndex,
-		directionEnum,
-		amount
-			? parseAmount(
-					amount,
-					assetType === 'base' ? BASE_PRECISION : QUOTE_PRECISION
-			  )
-			: parseAmount(baseAssetAmount, BASE_PRECISION),
-		amount ? (assetType as 'base' | 'quote') : 'base',
-		limitPriceBN,
-		triggerPriceBN,
-		orderType as NonMarketOrderType,
+		direction: directionEnum,
+		orderConfig,
+		useSwift: false,
 		reduceOnly,
-		postOnlyEnum,
-		false // useSwift
-	);
+		postOnly: postOnlyEnum,
+		assetType: assetType as 'base' | 'quote',
+		amount: amountBN,
+	});
 
 	await executeTransaction(
 		orderTxn as VersionedTransaction,
@@ -676,7 +691,7 @@ async function openPerpNonMarketOrderSwiftCommand(
 	const amount = args.amount as string;
 	const assetType = (args.assetType as string) || 'base';
 	const baseAssetAmount = args.baseAssetAmount as string;
-	const orderType = args.orderType as string;
+	const orderType = args.orderType as NonMarketOrderType;
 	const limitPrice = args.limitPrice as string;
 	const reduceOnly = (args.reduceOnly as string) === 'true';
 	const postOnly = (args.postOnly as string) || 'none';
@@ -707,6 +722,11 @@ async function openPerpNonMarketOrderSwiftCommand(
 	const postOnlyEnum = parsePostOnly(postOnly);
 	const limitPriceBN = parseAmount(limitPrice, PRICE_PRECISION);
 
+	const orderConfig: LimitOrderParamsOrderConfig = {
+		orderType: 'limit',
+		limitPrice: limitPriceBN!,
+	};
+
 	console.log('--- ⚡ Open Perp Non-Market Order Swift ---');
 	console.log(`👤 User Account: ${userAccount}`);
 	console.log(`🏪 Market Index: ${marketIndex}`);
@@ -714,13 +734,14 @@ async function openPerpNonMarketOrderSwiftCommand(
 		`📊 Direction: ${direction} (${ENUM_UTILS.toStr(directionEnum)})`
 	);
 
+	let amountBN: BN;
 	if (amount) {
 		const precision = assetType === 'base' ? BASE_PRECISION : QUOTE_PRECISION;
-		const amountBN = parseAmount(amount, precision);
+		amountBN = parseAmount(amount, precision);
 		console.log(`💰 Amount: ${amount} (${amountBN.toString()} raw units)`);
 		console.log(`💱 Asset Type: ${assetType}`);
 	} else {
-		const amountBN = parseAmount(baseAssetAmount, BASE_PRECISION);
+		amountBN = parseAmount(baseAssetAmount, BASE_PRECISION);
 		console.log(
 			`💰 Base Asset Amount: ${baseAssetAmount} (${amountBN.toString()} raw units)`
 		);
@@ -751,25 +772,18 @@ async function openPerpNonMarketOrderSwiftCommand(
 		console.log('\n👁️  Monitoring order status...');
 
 		// Use the main method - it handles both approaches internally
-		await centralServerDrift.getOpenPerpNonMarketOrderTxn(
-			userAccountPubkey,
+		await centralServerDrift.getOpenPerpNonMarketOrderTxn({
+			userAccountPublicKey: userAccountPubkey,
 			marketIndex,
-			directionEnum,
-			amount
-				? parseAmount(
-						amount,
-						assetType === 'base' ? BASE_PRECISION : QUOTE_PRECISION
-				  )
-				: parseAmount(baseAssetAmount, BASE_PRECISION),
-			amount ? (assetType as 'base' | 'quote') : 'base',
-			limitPriceBN,
-			undefined, // triggerPrice - not used for LIMIT orders
-			orderType as NonMarketOrderType,
+			direction: directionEnum,
+			orderConfig,
 			reduceOnly,
-			postOnlyEnum,
-			true, // useSwift
-			swiftOptions
-		);
+			postOnly: postOnlyEnum,
+			assetType: assetType as 'base' | 'quote',
+			amount: amountBN,
+			useSwift: true,
+			swiftOptions,
+		});
 
 		console.log('✅ [CLI] Swift order finished');
 	} catch (error) {
