@@ -159,6 +159,7 @@ export class SwiftClient {
 			allEnvDlog('swiftClient', 'full non-200 response body', response.body);
 			return {
 				message:
+					response.body?.error ||
 					response.body?.message ||
 					`HTTP ${response.status}: Error from Swift server`,
 				status: response.status,
