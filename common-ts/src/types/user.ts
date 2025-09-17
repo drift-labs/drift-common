@@ -33,6 +33,7 @@ export type OpenPosition = {
 	pnlIsClaimable: boolean;
 	remainderBaseAmount?: number; // LP only
 	lpDeriskPrice?: BN; //LP only
+	maxMarginRatio: number;
 };
 
 export type BankBalanceUI = SpotPosition & {

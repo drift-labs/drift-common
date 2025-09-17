@@ -195,6 +195,7 @@ const getOpenPositionData = (
 					'Initial',
 					true
 				),
+				maxMarginRatio: position.maxMarginRatio,
 			};
 		});
 
