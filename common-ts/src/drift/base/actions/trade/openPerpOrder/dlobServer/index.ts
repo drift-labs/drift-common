@@ -8,6 +8,7 @@ import {
 	UserAccount,
 	PublicKey,
 	decodeUser,
+	DefaultOrderParams,
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../../../../../../utils';
 import {
@@ -53,9 +54,9 @@ interface RegularOrderParams {
 // TODO: fallback method in case auction params endpoint is down
 
 /**
- * Fetches order parameters from the auction params server
+ * Fetches auction order parameters from the auction params server
  */
-export async function fetchOrderParamsFromServer({
+export async function fetchAuctionOrderParams({
 	assetType,
 	marketIndex,
 	marketType = MarketType.PERP,
@@ -106,14 +107,15 @@ export async function fetchOrderParamsFromServer({
 		baseAssetAmount: mappedParams.baseAssetAmount,
 		marketIndex: mappedParams.marketIndex,
 		reduceOnly: mappedParams.reduceOnly,
-		postOnly: mappedParams.postOnly,
-		triggerPrice: mappedParams.triggerPrice,
-		triggerCondition: mappedParams.triggerCondition,
+		postOnly: mappedParams.postOnly ?? DefaultOrderParams.postOnly,
+		triggerPrice: mappedParams.triggerPrice || null,
+		triggerCondition:
+			mappedParams.triggerCondition ?? DefaultOrderParams.triggerCondition,
 		oraclePriceOffset: mappedParams.oraclePriceOffset?.toNumber() || null,
-		auctionDuration: mappedParams.auctionDuration,
+		auctionDuration: mappedParams.auctionDuration || null,
 		maxTs: mappedParams.maxTs,
-		auctionStartPrice: mappedParams.auctionStartPrice,
-		auctionEndPrice: mappedParams.auctionEndPrice,
+		auctionStartPrice: mappedParams.auctionStartPrice || null,
+		auctionEndPrice: mappedParams.auctionEndPrice || null,
 	};
 }
 

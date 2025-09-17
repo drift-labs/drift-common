@@ -67,11 +67,15 @@ export function resolveBaseAssetAmount(params: {
 	}
 }
 
-export interface PlaceAndTakeParams {
-	enable: boolean;
-	auctionDurationPercentage?: number;
-	referrerInfo?: ReferrerInfo;
-}
+export type PlaceAndTakeParams =
+	| {
+			enable: false;
+	  }
+	| {
+			enable: true;
+			auctionDurationPercentage?: number;
+			referrerInfo: ReferrerInfo | undefined;
+	  };
 
 export type NonMarketOrderType =
 	| 'limit'

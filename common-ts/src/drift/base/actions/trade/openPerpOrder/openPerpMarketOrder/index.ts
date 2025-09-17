@@ -25,7 +25,7 @@ import {
 	PlaceAndTakeParams,
 } from '../../../../../utils/orderParams';
 import {
-	fetchOrderParamsFromServer,
+	fetchAuctionOrderParams,
 	fetchTopMakers,
 	OptionalAuctionParamsRequestInputs,
 } from '../dlobServer';
@@ -82,7 +82,7 @@ export async function createSwiftMarketOrder({
 	}
 
 	// Get order parameters from server
-	const fetchedOrderParams = await fetchOrderParamsFromServer({
+	const fetchedOrderParams = await fetchAuctionOrderParams({
 		driftClient,
 		user,
 		assetType,
@@ -125,6 +125,19 @@ export async function createSwiftMarketOrder({
 	});
 }
 
+class NoTopMakersError extends Error {
+	orderParams: OptionalOrderParams;
+	constructor(message: string, orderParams: OptionalOrderParams) {
+		super(message);
+		this.name = 'NoTopMakersError';
+		this.orderParams = orderParams;
+	}
+}
+
+/**
+ * Creates a placeAndTake transaction instruction.
+ * Fallbacks to a regular market order if no top makers are found.
+ */
 export const createPlaceAndTakePerpMarketOrderIx = async ({
 	assetType,
 	direction,
@@ -150,7 +163,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		: 'bid';
 
 	const [fetchedOrderParams, topMakersResult] = await Promise.all([
-		fetchOrderParamsFromServer({
+		fetchAuctionOrderParams({
 			driftClient,
 			user,
 			assetType,
@@ -169,6 +182,10 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 			limit: 4,
 		}),
 	]);
+
+	if (!topMakersResult || topMakersResult.length === 0) {
+		throw new NoTopMakersError('No top makers found', fetchedOrderParams);
+	}
 
 	const topMakersInfo = topMakersResult.map((maker) => ({
 		maker: maker.userAccountPubKey,
@@ -240,20 +257,29 @@ export const createOpenPerpMarketOrderIxs = async ({
 	const allIxs: TransactionInstruction[] = [];
 
 	if (placeAndTake?.enable) {
-		const placeAndTakeIx = await createPlaceAndTakePerpMarketOrderIx({
-			assetType,
-			amount,
-			direction,
-			dlobServerHttpUrl,
-			marketIndex,
-			driftClient,
-			user,
-			referrerInfo: placeAndTake.referrerInfo,
-			auctionDurationPercentage: placeAndTake.auctionDurationPercentage,
-		});
-		allIxs.push(placeAndTakeIx);
+		try {
+			const placeAndTakeIx = await createPlaceAndTakePerpMarketOrderIx({
+				assetType,
+				amount,
+				direction,
+				dlobServerHttpUrl,
+				marketIndex,
+				driftClient,
+				user,
+				referrerInfo: placeAndTake.referrerInfo,
+				auctionDurationPercentage: placeAndTake.auctionDurationPercentage,
+			});
+			allIxs.push(placeAndTakeIx);
+		} catch (e) {
+			if (e instanceof NoTopMakersError) {
+				// fallback to regular order
+				allOrders.push(e.orderParams);
+			} else {
+				throw e;
+			}
+		}
 	} else {
-		const fetchedOrderParams = await fetchOrderParamsFromServer({
+		const fetchedOrderParams = await fetchAuctionOrderParams({
 			driftClient,
 			user,
 			assetType,

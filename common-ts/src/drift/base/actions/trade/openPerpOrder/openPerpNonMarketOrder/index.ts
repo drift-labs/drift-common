@@ -29,7 +29,7 @@ import {
 	resolveBaseAssetAmount,
 } from '../../../../../utils/orderParams';
 import { ENUM_UTILS } from '../../../../../../utils';
-import { fetchOrderParamsFromServer } from '../dlobServer';
+import { fetchAuctionOrderParams } from '../dlobServer';
 import {
 	COMMON_UI_UTILS,
 	ORDER_COMMON_UTILS,
@@ -77,7 +77,7 @@ const getLimitAuctionOrderParams = async ({
 	baseAssetAmount: BN;
 	orderConfig: LimitOrderParamsOrderConfig;
 }) => {
-	const orderParams = await fetchOrderParamsFromServer({
+	const orderParams = await fetchAuctionOrderParams({
 		driftClient,
 		user,
 		assetType: 'base',
@@ -166,9 +166,9 @@ export const createMultipleOpenPerpNonMarketOrderIx = async (params: {
  * If `limitAuction` is enabled, a placeAndTake order is created to simulate a market auction order,
  * with the end price being the limit price.
  */
-export const createOpenPerpNonMarketOrderIx = async (
+export const createOpenPerpNonMarketOrderIxs = async (
 	params: OpenPerpNonMarketOrderBaseParams
-): Promise<TransactionInstruction> => {
+): Promise<TransactionInstruction[]> => {
 	const {
 		driftClient,
 		user,
@@ -194,6 +194,7 @@ export const createOpenPerpNonMarketOrderIx = async (
 	}
 
 	const allOrders: OptionalOrderParams[] = [];
+	const allIxs: TransactionInstruction[] = [];
 
 	// handle limit auction
 	if (orderConfig.orderType === 'limit' && orderConfig.limitAuction?.enable) {
@@ -204,7 +205,7 @@ export const createOpenPerpNonMarketOrderIx = async (
 		});
 
 		// if it is a limit auction order, we create a placeAndTake order to simulate a market order.
-		// this is useful when a limit order is crossing, and we want to achieve the best fill price through an auction.
+		// this is useful when a limit order is crossing, and we want to achieve the best fill price through a placeAndTake.
 		if (
 			limitAuctionOrderParams.auctionDuration > 0 &&
 			orderConfig.limitAuction?.usePlaceAndTake?.enable
@@ -223,7 +224,7 @@ export const createOpenPerpNonMarketOrderIx = async (
 					orderConfig.limitAuction.usePlaceAndTake.auctionDurationPercentage,
 				referrerInfo: orderConfig.limitAuction.usePlaceAndTake.referrerInfo,
 			});
-			return placeAndTakeIx;
+			allIxs.push(placeAndTakeIx);
 		} else {
 			allOrders.push(limitAuctionOrderParams);
 		}
@@ -281,8 +282,12 @@ export const createOpenPerpNonMarketOrderIx = async (
 		allOrders.push(stopLossParams);
 	}
 
-	const placeOrderIx = await driftClient.getPlaceOrdersIx(allOrders);
-	return placeOrderIx;
+	if (allOrders.length > 0) {
+		const placeOrderIx = await driftClient.getPlaceOrdersIx(allOrders);
+		allIxs.push(placeOrderIx);
+	}
+
+	return allIxs;
 };
 
 export const MINIMUM_SWIFT_LIMIT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 35;
@@ -341,7 +346,7 @@ export const createOpenPerpNonMarketOrderTxn = async (
 ): Promise<Transaction | VersionedTransaction> => {
 	const { driftClient } = params;
 
-	const instructions = await createOpenPerpNonMarketOrderIx(params);
+	const instructions = await createOpenPerpNonMarketOrderIxs(params);
 
 	const openPerpNonMarketOrderTxn =
 		await driftClient.txHandler.buildTransaction({

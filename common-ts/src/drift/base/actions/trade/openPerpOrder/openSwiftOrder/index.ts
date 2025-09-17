@@ -35,7 +35,16 @@ export interface SwiftOrderOptions {
 	signedMessageOrderSlotBuffer?: number;
 	isDelegate?: boolean;
 	callbacks?: {
-		onSigningExpiry?: () => void;
+		onOrderParamsMessagePrepped?: (
+			orderParamsMessage:
+				| SignedMsgOrderParamsMessage
+				| SignedMsgOrderParamsDelegateMessage
+		) => void;
+		onSigningExpiry?: (
+			orderParamsMessage:
+				| SignedMsgOrderParamsMessage
+				| SignedMsgOrderParamsDelegateMessage
+		) => void;
 		onSigningSuccess?: (
 			signedMessage: Uint8Array,
 			// we add the following here, because the onSigningSuccess callback is called before the order is sent to the swift server
@@ -213,15 +222,12 @@ interface SignOrderMsgParams {
 	};
 	/** Hex-encoded swift order message to sign */
 	hexEncodedSwiftOrderMessage: Uint8Array;
-	/** Slot number when the auction expires */
-	auctionExpirationSlot: BN;
-	/** Function to get the current blockchain slot */
-	getCurrentSlot: () => number;
+	/** Time in milliseconds till the auction expires */
+	expirationTimeMs: number;
 	/** Callback function called when the auction expires */
-	onExpired: () => void;
+	onExpired?: () => void;
 }
 
-// TODO: Signing the swift order should be part of the Drift wrapper, not here
 /**
  * Signs a swift order message with slot expiration monitoring.
  * Continuously monitors the current slot and rejects with AuctionSlotExpiredError
@@ -229,8 +235,7 @@ interface SignOrderMsgParams {
  *
  * @param wallet - Wallet instance with message signing capability
  * @param hexEncodedSwiftOrderMessage - Hex-encoded swift order message to sign
- * @param auctionExpirationSlot - Slot number when the auction expires
- * @param getCurrentSlot - Function to get the current blockchain slot
+ * @param expirationTimeMs - Time in milliseconds till the auction expires
  * @param onExpired - Callback function called when the auction expires
  *
  * @returns Promise resolving to the signed message as Uint8Array
@@ -239,32 +244,35 @@ interface SignOrderMsgParams {
 export const signSwiftOrderMsg = async ({
 	wallet,
 	hexEncodedSwiftOrderMessage,
-	auctionExpirationSlot,
-	getCurrentSlot,
+	expirationTimeMs,
 	onExpired,
 }: SignOrderMsgParams): Promise<Uint8Array> => {
-	return new Promise((resolve, reject) => {
-		const interval = setInterval(() => {
-			const currentSlot = getCurrentSlot();
-			if (currentSlot >= auctionExpirationSlot.toNumber()) {
-				onExpired();
-				clearInterval(interval);
-				reject(new AuctionSlotExpiredError());
-			}
-		}, SLOT_TIME_ESTIMATE_MS);
+	let timeoutId: ReturnType<typeof setTimeout>;
 
-		wallet
-			.signMessage(hexEncodedSwiftOrderMessage)
-			.then((signedMessage) => {
-				resolve(signedMessage);
-			})
-			.catch((error) => {
-				reject(error);
-			})
-			.finally(() => {
-				clearInterval(interval);
-			});
-	});
+	try {
+		// Sign the message
+		const signedMessagePromise = wallet.signMessage(
+			hexEncodedSwiftOrderMessage
+		);
+
+		const signingExpiredPromise = new Promise<never>((_resolve, reject) => {
+			timeoutId = setTimeout(() => {
+				onExpired?.();
+				reject(new AuctionSlotExpiredError());
+			}, expirationTimeMs);
+		});
+
+		// Ensure that the user signs the message before the expiration time
+		const signedMessage = await Promise.race([
+			signedMessagePromise,
+			signingExpiredPromise,
+		]);
+
+		return signedMessage;
+	} catch (error) {
+		clearTimeout(timeoutId);
+		throw error;
+	}
 };
 
 /**
@@ -287,7 +295,7 @@ interface SendSwiftOrderParams {
 	/** Public key of the signing authority */
 	signingAuthority: PublicKey;
 	/** Duration of the auction in slots (optional) */
-	auctionDurationSlot?: number;
+	auctionDuration?: number;
 }
 
 // TODO: Sending the swift order should be part of the Drift wrapper, not here
@@ -314,12 +322,12 @@ interface SendSwiftOrderParams {
 export const sendSwiftOrder = ({
 	driftClient,
 	marketId,
-	hexEncodedSwiftOrderMessageString: hexEncodedSwiftOrderMessage,
+	hexEncodedSwiftOrderMessageString,
 	signedMessage,
 	signedMsgOrderUuid,
 	takerAuthority,
 	signingAuthority,
-	auctionDurationSlot,
+	auctionDuration,
 }: SendSwiftOrderParams): SwiftOrderObservable => {
 	const signedMsgUserOrdersAccountPubkey = getSignedMsgUserAccountPublicKey(
 		driftClient.program.programId,
@@ -331,12 +339,12 @@ export const sendSwiftOrder = ({
 		driftClient,
 		marketId.marketIndex,
 		marketId.marketType,
-		hexEncodedSwiftOrderMessage.toString(),
+		hexEncodedSwiftOrderMessageString,
 		Buffer.from(signedMessage),
 		takerAuthority,
 		signedMsgUserOrdersAccountPubkey,
 		signedMsgOrderUuid,
-		((auctionDurationSlot ?? 0) + 15) * SLOT_TIME_ESTIMATE_MS,
+		((auctionDuration ?? 0) + 15) * SLOT_TIME_ESTIMATE_MS,
 		signingAuthority
 	);
 
@@ -387,103 +395,87 @@ export const prepSignAndSendSwiftOrder = async ({
 		slotBuffer,
 	});
 
-	// Sign the message
-	const signedMessagePromise = swiftOptions.wallet.signMessage(
-		hexEncodedSwiftOrderMessage.uInt8Array
+	swiftOptions.callbacks?.onOrderParamsMessagePrepped?.(
+		signedMsgOrderParamsMessage
 	);
 
-	let timeoutId: ReturnType<typeof setTimeout>;
-	const expirationTime =
+	const expirationTimeMs =
 		Math.max(
 			slotBuffer +
 				(orderParams.main.auctionDuration || 0) -
 				SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS,
 			MINIMUM_SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS
 		) * SLOT_TIME_ESTIMATE_MS;
-	const signingExpiredPromise = new Promise<never>((_resolve, reject) => {
-		timeoutId = setTimeout(() => {
-			swiftOptions.callbacks?.onSigningExpiry?.();
-			reject(new Error('Swift order signing expired'));
-		}, expirationTime);
+
+	// Ensure that the user signs the message before the expiration time
+	const signedMessage = await signSwiftOrderMsg({
+		wallet: swiftOptions.wallet,
+		hexEncodedSwiftOrderMessage: hexEncodedSwiftOrderMessage.uInt8Array,
+		expirationTimeMs,
+		onExpired: () =>
+			swiftOptions.callbacks?.onSigningExpiry?.(signedMsgOrderParamsMessage),
 	});
 
-	try {
-		// Ensure that the user signs the message before the expiration time
-		const signedMessage = await Promise.race([
-			signedMessagePromise,
-			signingExpiredPromise,
-		]);
+	swiftOptions.callbacks?.onSigningSuccess?.(
+		signedMessage,
+		signedMsgOrderUuid,
+		signedMsgOrderParamsMessage
+	);
 
-		clearTimeout(timeoutId);
+	// Initialize SwiftClient (required before using sendSwiftOrder)
+	SwiftClient.init(swiftOptions.swiftServerUrl);
 
-		swiftOptions.callbacks?.onSigningSuccess?.(
-			signedMessage,
-			signedMsgOrderUuid,
-			signedMsgOrderParamsMessage
-		);
+	// Create a promise-based wrapper for the sendSwiftOrder callback-based API
+	const swiftOrderObservable = sendSwiftOrder({
+		driftClient,
+		marketId: MarketId.createPerpMarket(marketIndex),
+		hexEncodedSwiftOrderMessageString: hexEncodedSwiftOrderMessage.string,
+		signedMessage,
+		signedMsgOrderUuid,
+		takerAuthority: swiftOptions.wallet.publicKey,
+		signingAuthority: swiftOptions.wallet.publicKey,
+		auctionDuration: orderParams.main.auctionDuration || undefined,
+	});
 
-		// Initialize SwiftClient (required before using sendSwiftOrder)
-		SwiftClient.init(swiftOptions.swiftServerUrl);
-
-		// Create a promise-based wrapper for the sendSwiftOrder callback-based API
-		const swiftOrderObservable = sendSwiftOrder({
-			driftClient,
-			marketId: MarketId.createPerpMarket(marketIndex),
-			hexEncodedSwiftOrderMessageString: hexEncodedSwiftOrderMessage.string,
-			signedMessage,
-			signedMsgOrderUuid,
-			takerAuthority: swiftOptions.wallet.publicKey,
-			signingAuthority: swiftOptions.wallet.publicKey,
-			auctionDurationSlot: orderParams.main.auctionDuration || undefined,
-		});
-
-		const wrapSwiftOrderEvent = <T extends SwiftOrderEvent>(
-			swiftOrderEvent: T
-		) => {
-			return {
-				...swiftOrderEvent,
-				swiftOrderUuid: signedMsgOrderUuid,
-				orderParamsMessage: signedMsgOrderParamsMessage,
-			};
+	const wrapSwiftOrderEvent = <T extends SwiftOrderEvent>(
+		swiftOrderEvent: T
+	) => {
+		return {
+			...swiftOrderEvent,
+			swiftOrderUuid: signedMsgOrderUuid,
+			orderParamsMessage: signedMsgOrderParamsMessage,
 		};
+	};
 
-		let promiseResolver;
-		const promise = new Promise<void>((resolve) => {
-			promiseResolver = resolve;
-		});
+	let promiseResolver;
+	const promise = new Promise<void>((resolve) => {
+		promiseResolver = resolve;
+	});
 
-		const handleTerminalEvent = (subscription: Subscription) => {
-			subscription.unsubscribe();
-			promiseResolver();
-		};
+	const handleTerminalEvent = (subscription: Subscription) => {
+		subscription.unsubscribe();
+		promiseResolver();
+	};
 
-		const subscription = swiftOrderObservable.subscribe((swiftOrderEvent) => {
-			if (swiftOrderEvent.type === 'sent') {
-				swiftOptions.callbacks?.onSent?.(wrapSwiftOrderEvent(swiftOrderEvent));
-			}
-			if (swiftOrderEvent.type === 'confirmed') {
-				swiftOptions.callbacks?.onConfirmed?.(
-					wrapSwiftOrderEvent(swiftOrderEvent)
-				);
-				handleTerminalEvent(subscription);
-			}
-			if (swiftOrderEvent.type === 'expired') {
-				swiftOptions.callbacks?.onExpired?.(
-					wrapSwiftOrderEvent(swiftOrderEvent)
-				);
-				handleTerminalEvent(subscription);
-			}
-			if (swiftOrderEvent.type === 'errored') {
-				swiftOptions.callbacks?.onErrored?.(
-					wrapSwiftOrderEvent(swiftOrderEvent)
-				);
-				handleTerminalEvent(subscription);
-			}
-		});
+	const subscription = swiftOrderObservable.subscribe((swiftOrderEvent) => {
+		if (swiftOrderEvent.type === 'sent') {
+			swiftOptions.callbacks?.onSent?.(wrapSwiftOrderEvent(swiftOrderEvent));
+		}
+		if (swiftOrderEvent.type === 'confirmed') {
+			swiftOptions.callbacks?.onConfirmed?.(
+				wrapSwiftOrderEvent(swiftOrderEvent)
+			);
+			handleTerminalEvent(subscription);
+		}
+		if (swiftOrderEvent.type === 'expired') {
+			swiftOptions.callbacks?.onExpired?.(wrapSwiftOrderEvent(swiftOrderEvent));
+			handleTerminalEvent(subscription);
+		}
+		if (swiftOrderEvent.type === 'errored') {
+			swiftOptions.callbacks?.onErrored?.(wrapSwiftOrderEvent(swiftOrderEvent));
+			handleTerminalEvent(subscription);
+		}
+	});
 
-		return promise;
-	} catch (error) {
-		clearTimeout(timeoutId);
-		throw error;
-	}
+	return promise;
 };
