@@ -5,6 +5,9 @@ import {
 	PositionDirection,
 	OptionalOrderParams,
 	MarketType,
+	getUserStatsAccountPublicKey,
+	ReferrerInfo,
+	PRICE_PRECISION,
 } from '@drift-labs/sdk';
 import {
 	Transaction,
@@ -13,175 +16,54 @@ import {
 } from '@solana/web3.js';
 import { ENUM_UTILS } from '../../../../../../utils';
 import {
-	mapAuctionParamsResponse,
-	ServerAuctionParamsResponse,
-	MappedAuctionParams,
-} from '../../../../../utils/auctionParamsResponseMapper';
-import {
-	OptionalTriggerOrderParams,
-	prepSwiftOrder,
-	sendSwiftOrder,
+	prepSignAndSendSwiftOrder,
 	SwiftOrderOptions,
-	SwiftOrderResult,
 } from '../openSwiftOrder';
-import { MarketId } from '../../../../../../types';
-import { SwiftClient } from '../../../../../../clients/swiftClient';
 import { buildNonMarketOrderParams } from '../../../../../utils/orderParams';
+import {
+	fetchAuctionOrderParams,
+	fetchTopMakers,
+	OptionalAuctionParamsRequestInputs,
+} from '../dlobServer';
+import { ORDER_COMMON_UTILS } from '../../../../../../common-ui-utils/order';
+import { TxnOrSwiftResult, WithTxnParams } from '../types';
+import { NoTopMakersError } from '../../../../../Drift/constants/errors';
+import { PlaceAndTakeParams, OptionalTriggerOrderParams } from '../types';
 
-export interface AuctionParamsRequestOptions {
-	// Optional parameters that can override defaults or provide additional configuration
-	maxLeverageSelected?: boolean;
-	maxLeverageOrderSize?: BN;
-	reduceOnly?: boolean;
-	auctionDuration?: number;
-	auctionStartPriceOffset?: number;
-	auctionEndPriceOffset?: number;
-	auctionStartPriceOffsetFrom?: string; // TradeOffsetPrice
-	auctionEndPriceOffsetFrom?: string; // TradeOffsetPrice
-	slippageTolerance?: number | 'dynamic';
-	auctionPriceCaps?: {
-		min: BN;
-		max: BN;
-	};
-	isOracleOrder?: boolean;
-	additionalEndPriceBuffer?: BN;
-	forceUpToSlippage?: boolean;
-	orderType?: 'market' | 'oracle';
-}
-
-export type OpenPerpMarketOrderParams<T extends boolean = boolean> = {
+export interface OpenPerpMarketOrderBaseParams {
 	driftClient: DriftClient;
 	user: User;
 	assetType: 'base' | 'quote';
 	marketIndex: number;
 	direction: PositionDirection;
 	amount: BN;
-	auctionParamsOptions?: AuctionParamsRequestOptions;
 	dlobServerHttpUrl: string;
+	// mainly used for UI order identification
+	userOrderId?: number;
+	placeAndTake?: PlaceAndTakeParams;
+	optionalAuctionParamsInputs?: OptionalAuctionParamsRequestInputs;
 	bracketOrders?: {
 		takeProfit?: OptionalTriggerOrderParams;
 		stopLoss?: OptionalTriggerOrderParams;
 	};
-	marketType?: MarketType;
-	useSwift: T;
-} & (T extends true
-	? { swiftOptions: SwiftOrderOptions }
-	: { swiftOptions?: never });
-
-interface RegularOrderParams {
-	driftClient: DriftClient;
-	user: User;
-	assetType: 'base' | 'quote';
-	marketType?: MarketType;
-	marketIndex: number;
-	direction: PositionDirection;
-	amount: BN;
-	auctionParamsOptions?: AuctionParamsRequestOptions;
-	dlobServerHttpUrl: string;
 }
 
-/**
- * Fetches order parameters from the auction params server
- */
-async function fetchOrderParamsFromServer({
-	assetType,
-	marketIndex,
-	marketType = MarketType.PERP,
-	direction,
-	amount,
-	dlobServerHttpUrl,
-	auctionParamsOptions = {},
-}: RegularOrderParams): Promise<OptionalOrderParams> {
-	// Extract optional parameters (no defaults except for what's required by server)
-	const {
-		maxLeverageSelected,
-		maxLeverageOrderSize,
-		reduceOnly,
-		auctionDuration,
-		auctionStartPriceOffset,
-		auctionEndPriceOffset,
-		auctionStartPriceOffsetFrom,
-		auctionEndPriceOffsetFrom,
-		slippageTolerance,
-		isOracleOrder,
-		orderType,
-		...restOptions
-	} = auctionParamsOptions;
+export interface OpenPerpMarketOrderBaseParamsWithSwift
+	extends Omit<OpenPerpMarketOrderBaseParams, 'placeAndTake'> {
+	swiftOptions: SwiftOrderOptions;
+}
 
-	// Build URL parameters for server request
-	const urlParamsObject: Record<string, string> = {
-		// Required fields
-		assetType,
-		marketType: ENUM_UTILS.toStr(marketType),
-		marketIndex: marketIndex.toString(),
-		direction: ENUM_UTILS.toStr(direction),
-		amount: amount.toString(),
-	};
-
-	// Add optional parameters only if they are provided
-	const optionalParams = {
-		maxLeverageSelected,
-		maxLeverageOrderSize,
-		reduceOnly,
-		auctionDuration,
-		auctionStartPriceOffset,
-		auctionEndPriceOffset,
-		auctionStartPriceOffsetFrom,
-		auctionEndPriceOffsetFrom,
-		slippageTolerance,
-		isOracleOrder,
-		orderType,
-		additionalEndPriceBuffer: restOptions.additionalEndPriceBuffer,
-		forceUpToSlippage: restOptions.forceUpToSlippage,
-	};
-
-	// Add defined optional parameters
-	Object.entries(optionalParams).forEach(([key, value]) => {
-		if (value !== undefined) {
-			urlParamsObject[key] = value.toString();
-		}
-	});
-
-	const urlParams = new URLSearchParams(urlParamsObject);
-
-	// Get order params from server
-	const requestUrl = `${dlobServerHttpUrl}/auctionParams?${urlParams.toString()}`;
-	const response = await fetch(requestUrl);
-
-	if (!response.ok) {
-		throw new Error(
-			`Server responded with ${response.status}: ${response.statusText}`
-		);
-	}
-
-	const serverResponse: ServerAuctionParamsResponse = await response.json();
-	const mappedParams: MappedAuctionParams =
-		mapAuctionParamsResponse(serverResponse);
-
-	// Convert MappedAuctionParams to OptionalOrderParams
-	return {
-		orderType: mappedParams.orderType,
-		marketType: mappedParams.marketType,
-		userOrderId: mappedParams.userOrderId,
-		direction: mappedParams.direction,
-		baseAssetAmount: mappedParams.baseAssetAmount,
-		marketIndex: mappedParams.marketIndex,
-		reduceOnly: mappedParams.reduceOnly,
-		postOnly: mappedParams.postOnly,
-		triggerPrice: mappedParams.triggerPrice,
-		triggerCondition: mappedParams.triggerCondition,
-		oraclePriceOffset: mappedParams.oraclePriceOffset?.toNumber() || null,
-		auctionDuration: mappedParams.auctionDuration,
-		maxTs: mappedParams.maxTs,
-		auctionStartPrice: mappedParams.auctionStartPrice,
-		auctionEndPrice: mappedParams.auctionEndPrice,
-	};
+export interface OpenPerpMarketOrderParams<T extends boolean = boolean>
+	extends OpenPerpMarketOrderBaseParams {
+	useSwift: T;
+	swiftOptions?: T extends true ? SwiftOrderOptions : never;
+	placeAndTake?: T extends true ? never : PlaceAndTakeParams;
 }
 
 /**
  * Creates and submits a Swift (signed message) order. Only available for perp orders.
  */
-async function createSwiftOrder({
+export async function createSwiftMarketOrder({
 	driftClient,
 	user,
 	assetType,
@@ -190,13 +72,16 @@ async function createSwiftOrder({
 	amount,
 	bracketOrders,
 	dlobServerHttpUrl,
-	auctionParamsOptions,
+	optionalAuctionParamsInputs,
 	swiftOptions,
-}: Omit<OpenPerpMarketOrderParams, 'useSwift'> & {
-	swiftOptions: SwiftOrderOptions;
-}): Promise<SwiftOrderResult> {
+	userOrderId = 0,
+}: OpenPerpMarketOrderBaseParamsWithSwift): Promise<void> {
+	if (amount.isZero()) {
+		throw new Error('Amount must be greater than zero');
+	}
+
 	// Get order parameters from server
-	const orderParams = await fetchOrderParamsFromServer({
+	const fetchedOrderParams = await fetchAuctionOrderParams({
 		driftClient,
 		user,
 		assetType,
@@ -205,52 +90,130 @@ async function createSwiftOrder({
 		direction,
 		amount,
 		dlobServerHttpUrl,
-		auctionParamsOptions,
+		optionalAuctionParamsInputs,
 	});
 
-	// Fetch current slot programmatically
-	const currentSlot = await driftClient.connection.getSlot();
-	const userAccount = user.getUserAccount();
+	const oraclePrice = driftClient.getOracleDataForPerpMarket(marketIndex).price;
+	const totalQuoteAmount = amount.mul(oraclePrice).div(PRICE_PRECISION);
 
-	// Use the existing prepSwiftOrder helper function
-	const { hexEncodedSwiftOrderMessage, signedMsgOrderUuid } = prepSwiftOrder({
+	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
+		marketIndex,
 		driftClient,
-		takerUserAccount: {
-			pubKey: swiftOptions.wallet.publicKey,
-			subAccountId: userAccount.subAccountId,
-		},
-		currentSlot,
-		isDelegate: swiftOptions.isDelegate || false,
+		user,
+		totalQuoteAmount,
+		direction
+	);
+
+	const orderParams = {
+		...fetchedOrderParams,
+		userOrderId,
+		bitFlags,
+	};
+
+	const userAccount = user.getUserAccount();
+	const slotBuffer = swiftOptions.signedMessageOrderSlotBuffer || 7;
+
+	await prepSignAndSendSwiftOrder({
+		driftClient,
+		subAccountId: userAccount.subAccountId,
+		marketIndex,
+		slotBuffer,
+		swiftOptions,
 		orderParams: {
 			main: orderParams,
 			takeProfit: bracketOrders?.takeProfit,
 			stopLoss: bracketOrders?.stopLoss,
 		},
-		slotBuffer: swiftOptions.signedMessageOrderSlotBuffer || 30,
 	});
+}
 
-	// Sign the message
-	const signedMessage = await swiftOptions.wallet.signMessage(
-		hexEncodedSwiftOrderMessage.uInt8Array
+/**
+ * Creates a placeAndTake transaction instruction.
+ * Fallbacks to a regular market order if no top makers are found.
+ */
+export const createPlaceAndTakePerpMarketOrderIx = async ({
+	assetType,
+	direction,
+	dlobServerHttpUrl,
+	marketIndex,
+	driftClient,
+	user,
+	userOrderId,
+	amount,
+	referrerInfo,
+	auctionDurationPercentage,
+	optionalAuctionParamsInputs,
+}: OpenPerpMarketOrderBaseParams & {
+	direction: PositionDirection;
+	dlobServerHttpUrl: string;
+	marketIndex: number;
+	driftClient: DriftClient;
+	user: User;
+	referrerInfo?: ReferrerInfo;
+	auctionDurationPercentage?: number;
+}) => {
+	const counterPartySide = ENUM_UTILS.match(direction, PositionDirection.LONG)
+		? 'ask'
+		: 'bid';
+
+	const [fetchedOrderParams, topMakersResult] = await Promise.all([
+		fetchAuctionOrderParams({
+			driftClient,
+			user,
+			assetType,
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction,
+			amount,
+			dlobServerHttpUrl,
+			optionalAuctionParamsInputs,
+		}),
+		fetchTopMakers({
+			dlobServerHttpUrl,
+			marketIndex,
+			marketType: MarketType.PERP,
+			side: counterPartySide,
+			limit: 4,
+		}),
+	]);
+
+	const oraclePrice = driftClient.getOracleDataForPerpMarket(marketIndex).price;
+	const totalQuoteAmount = amount.mul(oraclePrice).div(PRICE_PRECISION);
+
+	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
+		marketIndex,
+		driftClient,
+		user,
+		totalQuoteAmount,
+		direction
+	);
+	fetchedOrderParams.bitFlags = bitFlags;
+	fetchedOrderParams.userOrderId = userOrderId;
+
+	if (!topMakersResult || topMakersResult.length === 0) {
+		throw new NoTopMakersError('No top makers found', fetchedOrderParams);
+	}
+
+	const topMakersInfo = topMakersResult.map((maker) => ({
+		maker: maker.userAccountPubKey,
+		makerUserAccount: maker.userAccount,
+		makerStats: getUserStatsAccountPublicKey(
+			driftClient.program.programId,
+			maker.userAccount.authority
+		),
+	}));
+
+	const placeAndTakeIx = await driftClient.getPlaceAndTakePerpOrderIx(
+		fetchedOrderParams,
+		topMakersInfo,
+		referrerInfo,
+		undefined,
+		auctionDurationPercentage,
+		user.getUserAccount().subAccountId
 	);
 
-	// Initialize SwiftClient (required before using sendSwiftOrder)
-	SwiftClient.init(swiftOptions.swiftServerUrl);
-
-	const swiftOrderResult = sendSwiftOrder({
-		driftClient,
-		marketId: MarketId.createPerpMarket(marketIndex),
-		hexEncodedSwiftOrderMessageString: hexEncodedSwiftOrderMessage.string,
-		signedMessage,
-		signedMsgOrderUuid,
-		takerAuthority: swiftOptions.wallet.publicKey,
-		signingAuthority: swiftOptions.wallet.publicKey,
-		auctionDurationSlot: orderParams.auctionDuration || undefined,
-		swiftConfirmationSlotBuffer: 15,
-	});
-
-	return swiftOrderResult;
-}
+	return placeAndTakeIx;
+};
 
 /**
  * Creates transaction instructions for opening a perp market order.
@@ -263,73 +226,134 @@ async function createSwiftOrder({
  * @param direction - The direction of the trade (long/short)
  * @param amount - The amount to trade
  * @param dlobServerHttpUrl - Server URL for the auction params endpoint
- * @param auctionParamsOptions - Optional parameters for auction params endpoint and order configuration
- * @param useSwift - Whether to use Swift (signed message) orders instead of regular transactions
- * @param swiftOptions - Options for Swift (signed message) orders. Required if useSwift is true
+ * @param optionalAuctionParamsInputs - Optional parameters for auction params endpoint and order configuration
  *
- * @returns Promise resolving to an array of transaction instructions for regular orders, or empty array for Swift orders
+ * @returns Promise resolving to an array of transaction instructions for regular orders
  */
-export const createOpenPerpMarketOrderIx = async ({
+export const createOpenPerpMarketOrderIxs = async ({
 	driftClient,
 	user,
 	assetType,
 	marketIndex,
 	direction,
 	amount,
+	bracketOrders,
 	dlobServerHttpUrl,
-	auctionParamsOptions = {},
-	useSwift = false,
-	swiftOptions,
-}: OpenPerpMarketOrderParams): Promise<TransactionInstruction[]> => {
+	placeAndTake,
+	userOrderId,
+	optionalAuctionParamsInputs = {},
+}: OpenPerpMarketOrderBaseParams): Promise<TransactionInstruction[]> => {
 	if (!amount || amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
 	}
 
-	// First, get order parameters from server (same for both Swift and regular orders)
-	const orderParams = await fetchOrderParamsFromServer({
-		driftClient,
-		user,
-		assetType,
-		marketIndex,
-		marketType: MarketType.PERP,
-		direction,
-		amount,
-		dlobServerHttpUrl,
-		auctionParamsOptions,
-	});
+	const allOrders: OptionalOrderParams[] = [];
+	const allIxs: TransactionInstruction[] = [];
 
-	// If useSwift is true, use prepSwiftOrder and return empty array
-	if (useSwift) {
-		if (!swiftOptions) {
-			throw new Error('swiftOptions is required when useSwift is true');
+	if (placeAndTake?.enable) {
+		try {
+			const placeAndTakeIx = await createPlaceAndTakePerpMarketOrderIx({
+				assetType,
+				amount,
+				direction,
+				dlobServerHttpUrl,
+				marketIndex,
+				driftClient,
+				user,
+				userOrderId,
+				referrerInfo: placeAndTake.referrerInfo,
+				auctionDurationPercentage: placeAndTake.auctionDurationPercentage,
+				optionalAuctionParamsInputs,
+			});
+			allIxs.push(placeAndTakeIx);
+		} catch (e) {
+			if (e instanceof NoTopMakersError) {
+				// fallback to regular order
+				allOrders.push(e.orderParams);
+			} else {
+				throw e;
+			}
 		}
-
-		const currentSlot = await driftClient.connection.getSlot();
-		const userAccount = user.getUserAccount();
-
-		// Use the existing prepSwiftOrder helper function
-		prepSwiftOrder({
+	} else {
+		const fetchedOrderParams = await fetchAuctionOrderParams({
 			driftClient,
-			takerUserAccount: {
-				pubKey: swiftOptions.wallet.publicKey,
-				subAccountId: userAccount.subAccountId,
-			},
-			currentSlot,
-			isDelegate: swiftOptions.isDelegate || false,
-			orderParams: {
-				main: orderParams,
-				// TODO: Add support for stopLoss and takeProfit
-			},
-			slotBuffer: swiftOptions.signedMessageOrderSlotBuffer || 30,
+			user,
+			assetType,
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction,
+			amount,
+			dlobServerHttpUrl,
+			optionalAuctionParamsInputs,
 		});
 
-		// Swift orders don't return transaction instructions
-		return [];
+		const oraclePrice =
+			driftClient.getOracleDataForPerpMarket(marketIndex).price;
+		const totalQuoteAmount = amount.mul(oraclePrice).div(PRICE_PRECISION);
+
+		const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
+			marketIndex,
+			driftClient,
+			user,
+			totalQuoteAmount,
+			direction
+		);
+
+		const orderParams = {
+			...fetchedOrderParams,
+			userOrderId,
+			bitFlags,
+		};
+
+		allOrders.push(orderParams);
+	}
+
+	const bracketOrdersDirection = ENUM_UTILS.match(
+		direction,
+		PositionDirection.LONG
+	)
+		? PositionDirection.SHORT
+		: PositionDirection.LONG;
+
+	if (bracketOrders?.takeProfit) {
+		const takeProfitParams = buildNonMarketOrderParams({
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction: bracketOrdersDirection,
+			baseAssetAmount: bracketOrders.takeProfit.baseAssetAmount ?? amount,
+			orderConfig: {
+				orderType: 'takeProfit',
+				triggerPrice: bracketOrders.takeProfit.triggerPrice,
+				limitPrice: bracketOrders.takeProfit.limitPrice,
+			},
+			reduceOnly: bracketOrders.takeProfit.reduceOnly ?? true,
+		});
+		allOrders.push(takeProfitParams);
+	}
+
+	if (bracketOrders?.stopLoss) {
+		const stopLossParams = buildNonMarketOrderParams({
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction: bracketOrdersDirection,
+			baseAssetAmount: bracketOrders.stopLoss.baseAssetAmount ?? amount,
+			orderConfig: {
+				orderType: 'stopLoss',
+				triggerPrice: bracketOrders.stopLoss.triggerPrice,
+				limitPrice: bracketOrders.stopLoss.limitPrice,
+			},
+			reduceOnly: bracketOrders.stopLoss.reduceOnly ?? true,
+		});
+		allOrders.push(stopLossParams);
 	}
 
 	// Regular order flow - create transaction instruction
-	const placeOrderIx = await driftClient.getPlaceOrdersIx([orderParams]);
-	return [placeOrderIx];
+	if (allOrders.length > 0) {
+		const placeOrderIx = await driftClient.getPlaceOrdersIx(allOrders);
+		allIxs.push(placeOrderIx);
+	}
+
+	return allIxs;
 };
 
 /**
@@ -340,125 +364,71 @@ export const createOpenPerpMarketOrderIx = async ({
  * @param marketIndex - The perp market index to trade
  * @param direction - The direction of the trade (long/short)
  * @param amount - The amount to trade
- * @param auctionParamsOptions - Optional parameters for auction params endpoint and order configuration
+ * @param optionalAuctionParamsInputs - Optional parameters for auction params endpoint and order configuration
  * @param dlobServerHttpUrl - Server URL for the auction params endpoint
  *
  * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
  */
-export const createOpenPerpMarketOrderTxn = async <T extends boolean>({
-	driftClient,
-	user,
-	assetType,
-	marketIndex,
-	direction,
-	amount,
-	dlobServerHttpUrl,
-	auctionParamsOptions,
-	bracketOrders,
-	useSwift,
-	swiftOptions,
-}: OpenPerpMarketOrderParams<T>): Promise<
-	T extends true ? SwiftOrderResult : Transaction | VersionedTransaction
-> => {
-	if (!amount || amount.isZero()) {
-		throw new Error('Amount must be greater than zero');
-	}
+export const createOpenPerpMarketOrderTxn = async (
+	params: WithTxnParams<OpenPerpMarketOrderBaseParams>
+): Promise<Transaction | VersionedTransaction> => {
+	const { driftClient } = params;
 
-	// First, get order parameters from server (same for both Swift and regular orders)
-	const orderParams = await fetchOrderParamsFromServer({
-		driftClient,
-		user,
-		assetType,
-		marketIndex,
-		marketType: MarketType.PERP,
-		direction,
-		amount,
-		dlobServerHttpUrl,
-		auctionParamsOptions,
+	// Regular order flow - create transaction instruction and build transaction
+	const placeOrderIx = await createOpenPerpMarketOrderIxs(params);
+	const openPerpMarketOrderTxn = await driftClient.txHandler.buildTransaction({
+		instructions: placeOrderIx,
+		txVersion: 0,
+		connection: driftClient.connection,
+		preFlightCommitment: 'confirmed',
+		fetchAllMarketLookupTableAccounts:
+			driftClient.fetchAllLookupTableAccounts.bind(driftClient),
+		txParams: params.txParams,
 	});
+
+	return openPerpMarketOrderTxn;
+};
+
+/**
+ * Creates a transaction or swift order for a perp market order.
+ *
+ * @param driftClient - The Drift client instance for interacting with the protocol
+ * @param user - The user account that will place the order
+ * @param marketIndex - The perp market index to trade
+ * @param direction - The direction of the trade (long/short)
+ * @param amount - The amount to trade
+ * @param optionalAuctionParamsInputs - Optional parameters for auction params endpoint and order configuration
+ * @param dlobServerHttpUrl - Server URL for the auction params endpoint
+ * @param useSwift - Whether to use Swift (signed message) orders instead of regular transactions
+ * @param swiftOptions - Options for Swift (signed message) orders. Required if useSwift is true
+ * @param userOrderId - The user order id for UI identification
+ *
+ * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
+ */
+export const createOpenPerpMarketOrder = async <T extends boolean>(
+	params: WithTxnParams<OpenPerpMarketOrderParams<T>>
+): Promise<TxnOrSwiftResult<T>> => {
+	const { useSwift, swiftOptions, ...rest } = params;
 
 	// If useSwift is true, return the Swift result directly
 	if (useSwift) {
 		if (!swiftOptions) {
 			throw new Error('swiftOptions is required when useSwift is true');
 		}
-		return (await createSwiftOrder({
-			driftClient,
-			user,
-			assetType,
-			marketIndex,
-			direction,
-			amount,
-			dlobServerHttpUrl,
-			bracketOrders,
-			auctionParamsOptions,
+
+		const swiftOrderResult = await createSwiftMarketOrder({
+			...rest,
 			swiftOptions,
-		})) as T extends true
-			? SwiftOrderResult
+		});
+
+		return swiftOrderResult as T extends true
+			? void
 			: Transaction | VersionedTransaction;
 	}
 
-	const allOrders: OptionalOrderParams[] = [orderParams];
-
-	if (bracketOrders?.takeProfit) {
-		const takeProfitParams = buildNonMarketOrderParams({
-			marketIndex,
-			marketType: MarketType.PERP,
-			direction: bracketOrders.takeProfit.direction,
-			baseAssetAmount: amount,
-			orderConfig: {
-				orderType: 'takeProfit',
-				triggerPrice: bracketOrders.takeProfit.triggerPrice,
-			},
-			reduceOnly: true,
-		});
-		allOrders.push(takeProfitParams);
-	}
-
-	if (bracketOrders?.stopLoss) {
-		const stopLossParams = buildNonMarketOrderParams({
-			marketIndex,
-			marketType: MarketType.PERP,
-			direction: bracketOrders.stopLoss.direction,
-			baseAssetAmount: amount,
-			orderConfig: {
-				orderType: 'stopLoss',
-				triggerPrice: bracketOrders.stopLoss.triggerPrice,
-			},
-			reduceOnly: true,
-		});
-		allOrders.push(stopLossParams);
-	}
-
-	// Regular order flow - create transaction instruction and build transaction
-	const placeOrderIx = await driftClient.getPlaceOrdersIx(allOrders);
-	const openPerpMarketOrderTxn = await driftClient.txHandler.buildTransaction({
-		instructions: [placeOrderIx],
-		txVersion: 0,
-		connection: driftClient.connection,
-		preFlightCommitment: 'confirmed',
-		fetchAllMarketLookupTableAccounts:
-			driftClient.fetchAllLookupTableAccounts.bind(driftClient),
-	});
+	const openPerpMarketOrderTxn = await createOpenPerpMarketOrderTxn(rest);
 
 	return openPerpMarketOrderTxn as T extends true
-		? SwiftOrderResult
+		? void
 		: Transaction | VersionedTransaction;
-};
-
-/**
- * Creates a Swift (signed message) order directly.
- * This is a convenience function for when you only want to create Swift orders.
- *
- * @param params - All the parameters needed for creating a Swift order
- * @returns Promise resolving to SwiftOrderResult with observable and order UUID
- */
-export const createSwiftPerpMarketOrder = async (
-	params: Omit<OpenPerpMarketOrderParams, 'useSwift'> & {
-		swiftOptions: SwiftOrderOptions;
-	}
-): Promise<SwiftOrderResult> => {
-	return await createSwiftOrder({
-		...params,
-	});
 };

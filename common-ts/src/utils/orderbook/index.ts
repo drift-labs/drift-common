@@ -4,7 +4,11 @@ import {
 	L2OrderBook,
 	BN,
 	MMOraclePriceData,
+	BigNum,
+	PERCENTAGE_PRECISION_EXP,
 } from '@drift-labs/sdk';
+import { MarketId } from '../../types';
+import { COMMON_MATH } from '../math';
 
 export interface L2WithOracle extends L2OrderBook {
 	oracleData: OraclePriceData;
@@ -145,4 +149,122 @@ export const deserializeL2Response = (
 		spreadPct: new BN(serializedOrderbook.spreadPct),
 		spreadQuote: new BN(serializedOrderbook.spreadQuote),
 	};
+};
+
+export const convertToL2OrderBook = (
+	l2Data: L2WithOracleAndMarketData[]
+): L2OrderBook => {
+	// Find the market data - there should be one entry for our market
+	const marketData = l2Data[0];
+
+	if (!marketData) {
+		throw new Error('No L2 data available for market');
+	}
+
+	// L2WithOracleAndMarketData extends L2OrderBook, so we can use it directly
+	return {
+		asks: marketData.asks,
+		bids: marketData.bids,
+		slot: marketData.slot,
+	};
+};
+
+export interface DynamicSlippageConfig {
+	dynamicSlippageMin?: number;
+	dynamicSlippageMax?: number;
+	dynamicBaseSlippageMajor?: number;
+	dynamicBaseSlippageNonMajor?: number;
+	dynamicSlippageMultiplierMajor?: number;
+	dynamicSlippageMultiplierNonMajor?: number;
+}
+
+const DEFAULT_DYNAMIC_SLIPPAGE_CONFIG: DynamicSlippageConfig = {
+	dynamicSlippageMin: 0.05,
+	dynamicSlippageMax: 5,
+	dynamicBaseSlippageMajor: 0,
+	dynamicBaseSlippageNonMajor: 0.5,
+	dynamicSlippageMultiplierMajor: 1.02,
+	dynamicSlippageMultiplierNonMajor: 1.2,
+};
+
+export const calculateDynamicSlippageFromL2 = ({
+	l2Data,
+	marketId,
+	startPrice,
+	worstPrice,
+	oraclePrice,
+	dynamicSlippageConfig,
+}: {
+	l2Data: L2OrderBook;
+	marketId: MarketId;
+	startPrice: BN;
+	worstPrice: BN;
+	oraclePrice?: BN;
+	dynamicSlippageConfig?: DynamicSlippageConfig;
+}): number => {
+	const dynamicSlippageConfigToUse = dynamicSlippageConfig
+		? { ...DEFAULT_DYNAMIC_SLIPPAGE_CONFIG, ...dynamicSlippageConfig }
+		: DEFAULT_DYNAMIC_SLIPPAGE_CONFIG;
+
+	// Calculate spread information from L2 data using the oracle price
+	const spreadBidAskMark = COMMON_MATH.calculateSpreadBidAskMark(
+		l2Data,
+		oraclePrice
+	);
+
+	const bestAskNum = spreadBidAskMark.bestAskPrice?.toNumber?.() || 0;
+	const bestBidNum = spreadBidAskMark.bestBidPrice?.toNumber?.() || 0;
+
+	const spreadPctFromL2 = BigNum.from(
+		spreadBidAskMark.spreadPct,
+		PERCENTAGE_PRECISION_EXP
+	).toNum();
+
+	// Calculate spread percentage
+	const spreadPct =
+		spreadPctFromL2 ||
+		(Math.abs(bestAskNum - bestBidNum) / ((bestAskNum + bestBidNum) / 2)) * 100;
+
+	// Default to 0.5% if we get invalid spread info
+	if (isNaN(spreadPct) || spreadPct <= 0) {
+		return 0.5;
+	}
+
+	// Apply a buffer based on the tier of the contract
+	// Currently no buffer for SOL/BTC/ETH perp and a +10% buffer for other markets
+	const isMajor = marketId.isPerp && marketId.marketIndex < 3;
+
+	const spreadBaseSlippage = spreadPct / 2;
+
+	const baseSlippage = isMajor
+		? dynamicSlippageConfigToUse.dynamicBaseSlippageMajor
+		: dynamicSlippageConfigToUse.dynamicBaseSlippageNonMajor;
+	let dynamicSlippage = baseSlippage + spreadBaseSlippage;
+
+	// Use halfway to worst price as size adjusted slippage
+	if (startPrice && worstPrice) {
+		const sizeAdjustedSlippage =
+			(startPrice.sub(worstPrice).abs().toNumber() /
+				BN.max(startPrice, worstPrice).toNumber() /
+				2) *
+			100;
+
+		dynamicSlippage = Math.max(dynamicSlippage, sizeAdjustedSlippage);
+	}
+
+	// Apply multiplier from env var
+	const multiplier = isMajor
+		? dynamicSlippageConfigToUse.dynamicSlippageMultiplierMajor
+		: dynamicSlippageConfigToUse.dynamicSlippageMultiplierNonMajor;
+
+	dynamicSlippage = dynamicSlippage * multiplier;
+
+	// Enforce .05% minimum, 5% maximum, can change these in env vars
+	const finalSlippage = Math.min(
+		Math.max(dynamicSlippage, dynamicSlippageConfigToUse.dynamicSlippageMin),
+		dynamicSlippageConfigToUse.dynamicSlippageMax
+	);
+
+	// Round to avoid floating point precision issues, preserving 6 decimal places
+	return Math.round(finalSlippage * 1000000) / 1000000;
 };

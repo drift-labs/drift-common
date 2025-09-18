@@ -4,7 +4,7 @@ import {
 	PostOnlyParams,
 	QuoteResponse,
 } from '@drift-labs/sdk';
-import { AuctionParamsRequestOptions } from '../../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
+import { OptionalAuctionParamsRequestInputs } from '../../../../base/actions/trade/openPerpOrder/dlobServer';
 
 /**
  * Interface for deposit operation parameters.
@@ -55,7 +55,7 @@ export type PerpOrderParams = {
 		| {
 				orderType: 'market';
 				disableSwift?: boolean;
-				auctionParamsOptions?: AuctionParamsRequestOptions;
+				optionalAuctionParamsInputs?: OptionalAuctionParamsRequestInputs;
 				postOnly?: never;
 				bracketOrders?: {
 					takeProfitPrice?: BigNum;

@@ -16,7 +16,6 @@ import {
 	OrderTriggerCondition,
 	PerpMarketConfig,
 	PositionDirection,
-	PostOnlyParams,
 	PublicKey,
 	QuoteResponse,
 	SpotMarketConfig,
@@ -38,18 +37,20 @@ import { createWithdrawTxn } from '../../base/actions/spot/withdraw';
 import { createSettleFundingTxn } from '../../base/actions/perp/settleFunding';
 import { createSettlePnlTxn } from '../../base/actions/perp/settlePnl';
 import {
-	createOpenPerpMarketOrderTxn,
-	AuctionParamsRequestOptions,
+	createOpenPerpMarketOrder,
+	OpenPerpMarketOrderParams,
 } from '../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
-import { createOpenPerpNonMarketOrderTxn } from '../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
+import {
+	createOpenPerpNonMarketOrderTxn,
+	OpenPerpNonMarketOrderParams,
+} from '../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 import { createEditOrderTxn } from '../../base/actions/trade/editOrder';
 import { createCancelOrdersTxn } from '../../base/actions/trade/cancelOrder';
 import { createSwapTxn } from '../../base/actions/trade/swap';
-import { NonMarketOrderParamsConfig } from '../../utils/orderParams';
 import {
-	SwiftOrderResult,
-	SwiftOrderOptions,
-} from '../../base/actions/trade/openPerpOrder/openSwiftOrder';
+	TxnOrSwiftResult,
+	WithTxnParams,
+} from '../../base/actions/trade/openPerpOrder/types';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.
@@ -306,35 +307,22 @@ export class CentralServerDrift {
 		);
 	}
 
-	public async getOpenPerpMarketOrderTxn(
-		userAccountPublicKey: PublicKey,
-		assetType: 'base' | 'quote',
-		marketIndex: number,
-		direction: PositionDirection,
-		amount: BN,
-		dlobServerHttpUrl: string,
-		auctionParamsOptions?: AuctionParamsRequestOptions,
-		useSwift?: boolean,
-		swiftOptions?: SwiftOrderOptions,
-		marketType?: MarketType
-	): Promise<VersionedTransaction | Transaction | SwiftOrderResult> {
+	public async getOpenPerpMarketOrderTxn<T extends boolean>({
+		userAccountPublicKey,
+		...rest
+	}: WithTxnParams<
+		Omit<OpenPerpMarketOrderParams<T>, 'driftClient' | 'user'>
+	> & {
+		userAccountPublicKey: PublicKey;
+	}): Promise<TxnOrSwiftResult<T>> {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const openPerpMarketOrderTxn = await createOpenPerpMarketOrderTxn({
+				const openPerpMarketOrderTxn = await createOpenPerpMarketOrder({
+					...rest,
 					driftClient: this.driftClient,
 					user,
-					assetType,
-					marketIndex,
-					direction,
-					amount,
-					dlobServerHttpUrl,
-					auctionParamsOptions,
-					useSwift,
-					swiftOptions,
-					marketType,
 				});
-
 				return openPerpMarketOrderTxn;
 			}
 		);
@@ -343,66 +331,22 @@ export class CentralServerDrift {
 	/**
 	 * Create a perp non-market order with amount and asset type
 	 */
-	public async getOpenPerpNonMarketOrderTxn(
-		userAccountPublicKey: PublicKey,
-		marketIndex: number,
-		direction: PositionDirection,
-		amount: BN,
-		assetType: 'base' | 'quote',
-		limitPrice?: BN,
-		triggerPrice?: BN,
-		orderType?: 'limit' | 'takeProfit' | 'stopLoss' | 'oracleLimit',
-		reduceOnly?: boolean,
-		postOnly?: PostOnlyParams,
-		useSwift?: boolean,
-		swiftOptions?: SwiftOrderOptions,
-		oraclePriceOffset?: BN
-	): Promise<VersionedTransaction | Transaction | SwiftOrderResult> {
-		let orderConfig: NonMarketOrderParamsConfig['orderConfig'];
-
-		switch (orderType) {
-			case 'limit':
-				orderConfig = {
-					orderType,
-					limitPrice,
-				};
-				break;
-			case 'takeProfit':
-			case 'stopLoss':
-				orderConfig = {
-					orderType,
-					triggerPrice,
-					limitPrice,
-				};
-				break;
-			case 'oracleLimit':
-				orderConfig = {
-					orderType,
-					oraclePriceOffset,
-				};
-				break;
-			default: {
-				const _exhaustiveCheck: never = orderType;
-				throw new Error(`Unsupported order type: ${_exhaustiveCheck}`);
-			}
-		}
-
+	public async getOpenPerpNonMarketOrderTxn({
+		userAccountPublicKey,
+		...rest
+	}: WithTxnParams<
+		Omit<OpenPerpNonMarketOrderParams, 'driftClient' | 'user'>
+	> & {
+		userAccountPublicKey: PublicKey;
+	}): Promise<VersionedTransaction | Transaction | void> {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
 				const openPerpNonMarketOrderTxn = await createOpenPerpNonMarketOrderTxn(
 					{
+						...rest,
 						driftClient: this.driftClient,
 						user,
-						marketIndex,
-						direction,
-						amount,
-						assetType,
-						orderConfig,
-						reduceOnly,
-						postOnly,
-						useSwift,
-						swiftOptions,
 					}
 				);
 

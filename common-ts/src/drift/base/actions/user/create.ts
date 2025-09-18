@@ -3,6 +3,7 @@ import {
 	DriftClient,
 	PublicKey,
 	ReferrerInfo,
+	ReferrerNameAccount,
 	SpotMarketConfig,
 	TxParams,
 	UserStatsAccount,
@@ -74,9 +75,10 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 
 	const associatedDepositTokenAddressPromise =
 		getTokenAddressForDepositAndWithdraw(spotMarketConfig.mint, authority);
-	const referrerInfoPromise: Promise<ReferrerInfo | undefined> = referrerName
-		? driftClient.fetchReferrerNameAccount(referrerName)
-		: Promise.resolve(undefined);
+	const referrerNameAccountPromise: Promise<ReferrerNameAccount | undefined> =
+		referrerName
+			? driftClient.fetchReferrerNameAccount(referrerName)
+			: Promise.resolve(undefined);
 	const subaccountExistsPromise = USER_UTILS.checkIfUserAccountExists(
 		driftClient,
 		{
@@ -86,10 +88,10 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 		}
 	);
 
-	const [associatedDepositTokenAddress, referrerInfo, subaccountExists] =
+	const [associatedDepositTokenAddress, referrerNameAccount, subaccountExists] =
 		await Promise.all([
 			associatedDepositTokenAddressPromise,
-			referrerInfoPromise,
+			referrerNameAccountPromise,
 			subaccountExistsPromise,
 		]);
 
@@ -102,6 +104,13 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 		(poolId !== MAIN_POOL_ID || nextUserId === 0
 			? DEFAULT_ACCOUNT_NAMES_BY_POOL_ID[poolId]
 			: `Account ${nextUserId}`);
+
+	const referrerInfo: ReferrerInfo | undefined = referrerNameAccount
+		? {
+				referrer: referrerNameAccount.user,
+				referrerStats: referrerNameAccount.userStats,
+		  }
+		: undefined;
 
 	const { ixs, userAccountPublicKey } =
 		await driftClient.createInitializeUserAccountAndDepositCollateralIxs(

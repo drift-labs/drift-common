@@ -11,8 +11,11 @@ import {
 	PerpMarketConfig,
 	PerpMarkets,
 	SpotMarkets,
+	DriftClient,
+	isVariant,
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../utils';
+import { DEFAULT_MAX_MARKET_LEVERAGE } from '../constants/markets';
 
 const getBaseAssetSymbol = (marketName: string, removePrefix = false) => {
 	let baseAssetSymbol = marketName.replace('-PERP', '').replace('/USDC', '');
@@ -120,6 +123,72 @@ function getMarketConfig(
 	}
 }
 
+const getMaxLeverageForMarket = (
+	marketType: MarketType,
+	marketIndex: number,
+	driftClient: DriftClient
+): {
+	maxLeverage: number;
+	highLeverageMaxLeverage: number;
+	hasHighLeverage: boolean;
+} => {
+	try {
+		if (isVariant(marketType, 'perp')) {
+			const marketAccount = driftClient.getPerpMarketAccount(marketIndex);
+
+			const maxLeverage = parseFloat(
+				(
+					1 /
+					((marketAccount?.marginRatioInitial
+						? marketAccount.marginRatioInitial
+						: 10000 / DEFAULT_MAX_MARKET_LEVERAGE) /
+						10000)
+				).toFixed(2)
+			);
+
+			const marketHasHighLeverageMode =
+				!!marketAccount?.highLeverageMarginRatioInitial;
+
+			const highLeverageMaxLeverage = marketHasHighLeverageMode
+				? parseFloat(
+						(
+							1 /
+							((marketAccount?.highLeverageMarginRatioInitial
+								? marketAccount?.highLeverageMarginRatioInitial
+								: 10000 / DEFAULT_MAX_MARKET_LEVERAGE) /
+								10000)
+						).toFixed(1)
+				  )
+				: 0;
+
+			return {
+				maxLeverage,
+				highLeverageMaxLeverage,
+				hasHighLeverage: marketHasHighLeverageMode,
+			};
+		} else {
+			const marketAccount = driftClient.getSpotMarketAccount(marketIndex);
+
+			const liabilityWeight = marketAccount
+				? marketAccount.initialLiabilityWeight / 10000
+				: 0;
+
+			return {
+				maxLeverage: parseFloat((1 / (liabilityWeight - 1)).toFixed(2)),
+				highLeverageMaxLeverage: 0,
+				hasHighLeverage: false,
+			};
+		}
+	} catch (e) {
+		console.error(e);
+		return {
+			maxLeverage: 0,
+			highLeverageMaxLeverage: 0,
+			hasHighLeverage: false,
+		};
+	}
+};
+
 export const MARKET_UTILS = {
 	getBaseAssetSymbol,
 	getPausedOperations,
@@ -127,4 +196,5 @@ export const MARKET_UTILS = {
 	SpotOperationsMap,
 	InsuranceFundOperationsMap,
 	getMarketConfig,
+	getMaxLeverageForMarket,
 };

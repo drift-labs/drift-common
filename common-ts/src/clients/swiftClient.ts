@@ -3,6 +3,8 @@ import {
 	DriftClient,
 	MarketType,
 	OrderType,
+	SignedMsgOrderParamsDelegateMessage,
+	SignedMsgOrderParamsMessage,
 	SignedMsgUserOrdersAccount,
 	digestSignature,
 	isVariant,
@@ -44,6 +46,13 @@ export type SwiftOrderEvent =
 	| SwiftOrderErroredEvent
 	| SwiftOrderConfirmedEvent
 	| SwiftOrderSentEvent;
+
+export type SwiftOrderEventWithParams<T extends SwiftOrderEvent> = T & {
+	swiftOrderUuid: Uint8Array;
+	orderParamsMessage:
+		| SignedMsgOrderParamsMessage
+		| SignedMsgOrderParamsDelegateMessage;
+};
 
 export class SwiftClient {
 	private static baseUrl = '';
@@ -116,14 +125,21 @@ export class SwiftClient {
 					try {
 						resBody =
 							(await response.json()) as SwiftServerOrderProcessResponse;
+
+						res({
+							success: response.ok,
+							body: resBody,
+							status: response.status,
+						});
 					} catch (err) {
 						allEnvDlog('swiftClient', 'Error reading response body', err);
+
+						res({
+							success: false,
+							body: err as any,
+							status: response.status,
+						});
 					}
-					res({
-						success: response.ok,
-						body: resBody,
-						status: response.status,
-					});
 				})
 				.catch((err) => {
 					res({ success: false, body: err, status: 0 });
@@ -192,6 +208,11 @@ export class SwiftClient {
 			connection
 				.getAccountInfo(signedMsgUserOrdersAccount, 'confirmed')
 				.then((accountInfo) => {
+					if (!accountInfo) {
+						reject(new Error('Swift message account not found'));
+						return;
+					}
+
 					const order = this.findOrderInSignedMsgUserOrdersAccount(
 						client,
 						accountInfo,

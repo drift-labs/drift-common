@@ -3,8 +3,6 @@ import {
 	DriftClient,
 	JupiterClient,
 	MarketType,
-	OrderType,
-	PositionDirection,
 	QuoteResponse,
 	SwapMode,
 	TxParams,
@@ -32,13 +30,11 @@ import {
 } from './types';
 import { createCancelOrdersTxn } from '../../../../base/actions/trade/cancelOrder';
 import {
-	createOpenPerpMarketOrderTxn,
+	createOpenPerpMarketOrder,
 	OpenPerpMarketOrderParams,
 } from '../../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { createSwapTxn } from '../../../../base/actions/trade/swap';
-import { createOpenPerpNonMarketOrderTxn } from '../../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
-import { ENUM_UTILS } from '../../../../../utils';
-import { SwiftOrderResult } from 'src/drift/base/actions/trade/openPerpOrder/openSwiftOrder';
+import { createOpenPerpNonMarketOrder } from '../../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 
 /**
  * Handles majority of the relevant operations on the Drift program including deposits,
@@ -352,7 +348,7 @@ export class DriftOperations {
 	 */
 	async openPerpOrder(
 		params: PerpOrderParams
-	): Promise<TransactionSignature | SwiftOrderResult> {
+	): Promise<TransactionSignature | void> {
 		const accountData = this.getUserAccountCache().getUser(
 			params.subAccountId,
 			this.driftClient.wallet.publicKey
@@ -370,30 +366,17 @@ export class DriftOperations {
 		}) => {
 			const bracketOrders: OpenPerpMarketOrderParams['bracketOrders'] = {};
 
-			const oppositeDirection = ENUM_UTILS.match(
-				params.direction,
-				PositionDirection.LONG
-			)
-				? PositionDirection.SHORT
-				: PositionDirection.LONG;
-
 			if (bracketOrdersInput?.takeProfitPrice) {
 				bracketOrders.takeProfit = {
-					orderType: OrderType.TRIGGER_MARKET,
 					triggerPrice: bracketOrdersInput.takeProfitPrice.val,
 					baseAssetAmount: params.size.val,
-					marketIndex: params.marketIndex,
-					direction: oppositeDirection,
 				};
 			}
 
 			if (bracketOrdersInput?.stopLossPrice) {
 				bracketOrders.stopLoss = {
-					orderType: OrderType.TRIGGER_MARKET,
 					triggerPrice: bracketOrdersInput.stopLossPrice.val,
 					baseAssetAmount: params.size.val,
-					marketIndex: params.marketIndex,
-					direction: oppositeDirection,
 				};
 			}
 
@@ -410,7 +393,7 @@ export class DriftOperations {
 
 				// we split the logic for SWIFT and non-SWIFT orders to achieve better type inference
 				if (useSwift) {
-					const swiftOrderResult = await createOpenPerpMarketOrderTxn({
+					const swiftOrderResult = await createOpenPerpMarketOrder({
 						driftClient: this.driftClient,
 						user,
 						assetType: params.assetType,
@@ -425,12 +408,13 @@ export class DriftOperations {
 						bracketOrders,
 						dlobServerHttpUrl: this.dlobServerHttpUrl,
 						marketIndex: params.marketIndex,
-						auctionParamsOptions: params.orderConfig.auctionParamsOptions,
+						optionalAuctionParamsInputs:
+							params.orderConfig.optionalAuctionParamsInputs,
 					});
 
 					return swiftOrderResult;
 				} else {
-					const result = await createOpenPerpMarketOrderTxn({
+					const result = await createOpenPerpMarketOrder({
 						driftClient: this.driftClient,
 						user,
 						assetType: params.assetType,
@@ -438,7 +422,8 @@ export class DriftOperations {
 						direction: params.direction,
 						amount: params.size.val,
 						bracketOrders,
-						auctionParamsOptions: params.orderConfig.auctionParamsOptions,
+						optionalAuctionParamsInputs:
+							params.orderConfig.optionalAuctionParamsInputs,
 						dlobServerHttpUrl: this.dlobServerHttpUrl,
 						useSwift: false,
 					});
@@ -457,7 +442,7 @@ export class DriftOperations {
 
 				// we split the logic for SWIFT and non-SWIFT orders to achieve better type inference
 				if (useSwift) {
-					const swiftOrderResult = await createOpenPerpNonMarketOrderTxn<true>({
+					const swiftOrderResult = await createOpenPerpNonMarketOrder({
 						driftClient: this.driftClient,
 						user,
 						direction: params.direction,
@@ -481,7 +466,7 @@ export class DriftOperations {
 
 					return swiftOrderResult;
 				} else {
-					const txn = await createOpenPerpNonMarketOrderTxn({
+					const txn = await createOpenPerpNonMarketOrder({
 						driftClient: this.driftClient,
 						user,
 						direction: params.direction,
@@ -506,7 +491,7 @@ export class DriftOperations {
 			}
 			case 'takeProfit':
 			case 'stopLoss': {
-				const txn = await createOpenPerpNonMarketOrderTxn({
+				const txn = await createOpenPerpNonMarketOrder({
 					driftClient: this.driftClient,
 					user,
 					direction: params.direction,
@@ -528,7 +513,7 @@ export class DriftOperations {
 				return txSig;
 			}
 			case 'oracleLimit': {
-				const txn = await createOpenPerpNonMarketOrderTxn({
+				const txn = await createOpenPerpNonMarketOrder({
 					driftClient: this.driftClient,
 					user,
 					direction: params.direction,
@@ -714,10 +699,6 @@ export class DriftOperations {
 
 /**
  * TODO:
- * - priority fees / tx params
- * - open non-market perp order
- * - open market non-swift perp order
- * - open non-market non-swift perp order
  * - transfer between subaccounts
  * - close position?
  * - close multiple positions

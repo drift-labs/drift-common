@@ -8,31 +8,6 @@ import {
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../../utils';
 
-// TODO: remove response mapper from ui and use this one
-export interface ServerAuctionParamsResponse {
-	data: {
-		params: {
-			orderType?: string;
-			marketType?: string;
-			userOrderId?: number;
-			direction?: string;
-			baseAssetAmount?: string | number;
-			marketIndex?: number;
-			reduceOnly?: boolean;
-			postOnly?: string;
-			immediateOrCancel?: boolean;
-			triggerPrice?: string | number | null;
-			triggerCondition?: string;
-			oraclePriceOffset?: string | number;
-			auctionDuration?: number;
-			maxTs?: string | number | null;
-			auctionStartPrice?: string | number;
-			auctionEndPrice?: string | number;
-		};
-		// Additional fields like entryPrice, bestPrice, etc. are ignored for now
-	};
-}
-
 export interface MappedAuctionParams {
 	orderType: OrderType;
 	marketType: MarketType;
@@ -77,6 +52,13 @@ interface ServerAuctionParams {
 	maxTs?: string | number | null;
 	auctionStartPrice?: string | number;
 	auctionEndPrice?: string | number;
+}
+
+export interface ServerAuctionParamsResponse {
+	data: {
+		params: ServerAuctionParams;
+		// Additional fields like entryPrice, bestPrice, etc. are ignored for now
+	};
 }
 
 const FIELD_MAPPING: Record<keyof ServerAuctionParams, FieldConfig> = {
@@ -204,19 +186,19 @@ const convertValue = (value: any, type: FieldType): any => {
  * Maps the server response from getOrderParams back to proper client-side types
  */
 export function mapAuctionParamsResponse(
-	serverResponse: ServerAuctionParamsResponse
+	serverAuctionParams: ServerAuctionParams
 ): MappedAuctionParams {
 	const mapped: Partial<MappedAuctionParams> = {};
 
 	// Extract the actual params from the nested structure
-	const params = serverResponse.data?.params;
-	if (!params) {
+	if (!serverAuctionParams) {
 		throw new Error('Invalid server response: missing data.params');
 	}
 
 	// Process each field based on its configuration
 	Object.entries(FIELD_MAPPING).forEach(([fieldName, config]) => {
-		const serverValue = params[fieldName as keyof ServerAuctionParams];
+		const serverValue =
+			serverAuctionParams[fieldName as keyof ServerAuctionParams];
 
 		if (serverValue !== undefined) {
 			try {
@@ -229,7 +211,7 @@ export function mapAuctionParamsResponse(
 					actualType: typeof serverValue,
 					isNull: serverValue === null,
 					isUndefined: serverValue === undefined,
-					fullServerResponse: serverResponse,
+					fullServerResponse: serverAuctionParams,
 				});
 				throw new Error(
 					`Failed to convert field '${fieldName}' (value: ${serverValue}, type: ${

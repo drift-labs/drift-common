@@ -1,12 +1,8 @@
 import { Subject, Observable } from 'rxjs';
 import { MarketId, MarketKey } from '../../../types/MarketId';
-import {
-	L2WithOracleAndMarketData,
-	RawL2Output,
-	deserializeL2Response,
-} from '../../../utils/orderbook';
-import { PollingSequenceGuard } from '../../../utils/pollingSequenceGuard';
+import { L2WithOracleAndMarketData } from '../../../utils/orderbook';
 import { PollingCategory } from '../constants/blockchain';
+import { fetchBulkMarketsDlobL2Data } from '../../base/actions/trade/openPerpOrder/dlobServer';
 
 export interface PollingConfig {
 	driftDlobServerHttpUrl: string;
@@ -30,25 +26,6 @@ export interface MarketPollingData {
 	marketId: MarketId;
 	data: L2WithOracleAndMarketData;
 }
-
-export interface BulkL2FetchingQueryParams {
-	marketIndex: number;
-	marketType: string;
-	depth: number;
-	includeVamm: boolean;
-	includePhoenix: boolean;
-	includeOpenbook: boolean;
-	includeSerum: boolean;
-	includeOracle: boolean;
-	includeIndicative: boolean;
-}
-
-export interface BulkL2FetchingParams {
-	markets: (BulkL2FetchingQueryParams & { intervalMultiplier: number })[];
-	grouping?: number;
-}
-
-const BACKGROUND_L2_POLLING_KEY = Symbol('BACKGROUND_L2_POLLING_KEY');
 
 // Predefined interval multipliers from the original React hook
 export const POLLING_INTERVALS = {
@@ -406,11 +383,11 @@ export class PollingDlob {
 			}
 
 			// Make a single bulk fetch for all markets
-			const l2Data = await this.fetchBulkMarketL2Data(
+			const l2Data = await fetchBulkMarketsDlobL2Data(
+				this.config.driftDlobServerHttpUrl,
 				combinedMarketRequests.map((req) => ({
 					marketId: req.marketId,
 					depth: req.depth,
-					intervalMultiplier: req.intervalMultiplier,
 				}))
 			);
 
@@ -459,102 +436,5 @@ export class PollingDlob {
 				this.errorSubject.next(errorInstance);
 			}
 		}
-	}
-
-	private async fetchBulkMarketL2Data(
-		markets: {
-			marketId: MarketId;
-			depth: number;
-			intervalMultiplier: number;
-		}[]
-	): Promise<L2WithOracleAndMarketData[]> {
-		const fetchingParams: BulkL2FetchingParams = {
-			markets: markets.map((m) => ({
-				marketIndex: m.marketId.marketIndex,
-				marketType: m.marketId.marketTypeStr,
-				depth: m.depth,
-				includeVamm: m.marketId.isPerp,
-				includePhoenix: m.marketId.isSpot,
-				includeSerum: m.marketId.isSpot,
-				includeOpenbook: m.marketId.isSpot,
-				includeOracle: true,
-				includeIndicative: this.config.indicativeLiquidityEnabled ?? false,
-				intervalMultiplier: m.intervalMultiplier,
-			})),
-			grouping: this.config.groupingSize,
-		};
-
-		return this.bulkDlobL2Fetcher(fetchingParams);
-	}
-
-	private async bulkDlobL2Fetcher(
-		params: BulkL2FetchingParams
-	): Promise<L2WithOracleAndMarketData[]> {
-		const queryParamsMap: {
-			[K in keyof BulkL2FetchingQueryParams]: string;
-		} & {
-			grouping?: string;
-		} = {
-			marketType: params.markets.map((market) => market.marketType).join(','),
-			marketIndex: params.markets.map((market) => market.marketIndex).join(','),
-			depth: params.markets.map((market) => market.depth).join(','),
-			includeVamm: params.markets.map((market) => market.includeVamm).join(','),
-			includePhoenix: params.markets
-				.map((market) => market.includePhoenix)
-				.join(','),
-			includeOpenbook: params.markets
-				.map((market) => market.includeOpenbook)
-				.join(','),
-			includeSerum: params.markets
-				.map((market) => market.includeSerum)
-				.join(','),
-			grouping: params.grouping
-				? params.markets.map(() => params.grouping).join(',')
-				: undefined,
-			includeOracle: params.markets
-				.map((market) => market.includeOracle)
-				.join(','),
-			includeIndicative: params.markets
-				.map((market) => market.includeIndicative)
-				.join(','),
-		};
-
-		const queryParams = this.encodeQueryParams(queryParamsMap);
-
-		// Use cached endpoint when exclusively fetching background markets
-		const useCachedEndpoint = !params.markets.some(
-			(market) => market.depth !== 1
-		);
-
-		const endpoint = useCachedEndpoint
-			? `${this.config.driftDlobServerHttpUrl}/batchL2Cache`
-			: `${this.config.driftDlobServerHttpUrl}/batchL2`;
-
-		return new Promise<L2WithOracleAndMarketData[]>((resolve, reject) => {
-			PollingSequenceGuard.fetch(BACKGROUND_L2_POLLING_KEY, () => {
-				return fetch(`${endpoint}?${queryParams}`);
-			})
-				.then(async (response) => {
-					const responseData = await response.json();
-					const resultsArray = responseData.l2s as RawL2Output[];
-					const deserializedL2 = resultsArray.map(deserializeL2Response);
-					resolve(deserializedL2);
-				})
-				.catch((error) => {
-					reject(error);
-				});
-		});
-	}
-
-	private encodeQueryParams(
-		params: Record<string, string | undefined>
-	): string {
-		return Object.entries(params)
-			.filter(([_, value]) => value !== undefined)
-			.map(
-				([key, value]) =>
-					`${encodeURIComponent(key)}=${encodeURIComponent(value!)}`
-			)
-			.join('&');
 	}
 }

@@ -1,6 +1,5 @@
 import {
 	BN,
-	MarketType,
 	PositionDirection,
 	PostOnlyParams,
 	OptionalOrderParams,
@@ -11,7 +10,7 @@ import {
 	ZERO,
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../../utils';
-import { OptionalTriggerOrderParams } from '../base/actions/trade/openPerpOrder/openSwiftOrder';
+import { NonMarketOrderParamsConfig } from '../base/actions/trade/openPerpOrder/types';
 
 /**
  * Converts amount and assetType to base asset amount
@@ -65,40 +64,6 @@ export function resolveBaseAssetAmount(params: {
 	}
 }
 
-export type NonMarketOrderType =
-	| 'limit'
-	| 'takeProfit'
-	| 'stopLoss'
-	| 'oracleLimit';
-
-export interface NonMarketOrderParamsConfig {
-	marketIndex: number;
-	marketType: MarketType;
-	direction: PositionDirection;
-	baseAssetAmount: BN;
-	reduceOnly?: boolean;
-	postOnly?: PostOnlyParams;
-	orderConfig:
-		| {
-				orderType: Extract<NonMarketOrderType, 'limit'>;
-				limitPrice: BN;
-				disableSwift?: boolean;
-				bracketOrders?: {
-					takeProfit?: OptionalTriggerOrderParams;
-					stopLoss?: OptionalTriggerOrderParams;
-				};
-		  }
-		| {
-				orderType: Extract<NonMarketOrderType, 'takeProfit' | 'stopLoss'>;
-				triggerPrice: BN;
-				limitPrice?: BN;
-		  }
-		| {
-				orderType: Extract<NonMarketOrderType, 'oracleLimit'>;
-				oraclePriceOffset: BN;
-		  };
-}
-
 /**
  * Determine trigger condition based on direction
  * For stop orders: ABOVE when long, BELOW when short
@@ -138,6 +103,7 @@ export function buildNonMarketOrderParams({
 	orderConfig,
 	reduceOnly = false,
 	postOnly = PostOnlyParams.NONE,
+	userOrderId = 0,
 }: NonMarketOrderParamsConfig): OptionalOrderParams {
 	const orderType = orderConfig.orderType;
 
@@ -155,6 +121,7 @@ export function buildNonMarketOrderParams({
 			price: orderConfig.limitPrice,
 			reduceOnly,
 			postOnly,
+			userOrderId,
 		});
 	}
 
@@ -173,9 +140,11 @@ export function buildNonMarketOrderParams({
 				direction,
 				baseAssetAmount,
 				triggerPrice: orderConfig.triggerPrice,
-				price: orderConfig.limitPrice,
+				price: orderConfig.limitPrice!,
 				triggerCondition,
 				reduceOnly,
+				postOnly,
+				userOrderId,
 			});
 		} else {
 			return getTriggerMarketOrderParams({
@@ -187,6 +156,8 @@ export function buildNonMarketOrderParams({
 				price: orderConfig.limitPrice,
 				triggerCondition,
 				reduceOnly,
+				postOnly,
+				userOrderId,
 			});
 		}
 	}
@@ -203,6 +174,9 @@ export function buildNonMarketOrderParams({
 			baseAssetAmount,
 			price: ZERO,
 			oraclePriceOffset: orderConfig.oraclePriceOffset.toNumber(),
+			userOrderId,
+			postOnly,
+			reduceOnly,
 		});
 	}
 

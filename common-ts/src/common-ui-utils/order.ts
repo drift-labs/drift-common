@@ -4,6 +4,14 @@ import {
 	PositionDirection,
 	BigNum,
 	ZERO,
+	ContractTier,
+	BN,
+	PERCENTAGE_PRECISION,
+	isOneOfVariant,
+	MarketType,
+	DriftClient,
+	User,
+	OrderParamsBitFlag,
 } from '@drift-labs/sdk';
 import {
 	LIMIT_ORDER_TYPE_CONFIG,
@@ -20,6 +28,7 @@ import { UISerializableOrder } from '../serializableTypes';
 import { ENUM_UTILS, matchEnum } from '../utils';
 import { AuctionParams } from '../types';
 import { EMPTY_AUCTION_PARAMS } from '../constants/trade';
+import { MARKET_UTILS } from './market';
 
 const getOrderLabelFromOrderDetails = (
 	orderDetails: Pick<
@@ -228,9 +237,85 @@ const getUIOrderTypeFromSdkOrderType = (
 	throw new Error('Invalid order type');
 };
 
+function getPerpAuctionDuration(
+	priceDiff: BN,
+	price: BN,
+	contractTier: ContractTier
+): number {
+	const percentDiff = priceDiff.mul(PERCENTAGE_PRECISION).div(price);
+
+	const slotsPerBp = isOneOfVariant(contractTier, ['a', 'b'])
+		? new BN(100)
+		: new BN(60);
+
+	const rawSlots = percentDiff
+		.mul(slotsPerBp)
+		.div(PERCENTAGE_PRECISION.divn(100));
+
+	const clamped = BN.min(BN.max(rawSlots, new BN(5)), new BN(180));
+
+	return clamped.toNumber();
+}
+
+/**
+ * Mainly checks if the user will be entering high leverage mode through this order.
+ */
+function getPerpOrderParamsBitFlags(
+	marketIndex: number,
+	driftClient: DriftClient,
+	userAccount: User,
+	quoteSize: BN,
+	side: PositionDirection,
+	enterHighLeverageModeBufferPct = 2
+): number | undefined {
+	if (quoteSize.lte(ZERO)) {
+		return undefined;
+	}
+
+	const { hasHighLeverage: isMarketAHighLeverageMarket } =
+		MARKET_UTILS.getMaxLeverageForMarket(
+			MarketType.PERP,
+			marketIndex,
+			driftClient
+		);
+
+	if (!isMarketAHighLeverageMarket) {
+		return undefined;
+	}
+
+	// Check if user is already in high leverage mode
+	if (userAccount.isHighLeverageMode('Initial')) {
+		return undefined;
+	}
+
+	// Get max trade size without entering high leverage mode
+	const maxTradeWithoutHLM = userAccount.getMaxTradeSizeUSDCForPerp(
+		marketIndex,
+		side,
+		undefined,
+		false // enterHighLeverageMode = false
+	);
+
+	// If order exceeds non-HLM free collateral, enable high leverage mode
+	// if within 2%, also enable high lev mode to avoid failures
+	if (
+		quoteSize.gte(
+			maxTradeWithoutHLM.tradeSize.muln(
+				1 - enterHighLeverageModeBufferPct / 100
+			)
+		)
+	) {
+		return OrderParamsBitFlag.UpdateHighLeverageMode;
+	}
+
+	return undefined;
+}
+
 export const ORDER_COMMON_UTILS = {
 	getOrderLabelFromOrderDetails,
 	getLimitPriceFromOracleOffset,
 	isAuctionEmpty,
 	getUIOrderTypeFromSdkOrderType,
+	getPerpAuctionDuration,
+	getPerpOrderParamsBitFlags,
 };
