@@ -24,9 +24,6 @@ import {
 } from '../openSwiftOrder';
 import {
 	buildNonMarketOrderParams,
-	LimitAuctionConfig,
-	LimitOrderParamsOrderConfig,
-	NonMarketOrderParamsConfig,
 	resolveBaseAssetAmount,
 } from '../../../../../utils/orderParams';
 import { ENUM_UTILS } from '../../../../../../utils';
@@ -37,7 +34,13 @@ import {
 } from '../../../../../../common-ui-utils';
 import { createPlaceAndTakePerpMarketOrderIx } from '../openPerpMarketOrder';
 import invariant from 'tiny-invariant';
-import { TxnOrSwiftResult, WithTxnParams } from '../types';
+import {
+	TxnOrSwiftResult,
+	LimitAuctionConfig,
+	LimitOrderParamsOrderConfig,
+	NonMarketOrderParamsConfig,
+	WithTxnParams,
+} from '../types';
 
 export interface OpenPerpNonMarketOrderBaseParams
 	extends Omit<NonMarketOrderParamsConfig, 'marketType' | 'baseAssetAmount'> {
@@ -260,6 +263,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 			}
 		}
 
+		// fallback to normal limit order with auction params
 		if (!createdPlaceAndTakeIx) {
 			allOrders.push(limitAuctionOrderParams);
 		}
@@ -293,17 +297,27 @@ export const createOpenPerpNonMarketOrderIxs = async (
 		allOrders.push(orderParams);
 	}
 
+	const bracketOrdersDirection = ENUM_UTILS.match(
+		direction,
+		PositionDirection.LONG
+	)
+		? PositionDirection.SHORT
+		: PositionDirection.LONG;
+
 	if ('bracketOrders' in orderConfig && orderConfig.bracketOrders?.takeProfit) {
 		const takeProfitParams = buildNonMarketOrderParams({
 			marketIndex,
 			marketType: MarketType.PERP,
-			direction: orderConfig.bracketOrders.takeProfit.direction,
-			baseAssetAmount: finalBaseAssetAmount,
+			direction: bracketOrdersDirection,
+			baseAssetAmount:
+				orderConfig.bracketOrders.takeProfit.baseAssetAmount ??
+				finalBaseAssetAmount,
 			orderConfig: {
 				orderType: 'takeProfit',
 				triggerPrice: orderConfig.bracketOrders.takeProfit.triggerPrice,
+				limitPrice: orderConfig.bracketOrders.takeProfit.limitPrice,
 			},
-			reduceOnly: true,
+			reduceOnly: orderConfig.bracketOrders.takeProfit.reduceOnly ?? true,
 		});
 		allOrders.push(takeProfitParams);
 	}
@@ -312,13 +326,16 @@ export const createOpenPerpNonMarketOrderIxs = async (
 		const stopLossParams = buildNonMarketOrderParams({
 			marketIndex,
 			marketType: MarketType.PERP,
-			direction: orderConfig.bracketOrders.stopLoss.direction,
-			baseAssetAmount: finalBaseAssetAmount,
+			direction: bracketOrdersDirection,
+			baseAssetAmount:
+				orderConfig.bracketOrders.stopLoss.baseAssetAmount ??
+				finalBaseAssetAmount,
 			orderConfig: {
 				orderType: 'stopLoss',
 				triggerPrice: orderConfig.bracketOrders.stopLoss.triggerPrice,
+				limitPrice: orderConfig.bracketOrders.stopLoss.limitPrice,
 			},
-			reduceOnly: true,
+			reduceOnly: orderConfig.bracketOrders.stopLoss.reduceOnly ?? true,
 		});
 		allOrders.push(stopLossParams);
 	}
@@ -391,16 +408,10 @@ export const createOpenPerpNonMarketOrderTxn = async (
 
 	const instructions = await createOpenPerpNonMarketOrderIxs(params);
 
-	const openPerpNonMarketOrderTxn =
-		await driftClient.txHandler.buildTransaction({
-			instructions,
-			txVersion: 0,
-			connection: driftClient.connection,
-			preFlightCommitment: 'confirmed',
-			fetchAllMarketLookupTableAccounts:
-				driftClient.fetchAllLookupTableAccounts.bind(driftClient),
-			txParams: params.txParams,
-		});
+	const openPerpNonMarketOrderTxn = await driftClient.buildTransaction(
+		instructions,
+		params.txParams
+	);
 
 	return openPerpNonMarketOrderTxn;
 };
@@ -412,12 +423,12 @@ export const createOpenPerpNonMarketOrder = async <T extends boolean>(
 
 	// If useSwift is true, return the Swift result directly
 	if (useSwift) {
-		if (!swiftOptions) {
-			throw new Error('swiftOptions is required when useSwift is true');
-		}
-
 		if (orderConfig.orderType !== 'limit') {
 			throw new Error('Only limit orders are supported with Swift');
+		}
+
+		if (!swiftOptions) {
+			throw new Error('swiftOptions is required when useSwift is true');
 		}
 
 		if (
@@ -433,14 +444,10 @@ export const createOpenPerpNonMarketOrder = async <T extends boolean>(
 			orderConfig,
 		});
 
-		return swiftOrderResult as T extends true
-			? void
-			: Transaction | VersionedTransaction;
+		return swiftOrderResult as TxnOrSwiftResult<T>;
 	}
 
 	const marketOrderTxn = await createOpenPerpNonMarketOrderTxn(params);
 
-	return marketOrderTxn as T extends true
-		? void
-		: Transaction | VersionedTransaction;
+	return marketOrderTxn as TxnOrSwiftResult<T>;
 };

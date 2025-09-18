@@ -50,7 +50,7 @@ import { createSwapTxn } from '../../base/actions/trade/swap';
 import {
 	TxnOrSwiftResult,
 	WithTxnParams,
-} from 'src/drift/base/actions/trade/openPerpOrder/types';
+} from '../../base/actions/trade/openPerpOrder/types';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.

@@ -40,8 +40,8 @@ export interface OptionalAuctionParamsRequestInputs {
 	auctionDuration?: number;
 	auctionStartPriceOffset?: number;
 	auctionEndPriceOffset?: number;
-	auctionStartPriceOffsetFrom?: string; // TradeOffsetPrice
-	auctionEndPriceOffsetFrom?: string; // TradeOffsetPrice
+	auctionStartPriceOffsetFrom?: TradeOffsetPrice;
+	auctionEndPriceOffsetFrom?: TradeOffsetPrice;
 	slippageTolerance?: number | 'dynamic';
 	auctionPriceCaps?: {
 		min: BN;
@@ -251,6 +251,7 @@ export async function fetchAuctionOrderParamsFromDlob({
 		maxTs: mappedParams.maxTs,
 		auctionStartPrice: mappedParams.auctionStartPrice || null,
 		auctionEndPrice: mappedParams.auctionEndPrice || null,
+		// no price, because market orders don't need a price
 	};
 }
 
@@ -344,9 +345,9 @@ export async function fetchAuctionOrderParamsFromL2({
 			optionalAuctionParamsInputs.auctionStartPriceOffset,
 		auctionEndPriceOffset: optionalAuctionParamsInputs.auctionEndPriceOffset,
 		auctionStartPriceOffsetFrom:
-			optionalAuctionParamsInputs.auctionStartPriceOffsetFrom as TradeOffsetPrice,
+			optionalAuctionParamsInputs.auctionStartPriceOffsetFrom,
 		auctionEndPriceOffsetFrom:
-			optionalAuctionParamsInputs.auctionEndPriceOffsetFrom as TradeOffsetPrice,
+			optionalAuctionParamsInputs.auctionEndPriceOffsetFrom,
 		slippageTolerance: derivedSlippage,
 		isOracleOrder: optionalAuctionParamsInputs.isOracleOrder,
 		additionalEndPriceBuffer:
@@ -370,7 +371,8 @@ type FetchTopMakersParams = {
 };
 
 /**
- * Fetches the top makers information, for use as inputs in place and take market orders.
+ * Fetches the top makers information, for use as inputs in placeAndTake market orders.
+ * The side of the request should be opposite of the side of the placeAndTake market order.
  */
 export async function fetchTopMakers(params: FetchTopMakersParams): Promise<
 	{

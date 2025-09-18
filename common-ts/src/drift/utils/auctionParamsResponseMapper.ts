@@ -8,8 +8,6 @@ import {
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../../utils';
 
-// TODO: remove response mapper from ui and use this one
-
 export interface MappedAuctionParams {
 	orderType: OrderType;
 	marketType: MarketType;

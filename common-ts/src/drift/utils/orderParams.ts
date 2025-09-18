@@ -1,6 +1,5 @@
 import {
 	BN,
-	MarketType,
 	PositionDirection,
 	PostOnlyParams,
 	OptionalOrderParams,
@@ -9,11 +8,9 @@ import {
 	getTriggerLimitOrderParams,
 	OrderTriggerCondition,
 	ZERO,
-	ReferrerInfo,
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../../utils';
-import { OptionalTriggerOrderParams } from '../base/actions/trade/openPerpOrder/openSwiftOrder';
-import { OptionalAuctionParamsRequestInputs } from '../base/actions/trade/openPerpOrder/dlobServer';
+import { NonMarketOrderParamsConfig } from '../base/actions/trade/openPerpOrder/types';
 
 /**
  * Converts amount and assetType to base asset amount
@@ -65,71 +62,6 @@ export function resolveBaseAssetAmount(params: {
 			'Either (amount + assetType) or baseAssetAmount must be provided'
 		);
 	}
-}
-
-export type PlaceAndTakeParams =
-	| {
-			enable: false;
-	  }
-	| {
-			enable: true;
-			auctionDurationPercentage?: number;
-			referrerInfo: ReferrerInfo | undefined;
-	  };
-
-export type NonMarketOrderType =
-	| 'limit'
-	| 'takeProfit'
-	| 'stopLoss'
-	| 'oracleLimit';
-
-export interface LimitAuctionConfig {
-	enable: boolean;
-	dlobServerHttpUrl: string;
-	auctionStartPriceOffset: number;
-	oraclePrice?: BN; // used to calculate oracle price bands
-	optionalLimitAuctionParams?: OptionalAuctionParamsRequestInputs;
-	usePlaceAndTake?: {
-		enable: boolean;
-		referrerInfo?: ReferrerInfo; // needed for place and take fallback
-		auctionDurationPercentage?: number;
-	};
-}
-
-export interface LimitOrderParamsOrderConfig {
-	orderType: Extract<NonMarketOrderType, 'limit'>;
-	limitPrice: BN;
-	bracketOrders?: {
-		takeProfit?: OptionalTriggerOrderParams;
-		stopLoss?: OptionalTriggerOrderParams;
-	};
-	/**
-	 * Limit orders can have an optional auction that allows it to go through the auction process.
-	 * Usually, the auction params are set up to the limit price, to allow for a possible improved
-	 * fill price. This is useful for when a limit order is crossing the orderbook.
-	 */
-	limitAuction?: LimitAuctionConfig;
-}
-
-export interface NonMarketOrderParamsConfig {
-	marketIndex: number;
-	marketType: MarketType;
-	direction: PositionDirection;
-	baseAssetAmount: BN;
-	reduceOnly?: boolean;
-	postOnly?: PostOnlyParams;
-	userOrderId?: number;
-	orderConfig:
-		| LimitOrderParamsOrderConfig
-		| {
-				orderType: Extract<NonMarketOrderType, 'takeProfit' | 'stopLoss'>;
-				triggerPrice: BN;
-				limitPrice?: BN;
-		  }
-		| {
-				orderType: Extract<NonMarketOrderType, 'oracleLimit'>;
-				oraclePriceOffset: BN;
-		  };
 }
 
 /**

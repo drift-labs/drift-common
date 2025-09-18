@@ -16,14 +16,10 @@ import {
 } from '@solana/web3.js';
 import { ENUM_UTILS } from '../../../../../../utils';
 import {
-	OptionalTriggerOrderParams,
 	prepSignAndSendSwiftOrder,
 	SwiftOrderOptions,
 } from '../openSwiftOrder';
-import {
-	buildNonMarketOrderParams,
-	PlaceAndTakeParams,
-} from '../../../../../utils/orderParams';
+import { buildNonMarketOrderParams } from '../../../../../utils/orderParams';
 import {
 	fetchAuctionOrderParams,
 	fetchTopMakers,
@@ -31,6 +27,8 @@ import {
 } from '../dlobServer';
 import { ORDER_COMMON_UTILS } from '../../../../../../common-ui-utils/order';
 import { TxnOrSwiftResult, WithTxnParams } from '../types';
+import { NoTopMakersError } from '../../../../../Drift/constants/errors';
+import { PlaceAndTakeParams, OptionalTriggerOrderParams } from '../types';
 
 export interface OpenPerpMarketOrderBaseParams {
 	driftClient: DriftClient;
@@ -127,15 +125,6 @@ export async function createSwiftMarketOrder({
 			stopLoss: bracketOrders?.stopLoss,
 		},
 	});
-}
-
-class NoTopMakersError extends Error {
-	orderParams: OptionalOrderParams;
-	constructor(message: string, orderParams: OptionalOrderParams) {
-		super(message);
-		this.name = 'NoTopMakersError';
-		this.orderParams = orderParams;
-	}
 }
 
 /**
@@ -238,10 +227,8 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
  * @param amount - The amount to trade
  * @param dlobServerHttpUrl - Server URL for the auction params endpoint
  * @param optionalAuctionParamsInputs - Optional parameters for auction params endpoint and order configuration
- * @param useSwift - Whether to use Swift (signed message) orders instead of regular transactions
- * @param swiftOptions - Options for Swift (signed message) orders. Required if useSwift is true
  *
- * @returns Promise resolving to an array of transaction instructions for regular orders, or empty array for Swift orders
+ * @returns Promise resolving to an array of transaction instructions for regular orders
  */
 export const createOpenPerpMarketOrderIxs = async ({
 	driftClient,
@@ -259,8 +246,6 @@ export const createOpenPerpMarketOrderIxs = async ({
 	if (!amount || amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
 	}
-
-	// First, get order parameters from server (same for both Swift and regular orders)
 
 	const allOrders: OptionalOrderParams[] = [];
 	const allIxs: TransactionInstruction[] = [];
@@ -323,17 +308,25 @@ export const createOpenPerpMarketOrderIxs = async ({
 		allOrders.push(orderParams);
 	}
 
+	const bracketOrdersDirection = ENUM_UTILS.match(
+		direction,
+		PositionDirection.LONG
+	)
+		? PositionDirection.SHORT
+		: PositionDirection.LONG;
+
 	if (bracketOrders?.takeProfit) {
 		const takeProfitParams = buildNonMarketOrderParams({
 			marketIndex,
 			marketType: MarketType.PERP,
-			direction: bracketOrders.takeProfit.direction,
-			baseAssetAmount: amount,
+			direction: bracketOrdersDirection,
+			baseAssetAmount: bracketOrders.takeProfit.baseAssetAmount ?? amount,
 			orderConfig: {
 				orderType: 'takeProfit',
 				triggerPrice: bracketOrders.takeProfit.triggerPrice,
+				limitPrice: bracketOrders.takeProfit.limitPrice,
 			},
-			reduceOnly: true,
+			reduceOnly: bracketOrders.takeProfit.reduceOnly ?? true,
 		});
 		allOrders.push(takeProfitParams);
 	}
@@ -342,13 +335,14 @@ export const createOpenPerpMarketOrderIxs = async ({
 		const stopLossParams = buildNonMarketOrderParams({
 			marketIndex,
 			marketType: MarketType.PERP,
-			direction: bracketOrders.stopLoss.direction,
-			baseAssetAmount: amount,
+			direction: bracketOrdersDirection,
+			baseAssetAmount: bracketOrders.stopLoss.baseAssetAmount ?? amount,
 			orderConfig: {
 				orderType: 'stopLoss',
 				triggerPrice: bracketOrders.stopLoss.triggerPrice,
+				limitPrice: bracketOrders.stopLoss.limitPrice,
 			},
-			reduceOnly: true,
+			reduceOnly: bracketOrders.stopLoss.reduceOnly ?? true,
 		});
 		allOrders.push(stopLossParams);
 	}

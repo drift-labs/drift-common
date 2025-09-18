@@ -3,8 +3,6 @@ import {
 	DriftClient,
 	JupiterClient,
 	MarketType,
-	OrderType,
-	PositionDirection,
 	QuoteResponse,
 	SwapMode,
 	TxParams,
@@ -37,7 +35,6 @@ import {
 } from '../../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { createSwapTxn } from '../../../../base/actions/trade/swap';
 import { createOpenPerpNonMarketOrder } from '../../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
-import { ENUM_UTILS } from '../../../../../utils';
 
 /**
  * Handles majority of the relevant operations on the Drift program including deposits,
@@ -369,30 +366,17 @@ export class DriftOperations {
 		}) => {
 			const bracketOrders: OpenPerpMarketOrderParams['bracketOrders'] = {};
 
-			const oppositeDirection = ENUM_UTILS.match(
-				params.direction,
-				PositionDirection.LONG
-			)
-				? PositionDirection.SHORT
-				: PositionDirection.LONG;
-
 			if (bracketOrdersInput?.takeProfitPrice) {
 				bracketOrders.takeProfit = {
-					orderType: OrderType.TRIGGER_MARKET,
 					triggerPrice: bracketOrdersInput.takeProfitPrice.val,
 					baseAssetAmount: params.size.val,
-					marketIndex: params.marketIndex,
-					direction: oppositeDirection,
 				};
 			}
 
 			if (bracketOrdersInput?.stopLossPrice) {
 				bracketOrders.stopLoss = {
-					orderType: OrderType.TRIGGER_MARKET,
 					triggerPrice: bracketOrdersInput.stopLossPrice.val,
 					baseAssetAmount: params.size.val,
-					marketIndex: params.marketIndex,
-					direction: oppositeDirection,
 				};
 			}
 
@@ -458,7 +442,7 @@ export class DriftOperations {
 
 				// we split the logic for SWIFT and non-SWIFT orders to achieve better type inference
 				if (useSwift) {
-					const swiftOrderResult = await createOpenPerpNonMarketOrder<true>({
+					const swiftOrderResult = await createOpenPerpNonMarketOrder({
 						driftClient: this.driftClient,
 						user,
 						direction: params.direction,

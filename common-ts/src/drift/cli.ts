@@ -20,10 +20,10 @@ import { ENUM_UTILS } from '../utils';
 import { API_URLS } from './constants/apiUrls';
 import * as path from 'path';
 import {
+	NonMarketOrderType,
 	LimitOrderParamsOrderConfig,
 	NonMarketOrderParamsConfig,
-	NonMarketOrderType,
-} from './utils/orderParams';
+} from './base/actions/trade/openPerpOrder/types';
 
 // Load environment variables from .env file
 const dotenv = require('dotenv');

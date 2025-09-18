@@ -22,6 +22,7 @@ import {
 } from '../../../../../../clients/swiftClient';
 import { MarketId } from '../../../../../../types';
 import { Observable, Subscription } from 'rxjs';
+import { OptionalTriggerOrderParams } from '../types';
 
 export const SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 5;
 export const MINIMUM_SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 5;
@@ -69,11 +70,6 @@ export interface SwiftOrderOptions {
 }
 
 export type SwiftOrderObservable = Observable<SwiftOrderEvent>;
-
-export interface OptionalTriggerOrderParams extends OptionalOrderParams {
-	/** The trigger price for the order */
-	triggerPrice: BN;
-}
 
 interface PrepSwiftOrderParams {
 	/** The Drift client instance */
@@ -299,7 +295,6 @@ interface SendSwiftOrderParams {
 	auctionDuration?: number;
 }
 
-// TODO: Sending the swift order should be part of the Drift wrapper, not here
 /**
  * Sends a swift order to the Swift server and handles the response.
  * Monitors the order status and calls appropriate callback functions based on the response type.

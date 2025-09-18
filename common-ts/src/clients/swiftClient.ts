@@ -208,7 +208,7 @@ export class SwiftClient {
 				.getAccountInfo(signedMsgUserOrdersAccount, 'confirmed')
 				.then((accountInfo) => {
 					if (!accountInfo) {
-						reject(new Error('Account info not found'));
+						reject(new Error('Swift message account not found'));
 						return;
 					}
 

@@ -13,21 +13,21 @@ interface SettlePnlParams {
 }
 
 /**
- * Creates transaction instructions for settling PnL for multiple markets.
+ * Creates transaction instruction for settling PnL for multiple markets.
  *
  * @param driftClient - The Drift client instance for interacting with the protocol
  * @param user - The user account that will settle PnL
  * @param marketIndexes - Array of perp market indexes to settle PnL for
  * @param mode - Settlement mode (defaults to TRY_SETTLE)
  *
- * @returns Promise resolving to an array of transaction instructions for settling PnL
+ * @returns Promise resolving to a transaction instructions for settling PnL
  */
-export const createSettlePnlIxs = async ({
+export const createSettlePnlIx = async ({
 	driftClient,
 	user,
 	marketIndexes,
 	mode = SettlePnlMode.TRY_SETTLE,
-}: SettlePnlParams): Promise<TransactionInstruction[]> => {
+}: SettlePnlParams): Promise<TransactionInstruction> => {
 	const userAccountPublicKey = user.getUserAccountPublicKey();
 	const userAccount = user.getUserAccount();
 
@@ -38,7 +38,7 @@ export const createSettlePnlIxs = async ({
 		mode
 	);
 
-	return [settlePnlIx];
+	return settlePnlIx;
 };
 
 interface CreateSettlePnlTxnParams extends SettlePnlParams {
@@ -63,7 +63,7 @@ export const createSettlePnlTxn = async ({
 	mode = SettlePnlMode.TRY_SETTLE,
 	txParams,
 }: CreateSettlePnlTxnParams): Promise<Transaction | VersionedTransaction> => {
-	const settlePnlIxs = await createSettlePnlIxs({
+	const settlePnlIxs = await createSettlePnlIx({
 		driftClient,
 		user,
 		marketIndexes,
