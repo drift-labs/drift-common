@@ -13,6 +13,7 @@ import {
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
 	MarketType,
+	OneShotUserAccountSubscriber,
 	OrderTriggerCondition,
 	PerpMarketConfig,
 	PositionDirection,
@@ -21,6 +22,7 @@ import {
 	SpotMarketConfig,
 	SwapMode,
 	User,
+	UserAccount,
 	WhileValidTxSender,
 } from '@drift-labs/sdk';
 import { Connection, Transaction, VersionedTransaction } from '@solana/web3.js';
@@ -205,6 +207,19 @@ export class CentralServerDrift {
 				// Don't throw cleanup errors, but log them
 			}
 		}
+	}
+
+	public async getUserAccount(
+		userAccountPublicKey: PublicKey
+	): Promise<UserAccount> {
+		const oneShotUserAccountSubscriber = new OneShotUserAccountSubscriber(
+			this.driftClient.program,
+			userAccountPublicKey,
+			undefined,
+			undefined
+		);
+		await oneShotUserAccountSubscriber.subscribe();
+		return oneShotUserAccountSubscriber.getUserAccountAndSlot().data;
 	}
 
 	public async getDepositTxn(
