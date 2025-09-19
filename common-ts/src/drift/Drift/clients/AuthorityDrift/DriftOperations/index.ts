@@ -3,6 +3,7 @@ import {
 	DriftClient,
 	JupiterClient,
 	MarketType,
+	MAX_LEVERAGE_ORDER_SIZE,
 	QuoteResponse,
 	SwapMode,
 	TxParams,
@@ -383,6 +384,10 @@ export class DriftOperations {
 			return bracketOrders;
 		};
 
+		const amountBN = params.isMaxLeverage
+			? MAX_LEVERAGE_ORDER_SIZE
+			: params.size.val;
+
 		switch (params.orderConfig.orderType) {
 			case 'market': {
 				const useSwift = !params.orderConfig.disableSwift;
@@ -404,7 +409,7 @@ export class DriftOperations {
 							swiftServerUrl: this.swiftServerUrl,
 						},
 						direction: params.direction,
-						amount: params.size.val,
+						amount: amountBN,
 						bracketOrders,
 						dlobServerHttpUrl: this.dlobServerHttpUrl,
 						marketIndex: params.marketIndex,
@@ -420,7 +425,7 @@ export class DriftOperations {
 						assetType: params.assetType,
 						marketIndex: params.marketIndex,
 						direction: params.direction,
-						amount: params.size.val,
+						amount: amountBN,
 						bracketOrders,
 						optionalAuctionParamsInputs:
 							params.orderConfig.optionalAuctionParamsInputs,
@@ -447,7 +452,7 @@ export class DriftOperations {
 						user,
 						direction: params.direction,
 						marketIndex: params.marketIndex,
-						amount: params.size.val,
+						amount: amountBN,
 						assetType: params.assetType,
 						orderConfig: {
 							orderType: 'limit',
@@ -471,7 +476,7 @@ export class DriftOperations {
 						user,
 						direction: params.direction,
 						marketIndex: params.marketIndex,
-						amount: params.size.val,
+						amount: amountBN,
 						assetType: params.assetType,
 						orderConfig: {
 							orderType: 'limit',
@@ -496,7 +501,7 @@ export class DriftOperations {
 					user,
 					direction: params.direction,
 					marketIndex: params.marketIndex,
-					amount: params.size.val,
+					amount: amountBN,
 					assetType: params.assetType,
 					orderConfig: {
 						orderType: params.orderConfig.orderType,
@@ -518,7 +523,7 @@ export class DriftOperations {
 					user,
 					direction: params.direction,
 					marketIndex: params.marketIndex,
-					amount: params.size.val,
+					amount: amountBN,
 					assetType: params.assetType,
 					orderConfig: {
 						orderType: 'oracleLimit',

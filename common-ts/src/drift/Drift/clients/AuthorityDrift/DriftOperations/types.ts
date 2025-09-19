@@ -5,6 +5,7 @@ import {
 	QuoteResponse,
 } from '@drift-labs/sdk';
 import { OptionalAuctionParamsRequestInputs } from '../../../../base/actions/trade/openPerpOrder/dlobServer';
+import { SwiftOrderOptions } from '../../../../base/actions/trade/openPerpOrder/openSwiftOrder';
 
 /**
  * Interface for deposit operation parameters.
@@ -51,6 +52,7 @@ export type PerpOrderParams = {
 	size: BigNum;
 	reduceOnly?: boolean;
 	postOnly?: PostOnlyParams;
+	isMaxLeverage?: boolean;
 	orderConfig:
 		| {
 				orderType: 'market';
@@ -61,7 +63,7 @@ export type PerpOrderParams = {
 					takeProfitPrice?: BigNum;
 					stopLossPrice?: BigNum;
 				};
-				// TODO: isMaxLeverage?
+				swiftOptions?: Omit<SwiftOrderOptions, 'wallet' | 'swiftServerUrl'>;
 		  }
 		| {
 				orderType: 'limit';
@@ -71,7 +73,7 @@ export type PerpOrderParams = {
 					takeProfitPrice?: BigNum;
 					stopLossPrice?: BigNum;
 				};
-				// TODO: isMaxLeverage?
+				swiftOptions?: Omit<SwiftOrderOptions, 'wallet' | 'swiftServerUrl'>;
 		  }
 		| {
 				orderType: 'takeProfit' | 'stopLoss';
