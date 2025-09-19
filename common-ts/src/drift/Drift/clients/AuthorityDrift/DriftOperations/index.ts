@@ -407,6 +407,7 @@ export class DriftOperations {
 							// @ts-ignore TODO: we might want to add signMessage to the IWallet interface
 							wallet: this.driftClient.wallet,
 							swiftServerUrl: this.swiftServerUrl,
+							...params.orderConfig.swiftOptions,
 						},
 						direction: params.direction,
 						amount: amountBN,
@@ -466,6 +467,7 @@ export class DriftOperations {
 							// @ts-ignore TODO: we might want to add signMessage to the IWallet interface
 							wallet: this.driftClient.wallet,
 							swiftServerUrl: this.swiftServerUrl,
+							...params.orderConfig.swiftOptions,
 						},
 					});
 

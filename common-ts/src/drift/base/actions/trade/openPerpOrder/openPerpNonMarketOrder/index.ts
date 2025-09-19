@@ -372,13 +372,24 @@ export const createSwiftLimitOrder = async (
 		limitPrice,
 	});
 
-	const orderParams = await getLimitAuctionOrderParams({
-		...params,
-		baseAssetAmount: finalBaseAssetAmount,
-		orderConfig: orderConfig as LimitOrderParamsOrderConfig & {
-			limitAuction: LimitAuctionConfig;
-		},
-	});
+	const orderParams = orderConfig.limitAuction?.enable
+		? await getLimitAuctionOrderParams({
+				...params,
+				baseAssetAmount: finalBaseAssetAmount,
+				orderConfig: orderConfig as LimitOrderParamsOrderConfig & {
+					limitAuction: LimitAuctionConfig;
+				},
+		  })
+		: buildNonMarketOrderParams({
+				marketIndex,
+				marketType: MarketType.PERP,
+				direction: params.direction,
+				baseAssetAmount: finalBaseAssetAmount,
+				orderConfig,
+				reduceOnly: params.reduceOnly,
+				postOnly: params.postOnly,
+				userOrderId: params.userOrderId,
+		  });
 
 	const userAccount = user.getUserAccount();
 	const slotBuffer = Math.max(
