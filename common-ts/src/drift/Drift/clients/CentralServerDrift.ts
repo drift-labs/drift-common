@@ -22,7 +22,6 @@ import {
 	SpotMarketConfig,
 	SwapMode,
 	User,
-	UserAccount,
 	WhileValidTxSender,
 } from '@drift-labs/sdk';
 import { Connection, Transaction, VersionedTransaction } from '@solana/web3.js';
@@ -147,6 +146,15 @@ export class CentralServerDrift {
 		const user = new User({
 			driftClient: this.driftClient,
 			userAccountPublicKey,
+			accountSubscription: {
+				type: 'custom',
+				userAccountSubscriber: new OneShotUserAccountSubscriber(
+					this.driftClient.program,
+					userAccountPublicKey,
+					undefined,
+					undefined
+				),
+			},
 		});
 
 		// Store original state
@@ -209,17 +217,30 @@ export class CentralServerDrift {
 		}
 	}
 
-	public async getUserAccount(
-		userAccountPublicKey: PublicKey
-	): Promise<UserAccount> {
+	/**
+	 * Returns a User object for a given user account public key. This fetches the user account data once.
+	 *
+	 * You may read more about the User object [here](https://github.com/drift-labs/protocol-v2/blob/master/sdk/src/user.ts)
+	 *
+	 * @param userAccountPublicKey - The user account public key
+	 */
+	public async getUser(userAccountPublicKey: PublicKey): Promise<User> {
 		const oneShotUserAccountSubscriber = new OneShotUserAccountSubscriber(
 			this.driftClient.program,
 			userAccountPublicKey,
 			undefined,
 			undefined
 		);
-		await oneShotUserAccountSubscriber.subscribe();
-		return oneShotUserAccountSubscriber.getUserAccountAndSlot().data;
+		const user = new User({
+			driftClient: this.driftClient,
+			userAccountPublicKey,
+			accountSubscription: {
+				type: 'custom',
+				userAccountSubscriber: oneShotUserAccountSubscriber,
+			},
+		});
+		await user.subscribe();
+		return user;
 	}
 
 	public async getDepositTxn(
