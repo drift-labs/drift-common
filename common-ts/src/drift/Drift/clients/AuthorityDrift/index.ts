@@ -73,7 +73,6 @@ import {
 	DEFAULT_ORDERBOOK_GROUPING,
 	DEFAULT_ORDERBOOK_SUBSCRIPTION_CONFIG,
 } from '../../constants/orderbook';
-import { SwiftOrderResult } from '../../../base/actions/trade/openPerpOrder/openSwiftOrder';
 import { OrderbookGrouping } from '../../../../utils/dlob-server/DlobServerWebsocketUtils';
 
 /**
@@ -797,7 +796,7 @@ export class AuthorityDrift {
 	@enforceGeoBlock
 	public async openPerpOrder(
 		params: PerpOrderParams
-	): Promise<TransactionSignature | SwiftOrderResult> {
+	): Promise<TransactionSignature | void> {
 		return this.driftOperations.openPerpOrder(params);
 	}
 
