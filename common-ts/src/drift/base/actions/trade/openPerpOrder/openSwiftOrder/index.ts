@@ -96,6 +96,8 @@ interface PrepSwiftOrderParams {
 	};
 	/** Buffer slots to account for signing time (default: 2 slots ~1 second). If a user is required to manually sign the message, this should be a higher number. */
 	slotBuffer?: number;
+	/** Max leverage for the position */
+	positionMaxLev?: number;
 }
 
 /**
@@ -122,6 +124,7 @@ export const prepSwiftOrder = ({
 	isDelegate,
 	orderParams,
 	slotBuffer = 35,
+	positionMaxLev,
 }: PrepSwiftOrderParams): {
 	hexEncodedSwiftOrderMessage: {
 		uInt8Array: Uint8Array;
@@ -159,6 +162,7 @@ export const prepSwiftOrder = ({
 					triggerPrice: orderParams.takeProfit.triggerPrice,
 			  }
 			: null,
+		maxMarginRatio: positionMaxLev ? (1 / positionMaxLev) * 1000 : null,
 	};
 
 	const signedMsgOrderParamsMessage:
