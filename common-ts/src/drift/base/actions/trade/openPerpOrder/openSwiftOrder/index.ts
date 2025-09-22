@@ -373,7 +373,7 @@ export const prepSignAndSendSwiftOrder = async ({
 	swiftOptions,
 	orderParams,
 }: PrepSignAndSendSwiftOrderParams): Promise<void> => {
-	const currentSlot = await driftClient.connection.getSlot();
+	const currentSlot = await driftClient.connection.getSlot('confirmed');
 
 	const {
 		hexEncodedSwiftOrderMessage,
