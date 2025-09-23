@@ -10,6 +10,7 @@ import {
 	decodeUser,
 	DefaultOrderParams,
 	PRICE_PRECISION,
+	BASE_PRECISION,
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../../../../../../utils';
 import {
@@ -195,7 +196,7 @@ export async function fetchAuctionOrderParamsFromDlob({
 			: (() => {
 					const oraclePrice =
 						driftClient.getOracleDataForPerpMarket(marketIndex).price;
-					return amount.mul(oraclePrice).div(PRICE_PRECISION);
+					return amount.mul(BASE_PRECISION).div(oraclePrice);
 			  })();
 
 	// Build URL parameters for server request

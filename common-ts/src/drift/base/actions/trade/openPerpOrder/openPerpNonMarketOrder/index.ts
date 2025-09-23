@@ -63,11 +63,21 @@ export interface OpenPerpNonMarketOrderParamsWithSwift
 	swiftOptions: SwiftOrderOptions;
 }
 
-export interface OpenPerpNonMarketOrderParams<T extends boolean = boolean>
-	extends OpenPerpNonMarketOrderBaseParams {
-	useSwift: T;
-	swiftOptions?: T extends true ? SwiftOrderOptions : never;
-}
+export type OpenPerpNonMarketOrderParams<
+	T extends boolean = boolean,
+	S extends Omit<SwiftOrderOptions, 'swiftServerUrl'> = Omit<
+		SwiftOrderOptions,
+		'swiftServerUrl'
+	>
+> = T extends true
+	? OpenPerpNonMarketOrderBaseParams & {
+			useSwift: T;
+			swiftOptions: S;
+	  }
+	: OpenPerpNonMarketOrderBaseParams & {
+			useSwift: T;
+			swiftOptions?: never;
+	  };
 
 const getLimitAuctionOrderParams = async ({
 	driftClient,
@@ -428,7 +438,7 @@ export const createOpenPerpNonMarketOrderTxn = async (
 };
 
 export const createOpenPerpNonMarketOrder = async <T extends boolean>(
-	params: WithTxnParams<OpenPerpNonMarketOrderParams<T>>
+	params: WithTxnParams<OpenPerpNonMarketOrderParams<T, SwiftOrderOptions>>
 ): Promise<TxnOrSwiftResult<T>> => {
 	const { swiftOptions, useSwift, orderConfig } = params;
 

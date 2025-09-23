@@ -53,13 +53,23 @@ export interface OpenPerpMarketOrderBaseParamsWithSwift
 	swiftOptions: SwiftOrderOptions;
 }
 
-export interface OpenPerpMarketOrderParams<T extends boolean = boolean>
-	extends OpenPerpMarketOrderBaseParams {
-	useSwift: T;
-	swiftOptions?: T extends true ? SwiftOrderOptions : never;
-	placeAndTake?: T extends true ? never : PlaceAndTakeParams;
-}
-
+export type OpenPerpMarketOrderParams<
+	T extends boolean = boolean,
+	S extends Omit<SwiftOrderOptions, 'swiftServerUrl'> = Omit<
+		SwiftOrderOptions,
+		'swiftServerUrl'
+	>
+> = T extends true
+	? OpenPerpMarketOrderBaseParams & {
+			useSwift: T;
+			swiftOptions: S;
+			placeAndTake?: never;
+	  }
+	: OpenPerpMarketOrderBaseParams & {
+			useSwift: T;
+			placeAndTake?: PlaceAndTakeParams;
+			swiftOptions?: never;
+	  };
 /**
  * Creates and submits a Swift (signed message) order. Only available for perp orders.
  */
@@ -406,7 +416,7 @@ export const createOpenPerpMarketOrderTxn = async (
  * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
  */
 export const createOpenPerpMarketOrder = async <T extends boolean>(
-	params: WithTxnParams<OpenPerpMarketOrderParams<T>>
+	params: WithTxnParams<OpenPerpMarketOrderParams<T, SwiftOrderOptions>>
 ): Promise<TxnOrSwiftResult<T>> => {
 	const { useSwift, swiftOptions, ...rest } = params;
 
@@ -421,14 +431,10 @@ export const createOpenPerpMarketOrder = async <T extends boolean>(
 			swiftOptions,
 		});
 
-		return swiftOrderResult as T extends true
-			? void
-			: Transaction | VersionedTransaction;
+		return swiftOrderResult as TxnOrSwiftResult<T>;
 	}
 
 	const openPerpMarketOrderTxn = await createOpenPerpMarketOrderTxn(rest);
 
-	return openPerpMarketOrderTxn as T extends true
-		? void
-		: Transaction | VersionedTransaction;
+	return openPerpMarketOrderTxn as TxnOrSwiftResult<T>;
 };

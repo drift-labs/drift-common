@@ -15,7 +15,7 @@ import {
 } from '@drift-labs/sdk';
 import { sign } from 'tweetnacl';
 import { CentralServerDrift } from './Drift/clients/CentralServerDrift';
-import { SwiftOrderOptions } from './base/actions/trade/openPerpOrder/openSwiftOrder';
+import { CentralServerSwiftOrderOptions } from './Drift/clients/CentralServerDrift/types';
 import { ENUM_UTILS } from '../utils';
 import { API_URLS } from './constants/apiUrls';
 import * as path from 'path';
@@ -284,7 +284,7 @@ async function executeTransaction(
 
 const createSwiftOrderCallbacks = (
 	orderType: string
-): SwiftOrderOptions['callbacks'] => {
+): CentralServerSwiftOrderOptions['callbacks'] => {
 	const terminalCall = () => {
 		console.log('🏁 Order monitoring completed');
 	};
@@ -482,9 +482,7 @@ async function openPerpMarketOrderCommand(args: CliArgs): Promise<void> {
 		marketIndex,
 		direction: directionEnum,
 		amount: amountBN,
-		dlobServerHttpUrl,
 		useSwift: false,
-		// TODO: why doesn't TS throw an error here for undefined swiftOptions?
 	});
 
 	await executeTransaction(orderTxn as VersionedTransaction, 'Open Perp Order');
@@ -534,7 +532,6 @@ async function openPerpMarketOrderSwiftCommand(args: CliArgs): Promise<void> {
 			marketIndex,
 			direction: directionEnum,
 			amount: amountBN,
-			dlobServerHttpUrl,
 			useSwift: true,
 			swiftOptions: {
 				wallet: {
@@ -544,7 +541,6 @@ async function openPerpMarketOrderSwiftCommand(args: CliArgs): Promise<void> {
 					},
 					publicKey: wallet.publicKey,
 				},
-				swiftServerUrl,
 				callbacks: createSwiftOrderCallbacks('Open Perp Order'),
 			},
 		});
@@ -757,7 +753,7 @@ async function openPerpNonMarketOrderSwiftCommand(
 	console.log(`🔑 Wallet Public Key: ${wallet.publicKey.toString()}`);
 
 	try {
-		const swiftOptions: SwiftOrderOptions = {
+		const swiftOptions: CentralServerSwiftOrderOptions = {
 			wallet: {
 				signMessage: async (message: Uint8Array) => {
 					const signature = sign.detached(message, wallet.payer.secretKey);
@@ -765,7 +761,6 @@ async function openPerpNonMarketOrderSwiftCommand(
 				},
 				publicKey: wallet.publicKey,
 			},
-			swiftServerUrl,
 			callbacks: createSwiftOrderCallbacks('Open Perp Non-Market Order'),
 		};
 

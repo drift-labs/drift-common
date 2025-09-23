@@ -25,33 +25,35 @@ import {
 	WhileValidTxSender,
 } from '@drift-labs/sdk';
 import { Connection, Transaction, VersionedTransaction } from '@solana/web3.js';
-import { COMMON_UI_UTILS } from '../../../common-ui-utils/commonUiUtils';
+import { COMMON_UI_UTILS } from '../../../../common-ui-utils/commonUiUtils';
 import {
 	DEFAULT_ACCOUNT_LOADER_COMMITMENT,
 	DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS,
 	DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 	DEFAULT_TX_SENDER_RETRY_INTERVAL,
-} from '../constants';
-import { MarketId } from '../../../types';
-import { createDepositTxn } from '../../base/actions/spot/deposit';
-import { createWithdrawTxn } from '../../base/actions/spot/withdraw';
-import { createSettleFundingTxn } from '../../base/actions/perp/settleFunding';
-import { createSettlePnlTxn } from '../../base/actions/perp/settlePnl';
+} from '../../constants';
+import { MarketId } from '../../../../types';
+import { createDepositTxn } from '../../../base/actions/spot/deposit';
+import { createWithdrawTxn } from '../../../base/actions/spot/withdraw';
+import { createSettleFundingTxn } from '../../../base/actions/perp/settleFunding';
+import { createSettlePnlTxn } from '../../../base/actions/perp/settlePnl';
+import { createOpenPerpMarketOrder } from '../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import {
-	createOpenPerpMarketOrder,
-	OpenPerpMarketOrderParams,
-} from '../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
-import {
-	createOpenPerpNonMarketOrderTxn,
+	createOpenPerpNonMarketOrder,
 	OpenPerpNonMarketOrderParams,
-} from '../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
-import { createEditOrderTxn } from '../../base/actions/trade/editOrder';
-import { createCancelOrdersTxn } from '../../base/actions/trade/cancelOrder';
-import { createSwapTxn } from '../../base/actions/trade/swap';
+} from '../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
+import { createEditOrderTxn } from '../../../base/actions/trade/editOrder';
+import { createCancelOrdersTxn } from '../../../base/actions/trade/cancelOrder';
+import { createSwapTxn } from '../../../base/actions/trade/swap';
 import {
 	TxnOrSwiftResult,
 	WithTxnParams,
-} from '../../base/actions/trade/openPerpOrder/types';
+} from '../../../base/actions/trade/openPerpOrder/types';
+import { EnvironmentConstants } from '../../../../EnvironmentConstants';
+import {
+	CentralServerGetOpenPerpMarketOrderTxnParams,
+	CentralServerGetOpenPerpNonMarketOrderTxnParams,
+} from './types';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.
@@ -62,6 +64,13 @@ export class CentralServerDrift {
 	private driftClient: DriftClient;
 	private _perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
+	/**
+	 * The public endpoints that can be used to retrieve Drift data / interact with the Drift program.
+	 */
+	private _driftEndpoints: {
+		dlobServerHttpUrl: string;
+		swiftServerUrl: string;
+	};
 
 	/**
 	 * @param solanaRpcEndpoint - The Solana RPC endpoint to use for reading RPC data.
@@ -121,6 +130,20 @@ export class CentralServerDrift {
 			driftEnv === 'devnet' ? DevnetPerpMarkets : MainnetPerpMarkets;
 		this.spotMarketConfigs =
 			driftEnv === 'devnet' ? DevnetSpotMarkets : MainnetSpotMarkets;
+
+		// set up Drift endpoints
+		const driftDlobServerHttpUrlToUse =
+			EnvironmentConstants.dlobServerHttpUrl[
+				config.driftEnv === 'devnet' ? 'dev' : 'mainnet'
+			];
+		const swiftServerUrlToUse =
+			EnvironmentConstants.swiftServerUrl[
+				config.driftEnv === 'devnet' ? 'staging' : 'mainnet'
+			];
+		this._driftEndpoints = {
+			dlobServerHttpUrl: driftDlobServerHttpUrlToUse,
+			swiftServerUrl: swiftServerUrlToUse,
+		};
 	}
 
 	public async subscribe() {
@@ -343,23 +366,48 @@ export class CentralServerDrift {
 		);
 	}
 
+	// overloads for better type inference
+	public async getOpenPerpMarketOrderTxn(
+		params: CentralServerGetOpenPerpMarketOrderTxnParams<true>
+	): Promise<void>;
+	public async getOpenPerpMarketOrderTxn(
+		params: CentralServerGetOpenPerpMarketOrderTxnParams<false>
+	): Promise<Transaction | VersionedTransaction>;
 	public async getOpenPerpMarketOrderTxn<T extends boolean>({
 		userAccountPublicKey,
 		...rest
-	}: WithTxnParams<
-		Omit<OpenPerpMarketOrderParams<T>, 'driftClient' | 'user'>
-	> & {
-		userAccountPublicKey: PublicKey;
-	}): Promise<TxnOrSwiftResult<T>> {
+	}: CentralServerGetOpenPerpMarketOrderTxnParams<T>): Promise<
+		TxnOrSwiftResult<T>
+	> {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
-			async (user) => {
-				const openPerpMarketOrderTxn = await createOpenPerpMarketOrder({
-					...rest,
-					driftClient: this.driftClient,
-					user,
-				});
-				return openPerpMarketOrderTxn;
+			async (user): Promise<TxnOrSwiftResult<T>> => {
+				const { useSwift, swiftOptions, placeAndTake, ...otherProps } = rest;
+
+				if (useSwift) {
+					const swiftOrderResult = await createOpenPerpMarketOrder({
+						...otherProps,
+						useSwift: true,
+						swiftOptions: {
+							...swiftOptions,
+							swiftServerUrl: this._driftEndpoints.swiftServerUrl,
+						},
+						driftClient: this.driftClient,
+						user,
+						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+					});
+					return swiftOrderResult as TxnOrSwiftResult<T>;
+				} else {
+					const openPerpMarketOrderTxn = await createOpenPerpMarketOrder({
+						...otherProps,
+						placeAndTake,
+						useSwift: false,
+						driftClient: this.driftClient,
+						user,
+						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+					});
+					return openPerpMarketOrderTxn as TxnOrSwiftResult<T>;
+				}
 			}
 		);
 	}
@@ -367,26 +415,48 @@ export class CentralServerDrift {
 	/**
 	 * Create a perp non-market order with amount and asset type
 	 */
-	public async getOpenPerpNonMarketOrderTxn({
+	public async getOpenPerpNonMarketOrderTxn(
+		params: CentralServerGetOpenPerpNonMarketOrderTxnParams<true>
+	): Promise<void>;
+	public async getOpenPerpNonMarketOrderTxn(
+		params: CentralServerGetOpenPerpNonMarketOrderTxnParams<false>
+	): Promise<Transaction | VersionedTransaction>;
+	public async getOpenPerpNonMarketOrderTxn<T extends boolean>({
 		userAccountPublicKey,
 		...rest
 	}: WithTxnParams<
-		Omit<OpenPerpNonMarketOrderParams, 'driftClient' | 'user'>
+		Omit<OpenPerpNonMarketOrderParams<T>, 'driftClient' | 'user'>
 	> & {
 		userAccountPublicKey: PublicKey;
-	}): Promise<VersionedTransaction | Transaction | void> {
+	}): Promise<TxnOrSwiftResult<T>> {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const openPerpNonMarketOrderTxn = await createOpenPerpNonMarketOrderTxn(
-					{
-						...rest,
+				const { useSwift, swiftOptions, ...otherProps } = rest;
+
+				if (useSwift) {
+					const swiftOrderResult = await createOpenPerpNonMarketOrder({
+						...otherProps,
+						useSwift: true,
+						swiftOptions: {
+							...swiftOptions,
+							swiftServerUrl: this._driftEndpoints.swiftServerUrl,
+						},
 						driftClient: this.driftClient,
 						user,
-					}
-				);
-
-				return openPerpNonMarketOrderTxn;
+						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+					});
+					return swiftOrderResult as TxnOrSwiftResult<T>;
+				} else {
+					const openPerpNonMarketOrderTxn = await createOpenPerpNonMarketOrder({
+						...otherProps,
+						useSwift: false,
+						driftClient: this.driftClient,
+						user,
+						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+					});
+					return openPerpNonMarketOrderTxn as TxnOrSwiftResult<T>;
+				}
 			}
 		);
 	}
