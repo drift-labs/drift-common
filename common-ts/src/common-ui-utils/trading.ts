@@ -252,7 +252,7 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 
 const convertLeverageToMarginRatio = (leverage: number): number | undefined => {
 	if (!leverage) return undefined;
-	return (1 / leverage) * MARGIN_PRECISION.toNumber();
+	return Math.round((1 / leverage) * MARGIN_PRECISION.toNumber());
 };
 
 const getMarketTickSize = (
