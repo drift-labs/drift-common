@@ -30,7 +30,8 @@ export const MINIMUM_SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 5;
 export interface SwiftOrderOptions {
 	wallet: {
 		signMessage: (message: Uint8Array) => Promise<Uint8Array>;
-		publicKey: PublicKey;
+		takerAuthority: PublicKey;
+		signingAuthority?: PublicKey;
 	};
 	swiftServerUrl: string;
 	signedMessageOrderSlotBuffer?: number;
@@ -382,7 +383,7 @@ export const prepSignAndSendSwiftOrder = async ({
 	} = prepSwiftOrder({
 		driftClient,
 		takerUserAccount: {
-			pubKey: swiftOptions.wallet.publicKey,
+			pubKey: swiftOptions.wallet.takerAuthority,
 			subAccountId: subAccountId,
 		},
 		currentSlot,
@@ -428,8 +429,10 @@ export const prepSignAndSendSwiftOrder = async ({
 		hexEncodedSwiftOrderMessageString: hexEncodedSwiftOrderMessage.string,
 		signedMessage,
 		signedMsgOrderUuid,
-		takerAuthority: swiftOptions.wallet.publicKey,
-		signingAuthority: swiftOptions.wallet.publicKey,
+		takerAuthority: swiftOptions.wallet.takerAuthority,
+		signingAuthority:
+			swiftOptions.wallet.signingAuthority ??
+			swiftOptions.wallet.takerAuthority,
 		auctionDuration: orderParams.main.auctionDuration || undefined,
 	});
 

@@ -539,7 +539,8 @@ async function openPerpMarketOrderSwiftCommand(args: CliArgs): Promise<void> {
 						const signature = sign.detached(message, wallet.payer.secretKey);
 						return new Uint8Array(signature);
 					},
-					publicKey: wallet.publicKey,
+					takerAuthority: wallet.publicKey,
+					signingAuthority: wallet.publicKey,
 				},
 				callbacks: createSwiftOrderCallbacks('Open Perp Order'),
 			},
@@ -759,7 +760,8 @@ async function openPerpNonMarketOrderSwiftCommand(
 					const signature = sign.detached(message, wallet.payer.secretKey);
 					return new Uint8Array(signature);
 				},
-				publicKey: wallet.publicKey,
+				takerAuthority: wallet.publicKey,
+				signingAuthority: wallet.publicKey,
 			},
 			callbacks: createSwiftOrderCallbacks('Open Perp Non-Market Order'),
 		};
