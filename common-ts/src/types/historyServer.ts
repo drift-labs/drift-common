@@ -3,6 +3,7 @@ import {
 	UISerializableAccountSnapshot,
 	UISerializableAllTimePnlData,
 } from 'src/serializableTypes';
+import { AccountSnapshot } from './leaderboard';
 
 export type MarketDetails24H = {
 	marketType: MarketType;
@@ -36,6 +37,10 @@ export type UISnapshotHistory = {
 	[HistoryResolution.MONTH]: UISerializableAccountSnapshot[];
 	[HistoryResolution.ALL]: UISerializableAccountSnapshot[];
 	dailyAllTimePnls: UISerializableAllTimePnlData[];
+};
+
+export type SnapshotHistory = {
+	[key in HistoryResolution]: AccountSnapshot[];
 };
 
 export type MarketMakerRewardRecord = {
