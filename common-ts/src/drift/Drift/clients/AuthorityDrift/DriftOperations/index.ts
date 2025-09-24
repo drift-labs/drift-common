@@ -8,6 +8,7 @@ import {
 	SwapMode,
 	TxParams,
 	User,
+	UserStatsAccount,
 	ZERO,
 } from '@drift-labs/sdk';
 import { TransactionSignature } from '@solana/web3.js';
@@ -140,13 +141,21 @@ export class DriftOperations {
 			maxLeverage ?? 0
 		);
 
+		let userStatsAccount: UserStatsAccount | undefined = undefined;
+
+		try {
+			userStatsAccount = this.driftClient.userStats?.getAccount();
+		} catch (error) {
+			// ignore
+		}
+
 		const { transaction, subAccountId } =
 			await createUserAndDepositCollateralBaseTxn({
 				driftClient: this.driftClient,
 				amount: depositAmount.val,
 				spotMarketConfig: spotMarketConfig,
 				authority: this.driftClient.wallet.publicKey,
-				userStatsAccount: this.driftClient.userStats?.getAccount(),
+				userStatsAccount: userStatsAccount,
 				accountName: newAccountName,
 				referrerName,
 				customMaxMarginRatio,
