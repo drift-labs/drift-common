@@ -351,6 +351,7 @@ export const sendSwiftOrder = ({
 type PrepSignAndSendSwiftOrderParams = {
 	driftClient: DriftClient;
 	subAccountId: number;
+	userAccountPubKey: PublicKey;
 	marketIndex: number;
 	slotBuffer: number;
 	swiftOptions: SwiftOrderOptions;
@@ -369,6 +370,7 @@ type PrepSignAndSendSwiftOrderParams = {
 export const prepSignAndSendSwiftOrder = async ({
 	driftClient,
 	subAccountId,
+	userAccountPubKey,
 	marketIndex,
 	slotBuffer,
 	swiftOptions,
@@ -383,7 +385,7 @@ export const prepSignAndSendSwiftOrder = async ({
 	} = prepSwiftOrder({
 		driftClient,
 		takerUserAccount: {
-			pubKey: swiftOptions.wallet.takerAuthority,
+			pubKey: userAccountPubKey,
 			subAccountId: subAccountId,
 		},
 		currentSlot,

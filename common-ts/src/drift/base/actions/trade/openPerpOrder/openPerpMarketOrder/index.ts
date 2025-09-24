@@ -126,6 +126,7 @@ export async function createSwiftMarketOrder({
 	await prepSignAndSendSwiftOrder({
 		driftClient,
 		subAccountId: userAccount.subAccountId,
+		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
 		slotBuffer,
 		swiftOptions,
