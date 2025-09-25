@@ -11,7 +11,7 @@ import {
 	oraclePriceBands as getOraclePriceBands,
 	PositionDirection,
 	OrderParamsBitFlag,
-	PRICE_PRECISION,
+	BASE_PRECISION,
 } from '@drift-labs/sdk';
 import {
 	Transaction,
@@ -146,9 +146,7 @@ const getLimitAuctionOrderParams = async ({
 	});
 
 	const oraclePrice = driftClient.getOracleDataForPerpMarket(marketIndex).price;
-	const totalQuoteAmount = baseAssetAmount
-		.mul(oraclePrice)
-		.div(PRICE_PRECISION);
+	const totalQuoteAmount = baseAssetAmount.mul(oraclePrice).div(BASE_PRECISION);
 
 	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 		marketIndex,
@@ -293,7 +291,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 			driftClient.getOracleDataForPerpMarket(marketIndex).price;
 		const totalQuoteAmount = finalBaseAssetAmount
 			.mul(oraclePrice)
-			.div(PRICE_PRECISION);
+			.div(BASE_PRECISION);
 
 		const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 			marketIndex,

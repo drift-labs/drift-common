@@ -7,7 +7,7 @@ import {
 	MarketType,
 	getUserStatsAccountPublicKey,
 	ReferrerInfo,
-	PRICE_PRECISION,
+	BASE_PRECISION,
 } from '@drift-labs/sdk';
 import {
 	Transaction,
@@ -104,7 +104,7 @@ export async function createSwiftMarketOrder({
 	});
 
 	const oraclePrice = driftClient.getOracleDataForPerpMarket(marketIndex).price;
-	const totalQuoteAmount = amount.mul(oraclePrice).div(PRICE_PRECISION);
+	const totalQuoteAmount = amount.mul(oraclePrice).div(BASE_PRECISION);
 
 	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 		marketIndex,
@@ -189,7 +189,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	]);
 
 	const oraclePrice = driftClient.getOracleDataForPerpMarket(marketIndex).price;
-	const totalQuoteAmount = amount.mul(oraclePrice).div(PRICE_PRECISION);
+	const totalQuoteAmount = amount.mul(oraclePrice).div(BASE_PRECISION);
 
 	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 		marketIndex,
@@ -300,7 +300,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 
 		const oraclePrice =
 			driftClient.getOracleDataForPerpMarket(marketIndex).price;
-		const totalQuoteAmount = amount.mul(oraclePrice).div(PRICE_PRECISION);
+		const totalQuoteAmount = amount.mul(oraclePrice).div(BASE_PRECISION);
 
 		const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 			marketIndex,
