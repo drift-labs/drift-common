@@ -54,6 +54,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
  *   ts-node cli.ts cancelAllOrders --userAccount=11111111111111111111111111111111 --marketType=perp
  *   ts-node cli.ts swap --userAccount=11111111111111111111111111111111 --fromMarketIndex=1 --toMarketIndex=0 --fromAmount=1.5 --slippage=100 --swapMode=ExactIn
  *   ts-node cli.ts swap --userAccount=11111111111111111111111111111111 --fromMarketIndex=1 --toMarketIndex=0 --toAmount=150 --slippage=100 --swapMode=ExactOut
+ *   ts-node cli.ts createUserAndDeposit --marketIndex=0 --amount=100 --accountName="Primary"
  */
 
 // Shared configuration
@@ -244,6 +245,8 @@ async function initializeCentralServerDrift(): Promise<void> {
 	centralServerDrift = new CentralServerDrift({
 		solanaRpcEndpoint: process.env.ENDPOINT as string,
 		driftEnv: 'mainnet-beta', // Change to 'devnet' for devnet testing
+		supportedPerpMarkets: [0, 1, 2], // SOL, BTC, ETH
+		supportedSpotMarkets: [0, 1], // USDC, SOL
 		additionalDriftClientConfig: {
 			txVersion: 0,
 			txParams: {
@@ -351,6 +354,114 @@ async function depositCommand(args: CliArgs): Promise<void> {
 	);
 
 	await executeTransaction(depositTxn as VersionedTransaction, 'Deposit');
+}
+
+/**
+ * CLI Command: createUserAndDeposit
+ */
+async function createUserAndDepositCommand(args: CliArgs): Promise<void> {
+	const marketIndexArg = args.marketIndex as string;
+	const amountArg = args.amount as string;
+	const referrerName = args.referrerName as string | undefined;
+	const accountName = args.accountName as string | undefined;
+	const poolIdArg = args.poolId as string | undefined;
+	const fromSubAccountIdArg = args.fromSubAccountId as string | undefined;
+	const customMaxMarginRatioArg = args.customMaxMarginRatio as
+		| string
+		| undefined;
+
+	if (!marketIndexArg || !amountArg) {
+		throw new Error('Required arguments: --marketIndex, --amount');
+	}
+
+	const marketIndex = parseInt(marketIndexArg, 10);
+	if (isNaN(marketIndex)) {
+		throw new Error(`Invalid marketIndex: ${marketIndexArg}`);
+	}
+
+	const precision = getMarketPrecision(marketIndex, true);
+	const amountBN = parseAmount(amountArg, precision);
+
+	const options: {
+		referrerName?: string;
+		accountName?: string;
+		poolId?: number;
+		fromSubAccountId?: number;
+		customMaxMarginRatio?: number;
+	} = {};
+
+	if (referrerName) {
+		options.referrerName = referrerName;
+	}
+
+	if (accountName) {
+		options.accountName = accountName;
+	}
+
+	if (poolIdArg !== undefined) {
+		const poolId = parseInt(poolIdArg, 10);
+		if (isNaN(poolId)) {
+			throw new Error(`Invalid poolId: ${poolIdArg}`);
+		}
+		options.poolId = poolId;
+	}
+
+	if (fromSubAccountIdArg !== undefined) {
+		const fromSubAccountId = parseInt(fromSubAccountIdArg, 10);
+		if (isNaN(fromSubAccountId)) {
+			throw new Error(`Invalid fromSubAccountId: ${fromSubAccountIdArg}`);
+		}
+		options.fromSubAccountId = fromSubAccountId;
+	}
+
+	if (customMaxMarginRatioArg !== undefined) {
+		const customMaxMarginRatio = parseFloat(customMaxMarginRatioArg);
+		if (isNaN(customMaxMarginRatio)) {
+			throw new Error(
+				`Invalid customMaxMarginRatio: ${customMaxMarginRatioArg}`
+			);
+		}
+		options.customMaxMarginRatio = customMaxMarginRatio;
+	}
+
+	console.log('--- 🆕 Create User & Deposit Transaction ---');
+	console.log(`🔑 Authority (wallet): ${wallet.publicKey.toString()}`);
+	console.log(`🏪 Spot Market Index: ${marketIndex}`);
+	console.log(
+		`💰 Initial Deposit: ${amountArg} (${amountBN.toString()} raw units)`
+	);
+	if (options.accountName) {
+		console.log(`📝 Account Name: ${options.accountName}`);
+	}
+	if (options.referrerName) {
+		console.log(`🙌 Referrer Name: ${options.referrerName}`);
+	}
+	if (options.poolId !== undefined) {
+		console.log(`🏊 Pool ID: ${options.poolId}`);
+	}
+	if (options.fromSubAccountId !== undefined) {
+		console.log(`🔁 Funding From Subaccount ID: ${options.fromSubAccountId}`);
+	}
+	if (options.customMaxMarginRatio !== undefined) {
+		console.log(`📐 Custom Max Margin Ratio: ${options.customMaxMarginRatio}`);
+	}
+
+	const hasOptions = Object.keys(options).length > 0;
+	const { transaction, userAccountPublicKey, subAccountId } =
+		await centralServerDrift.getCreateAndDepositTxn(
+			wallet.publicKey,
+			amountBN,
+			marketIndex,
+			hasOptions ? options : undefined
+		);
+
+	console.log(`🆔 New User Account: ${userAccountPublicKey.toString()}`);
+	console.log(`🧾 Subaccount ID: ${subAccountId}`);
+
+	await executeTransaction(
+		transaction as VersionedTransaction,
+		'Create User & Deposit'
+	);
 }
 
 /**
@@ -807,6 +918,15 @@ function showUsage(): void {
 	);
 	console.log('');
 
+	console.log('🆕 createUserAndDeposit');
+	console.log(
+		'  ts-node cli.ts createUserAndDeposit --marketIndex=<num> --amount=<num> [--accountName=<string>] [--referrerName=<string>] [--poolId=<num>] [--fromSubAccountId=<num>] [--customMaxMarginRatio=<num>]'
+	);
+	console.log(
+		'  Example: ts-node cli.ts createUserAndDeposit --marketIndex=0 --amount=100 --accountName="Primary"'
+	);
+	console.log('');
+
 	console.log('💸 withdraw');
 	console.log(
 		'  ts-node cli.ts withdraw --userAccount=<pubkey> --marketIndex=<num> --amount=<num> [--isBorrow=<bool>] [--isMax=<bool>]'
@@ -1189,6 +1309,9 @@ async function main(): Promise<void> {
 
 	// Route to appropriate command
 	switch (command) {
+		case 'createUserAndDeposit':
+			await createUserAndDepositCommand(parsedArgs);
+			break;
 		case 'deposit':
 			await depositCommand(parsedArgs);
 			break;

@@ -9,6 +9,8 @@ import {
 	DriftClient,
 	DriftClientConfig,
 	DriftEnv,
+	fetchUserStatsAccount,
+	getMarketsAndOraclesForSubscription,
 	JupiterClient,
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
@@ -21,6 +23,7 @@ import {
 	QuoteResponse,
 	SpotMarketConfig,
 	SwapMode,
+	TxParams,
 	User,
 	WhileValidTxSender,
 } from '@drift-labs/sdk';
@@ -32,7 +35,6 @@ import {
 	DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 	DEFAULT_TX_SENDER_RETRY_INTERVAL,
 } from '../../constants';
-import { MarketId } from '../../../../types';
 import { createDepositTxn } from '../../../base/actions/spot/deposit';
 import { createWithdrawTxn } from '../../../base/actions/spot/withdraw';
 import { createSettleFundingTxn } from '../../../base/actions/perp/settleFunding';
@@ -45,6 +47,8 @@ import {
 import { createEditOrderTxn } from '../../../base/actions/trade/editOrder';
 import { createCancelOrdersTxn } from '../../../base/actions/trade/cancelOrder';
 import { createSwapTxn } from '../../../base/actions/trade/swap';
+import { createUserAndDepositCollateralBaseTxn } from '../../../base/actions/user/create';
+import { deleteUserTxn } from '../../../base/actions/user/delete';
 import {
 	TxnOrSwiftResult,
 	WithTxnParams,
@@ -54,6 +58,7 @@ import {
 	CentralServerGetOpenPerpMarketOrderTxnParams,
 	CentralServerGetOpenPerpNonMarketOrderTxnParams,
 } from './types';
+import { CentralServerDriftMarkets } from './markets';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.
@@ -72,18 +77,20 @@ export class CentralServerDrift {
 		swiftServerUrl: string;
 	};
 
+	public readonly markets: CentralServerDriftMarkets;
+
 	/**
 	 * @param solanaRpcEndpoint - The Solana RPC endpoint to use for reading RPC data.
 	 * @param driftEnv - The drift environment to use for the drift client.
-	 * @param activeTradeMarket - The active trade market to use for the drift client. This is used to subscribe to the market account, oracle data and mark price more frequently compared to the other markets.
-	 * @param additionalDriftClientConfig - Additional DriftClient config to use for the DriftClient.
+	 * @param supportedPerpMarkets - The perp markets indexes to support. See https://github.com/drift-labs/protocol-v2/blob/master/sdk/src/constants/perpMarkets.ts for all available markets. It is recommended to only include markets that will be used.
+	 * @param supportedSpotMarkets - The spot markets indexes to support. See https://github.com/drift-labs/protocol-v2/blob/master/sdk/src/constants/spotMarkets.ts for all available markets. It is recommended to only include markets that will be used.
 	 */
 	constructor(config: {
 		solanaRpcEndpoint: string;
 		driftEnv: DriftEnv;
+		supportedPerpMarkets: number[];
+		supportedSpotMarkets: number[];
 		additionalDriftClientConfig?: Partial<Omit<DriftClientConfig, 'env'>>;
-		activeTradeMarket?: MarketId;
-		marketsToSubscribe?: MarketId[];
 	}) {
 		const driftEnv = config.driftEnv;
 
@@ -96,6 +103,23 @@ export class CentralServerDrift {
 		);
 
 		const wallet = COMMON_UI_UTILS.createPlaceholderIWallet(); // use random wallet to initialize a central-server instance
+
+		const allPerpMarketConfigs =
+			driftEnv === 'devnet' ? DevnetPerpMarkets : MainnetPerpMarkets;
+		const allSpotMarketConfigs =
+			driftEnv === 'devnet' ? DevnetSpotMarkets : MainnetSpotMarkets;
+		this._perpMarketConfigs = config.supportedPerpMarkets.map((marketIndex) =>
+			allPerpMarketConfigs.find((market) => market.marketIndex === marketIndex)
+		);
+		this.spotMarketConfigs = config.supportedSpotMarkets.map((marketIndex) =>
+			allSpotMarketConfigs.find((market) => market.marketIndex === marketIndex)
+		);
+
+		const oracleInfos = getMarketsAndOraclesForSubscription(
+			driftEnv,
+			this._perpMarketConfigs,
+			this.spotMarketConfigs
+		);
 
 		const driftClientConfig: DriftClientConfig = {
 			env: driftEnv,
@@ -111,9 +135,17 @@ export class CentralServerDrift {
 			includeDelegates: false,
 			skipLoadUsers: true,
 			delistedMarketSetting: DelistedMarketSetting.Unsubscribe,
+			perpMarketIndexes: this._perpMarketConfigs.map(
+				(market) => market.marketIndex
+			),
+			spotMarketIndexes: this.spotMarketConfigs.map(
+				(market) => market.marketIndex
+			),
+			oracleInfos: oracleInfos.oracleInfos,
 			...config.additionalDriftClientConfig,
 		};
 		this.driftClient = new DriftClient(driftClientConfig);
+		this.markets = new CentralServerDriftMarkets(this.driftClient);
 
 		const txSender = new WhileValidTxSender({
 			connection,
@@ -126,10 +158,6 @@ export class CentralServerDrift {
 		});
 
 		this.driftClient.txSender = txSender;
-		this._perpMarketConfigs =
-			driftEnv === 'devnet' ? DevnetPerpMarkets : MainnetPerpMarkets;
-		this.spotMarketConfigs =
-			driftEnv === 'devnet' ? DevnetSpotMarkets : MainnetSpotMarkets;
 
 		// set up Drift endpoints
 		const driftDlobServerHttpUrlToUse =
@@ -266,6 +294,77 @@ export class CentralServerDrift {
 		return user;
 	}
 
+	public async getCreateAndDepositTxn(
+		authority: PublicKey,
+		amount: BN,
+		spotMarketIndex: number,
+		options?: {
+			referrerName?: string;
+			accountName?: string;
+			poolId?: number;
+			fromSubAccountId?: number;
+			customMaxMarginRatio?: number;
+		}
+	): Promise<{
+		transaction: VersionedTransaction | Transaction;
+		userAccountPublicKey: PublicKey;
+		subAccountId: number;
+	}> {
+		const spotMarketConfig = this.spotMarketConfigs.find(
+			(market) => market.marketIndex === spotMarketIndex
+		);
+
+		if (!spotMarketConfig) {
+			throw new Error(
+				`Spot market config not found for index ${spotMarketIndex}`
+			);
+		}
+
+		const userStatsAccount = await fetchUserStatsAccount(
+			this.driftClient.connection,
+			this.driftClient.program,
+			authority
+		);
+
+		const originalWallet = this.driftClient.wallet;
+		const originalAuthority = this.driftClient.authority;
+
+		const authorityWallet = {
+			publicKey: authority,
+			signTransaction: () =>
+				Promise.reject('This is a placeholder - do not sign with this wallet'),
+			signAllTransactions: () =>
+				Promise.reject('This is a placeholder - do not sign with this wallet'),
+		};
+
+		try {
+			this.driftClient.wallet = authorityWallet;
+			// @ts-ignore
+			this.driftClient.provider.wallet = authorityWallet;
+			this.driftClient.txHandler.updateWallet(authorityWallet);
+			this.driftClient.authority = authority;
+
+			return await createUserAndDepositCollateralBaseTxn({
+				driftClient: this.driftClient,
+				amount,
+				spotMarketConfig,
+				authority,
+				userStatsAccount,
+				referrerName: options?.referrerName,
+				accountName: options?.accountName,
+				poolId: options?.poolId,
+				fromSubAccountId: options?.fromSubAccountId,
+				customMaxMarginRatio: options?.customMaxMarginRatio,
+			});
+		} finally {
+			this.driftClient.wallet = originalWallet;
+			this.driftClient.txHandler.updateWallet(originalWallet);
+			// @ts-ignore
+			this.driftClient.provider.wallet = originalWallet;
+			this.driftClient.authority = originalAuthority;
+		}
+	}
+
 	public async getDepositTxn(
 		userAccountPublicKey: PublicKey,
 		amount: BN,
@@ -294,6 +393,21 @@ export class CentralServerDrift {
 				return depositTxn;
 			}
 		);
+	}
+
+	public async getDeleteUserTxn(
+		userAccountPublicKey: PublicKey,
+		options?: {
+			txParams?: TxParams;
+		}
+	): Promise<VersionedTransaction | Transaction> {
+		return this.driftClientContextWrapper(userAccountPublicKey, async () => {
+			return deleteUserTxn({
+				driftClient: this.driftClient,
+				userPublicKey: userAccountPublicKey,
+				txParams: options?.txParams,
+			});
+		});
 	}
 
 	public async getWithdrawTxn(

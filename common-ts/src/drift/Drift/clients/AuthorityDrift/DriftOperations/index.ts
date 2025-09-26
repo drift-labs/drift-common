@@ -213,7 +213,7 @@ export class DriftOperations {
 
 		const deleteTxn = await deleteUserTxn({
 			driftClient: this.driftClient,
-			user: user.userClient,
+			userPublicKey: user.userClient.userAccountPublicKey,
 			txParams: this.getTxParams(),
 		});
 

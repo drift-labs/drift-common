@@ -1,4 +1,4 @@
-import { DriftClient, TxParams, User } from '@drift-labs/sdk';
+import { DriftClient, PublicKey, TxParams } from '@drift-labs/sdk';
 
 /**
  * Parameters required for deleting a user instruction
@@ -7,7 +7,7 @@ interface DeleteUserIxParams {
 	/** The Drift protocol client instance */
 	driftClient: DriftClient;
 	/** The user account to be deleted */
-	user: User;
+	userPublicKey: PublicKey;
 }
 
 /**
@@ -23,9 +23,9 @@ interface DeleteUserIxParams {
  */
 export const deleteUserIx = async ({
 	driftClient,
-	user,
+	userPublicKey,
 }: DeleteUserIxParams) => {
-	return driftClient.getUserDeletionIx(user.userAccountPublicKey);
+	return driftClient.getUserDeletionIx(userPublicKey);
 };
 
 /**
@@ -54,9 +54,9 @@ interface DeleteUserTxnParams extends DeleteUserIxParams {
  */
 export const deleteUserTxn = async ({
 	driftClient,
-	user,
+	userPublicKey,
 	txParams,
 }: DeleteUserTxnParams) => {
-	const deleteIx = await deleteUserIx({ driftClient, user });
+	const deleteIx = await deleteUserIx({ driftClient, userPublicKey });
 	return driftClient.buildTransaction(deleteIx, txParams);
 };
