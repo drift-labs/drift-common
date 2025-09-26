@@ -16,22 +16,22 @@ import {
 	ZERO,
 	isVariant,
 } from '@drift-labs/sdk';
-import { MarketId, UIOrderType } from 'src/types';
+import { MarketId, OpenPosition, UIOrderType } from 'src/types';
 
 const calculatePnlPctFromPosition = (
 	pnl: BN,
-	quoteEntryAmount: BN,
-	leverage?: number
+	position: OpenPosition
 ): number => {
-	if (!quoteEntryAmount || quoteEntryAmount.eq(ZERO)) return 0;
+	if (!position.quoteEntryAmount || position.quoteEntryAmount.eq(ZERO))
+		return 0;
 
 	return (
 		BigNum.from(pnl, QUOTE_PRECISION_EXP)
 			.shift(5)
-			.div(BigNum.from(quoteEntryAmount.abs(), QUOTE_PRECISION_EXP))
+			.div(BigNum.from(position.quoteEntryAmount.abs(), QUOTE_PRECISION_EXP))
 			.toNum() *
 		100 *
-		(leverage ?? 1)
+		(convertMarginRatioToLeverage(position.maxMarginRatio) ?? 1)
 	);
 };
 
@@ -255,6 +255,19 @@ const convertLeverageToMarginRatio = (leverage: number): number | undefined => {
 	return Math.round((1 / leverage) * MARGIN_PRECISION.toNumber());
 };
 
+const convertMarginRatioToLeverage = (
+	marginRatio: number,
+	decimals?: number
+): number | undefined => {
+	if (!marginRatio) return undefined;
+
+	const leverage = 1 / (marginRatio / MARGIN_PRECISION.toNumber());
+
+	return decimals
+		? parseFloat(leverage.toFixed(decimals))
+		: Math.round(leverage);
+};
+
 const getMarketTickSize = (
 	driftClient: DriftClient,
 	marketId: MarketId
@@ -340,6 +353,7 @@ export const TRADING_UTILS = {
 	calculateLiquidationPriceAfterPerpTrade,
 	checkIsMarketOrderType,
 	convertLeverageToMarginRatio,
+	convertMarginRatioToLeverage,
 	getMarketTickSize,
 	getMarketTickSizeDecimals,
 	getMarketStepSize,
