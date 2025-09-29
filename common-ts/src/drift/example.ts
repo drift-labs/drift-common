@@ -57,6 +57,8 @@ async function initializeCentralServerDrift(): Promise<void> {
 	centralServerDrift = new CentralServerDrift({
 		solanaRpcEndpoint: process.env.ENDPOINT as string,
 		driftEnv: 'mainnet-beta', // Change to 'devnet' for devnet testing
+		supportedPerpMarkets: [0, 1, 2], // SOL, BTC, ETH
+		supportedSpotMarkets: [0, 1], // USDC, SOL
 		additionalDriftClientConfig: {
 			// Optional: Add additional DriftClient configuration
 			txVersion: 0,

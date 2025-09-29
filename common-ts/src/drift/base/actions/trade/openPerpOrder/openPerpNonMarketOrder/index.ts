@@ -11,7 +11,7 @@ import {
 	oraclePriceBands as getOraclePriceBands,
 	PositionDirection,
 	OrderParamsBitFlag,
-	PRICE_PRECISION,
+	BASE_PRECISION,
 } from '@drift-labs/sdk';
 import {
 	Transaction,
@@ -63,11 +63,21 @@ export interface OpenPerpNonMarketOrderParamsWithSwift
 	swiftOptions: SwiftOrderOptions;
 }
 
-export interface OpenPerpNonMarketOrderParams<T extends boolean = boolean>
-	extends OpenPerpNonMarketOrderBaseParams {
-	useSwift: T;
-	swiftOptions?: T extends true ? SwiftOrderOptions : never;
-}
+export type OpenPerpNonMarketOrderParams<
+	T extends boolean = boolean,
+	S extends Omit<SwiftOrderOptions, 'swiftServerUrl'> = Omit<
+		SwiftOrderOptions,
+		'swiftServerUrl'
+	>
+> = T extends true
+	? OpenPerpNonMarketOrderBaseParams & {
+			useSwift: T;
+			swiftOptions: S;
+	  }
+	: OpenPerpNonMarketOrderBaseParams & {
+			useSwift: T;
+			swiftOptions?: never;
+	  };
 
 const getLimitAuctionOrderParams = async ({
 	driftClient,
@@ -136,9 +146,7 @@ const getLimitAuctionOrderParams = async ({
 	});
 
 	const oraclePrice = driftClient.getOracleDataForPerpMarket(marketIndex).price;
-	const totalQuoteAmount = baseAssetAmount
-		.mul(oraclePrice)
-		.div(PRICE_PRECISION);
+	const totalQuoteAmount = baseAssetAmount.mul(oraclePrice).div(BASE_PRECISION);
 
 	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 		marketIndex,
@@ -283,7 +291,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 			driftClient.getOracleDataForPerpMarket(marketIndex).price;
 		const totalQuoteAmount = finalBaseAssetAmount
 			.mul(oraclePrice)
-			.div(PRICE_PRECISION);
+			.div(BASE_PRECISION);
 
 		const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 			marketIndex,
@@ -401,6 +409,7 @@ export const createSwiftLimitOrder = async (
 	await prepSignAndSendSwiftOrder({
 		driftClient,
 		subAccountId: userAccount.subAccountId,
+		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
 		slotBuffer,
 		swiftOptions,
@@ -428,7 +437,7 @@ export const createOpenPerpNonMarketOrderTxn = async (
 };
 
 export const createOpenPerpNonMarketOrder = async <T extends boolean>(
-	params: WithTxnParams<OpenPerpNonMarketOrderParams<T>>
+	params: WithTxnParams<OpenPerpNonMarketOrderParams<T, SwiftOrderOptions>>
 ): Promise<TxnOrSwiftResult<T>> => {
 	const { swiftOptions, useSwift, orderConfig } = params;
 
