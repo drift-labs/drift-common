@@ -20,18 +20,30 @@ import { MarketId, OpenPosition, UIOrderType } from 'src/types';
 
 const calculatePnlPctFromPosition = (
 	pnl: BN,
-	position: OpenPosition
+	position: OpenPosition,
+	marginUsed?: BN
 ): number => {
 	if (!position.quoteEntryAmount || position.quoteEntryAmount.eq(ZERO))
 		return 0;
 
+	let marginUsedNum: number;
+
+	if (marginUsed) {
+		marginUsedNum = BigNum.from(marginUsed, QUOTE_PRECISION_EXP).toNum();
+	} else {
+		const leverage = convertMarginRatioToLeverage(position.maxMarginRatio) ?? 1;
+		marginUsedNum =
+			BigNum.from(
+				position.quoteEntryAmount.abs(),
+				QUOTE_PRECISION_EXP
+			).toNum() / leverage;
+	}
+
 	return (
 		BigNum.from(pnl, QUOTE_PRECISION_EXP)
 			.shift(5)
-			.div(BigNum.from(position.quoteEntryAmount.abs(), QUOTE_PRECISION_EXP))
-			.toNum() *
-		100 *
-		(convertMarginRatioToLeverage(position.maxMarginRatio) ?? 1)
+			.div(BigNum.fromPrint(`${marginUsedNum}`, QUOTE_PRECISION_EXP))
+			.toNum() * 100
 	);
 };
 
