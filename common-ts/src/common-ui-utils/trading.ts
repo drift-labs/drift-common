@@ -16,22 +16,22 @@ import {
 	ZERO,
 	isVariant,
 } from '@drift-labs/sdk';
-import { MarketId, OpenPosition, UIOrderType } from 'src/types';
+import { MarketId, UIOrderType } from 'src/types';
 
 const calculatePnlPctFromPosition = (
 	pnl: BN,
-	position: OpenPosition
+	quoteEntryAmount: BN,
+	leverage?: number
 ): number => {
-	if (!position.quoteEntryAmount || position.quoteEntryAmount.eq(ZERO))
-		return 0;
+	if (!quoteEntryAmount || quoteEntryAmount.eq(ZERO)) return 0;
 
 	return (
 		BigNum.from(pnl, QUOTE_PRECISION_EXP)
 			.shift(5)
-			.div(BigNum.from(position.quoteEntryAmount.abs(), QUOTE_PRECISION_EXP))
+			.div(BigNum.from(quoteEntryAmount.abs(), QUOTE_PRECISION_EXP))
 			.toNum() *
 		100 *
-		(convertMarginRatioToLeverage(position.maxMarginRatio) ?? 1)
+		(leverage ?? 1)
 	);
 };
 
