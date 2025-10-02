@@ -23,7 +23,7 @@ const calculatePnlPctFromPosition = (
 	position: OpenPosition,
 	marginUsed?: BN
 ): number => {
-	if (!position.quoteEntryAmount || position.quoteEntryAmount.eq(ZERO))
+	if (!position?.quoteEntryAmount || position?.quoteEntryAmount.eq(ZERO))
 		return 0;
 
 	let marginUsedNum: number;
