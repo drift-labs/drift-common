@@ -23,6 +23,7 @@ import {
 import { MarketId } from '../../../../../../types';
 import { Observable, Subscription } from 'rxjs';
 import { OptionalTriggerOrderParams } from '../types';
+import { TRADING_UTILS } from '../../../../../../common-ui-utils/trading';
 
 export const SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 5;
 export const MINIMUM_SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 5;
@@ -97,6 +98,8 @@ interface PrepSwiftOrderParams {
 	};
 	/** Buffer slots to account for signing time (default: 2 slots ~1 second). If a user is required to manually sign the message, this should be a higher number. */
 	slotBuffer?: number;
+	/** Max leverage for the position */
+	positionMaxLev?: number;
 }
 
 /**
@@ -123,6 +126,7 @@ export const prepSwiftOrder = ({
 	isDelegate,
 	orderParams,
 	slotBuffer = 35,
+	positionMaxLev,
 }: PrepSwiftOrderParams): {
 	hexEncodedSwiftOrderMessage: {
 		uInt8Array: Uint8Array;
@@ -159,6 +163,9 @@ export const prepSwiftOrder = ({
 					baseAssetAmount: orderParams.takeProfit.baseAssetAmount,
 					triggerPrice: orderParams.takeProfit.triggerPrice,
 			  }
+			: null,
+		maxMarginRatio: positionMaxLev
+			? TRADING_UTILS.convertLeverageToMarginRatio(positionMaxLev)
 			: null,
 	};
 
