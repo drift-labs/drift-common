@@ -413,8 +413,12 @@ export class DriftOperations {
 						assetType: params.assetType,
 						useSwift: true,
 						swiftOptions: {
-							// @ts-ignore TODO: we might want to add signMessage to the IWallet interface
-							wallet: this.driftClient.wallet,
+							wallet: {
+								// @ts-ignore TODO: we might want to add signMessage to the IWallet interface
+								signMessage: this.driftClient.wallet.signMessage,
+								takerAuthority: this.driftClient.wallet.publicKey,
+								signingAuthority: this.driftClient.wallet.publicKey,
+							},
 							swiftServerUrl: this.swiftServerUrl,
 							...params.orderConfig.swiftOptions,
 						},
@@ -473,8 +477,12 @@ export class DriftOperations {
 						postOnly: params.postOnly,
 						useSwift: true,
 						swiftOptions: {
-							// @ts-ignore TODO: we might want to add signMessage to the IWallet interface
-							wallet: this.driftClient.wallet,
+							wallet: {
+								// @ts-ignore TODO: we might want to add signMessage to the IWallet interface
+								signMessage: this.driftClient.wallet.signMessage,
+								takerAuthority: this.driftClient.wallet.publicKey,
+								signingAuthority: this.driftClient.wallet.publicKey,
+							},
 							swiftServerUrl: this.swiftServerUrl,
 							...params.orderConfig.swiftOptions,
 						},

@@ -16,6 +16,7 @@ import {
 	SwapMode,
 	User,
 	WhileValidTxSender,
+	IWalletV2,
 } from '@drift-labs/sdk';
 import { Connection, PublicKey, TransactionSignature } from '@solana/web3.js';
 import { COMMON_UI_UTILS } from '../../../../common-ui-utils/commonUiUtils';
@@ -103,7 +104,7 @@ function enforceGeoBlock(
 export interface AuthorityDriftConfig {
 	solanaRpcEndpoint: string;
 	driftEnv: DriftEnv;
-	wallet?: IWallet;
+	wallet?: IWalletV2;
 	driftDlobServerHttpUrl?: string;
 	tradableMarkets?: MarketId[];
 	selectedTradeMarket?: MarketId;
