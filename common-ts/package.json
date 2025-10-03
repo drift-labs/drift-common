@@ -44,7 +44,7 @@
 		"build-dual": "yarn clean && tsup",
 		"watch-dual": "yarn clean && tsup --watch",
 		"clean": "rm -rf lib",
-		"test": "bun x mocha -r ts-node/register 'tests/**/*.ts' --exit",
+		"test": "bun x mocha -r ts-node/register 'tests/**/*.ts' --ignore 'tests/drift/**/*.ts' --exit",
 		"test:drift": "bun x mocha -r ts-node/register 'tests/drift/**/*.ts' --exit",
 		"test:ci": "bun x mocha -r ts-node/register 'tests/**/*.ts' --silent",
 		"test:debug": "node --inspect-brk --inspect=2234 node_modules/.bin/jest --runInBand",
