@@ -1,11 +1,11 @@
-import { DriftClient, User } from '@drift-labs/sdk';
+import { DriftClient, TxParams, User } from '@drift-labs/sdk';
 import {
 	Transaction,
 	TransactionInstruction,
 	VersionedTransaction,
 } from '@solana/web3.js';
 
-interface SettleFundingParams {
+interface CreateSettleFundingIxParams {
 	driftClient: DriftClient;
 	user: User;
 }
@@ -21,7 +21,7 @@ interface SettleFundingParams {
 export const createSettleFundingIx = async ({
 	driftClient,
 	user,
-}: SettleFundingParams): Promise<TransactionInstruction[]> => {
+}: CreateSettleFundingIxParams): Promise<TransactionInstruction[]> => {
 	const userAccountPublicKey = user.getUserAccountPublicKey();
 
 	const settleFundingIx = await driftClient.getSettleFundingPaymentIx(
@@ -30,6 +30,10 @@ export const createSettleFundingIx = async ({
 
 	return [settleFundingIx];
 };
+
+interface CreateSettleFundingTxnParams extends CreateSettleFundingIxParams {
+	txParams?: TxParams;
+}
 
 /**
  * Creates a complete transaction for settling funding payments.
@@ -42,7 +46,10 @@ export const createSettleFundingIx = async ({
 export const createSettleFundingTxn = async ({
 	driftClient,
 	user,
-}: SettleFundingParams): Promise<Transaction | VersionedTransaction> => {
+	txParams,
+}: CreateSettleFundingTxnParams): Promise<
+	Transaction | VersionedTransaction
+> => {
 	const settleFundingIxs = await createSettleFundingIx({
 		driftClient,
 		user,
@@ -55,6 +62,7 @@ export const createSettleFundingTxn = async ({
 		preFlightCommitment: 'confirmed',
 		fetchAllMarketLookupTableAccounts:
 			driftClient.fetchAllLookupTableAccounts.bind(driftClient),
+		txParams,
 	});
 
 	return settleFundingTxn;

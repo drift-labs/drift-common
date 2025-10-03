@@ -39,21 +39,22 @@ import { DriftEnv, User } from '@drift-labs/sdk';
 import { CentralServerDrift } from '../../../../../src/drift/Drift/clients/CentralServerDrift';
 import { EnvironmentConstants } from '../../../../../src/EnvironmentConstants';
 import { sleep } from '../../../../../src/utils';
+import { setupTestContext, invalidMockUserAccountPublicKey } from './context';
+import { getDevWallet } from '../../../../utils/wallet';
 
-describe('CentralServerDrift driftClientContextWrapper', () => {
+describe('CentralServerDrift driftClientContextWrapper', function () {
+	this.timeout(10_000);
+
 	let centralServerDrift: CentralServerDrift;
 	let originalConsoleWarn: typeof console.warn;
 
+	const validMockUserAccountPublicKey = getDevWallet().devUser0;
+	const valid2MockUserAccountPublicKey = getDevWallet().devUser1;
 	const defaultDevnetRpc = EnvironmentConstants.rpcs.dev[0].value;
-	const invalidMockUserAccountPublicKey = new PublicKey(
-		'11111111111111111111111111111114'
-	);
-	const validMockUserAccountPublicKey = new PublicKey(
-		'D8emKAMjiENT8DNWc2Vde3TmdgHvd2eaujFWdzNQTsMG' // chester's dev wallet
-	);
-	const valid2MockUserAccountPublicKey = new PublicKey(
-		'HbRfyzH21fYANqFWSRBP5VMnxrbrhTRFsWNq66juDUeJ' // chester's dev wallet
-	);
+
+	before(async () => {
+		await setupTestContext();
+	});
 
 	beforeEach(async () => {
 		// Suppress console warnings during tests
@@ -124,9 +125,10 @@ describe('CentralServerDrift driftClientContextWrapper', () => {
 		});
 	});
 
-	describe('Operation Function Validation', () => {
+	describe('Operation Function Validation', function () {
+		this.timeout(10000);
+
 		it('should handle operation function that returns different types', async function () {
-			this.timeout(10000); // Increase timeout for this test
 			const testCases = [
 				'string result',
 				42,
@@ -190,7 +192,9 @@ describe('CentralServerDrift driftClientContextWrapper', () => {
 			);
 		});
 
-		it('should handle multiple rapid sequential calls', async () => {
+		it('should handle multiple rapid sequential calls', async function () {
+			this.timeout(15_000);
+
 			const operations = Array.from({ length: 5 }, (_, i) =>
 				sinon.stub().resolves(`result-${i}`)
 			);
@@ -224,7 +228,9 @@ describe('CentralServerDrift driftClientContextWrapper', () => {
 			expect(results.length + errors.length).to.equal(operations.length);
 		});
 
-		it('should maintain correct user isolation with different user public keys', async () => {
+		it('should maintain correct user isolation with different user public keys', async function () {
+			this.timeout(10000);
+
 			// Track which user public key each operation receives
 			const userKeysReceived: PublicKey[] = [];
 			const userKeysExpected = [

@@ -178,6 +178,10 @@ export class CentralServerDrift {
 		await this.driftClient.subscribe();
 	}
 
+	public async unsubscribe() {
+		await this.driftClient.unsubscribe();
+	}
+
 	/**
 	 * Manages DriftClient state for transaction creation with proper setup and cleanup.
 	 * This abstraction handles:
@@ -304,6 +308,7 @@ export class CentralServerDrift {
 			poolId?: number;
 			fromSubAccountId?: number;
 			customMaxMarginRatio?: number;
+			txParams?: TxParams;
 		}
 	): Promise<{
 		transaction: VersionedTransaction | Transaction;
@@ -355,6 +360,7 @@ export class CentralServerDrift {
 				poolId: options?.poolId,
 				fromSubAccountId: options?.fromSubAccountId,
 				customMaxMarginRatio: options?.customMaxMarginRatio,
+				txParams: options?.txParams,
 			});
 		} finally {
 			this.driftClient.wallet = originalWallet;
@@ -368,7 +374,10 @@ export class CentralServerDrift {
 	public async getDepositTxn(
 		userAccountPublicKey: PublicKey,
 		amount: BN,
-		spotMarketIndex: number
+		spotMarketIndex: number,
+		options?: {
+			txParams?: TxParams;
+		}
 	): Promise<VersionedTransaction | Transaction> {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
@@ -388,6 +397,7 @@ export class CentralServerDrift {
 					user,
 					amount: BigNum.from(amount, spotMarketConfig.precisionExp),
 					spotMarketConfig,
+					txParams: options?.txParams,
 				});
 
 				return depositTxn;
@@ -417,6 +427,7 @@ export class CentralServerDrift {
 		options?: {
 			isBorrow?: boolean;
 			isMax?: boolean;
+			txParams?: TxParams;
 		}
 	): Promise<VersionedTransaction | Transaction> {
 		return this.driftClientContextWrapper(
@@ -439,6 +450,7 @@ export class CentralServerDrift {
 					spotMarketConfig,
 					isBorrow: options?.isBorrow,
 					isMax: options?.isMax,
+					txParams: options?.txParams,
 				});
 
 				return withdrawTxn;
@@ -447,7 +459,10 @@ export class CentralServerDrift {
 	}
 
 	public async getSettleFundingTxn(
-		userAccountPublicKey: PublicKey
+		userAccountPublicKey: PublicKey,
+		options?: {
+			txParams?: TxParams;
+		}
 	): Promise<VersionedTransaction | Transaction> {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
@@ -455,6 +470,7 @@ export class CentralServerDrift {
 				const settleFundingTxn = await createSettleFundingTxn({
 					driftClient: this.driftClient,
 					user,
+					txParams: options?.txParams,
 				});
 
 				return settleFundingTxn;
@@ -464,7 +480,10 @@ export class CentralServerDrift {
 
 	public async getSettlePnlTxn(
 		userAccountPublicKey: PublicKey,
-		marketIndexes: number[]
+		marketIndexes: number[],
+		options?: {
+			txParams?: TxParams;
+		}
 	): Promise<VersionedTransaction | Transaction> {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
@@ -473,6 +492,7 @@ export class CentralServerDrift {
 					driftClient: this.driftClient,
 					user,
 					marketIndexes,
+					txParams: options?.txParams,
 				});
 
 				return settlePnlTxn;
