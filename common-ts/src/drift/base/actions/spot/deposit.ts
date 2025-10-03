@@ -88,7 +88,7 @@ export const createDepositTxn = async ({
 	amount,
 	spotMarketConfig,
 	isMaxBorrowRepayment,
-	txParams: _txParams,
+	txParams,
 	initSwiftAccount: _initSwiftAccount,
 }: CreateDepositTxnParams): Promise<Transaction | VersionedTransaction> => {
 	// const authority = user.getUserAccount().authority;
@@ -131,6 +131,7 @@ export const createDepositTxn = async ({
 		preFlightCommitment: 'confirmed',
 		fetchAllMarketLookupTableAccounts:
 			driftClient.fetchAllLookupTableAccounts.bind(driftClient),
+		txParams,
 	});
 
 	return depositTxn;

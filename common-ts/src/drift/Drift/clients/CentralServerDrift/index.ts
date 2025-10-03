@@ -68,7 +68,7 @@ import { CentralServerDriftMarkets } from './markets';
 export class CentralServerDrift {
 	private driftClient: DriftClient;
 	private _perpMarketConfigs: PerpMarketConfig[];
-	private spotMarketConfigs: SpotMarketConfig[];
+	private _spotMarketConfigs: SpotMarketConfig[];
 	/**
 	 * The public endpoints that can be used to retrieve Drift data / interact with the Drift program.
 	 */
@@ -111,14 +111,14 @@ export class CentralServerDrift {
 		this._perpMarketConfigs = config.supportedPerpMarkets.map((marketIndex) =>
 			allPerpMarketConfigs.find((market) => market.marketIndex === marketIndex)
 		);
-		this.spotMarketConfigs = config.supportedSpotMarkets.map((marketIndex) =>
+		this._spotMarketConfigs = config.supportedSpotMarkets.map((marketIndex) =>
 			allSpotMarketConfigs.find((market) => market.marketIndex === marketIndex)
 		);
 
 		const oracleInfos = getMarketsAndOraclesForSubscription(
 			driftEnv,
 			this._perpMarketConfigs,
-			this.spotMarketConfigs
+			this._spotMarketConfigs
 		);
 
 		const driftClientConfig: DriftClientConfig = {
@@ -138,7 +138,7 @@ export class CentralServerDrift {
 			perpMarketIndexes: this._perpMarketConfigs.map(
 				(market) => market.marketIndex
 			),
-			spotMarketIndexes: this.spotMarketConfigs.map(
+			spotMarketIndexes: this._spotMarketConfigs.map(
 				(market) => market.marketIndex
 			),
 			oracleInfos: oracleInfos.oracleInfos,
@@ -176,6 +176,10 @@ export class CentralServerDrift {
 
 	public async subscribe() {
 		await this.driftClient.subscribe();
+	}
+
+	public async unsubscribe() {
+		await this.driftClient.unsubscribe();
 	}
 
 	/**
@@ -304,13 +308,14 @@ export class CentralServerDrift {
 			poolId?: number;
 			fromSubAccountId?: number;
 			customMaxMarginRatio?: number;
+			txParams?: TxParams;
 		}
 	): Promise<{
 		transaction: VersionedTransaction | Transaction;
 		userAccountPublicKey: PublicKey;
 		subAccountId: number;
 	}> {
-		const spotMarketConfig = this.spotMarketConfigs.find(
+		const spotMarketConfig = this._spotMarketConfigs.find(
 			(market) => market.marketIndex === spotMarketIndex
 		);
 
@@ -355,6 +360,7 @@ export class CentralServerDrift {
 				poolId: options?.poolId,
 				fromSubAccountId: options?.fromSubAccountId,
 				customMaxMarginRatio: options?.customMaxMarginRatio,
+				txParams: options?.txParams,
 			});
 		} finally {
 			this.driftClient.wallet = originalWallet;
@@ -368,12 +374,15 @@ export class CentralServerDrift {
 	public async getDepositTxn(
 		userAccountPublicKey: PublicKey,
 		amount: BN,
-		spotMarketIndex: number
+		spotMarketIndex: number,
+		options?: {
+			txParams?: TxParams;
+		}
 	): Promise<VersionedTransaction | Transaction> {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const spotMarketConfig = this.spotMarketConfigs.find(
+				const spotMarketConfig = this._spotMarketConfigs.find(
 					(market) => market.marketIndex === spotMarketIndex
 				);
 
@@ -388,6 +397,7 @@ export class CentralServerDrift {
 					user,
 					amount: BigNum.from(amount, spotMarketConfig.precisionExp),
 					spotMarketConfig,
+					txParams: options?.txParams,
 				});
 
 				return depositTxn;
@@ -417,12 +427,13 @@ export class CentralServerDrift {
 		options?: {
 			isBorrow?: boolean;
 			isMax?: boolean;
+			txParams?: TxParams;
 		}
 	): Promise<VersionedTransaction | Transaction> {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const spotMarketConfig = this.spotMarketConfigs.find(
+				const spotMarketConfig = this._spotMarketConfigs.find(
 					(market) => market.marketIndex === spotMarketIndex
 				);
 
@@ -439,6 +450,7 @@ export class CentralServerDrift {
 					spotMarketConfig,
 					isBorrow: options?.isBorrow,
 					isMax: options?.isMax,
+					txParams: options?.txParams,
 				});
 
 				return withdrawTxn;
@@ -447,7 +459,10 @@ export class CentralServerDrift {
 	}
 
 	public async getSettleFundingTxn(
-		userAccountPublicKey: PublicKey
+		userAccountPublicKey: PublicKey,
+		options?: {
+			txParams?: TxParams;
+		}
 	): Promise<VersionedTransaction | Transaction> {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
@@ -455,6 +470,7 @@ export class CentralServerDrift {
 				const settleFundingTxn = await createSettleFundingTxn({
 					driftClient: this.driftClient,
 					user,
+					txParams: options?.txParams,
 				});
 
 				return settleFundingTxn;
@@ -464,7 +480,10 @@ export class CentralServerDrift {
 
 	public async getSettlePnlTxn(
 		userAccountPublicKey: PublicKey,
-		marketIndexes: number[]
+		marketIndexes: number[],
+		options?: {
+			txParams?: TxParams;
+		}
 	): Promise<VersionedTransaction | Transaction> {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
@@ -473,6 +492,7 @@ export class CentralServerDrift {
 					driftClient: this.driftClient,
 					user,
 					marketIndexes,
+					txParams: options?.txParams,
 				});
 
 				return settlePnlTxn;
@@ -678,10 +698,10 @@ export class CentralServerDrift {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const fromSpotMarketConfig = this.spotMarketConfigs.find(
+				const fromSpotMarketConfig = this._spotMarketConfigs.find(
 					(market) => market.marketIndex === fromMarketIndex
 				);
-				const toSpotMarketConfig = this.spotMarketConfigs.find(
+				const toSpotMarketConfig = this._spotMarketConfigs.find(
 					(market) => market.marketIndex === toMarketIndex
 				);
 

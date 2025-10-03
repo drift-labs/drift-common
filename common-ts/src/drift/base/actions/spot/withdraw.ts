@@ -37,6 +37,18 @@ export const createWithdrawIx = async ({
 		// we over-estimate to ensure that there is no borrow dust left
 		// since reduceOnly is true, it is safe to over-estimate
 		finalWithdrawAmount = finalWithdrawAmount.scale(2, 1);
+		const scaledBalance = user
+			.getUserAccount()
+			.spotPositions.find(
+				(position) => position.marketIndex === spotMarketConfig.marketIndex
+			)?.scaledBalance;
+		if (scaledBalance && scaledBalance.abs().gtn(0)) {
+			// we use scaledBalance in case amount argument is zero
+			finalWithdrawAmount = BigNum.max(
+				finalWithdrawAmount,
+				BigNum.from(scaledBalance, spotMarketConfig.precisionExp).scale(2, 1)
+			);
+		}
 	}
 
 	const authority = user.getUserAccount().authority;
