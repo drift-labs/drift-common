@@ -32,11 +32,20 @@ const calculatePnlPctFromPosition = (
 		marginUsedNum = BigNum.from(marginUsed, QUOTE_PRECISION_EXP).toNum();
 	} else {
 		const leverage = convertMarginRatioToLeverage(position.maxMarginRatio) ?? 1;
-		marginUsedNum =
-			BigNum.from(
-				position.quoteEntryAmount.abs(),
-				QUOTE_PRECISION_EXP
-			).toNum() / leverage;
+		const quoteEntryAmountNum = BigNum.from(
+			position.quoteEntryAmount.abs(),
+			QUOTE_PRECISION_EXP
+		).toNum();
+
+		if (leverage <= 0 || quoteEntryAmountNum <= 0) {
+			marginUsedNum = 0;
+		} else {
+			marginUsedNum = quoteEntryAmountNum / leverage;
+		}
+	}
+
+	if (marginUsedNum <= 0) {
+		return 0;
 	}
 
 	return (
