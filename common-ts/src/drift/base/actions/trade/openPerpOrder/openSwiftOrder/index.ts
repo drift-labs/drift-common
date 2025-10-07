@@ -95,11 +95,11 @@ interface PrepSwiftOrderParams {
 		stopLoss?: OptionalTriggerOrderParams;
 		/** Optional take profit order parameters */
 		takeProfit?: OptionalTriggerOrderParams;
+		/** Optional max leverage for the position */
+		positionMaxLeverage?: number;
 	};
 	/** Buffer slots to account for signing time (default: 2 slots ~1 second). If a user is required to manually sign the message, this should be a higher number. */
 	slotBuffer?: number;
-	/** Max leverage for the position */
-	positionMaxLev?: number;
 }
 
 /**
@@ -126,7 +126,6 @@ export const prepSwiftOrder = ({
 	isDelegate,
 	orderParams,
 	slotBuffer = 35,
-	positionMaxLev,
 }: PrepSwiftOrderParams): {
 	hexEncodedSwiftOrderMessage: {
 		uInt8Array: Uint8Array;
@@ -164,8 +163,10 @@ export const prepSwiftOrder = ({
 					triggerPrice: orderParams.takeProfit.triggerPrice,
 			  }
 			: null,
-		maxMarginRatio: positionMaxLev
-			? TRADING_UTILS.convertLeverageToMarginRatio(positionMaxLev)
+		maxMarginRatio: orderParams.positionMaxLeverage
+			? TRADING_UTILS.convertLeverageToMarginRatio(
+					orderParams.positionMaxLeverage
+			  )
 			: null,
 	};
 
@@ -366,6 +367,10 @@ type PrepSignAndSendSwiftOrderParams = {
 		main: OptionalOrderParams;
 		takeProfit?: OptionalTriggerOrderParams;
 		stopLoss?: OptionalTriggerOrderParams;
+		/**
+		 * Adjusts the max leverage of a position.
+		 */
+		positionMaxLeverage?: number;
 	};
 };
 
