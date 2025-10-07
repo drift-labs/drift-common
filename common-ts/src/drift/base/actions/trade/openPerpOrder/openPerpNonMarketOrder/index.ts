@@ -41,6 +41,7 @@ import {
 	NonMarketOrderParamsConfig,
 	WithTxnParams,
 } from '../types';
+import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
 
 export interface OpenPerpNonMarketOrderBaseParams
 	extends Omit<NonMarketOrderParamsConfig, 'marketType' | 'baseAssetAmount'> {
@@ -204,6 +205,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 		postOnly = PostOnlyParams.NONE,
 		orderConfig,
 		userOrderId = 0,
+		positionMaxLeverage,
 	} = params;
 	// Support both new (amount + assetType) and legacy (baseAssetAmount) approaches
 	const finalBaseAssetAmount = resolveBaseAssetAmount({
@@ -223,6 +225,16 @@ export const createOpenPerpNonMarketOrderIxs = async (
 
 	const allOrders: OptionalOrderParams[] = [];
 	const allIxs: TransactionInstruction[] = [];
+
+	const leverageIx = await getPositionMaxLeverageIxIfNeeded(
+		driftClient,
+		user,
+		marketIndex,
+		positionMaxLeverage
+	);
+	if (leverageIx) {
+		allIxs.push(leverageIx);
+	}
 
 	// handle limit auction
 	if (orderConfig.orderType === 'limit' && orderConfig.limitAuction?.enable) {
@@ -417,6 +429,7 @@ export const createSwiftLimitOrder = async (
 			main: orderParams,
 			takeProfit: orderConfig.bracketOrders?.takeProfit,
 			stopLoss: orderConfig.bracketOrders?.stopLoss,
+			positionMaxLeverage: params.positionMaxLeverage,
 		},
 	});
 };

@@ -29,6 +29,7 @@ import { ORDER_COMMON_UTILS } from '../../../../../../common-ui-utils/order';
 import { TxnOrSwiftResult, WithTxnParams } from '../types';
 import { NoTopMakersError } from '../../../../../Drift/constants/errors';
 import { PlaceAndTakeParams, OptionalTriggerOrderParams } from '../types';
+import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
 
 export interface OpenPerpMarketOrderBaseParams {
 	driftClient: DriftClient;
@@ -46,6 +47,13 @@ export interface OpenPerpMarketOrderBaseParams {
 		takeProfit?: OptionalTriggerOrderParams;
 		stopLoss?: OptionalTriggerOrderParams;
 	};
+	/**
+	 * Optional per-market leverage to set for this position.
+	 * If provided and different from current position's leverage, will add an instruction
+	 * to update the position's maxMarginRatio before placing the order.
+	 * Example: 5 for 5x leverage, 10 for 10x leverage
+	 */
+	positionMaxLeverage?: number;
 }
 
 export interface OpenPerpMarketOrderBaseParamsWithSwift
@@ -85,6 +93,7 @@ export async function createSwiftMarketOrder({
 	optionalAuctionParamsInputs,
 	swiftOptions,
 	userOrderId = 0,
+	positionMaxLeverage,
 }: OpenPerpMarketOrderBaseParamsWithSwift): Promise<void> {
 	if (amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
@@ -134,6 +143,7 @@ export async function createSwiftMarketOrder({
 			main: orderParams,
 			takeProfit: bracketOrders?.takeProfit,
 			stopLoss: bracketOrders?.stopLoss,
+			positionMaxLeverage,
 		},
 	});
 }
@@ -238,6 +248,8 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
  * @param amount - The amount to trade
  * @param dlobServerHttpUrl - Server URL for the auction params endpoint
  * @param optionalAuctionParamsInputs - Optional parameters for auction params endpoint and order configuration
+ * @param positionMaxLeverage - Optional per-market leverage (e.g., 5 for 5x). If provided and different from current,
+ *                               adds an instruction to update the position's maxMarginRatio before placing the order.
  *
  * @returns Promise resolving to an array of transaction instructions for regular orders
  */
@@ -253,6 +265,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 	placeAndTake,
 	userOrderId,
 	optionalAuctionParamsInputs = {},
+	positionMaxLeverage,
 }: OpenPerpMarketOrderBaseParams): Promise<TransactionInstruction[]> => {
 	if (!amount || amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
@@ -260,6 +273,16 @@ export const createOpenPerpMarketOrderIxs = async ({
 
 	const allOrders: OptionalOrderParams[] = [];
 	const allIxs: TransactionInstruction[] = [];
+
+	const leverageIx = await getPositionMaxLeverageIxIfNeeded(
+		driftClient,
+		user,
+		marketIndex,
+		positionMaxLeverage
+	);
+	if (leverageIx) {
+		allIxs.push(leverageIx);
+	}
 
 	if (placeAndTake?.enable) {
 		try {
@@ -377,6 +400,8 @@ export const createOpenPerpMarketOrderIxs = async ({
  * @param amount - The amount to trade
  * @param optionalAuctionParamsInputs - Optional parameters for auction params endpoint and order configuration
  * @param dlobServerHttpUrl - Server URL for the auction params endpoint
+ * @param positionMaxLeverage - Optional per-market leverage (e.g., 5 for 5x). If provided and different from current,
+ *                              includes an instruction to update the position's maxMarginRatio.
  *
  * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
  */
@@ -386,9 +411,9 @@ export const createOpenPerpMarketOrderTxn = async (
 	const { driftClient } = params;
 
 	// Regular order flow - create transaction instruction and build transaction
-	const placeOrderIx = await createOpenPerpMarketOrderIxs(params);
+	const placeOrderIxs = await createOpenPerpMarketOrderIxs(params);
 	const openPerpMarketOrderTxn = await driftClient.txHandler.buildTransaction({
-		instructions: placeOrderIx,
+		instructions: placeOrderIxs,
 		txVersion: 0,
 		connection: driftClient.connection,
 		preFlightCommitment: 'confirmed',
@@ -413,6 +438,7 @@ export const createOpenPerpMarketOrderTxn = async (
  * @param useSwift - Whether to use Swift (signed message) orders instead of regular transactions
  * @param swiftOptions - Options for Swift (signed message) orders. Required if useSwift is true
  * @param userOrderId - The user order id for UI identification
+ * @param positionMaxLeverage - Optional per-market leverage (e.g., 5 for 5x). Only supported for regular transactions (not Swift).
  *
  * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
  */
