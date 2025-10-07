@@ -28,6 +28,11 @@ jobs:
           node-version: '20.18.x'
           cache: 'yarn'
 
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.2.15
+
       - name: Build SDK
         run: |
           yarn
