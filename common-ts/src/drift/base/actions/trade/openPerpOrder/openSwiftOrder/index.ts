@@ -12,6 +12,7 @@ import {
 	OptionalOrderParams,
 	PublicKey,
 } from '@drift-labs/sdk';
+import { getSwiftConfirmationTimeoutMs } from '../../../../../../utils';
 import {
 	SwiftClient,
 	SwiftOrderConfirmedEvent,
@@ -349,7 +350,7 @@ export const sendSwiftOrder = ({
 		takerAuthority,
 		signedMsgUserOrdersAccountPubkey,
 		signedMsgOrderUuid,
-		((auctionDuration ?? 0) + 15) * SLOT_TIME_ESTIMATE_MS,
+		getSwiftConfirmationTimeoutMs(auctionDuration ?? 0),
 		signingAuthority
 	);
 
