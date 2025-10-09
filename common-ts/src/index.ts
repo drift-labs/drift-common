@@ -4,7 +4,6 @@ export * from './types';
 export * from './EnvironmentConstants';
 export * from './utils';
 export * from './utils/index';
-export * from './utils/network';
 export * from './utils/s3Buckets';
 export * from './serializableTypes';
 export * from './utils/candles/Candle';

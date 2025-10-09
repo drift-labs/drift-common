@@ -878,6 +878,4 @@ export const COMMON_UTILS = {
 		},
 	},
 };
-
-export { getNetworkTimeoutMultiplier } from './network';
 export { getSwiftConfirmationTimeoutMs } from './signedMsgs';
