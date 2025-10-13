@@ -1,9 +1,18 @@
-import { DriftClient, TxParams, User } from '@drift-labs/sdk';
+import { DriftClient, User } from '@drift-labs/sdk';
 import {
 	Transaction,
 	TransactionInstruction,
 	VersionedTransaction,
+	PublicKey,
 } from '@solana/web3.js';
+import { WithTxnParams } from '../../types';
+
+interface CreateCancelOrdersIxParams {
+	driftClient: DriftClient;
+	user: User;
+	orderIds: number[];
+	mainSignerOverride?: PublicKey;
+}
 
 /**
  * Creates a transaction instruction to cancel multiple orders by their order IDs.
@@ -25,11 +34,13 @@ import {
  * ```
  */
 export const createCancelOrdersIx = async (
-	driftClient: DriftClient,
-	orderIds: number[],
-	user: User
+	params: CreateCancelOrdersIxParams
 ): Promise<TransactionInstruction> => {
-	return driftClient.getCancelOrdersByIdsIx(orderIds, undefined, user);
+	const { driftClient, user, orderIds, mainSignerOverride } = params;
+
+	return driftClient.getCancelOrdersByIdsIx(orderIds, undefined, user, {
+		authority: mainSignerOverride,
+	});
 };
 
 /**
@@ -57,13 +68,10 @@ export const createCancelOrdersIx = async (
  * ```
  */
 export const createCancelOrdersTxn = async (
-	driftClient: DriftClient,
-	user: User,
-	orderIds: number[],
-	txParams?: TxParams
+	params: WithTxnParams<CreateCancelOrdersIxParams>
 ): Promise<Transaction | VersionedTransaction> => {
-	return driftClient.buildTransaction(
-		await createCancelOrdersIx(driftClient, orderIds, user),
-		txParams
+	return params.driftClient.buildTransaction(
+		await createCancelOrdersIx(params),
+		params.txParams
 	);
 };

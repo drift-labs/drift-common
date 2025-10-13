@@ -4,12 +4,9 @@ import {
 	PositionDirection,
 	PostOnlyParams,
 	ReferrerInfo,
-	TxParams,
 } from '@drift-labs/sdk';
 import { Transaction, VersionedTransaction } from '@solana/web3.js';
 import { OptionalAuctionParamsRequestInputs } from './dlobServer';
-
-export type WithTxnParams<T> = T & { txParams?: TxParams };
 
 export type TxnOrSwiftResult<T extends boolean> = T extends true
 	? void

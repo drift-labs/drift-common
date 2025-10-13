@@ -708,12 +708,12 @@ export class DriftOperations {
 			throw new Error('User not found');
 		}
 
-		const cancelOrdersTxn = await createCancelOrdersTxn(
-			this.driftClient,
-			accountData.userClient,
+		const cancelOrdersTxn = await createCancelOrdersTxn({
+			driftClient: this.driftClient,
+			user: accountData.userClient,
 			orderIds,
-			this.getTxParams()
-		);
+			txParams: this.getTxParams(),
+		});
 
 		const { txSig } = await this.driftClient.sendTransaction(cancelOrdersTxn);
 

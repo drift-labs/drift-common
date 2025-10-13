@@ -40,8 +40,8 @@ import {
 	LimitAuctionConfig,
 	LimitOrderParamsOrderConfig,
 	NonMarketOrderParamsConfig,
-	WithTxnParams,
 } from '../types';
+import { WithTxnParams } from '../../../../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
 
 export interface OpenPerpNonMarketOrderBaseParams

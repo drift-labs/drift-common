@@ -27,7 +27,8 @@ import {
 	OptionalAuctionParamsRequestInputs,
 } from '../dlobServer';
 import { ORDER_COMMON_UTILS } from '../../../../../../common-ui-utils/order';
-import { TxnOrSwiftResult, WithTxnParams } from '../types';
+import { WithTxnParams } from '../../../../types';
+import { TxnOrSwiftResult } from '../types';
 import { NoTopMakersError } from '../../../../../Drift/constants/errors';
 import { PlaceAndTakeParams, OptionalTriggerOrderParams } from '../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';

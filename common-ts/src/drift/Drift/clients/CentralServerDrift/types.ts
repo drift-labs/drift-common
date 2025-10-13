@@ -1,5 +1,5 @@
 import { SwiftOrderOptions } from '../../../base/actions/trade/openPerpOrder/openSwiftOrder';
-import { WithTxnParams } from '../../../base/actions/trade/openPerpOrder/types';
+import { WithTxnParams } from '../../../base/types';
 import { OpenPerpMarketOrderParams } from '../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { OpenPerpNonMarketOrderParams } from '../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 import { PublicKey } from '@solana/web3.js';
