@@ -14,6 +14,7 @@ import {
 	BASE_PRECISION,
 } from '@drift-labs/sdk';
 import {
+	PublicKey,
 	Transaction,
 	TransactionInstruction,
 	VersionedTransaction,
@@ -57,6 +58,11 @@ export interface OpenPerpNonMarketOrderBaseParams
 	postOnly?: PostOnlyParams;
 	userOrderId?: number;
 	autoEnterHighLeverageModeBufferPct?: number;
+	/**
+	 * If provided, will override the main signer for the order. Otherwise, the main signer will be the user's authority.
+	 * This is only applicable for non-SWIFT orders.
+	 */
+	mainSignerOverride?: PublicKey;
 }
 
 export interface OpenPerpNonMarketOrderParamsWithSwift
@@ -173,8 +179,12 @@ export const createMultipleOpenPerpNonMarketOrderIx = async (params: {
 	direction: PositionDirection;
 	orderParamsConfigs: NonMarketOrderParamsConfig[];
 	enterHighLeverageMode?: boolean;
+	/**
+	 * If provided, will override the main signer for the order. Otherwise, the main signer will be the user's authority.
+	 */
+	mainSignerOverride?: PublicKey;
 }): Promise<TransactionInstruction> => {
-	const { driftClient, orderParamsConfigs } = params;
+	const { driftClient, orderParamsConfigs, mainSignerOverride } = params;
 
 	const orderParams = orderParamsConfigs.map(buildNonMarketOrderParams);
 
@@ -182,7 +192,13 @@ export const createMultipleOpenPerpNonMarketOrderIx = async (params: {
 		orderParams[0].bitFlags = OrderParamsBitFlag.UpdateHighLeverageMode;
 	}
 
-	const placeOrderIx = await driftClient.getPlaceOrdersIx(orderParams);
+	const placeOrderIx = await driftClient.getPlaceOrdersIx(
+		orderParams,
+		undefined,
+		{
+			authority: mainSignerOverride,
+		}
+	);
 	return placeOrderIx;
 };
 
@@ -206,6 +222,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 		orderConfig,
 		userOrderId = 0,
 		positionMaxLeverage,
+		mainSignerOverride,
 	} = params;
 	// Support both new (amount + assetType) and legacy (baseAssetAmount) approaches
 	const finalBaseAssetAmount = resolveBaseAssetAmount({
@@ -361,7 +378,13 @@ export const createOpenPerpNonMarketOrderIxs = async (
 	}
 
 	if (allOrders.length > 0) {
-		const placeOrderIx = await driftClient.getPlaceOrdersIx(allOrders);
+		const placeOrderIx = await driftClient.getPlaceOrdersIx(
+			allOrders,
+			undefined,
+			{
+				authority: mainSignerOverride,
+			}
+		);
 		allIxs.push(placeOrderIx);
 	}
 
