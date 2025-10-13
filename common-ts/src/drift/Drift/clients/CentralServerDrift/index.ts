@@ -49,10 +49,8 @@ import { createCancelOrdersTxn } from '../../../base/actions/trade/cancelOrder';
 import { createSwapTxn } from '../../../base/actions/trade/swap';
 import { createUserAndDepositCollateralBaseTxn } from '../../../base/actions/user/create';
 import { deleteUserTxn } from '../../../base/actions/user/delete';
-import {
-	TxnOrSwiftResult,
-	WithTxnParams,
-} from '../../../base/actions/trade/openPerpOrder/types';
+import { TxnOrSwiftResult } from '../../../base/actions/trade/openPerpOrder/types';
+import { WithTxnParams } from '../../../base/types';
 import { EnvironmentConstants } from '../../../../EnvironmentConstants';
 import {
 	CentralServerGetOpenPerpMarketOrderTxnParams,
@@ -643,11 +641,11 @@ export class CentralServerDrift {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const cancelOrdersTxn = await createCancelOrdersTxn(
-					this.driftClient,
+				const cancelOrdersTxn = await createCancelOrdersTxn({
+					driftClient: this.driftClient,
 					user,
-					orderIds
-				);
+					orderIds,
+				});
 
 				return cancelOrdersTxn;
 			}
