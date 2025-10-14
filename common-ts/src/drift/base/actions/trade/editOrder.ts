@@ -60,8 +60,8 @@ export const createEditOrderIx = async (
 	orderId: number,
 	editOrderParams: EditOrderParams
 ): Promise<TransactionInstruction> => {
-	const userPublicKey = user.getUserAccountPublicKey();
-	const _currentOrder = user.getOrderByUserOrderId(orderId);
+	//const userPublicKey = user.getUserAccountPublicKey();
+	//const _currentOrder = user.getOrderByUserOrderId(orderId);
 
 	// TODO: handle auction params
 
@@ -71,7 +71,7 @@ export const createEditOrderIx = async (
 			...editOrderParams,
 		},
 		undefined,
-		userPublicKey
+		{ user }
 	);
 };
 
