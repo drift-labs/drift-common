@@ -619,12 +619,12 @@ export class CentralServerDrift {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const editOrderTxn = await createEditOrderTxn(
-					this.driftClient,
+				const editOrderTxn = await createEditOrderTxn({
+					driftClient: this.driftClient,
 					user,
 					orderId,
-					editOrderParams
-				);
+					editOrderParams,
+				});
 
 				return editOrderTxn;
 			}
