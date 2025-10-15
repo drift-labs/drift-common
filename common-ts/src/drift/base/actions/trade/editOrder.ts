@@ -15,7 +15,7 @@ import {
 } from '@solana/web3.js';
 import { ENUM_UTILS } from '../../../../utils';
 import invariant from 'tiny-invariant';
-import { getLimitAuctionOrderParams } from './openPerpOrder/openPerpNonMarketOrder';
+import { getLimitAuctionOrderParams } from './openPerpOrder/auction';
 import {
 	LimitAuctionConfig,
 	LimitOrderParamsOrderConfig,
@@ -56,7 +56,7 @@ interface EditOrderParams {
 	policy?: number;
 }
 
-interface CreateEditOrderIxParams {
+export interface CreateEditOrderIxParams {
 	driftClient: DriftClient;
 	user: User;
 	orderId: number;
@@ -108,6 +108,7 @@ export const createEditOrderIx = async (
 			driftClient,
 			user,
 			marketIndex: currentOrder.marketIndex,
+			marketType: currentOrder.marketType,
 			direction: currentOrder.direction,
 			baseAssetAmount: currentOrder.baseAssetAmount,
 			userOrderId: currentOrder.userOrderId,

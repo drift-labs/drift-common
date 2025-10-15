@@ -4,11 +4,7 @@ import {
 	BN,
 	MarketType,
 	PostOnlyParams,
-	getLimitOrderParams,
 	OptionalOrderParams,
-	PRICE_PRECISION_EXP,
-	BigNum,
-	oraclePriceBands as getOraclePriceBands,
 	PositionDirection,
 	OrderParamsBitFlag,
 	BASE_PRECISION,
@@ -28,13 +24,8 @@ import {
 	resolveBaseAssetAmount,
 } from '../../../../../utils/orderParams';
 import { ENUM_UTILS } from '../../../../../../utils';
-import { fetchAuctionOrderParams } from '../dlobServer';
-import {
-	COMMON_UI_UTILS,
-	ORDER_COMMON_UTILS,
-} from '../../../../../../common-ui-utils';
+import { ORDER_COMMON_UTILS } from '../../../../../../common-ui-utils';
 import { createPlaceAndTakePerpMarketOrderIx } from '../openPerpMarketOrder';
-import invariant from 'tiny-invariant';
 import {
 	TxnOrSwiftResult,
 	LimitAuctionConfig,
@@ -43,6 +34,7 @@ import {
 } from '../types';
 import { WithTxnParams } from '../../../../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
+import { getLimitAuctionOrderParams } from '../auction';
 
 export interface OpenPerpNonMarketOrderBaseParams
 	extends Omit<NonMarketOrderParamsConfig, 'marketType' | 'baseAssetAmount'> {
@@ -85,89 +77,6 @@ export type OpenPerpNonMarketOrderParams<
 			useSwift: T;
 			swiftOptions?: never;
 	  };
-
-export const getLimitAuctionOrderParams = async ({
-	driftClient,
-	user,
-	marketIndex,
-	direction,
-	baseAssetAmount,
-	userOrderId = 0,
-	reduceOnly = false,
-	postOnly = PostOnlyParams.NONE,
-	orderConfig,
-}: OpenPerpNonMarketOrderBaseParams & {
-	baseAssetAmount: BN;
-	orderConfig: LimitOrderParamsOrderConfig & {
-		limitAuction: LimitAuctionConfig;
-	};
-}): Promise<OptionalOrderParams> => {
-	const orderParams = await fetchAuctionOrderParams({
-		driftClient,
-		user,
-		assetType: 'base',
-		marketIndex,
-		marketType: MarketType.PERP,
-		direction,
-		amount: baseAssetAmount,
-		dlobServerHttpUrl: orderConfig.limitAuction.dlobServerHttpUrl,
-		optionalAuctionParamsInputs:
-			orderConfig.limitAuction.optionalLimitAuctionParams,
-	});
-
-	const perpMarketAccount = driftClient.getPerpMarketAccount(marketIndex);
-
-	invariant(perpMarketAccount, 'Perp market account not found');
-	invariant(orderConfig.limitAuction.oraclePrice, 'Oracle price not found');
-	invariant(orderParams.auctionStartPrice, 'Auction start price not found');
-
-	const oraclePriceBands = orderConfig.limitAuction.oraclePrice
-		? getOraclePriceBands(perpMarketAccount, {
-				price: orderConfig.limitAuction.oraclePrice,
-		  })
-		: undefined;
-	const auctionDuration = ORDER_COMMON_UTILS.getPerpAuctionDuration(
-		orderConfig.limitPrice.sub(orderParams.auctionStartPrice).abs(),
-		orderConfig.limitAuction.oraclePrice,
-		perpMarketAccount.contractTier
-	);
-	const limitAuctionParams = COMMON_UI_UTILS.getLimitAuctionParams({
-		direction,
-		inputPrice: BigNum.from(orderConfig.limitPrice, PRICE_PRECISION_EXP),
-		startPriceFromSettings: orderParams.auctionStartPrice,
-		duration: auctionDuration,
-		auctionStartPriceOffset: orderConfig.limitAuction.auctionStartPriceOffset,
-		oraclePriceBands,
-	});
-
-	const limitAuctionOrderParams = getLimitOrderParams({
-		marketIndex,
-		marketType: MarketType.PERP,
-		direction,
-		baseAssetAmount,
-		reduceOnly,
-		postOnly,
-		price: orderConfig.limitPrice,
-		userOrderId,
-		...limitAuctionParams,
-	});
-
-	const oraclePrice = driftClient.getOracleDataForPerpMarket(marketIndex).price;
-	const totalQuoteAmount = baseAssetAmount.mul(oraclePrice).div(BASE_PRECISION);
-
-	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
-		marketIndex,
-		driftClient,
-		user,
-		totalQuoteAmount,
-		direction
-	);
-
-	return {
-		...limitAuctionOrderParams,
-		bitFlags,
-	};
-};
 
 /**
  * Creates a transaction instruction to open multiple non-market orders.
@@ -261,6 +170,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 	) {
 		const limitAuctionOrderParams = await getLimitAuctionOrderParams({
 			...params,
+			marketType: MarketType.PERP,
 			baseAssetAmount: finalBaseAssetAmount,
 			orderConfig: orderConfig as LimitOrderParamsOrderConfig & {
 				limitAuction: LimitAuctionConfig;
@@ -422,6 +332,7 @@ export const createSwiftLimitOrder = async (
 	const orderParams = orderConfig.limitAuction?.enable
 		? await getLimitAuctionOrderParams({
 				...params,
+				marketType: MarketType.PERP,
 				baseAssetAmount: finalBaseAssetAmount,
 				orderConfig: orderConfig as LimitOrderParamsOrderConfig & {
 					limitAuction: LimitAuctionConfig;

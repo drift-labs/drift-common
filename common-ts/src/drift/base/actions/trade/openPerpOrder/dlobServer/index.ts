@@ -9,8 +9,8 @@ import {
 	PublicKey,
 	decodeUser,
 	DefaultOrderParams,
-	PRICE_PRECISION,
 	BASE_PRECISION,
+	TEN,
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../../../../../../utils';
 import {
@@ -58,7 +58,7 @@ interface RegularOrderParams {
 	driftClient: DriftClient;
 	user: User;
 	assetType: 'base' | 'quote';
-	marketType?: MarketType;
+	marketType: MarketType;
 	marketIndex: number;
 	direction: PositionDirection;
 	amount: BN;
@@ -177,12 +177,34 @@ export async function fetchAuctionOrderParams(params: RegularOrderParams) {
 	}
 }
 
+const calcBaseFromQuote = (
+	driftClient: DriftClient,
+	marketType: MarketType,
+	marketIndex: number,
+	amount: BN
+) => {
+	const isPerp = ENUM_UTILS.match(marketType, MarketType.PERP);
+
+	const oraclePrice = isPerp
+		? driftClient.getOracleDataForPerpMarket(marketIndex).price
+		: driftClient.getOracleDataForSpotMarket(marketIndex).price;
+
+	if (isPerp) {
+		return amount.mul(BASE_PRECISION).div(oraclePrice);
+	} else {
+		const spotMarketAccount = driftClient.getSpotMarketAccount(marketIndex);
+		invariant(spotMarketAccount, 'Spot market account not found');
+		const precision = TEN.pow(new BN(spotMarketAccount.decimals));
+		return amount.mul(precision).div(oraclePrice);
+	}
+};
+
 /**
  * Fetches auction order parameters from the auction params endpoint
  */
 export async function fetchAuctionOrderParamsFromDlob({
 	marketIndex,
-	marketType = MarketType.PERP,
+	marketType,
 	direction,
 	amount,
 	dlobServerHttpUrl,
@@ -193,11 +215,7 @@ export async function fetchAuctionOrderParamsFromDlob({
 	const baseAmount =
 		assetType === 'base'
 			? amount
-			: (() => {
-					const oraclePrice =
-						driftClient.getOracleDataForPerpMarket(marketIndex).price;
-					return amount.mul(BASE_PRECISION).div(oraclePrice);
-			  })();
+			: calcBaseFromQuote(driftClient, marketType, marketIndex, amount);
 
 	// Build URL parameters for server request
 	const urlParamsObject: Record<string, string> = {
@@ -276,11 +294,7 @@ export async function fetchAuctionOrderParamsFromL2({
 	const baseAmount =
 		assetType === 'base'
 			? amount
-			: (() => {
-					const oraclePrice =
-						driftClient.getOracleDataForPerpMarket(marketIndex).price;
-					return amount.mul(oraclePrice).div(PRICE_PRECISION);
-			  })();
+			: calcBaseFromQuote(driftClient, marketType, marketIndex, amount);
 
 	const l2DataResponse = await fetchBulkMarketsDlobL2Data(dlobServerHttpUrl, [
 		{
