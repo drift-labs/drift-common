@@ -2,15 +2,25 @@ import {
 	BN,
 	DriftClient,
 	OrderTriggerCondition,
+	OrderType,
 	PositionDirection,
-	TxParams,
+	PostOnlyParams,
 	User,
 } from '@drift-labs/sdk';
 import {
+	PublicKey,
 	Transaction,
 	TransactionInstruction,
 	VersionedTransaction,
 } from '@solana/web3.js';
+import { ENUM_UTILS } from '../../../../utils';
+import invariant from 'tiny-invariant';
+import { getLimitAuctionOrderParams } from './openPerpOrder/openPerpNonMarketOrder';
+import {
+	LimitAuctionConfig,
+	LimitOrderParamsOrderConfig,
+} from './openPerpOrder/types';
+import { WithTxnParams } from '../../types';
 
 /**
  * Parameters for editing an existing order
@@ -46,34 +56,88 @@ interface EditOrderParams {
 	policy?: number;
 }
 
+interface CreateEditOrderIxParams {
+	driftClient: DriftClient;
+	user: User;
+	orderId: number;
+	editOrderParams: EditOrderParams;
+	mainSignerOverride?: PublicKey;
+	limitAuctionOrderConfig?: LimitOrderParamsOrderConfig & {
+		limitAuction: LimitAuctionConfig;
+	};
+}
+
 /**
  * Creates a transaction instruction to edit an existing order
  * @param driftClient - The DriftClient instance
  * @param userPublicKey - The public key of the user who owns the order
  * @param orderId - The ID of the order to edit
  * @param editOrderParams - Parameters containing the new order values
+ * @param limitAuctionOrderConfig - Configuration for the limit auction order. If not provided, limit auction will not be enabled when relevant.
  * @returns Promise that resolves to a TransactionInstruction
  */
 export const createEditOrderIx = async (
-	driftClient: DriftClient,
-	user: User,
-	orderId: number,
-	editOrderParams: EditOrderParams
+	params: CreateEditOrderIxParams
 ): Promise<TransactionInstruction> => {
-	const userPublicKey = user.getUserAccountPublicKey();
-	const _currentOrder = user.getOrderByUserOrderId(orderId);
+	const {
+		driftClient,
+		user,
+		orderId,
+		editOrderParams,
+		mainSignerOverride,
+		limitAuctionOrderConfig,
+	} = params;
+	const currentOrder = user.getOrder(orderId);
 
-	// TODO: handle auction params
+	invariant(currentOrder, 'Current order not found');
+
+	const isLimitOrder = ENUM_UTILS.match(
+		currentOrder.orderType,
+		OrderType.LIMIT
+	);
+
+	let finalEditOrderParams = editOrderParams;
+
+	// handle limit auction if config is provided
+	if (
+		isLimitOrder &&
+		limitAuctionOrderConfig &&
+		ENUM_UTILS.match(currentOrder.postOnly, PostOnlyParams.NONE)
+	) {
+		const limitAuctionOrderParams = await getLimitAuctionOrderParams({
+			driftClient,
+			user,
+			marketIndex: currentOrder.marketIndex,
+			direction: currentOrder.direction,
+			baseAssetAmount: currentOrder.baseAssetAmount,
+			userOrderId: currentOrder.userOrderId,
+			reduceOnly: currentOrder.reduceOnly,
+			postOnly: currentOrder.postOnly,
+			orderConfig: limitAuctionOrderConfig,
+		});
+
+		finalEditOrderParams = {
+			...editOrderParams,
+			auctionDuration: limitAuctionOrderParams.auctionDuration,
+			auctionStartPrice: limitAuctionOrderParams.auctionStartPrice,
+			auctionEndPrice: limitAuctionOrderParams.auctionEndPrice,
+		};
+	}
 
 	return driftClient.getModifyOrderIx(
 		{
 			orderId,
-			...editOrderParams,
+			...finalEditOrderParams,
 		},
 		undefined,
-		userPublicKey
+		{
+			user,
+			authority: mainSignerOverride,
+		}
 	);
 };
+
+type CreateEditOrderTxnParams = WithTxnParams<CreateEditOrderIxParams>;
 
 /**
  * Creates a complete transaction to edit an existing order
@@ -84,15 +148,12 @@ export const createEditOrderIx = async (
  * @param txParams - Optional transaction parameters (compute units, priority fees, etc.)
  * @returns Promise that resolves to a Transaction or VersionedTransaction
  */
-export const createEditOrderTxn = async (
-	driftClient: DriftClient,
-	user: User,
-	orderId: number,
-	editOrderParams: EditOrderParams,
-	txParams?: TxParams
-): Promise<Transaction | VersionedTransaction> => {
-	return driftClient.buildTransaction(
-		await createEditOrderIx(driftClient, user, orderId, editOrderParams),
+export const createEditOrderTxn = async ({
+	txParams,
+	...params
+}: CreateEditOrderTxnParams): Promise<Transaction | VersionedTransaction> => {
+	return params.driftClient.buildTransaction(
+		await createEditOrderIx(params),
 		txParams
 	);
 };

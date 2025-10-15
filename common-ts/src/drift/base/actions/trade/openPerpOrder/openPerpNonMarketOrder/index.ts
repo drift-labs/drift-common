@@ -86,7 +86,7 @@ export type OpenPerpNonMarketOrderParams<
 			swiftOptions?: never;
 	  };
 
-const getLimitAuctionOrderParams = async ({
+export const getLimitAuctionOrderParams = async ({
 	driftClient,
 	user,
 	marketIndex,
@@ -254,7 +254,11 @@ export const createOpenPerpNonMarketOrderIxs = async (
 	}
 
 	// handle limit auction
-	if (orderConfig.orderType === 'limit' && orderConfig.limitAuction?.enable) {
+	if (
+		orderConfig.orderType === 'limit' &&
+		orderConfig.limitAuction?.enable &&
+		ENUM_UTILS.match(postOnly, PostOnlyParams.NONE)
+	) {
 		const limitAuctionOrderParams = await getLimitAuctionOrderParams({
 			...params,
 			baseAssetAmount: finalBaseAssetAmount,
