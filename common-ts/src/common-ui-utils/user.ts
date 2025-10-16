@@ -196,6 +196,7 @@ const getOpenPositionData = (
 					true
 				),
 				maxMarginRatio: position.maxMarginRatio,
+				positionFlag: position.positionFlag,
 			};
 		});
 
