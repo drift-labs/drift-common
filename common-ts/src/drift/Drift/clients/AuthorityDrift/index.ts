@@ -17,6 +17,7 @@ import {
 	User,
 	WhileValidTxSender,
 	IWalletV2,
+	TxParams,
 } from '@drift-labs/sdk';
 import { Connection, PublicKey, TransactionSignature } from '@solana/web3.js';
 import { COMMON_UI_UTILS } from '../../../../common-ui-utils/commonUiUtils';
@@ -66,6 +67,7 @@ import {
 	SwapParams,
 	SettleAccountPnlParams,
 	CancelOrdersParams,
+	CreateRevenueShareEscrowParams,
 } from './DriftOperations/types';
 import { Initialize } from '../../../../Config';
 import { L2WithOracleAndMarketData } from '../../../../utils/orderbook';
@@ -769,6 +771,18 @@ export class AuthorityDrift {
 	}
 
 	/**
+	 * Creates a RevenueShareEscrow account for the user.
+	 *
+	 * @param params - Parameters for creating a RevenueShareEscrow account
+	 * @returns Promise resolving to the transaction signature of the creation
+	 */
+	public async createRevenueShareEscrow(
+		params: CreateRevenueShareEscrowParams
+	): Promise<TransactionSignature> {
+		return this.driftOperations.createRevenueShareEscrow(params);
+	}
+
+	/**
 	 * Deposits collateral into a user's spot market position.
 	 *
 	 * @param params - Parameters for the deposit operation
@@ -853,5 +867,9 @@ export class AuthorityDrift {
 		params: CancelOrdersParams
 	): Promise<TransactionSignature> {
 		return this.driftOperations.cancelOrders(params);
+	}
+
+	public getTxParams(overrides?: Partial<TxParams>): TxParams {
+		return this.driftOperations.getTxParams(overrides);
 	}
 }

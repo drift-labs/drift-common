@@ -61,6 +61,34 @@ export interface OpenPerpMarketOrderBaseParams {
 	 * This is only applicable for non-SWIFT orders.
 	 */
 	mainSignerOverride?: PublicKey;
+	/**
+	 * Optional builder code parameters for revenue sharing.
+	 * Only applicable for Swift orders.
+	 *
+	 * Prerequisites:
+	 * - User must have initialized a RevenueShareEscrow account
+	 * - Builder must be in the user's approved_builders list
+	 * - builderFeeTenthBps must not exceed the builder's max_fee_tenth_bps
+	 *
+	 * @example
+	 * ```typescript
+	 * builderParams: {
+	 *   builderIdx: 0,          // First builder in approved list
+	 *   builderFeeTenthBps: 50  // 5 bps = 0.05%
+	 * }
+	 * ```
+	 */
+	builderParams?: {
+		/**
+		 * Index of the builder in the user's approved_builders list.
+		 */
+		builderIdx: number;
+		/**
+		 * Fee to charge for this order, in tenths of basis points.
+		 * Must be <= the builder's max_fee_tenth_bps.
+		 */
+		builderFeeTenthBps: number;
+	};
 }
 
 export interface OpenPerpMarketOrderBaseParamsWithSwift
@@ -101,6 +129,7 @@ export async function createSwiftMarketOrder({
 	swiftOptions,
 	userOrderId = 0,
 	positionMaxLeverage,
+	builderParams,
 }: OpenPerpMarketOrderBaseParamsWithSwift): Promise<void> {
 	if (amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
@@ -152,6 +181,7 @@ export async function createSwiftMarketOrder({
 			stopLoss: bracketOrders?.stopLoss,
 			positionMaxLeverage,
 		},
+		builderParams,
 	});
 }
 

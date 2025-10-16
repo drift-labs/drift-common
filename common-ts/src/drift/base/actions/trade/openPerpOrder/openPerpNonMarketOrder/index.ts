@@ -55,6 +55,14 @@ export interface OpenPerpNonMarketOrderBaseParams
 	 * This is only applicable for non-SWIFT orders.
 	 */
 	mainSignerOverride?: PublicKey;
+	/**
+	 * Optional builder code parameters for revenue sharing.
+	 * Only applicable for Swift orders for now.
+	 */
+	builderParams?: {
+		builderIdx: number;
+		builderFeeTenthBps: number;
+	};
 }
 
 export interface OpenPerpNonMarketOrderParamsWithSwift
@@ -369,6 +377,7 @@ export const createSwiftLimitOrder = async (
 			stopLoss: orderConfig.bracketOrders?.stopLoss,
 			positionMaxLeverage: params.positionMaxLeverage,
 		},
+		builderParams: params.builderParams,
 	});
 };
 
