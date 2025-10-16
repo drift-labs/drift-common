@@ -200,6 +200,11 @@ export class SwiftClient {
 		signedMsgOrderUuid: Uint8Array,
 		confirmDuration: number
 	): Promise<number | undefined> {
+		allEnvDlog(
+			'swiftClient',
+			'confirmSwiftOrderWS - confirmation duration',
+			confirmDuration
+		);
 		return new Promise((resolve, reject) => {
 			const timeout = setTimeout(() => {
 				reject(new Error('Order not found'));

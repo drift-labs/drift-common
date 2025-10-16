@@ -878,3 +878,4 @@ export const COMMON_UTILS = {
 		},
 	},
 };
+export { getSwiftConfirmationTimeoutMs } from './signedMsgs';
