@@ -29,6 +29,7 @@ import {
 	SwapParams,
 	SettleAccountPnlParams,
 	CancelOrdersParams,
+	CreateRevenueShareEscrowParams,
 } from './types';
 import { createCancelOrdersTxn } from '../../../../base/actions/trade/cancelOrder';
 import {
@@ -37,6 +38,7 @@ import {
 } from '../../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { createSwapTxn } from '../../../../base/actions/trade/swap';
 import { createOpenPerpNonMarketOrder } from '../../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
+import { createRevenueShareEscrowTxn } from '../../../../base/actions/builder/createRevenueShareEscrow';
 
 /**
  * Handles majority of the relevant operations on the Drift program including deposits,
@@ -74,7 +76,7 @@ export class DriftOperations {
 	 * Gets transaction parameters with dynamic priority fees.
 	 * Falls back to default if priority fee function is not available.
 	 */
-	private getTxParams(overrides?: Partial<TxParams>): TxParams {
+	getTxParams(overrides?: Partial<TxParams>): TxParams {
 		const unsafePriorityFee = Math.floor(
 			this.getPriorityFee() ??
 				DriftOperations.DEFAULT_TX_PARAMS.computeUnitsPrice
@@ -182,6 +184,39 @@ export class DriftOperations {
 			txSig,
 			user,
 		};
+	}
+
+	/**
+	 * Creates a RevenueShareEscrow account for the user.
+	 *
+	 * @param params - The parameters for creating a RevenueShareEscrow account
+	 * @returns Promise resolving to the transaction signature of the creation
+	 *
+	 * @example
+	 * ```typescript
+	 * const txSig = await tradingOps.createRevenueShareEscrow({
+	 *   numOrders: 16,
+	 *   builder: {
+	 *     builderAuthority: new PublicKey("builderAuthority"),
+	 *     maxFeeTenthBps: 100,
+	 *   },
+	 * });
+	 * ```
+	 */
+	async createRevenueShareEscrow(
+		params: CreateRevenueShareEscrowParams
+	): Promise<TransactionSignature> {
+		const txn = await createRevenueShareEscrowTxn({
+			driftClient: this.driftClient,
+			authority: this.driftClient.wallet.publicKey,
+			numOrders: params.numOrders ?? 16,
+			builder: params.builder,
+			txParams: this.getTxParams(),
+		});
+
+		const { txSig } = await this.driftClient.sendTransaction(txn);
+
+		return txSig;
 	}
 
 	/**
@@ -429,6 +464,7 @@ export class DriftOperations {
 						marketIndex: params.marketIndex,
 						optionalAuctionParamsInputs:
 							params.orderConfig.optionalAuctionParamsInputs,
+						builderParams: params.builderParams,
 					});
 
 					return swiftOrderResult;
@@ -486,6 +522,7 @@ export class DriftOperations {
 							swiftServerUrl: this.swiftServerUrl,
 							...params.orderConfig.swiftOptions,
 						},
+						builderParams: params.builderParams,
 					});
 
 					return swiftOrderResult;

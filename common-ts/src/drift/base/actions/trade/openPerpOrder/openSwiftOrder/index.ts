@@ -100,6 +100,32 @@ interface PrepSwiftOrderParams {
 	};
 	/** Buffer slots to account for signing time (default: 2 slots ~1 second). If a user is required to manually sign the message, this should be a higher number. */
 	slotBuffer?: number;
+	/**
+	 * Optional builder code parameters for revenue sharing.
+	 * If provided, the builder will receive a portion of the trading fees.
+	 *
+	 * Prerequisites:
+	 * - User must have initialized a RevenueShareEscrow account
+	 * - Builder must be in the user's approved_builders list
+	 * - builderFeeTenthBps must not exceed the builder's max_fee_tenth_bps
+	 */
+	builderParams?: {
+		/**
+		 * Index of the builder in the user's approved_builders list.
+		 * This is the position (0-indexed) of the builder in the RevenueShareEscrow.approved_builders array.
+		 */
+		builderIdx: number;
+		/**
+		 * Fee to charge for this order, in tenths of basis points.
+		 * Must be <= the builder's max_fee_tenth_bps.
+		 *
+		 * Examples:
+		 * - 10 = 1 bps = 0.01%
+		 * - 50 = 5 bps = 0.05%
+		 * - 100 = 10 bps = 0.1%
+		 */
+		builderFeeTenthBps: number;
+	};
 }
 
 /**
@@ -126,6 +152,7 @@ export const prepSwiftOrder = ({
 	isDelegate,
 	orderParams,
 	slotBuffer = 35,
+	builderParams,
 }: PrepSwiftOrderParams): {
 	hexEncodedSwiftOrderMessage: {
 		uInt8Array: Uint8Array;
@@ -168,6 +195,9 @@ export const prepSwiftOrder = ({
 					orderParams.positionMaxLeverage
 			  )
 			: null,
+		// Include builder params if provided
+		builderIdx: builderParams?.builderIdx ?? null,
+		builderFeeTenthBps: builderParams?.builderFeeTenthBps ?? null,
 	};
 
 	const signedMsgOrderParamsMessage:
@@ -372,6 +402,34 @@ type PrepSignAndSendSwiftOrderParams = {
 		 */
 		positionMaxLeverage?: number;
 	};
+	/**
+	 * Optional builder code parameters for revenue sharing.
+	 * If provided, the builder will receive a portion of the trading fees.
+	 *
+	 * Prerequisites:
+	 * - User must have initialized a RevenueShareEscrow account
+	 * - Builder must be in the user's approved_builders list
+	 * - builderFeeTenthBps must not exceed the builder's max_fee_tenth_bps
+	 *
+	 * @example
+	 * ```typescript
+	 * builderParams: {
+	 *   builderIdx: 0,          // First builder in approved list
+	 *   builderFeeTenthBps: 50  // 5 bps = 0.05%
+	 * }
+	 * ```
+	 */
+	builderParams?: {
+		/**
+		 * Index of the builder in the user's approved_builders list.
+		 */
+		builderIdx: number;
+		/**
+		 * Fee to charge for this order, in tenths of basis points.
+		 * Must be <= the builder's max_fee_tenth_bps.
+		 */
+		builderFeeTenthBps: number;
+	};
 };
 
 /**
@@ -387,6 +445,7 @@ export const prepSignAndSendSwiftOrder = async ({
 	slotBuffer,
 	swiftOptions,
 	orderParams,
+	builderParams,
 }: PrepSignAndSendSwiftOrderParams): Promise<void> => {
 	const currentSlot = await driftClient.connection.getSlot('confirmed');
 
@@ -404,6 +463,7 @@ export const prepSignAndSendSwiftOrder = async ({
 		isDelegate: swiftOptions.isDelegate || false,
 		orderParams,
 		slotBuffer,
+		builderParams,
 	});
 
 	swiftOptions.callbacks?.onOrderParamsMessagePrepped?.(

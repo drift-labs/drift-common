@@ -2,6 +2,7 @@ import {
 	BigNum,
 	PositionDirection,
 	PostOnlyParams,
+	PublicKey,
 	QuoteResponse,
 } from '@drift-labs/sdk';
 import { OptionalAuctionParamsRequestInputs } from '../../../../base/actions/trade/openPerpOrder/dlobServer';
@@ -41,6 +42,14 @@ export interface CreateUserAndDepositParams {
 	referrerName?: string;
 }
 
+export interface CreateRevenueShareEscrowParams {
+	numOrders?: number;
+	builder?: {
+		builderAuthority: PublicKey;
+		maxFeeTenthBps: number;
+	};
+}
+
 /**
  * Interface for perp market order parameters.
  */
@@ -53,6 +62,29 @@ export type PerpOrderParams = {
 	reduceOnly?: boolean;
 	postOnly?: PostOnlyParams;
 	isMaxLeverage?: boolean;
+	/**
+	 * Optional builder code parameters for revenue sharing.
+	 * Only applicable for Swift orders for now (market and limit orders with Swift enabled).
+	 *
+	 * @example
+	 * ```typescript
+	 * builderParams: {
+	 *   builderIdx: 0,          // First builder in approved list
+	 *   builderFeeTenthBps: 50  // 5 bps = 0.05%
+	 * }
+	 * ```
+	 */
+	builderParams?: {
+		/**
+		 * Index of the builder in the user's approved_builders list.
+		 */
+		builderIdx: number;
+		/**
+		 * Fee to charge for this order, in tenths of basis points.
+		 * Must be <= the builder's max_fee_tenth_bps.
+		 */
+		builderFeeTenthBps: number;
+	};
 	orderConfig:
 		| {
 				orderType: 'market';
