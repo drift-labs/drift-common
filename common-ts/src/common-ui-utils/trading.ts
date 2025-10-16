@@ -16,43 +16,60 @@ import {
 	ZERO,
 	isVariant,
 } from '@drift-labs/sdk';
-import { MarketId, OpenPosition, UIOrderType } from 'src/types';
+import { MarketId, UIOrderType } from 'src/types';
+
+// const calculatePnlPctFromPosition = (
+// 	pnl: BN,
+// 	position: OpenPosition,
+// 	marginUsed?: BN
+// ): number => {
+// 	if (!position?.quoteEntryAmount || position?.quoteEntryAmount.eq(ZERO))
+// 		return 0;
+
+// 	let marginUsedNum: number;
+
+// 	if (marginUsed) {
+// 		marginUsedNum = BigNum.from(marginUsed, QUOTE_PRECISION_EXP).toNum();
+// 	} else {
+// 		const leverage = convertMarginRatioToLeverage(position.maxMarginRatio) ?? 1;
+// 		const quoteEntryAmountNum = BigNum.from(
+// 			position.quoteEntryAmount.abs(),
+// 			QUOTE_PRECISION_EXP
+// 		).toNum();
+
+// 		if (leverage <= 0 || quoteEntryAmountNum <= 0) {
+// 			marginUsedNum = 0;
+// 		} else {
+// 			marginUsedNum = quoteEntryAmountNum / leverage;
+// 		}
+// 	}
+
+// 	if (marginUsedNum <= 0) {
+// 		return 0;
+// 	}
+
+// 	return (
+// 		BigNum.from(pnl, QUOTE_PRECISION_EXP)
+// 			.shift(5)
+// 			.div(BigNum.fromPrint(`${marginUsedNum}`, QUOTE_PRECISION_EXP))
+// 			.toNum() * 100
+// 	);
+// };
 
 const calculatePnlPctFromPosition = (
 	pnl: BN,
-	position: OpenPosition,
-	marginUsed?: BN
+	quoteEntryAmount: BN,
+	leverage?: number
 ): number => {
-	if (!position?.quoteEntryAmount || position?.quoteEntryAmount.eq(ZERO))
-		return 0;
-
-	let marginUsedNum: number;
-
-	if (marginUsed) {
-		marginUsedNum = BigNum.from(marginUsed, QUOTE_PRECISION_EXP).toNum();
-	} else {
-		const leverage = convertMarginRatioToLeverage(position.maxMarginRatio) ?? 1;
-		const quoteEntryAmountNum = BigNum.from(
-			position.quoteEntryAmount.abs(),
-			QUOTE_PRECISION_EXP
-		).toNum();
-
-		if (leverage <= 0 || quoteEntryAmountNum <= 0) {
-			marginUsedNum = 0;
-		} else {
-			marginUsedNum = quoteEntryAmountNum / leverage;
-		}
-	}
-
-	if (marginUsedNum <= 0) {
-		return 0;
-	}
+	if (!quoteEntryAmount || quoteEntryAmount.eq(ZERO)) return 0;
 
 	return (
 		BigNum.from(pnl, QUOTE_PRECISION_EXP)
 			.shift(5)
-			.div(BigNum.fromPrint(`${marginUsedNum}`, QUOTE_PRECISION_EXP))
-			.toNum() * 100
+			.div(BigNum.from(quoteEntryAmount.abs(), QUOTE_PRECISION_EXP))
+			.toNum() *
+		100 *
+		(leverage ?? 1)
 	);
 };
 
