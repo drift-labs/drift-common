@@ -374,7 +374,8 @@ export const isEntirePositionOrder = (orderAmount: BigNum): boolean => {
  */
 const getMarginUsedForPosition = (
 	user: User,
-	marketIndex: number
+	marketIndex: number,
+	includeOpenOrders = true
 ): BN | undefined => {
 	const perpPosition = user.getPerpPosition(marketIndex);
 	if (!perpPosition) return undefined;
@@ -382,6 +383,7 @@ const getMarginUsedForPosition = (
 	const hc = user.getPerpPositionHealth({
 		marginCategory: 'Initial',
 		perpPosition,
+		includeOpenOrders,
 	});
 	const userCollateral = user.getTotalCollateral();
 	return userCollateral.lt(hc.weightedValue)
