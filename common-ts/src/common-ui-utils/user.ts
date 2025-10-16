@@ -23,6 +23,7 @@ import {
 	getUserAccountPublicKeySync,
 	calculateUnsettledFundingPnl,
 	isOracleValid,
+	AMM_RESERVE_PRECISION,
 } from '@drift-labs/sdk';
 import { OpenPosition, UIMarket } from '../types';
 import { TRADING_UTILS } from './trading';
@@ -145,9 +146,10 @@ const getOpenPositionData = (
 				marketIndex: position.marketIndex,
 				marketSymbol: perpMarketConfig.symbol,
 				direction: isShort ? 'short' : 'long',
-				notional: user
-					.getPerpPositionValue(position.marketIndex, oraclePriceData)
-					.abs(),
+				notional: position.baseAssetAmount
+					.abs()
+					.mul(markPrice)
+					.div(AMM_RESERVE_PRECISION),
 				baseSize: position.baseAssetAmount,
 				markPrice,
 				entryPrice,
