@@ -375,7 +375,7 @@ export const isEntirePositionOrder = (orderAmount: BigNum): boolean => {
 const getMarginUsedForPosition = (
 	user: User,
 	marketIndex: number,
-	includeOpenOrders: boolean
+	includeOpenOrders = true
 ): BN | undefined => {
 	const perpPosition = user.getPerpPosition(marketIndex);
 	if (!perpPosition) return undefined;
