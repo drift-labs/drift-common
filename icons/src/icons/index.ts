@@ -185,6 +185,7 @@ export { default as Up } from './components/Up';
 export { default as Upload } from './components/Upload';
 export { default as Vote } from './components/Vote';
 export { default as Wallet } from './components/Wallet';
+export { default as Warning } from './components/Warning';
 export { default as WarningFilled } from './components/WarningFilled';
 export { default as Withdraw } from './components/Withdraw';
 export { default as YES } from './components/YES';
