@@ -198,6 +198,7 @@ const getOpenPositionData = (
 					true
 				),
 				maxMarginRatio: position.maxMarginRatio,
+				isolatedPositionScaledBalance: position.isolatedPositionScaledBalance,
 				positionFlag: position.positionFlag,
 			};
 		});
