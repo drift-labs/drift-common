@@ -53,7 +53,7 @@ const calculateBidAskAndmarkPrice = (l2: L2OrderBook, oraclePrice?: BN) => {
 };
 
 const calculateSpreadQuote = (bestBidPrice: BN, bestAskPrice: BN) => {
-	return BN.max(bestBidPrice.sub(bestAskPrice), ZERO);
+	return BN.max(bestAskPrice.sub(bestBidPrice), ZERO);
 };
 
 function calculateSpreadPct(markPricePrice: BN, spreadQuote: BN) {
