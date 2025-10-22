@@ -106,7 +106,7 @@ function enforceGeoBlock(
 export interface AuthorityDriftConfig {
 	solanaRpcEndpoint: string;
 	driftEnv: DriftEnv;
-	wallet?: IWallet;
+	wallet?: IWalletV2;
 	driftDlobServerHttpUrl?: string;
 	tradableMarkets?: MarketId[];
 	selectedTradeMarket?: MarketId;
