@@ -1,4 +1,4 @@
-import { BN, L2OrderBook, PERCENTAGE_PRECISION } from '@drift-labs/sdk';
+import { BN, L2OrderBook, PERCENTAGE_PRECISION, ZERO } from '@drift-labs/sdk';
 
 const calculateMarkPrice = (
 	bestBidPrice?: BN,
@@ -53,7 +53,7 @@ const calculateBidAskAndmarkPrice = (l2: L2OrderBook, oraclePrice?: BN) => {
 };
 
 const calculateSpreadQuote = (bestBidPrice: BN, bestAskPrice: BN) => {
-	return bestBidPrice.sub(bestAskPrice).abs();
+	return BN.max(bestBidPrice.sub(bestAskPrice), ZERO);
 };
 
 function calculateSpreadPct(markPricePrice: BN, spreadQuote: BN) {
