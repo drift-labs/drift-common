@@ -34,6 +34,8 @@ export type OpenPosition = {
 	remainderBaseAmount?: number; // LP only
 	lpDeriskPrice?: BN; //LP only
 	maxMarginRatio: number;
+	isolatedPositionScaledBalance: BN;
+	positionFlag: number;
 };
 
 export type BankBalanceUI = SpotPosition & {
