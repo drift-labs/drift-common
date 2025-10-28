@@ -44,14 +44,9 @@ export interface OptionalAuctionParamsRequestInputs {
 	auctionStartPriceOffsetFrom?: TradeOffsetPrice;
 	auctionEndPriceOffsetFrom?: TradeOffsetPrice;
 	slippageTolerance?: number | 'dynamic';
-	auctionPriceCaps?: {
-		min: BN;
-		max: BN;
-	};
 	isOracleOrder?: boolean;
 	additionalEndPriceBuffer?: BN;
 	forceUpToSlippage?: boolean;
-	orderType?: 'market' | 'oracle';
 }
 
 interface RegularOrderParams {
