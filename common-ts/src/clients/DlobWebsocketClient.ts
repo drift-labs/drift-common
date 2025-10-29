@@ -223,6 +223,7 @@ export class DlobWebsocketClient {
 				data: string;
 			}>({
 				wsUrl: this.config.websocketUrl,
+				enableHeartbeatMonitoring: true,
 				subscriptionId: `${this.config.websocketUrl}_dlob_liquidity_${marketId.key}`,
 				subscribeMessage: JSON.stringify(
 					DLOB_SERVER_WEBSOCKET_UTILS.getSubscriptionProps({

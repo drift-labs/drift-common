@@ -14,6 +14,7 @@ type WebSocketSubscriptionProps<T = Record<string, unknown>> = {
 	errorMessageFilter?: (message: WebSocketMessage<T>) => boolean;
 	onClose?: () => void;
 	enableHeartbeatMonitoring?: boolean;
+	heartbeatTimeoutMs?: number;
 };
 
 type WebSocketSubscriptionState<T = Record<string, unknown>> =
@@ -28,7 +29,7 @@ type SubscriptionId = string;
 const DEFAULT_MAX_RECONNECT_ATTEMPTS = 5;
 const DEFAULT_MAX_RECONNECT_WINDOW_MS = 60 * 1000;
 const DEFAULT_CONNECTION_CLOSE_DELAY_MS = 2 * 1000; // 2 seconds delay before closing connection
-const DEFAULT_HEARTBEAT_TIMEOUT_MS = 60 * 1000; // Consider connection dead if no heartbeat within 60 seconds
+const DEFAULT_HEARTBEAT_TIMEOUT_MS = 11 * 1000; // Consider connection dead if no heartbeat within 11 seconds (a little more than twice of 5 seconds, the interval Drift servers use)
 
 /**
  * Manages reconnection logic for WebSocket connections with exponential backoff and rate limiting.
@@ -163,10 +164,12 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 	private closeTimeout: NodeJS.Timeout | null = null;
 	private heartbeatTimeout: NodeJS.Timeout | null = null;
 	private heartbeatMonitoringEnabled: boolean = false;
+	private heartbeatTimeoutMs: number = DEFAULT_HEARTBEAT_TIMEOUT_MS;
 
 	private constructor(
 		wsUrl: WebSocketUrl,
-		enableHeartbeatMonitoring: boolean = false
+		enableHeartbeatMonitoring: boolean = false,
+		heartbeatTimeoutMs: number = DEFAULT_HEARTBEAT_TIMEOUT_MS
 	) {
 		if (MultiplexWebSocket.URL_TO_WEBSOCKETS_LOOKUP.has(wsUrl)) {
 			throw new Error(
@@ -184,6 +187,7 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 
 		this.reconnectionManager = new ReconnectionManager();
 		this.heartbeatMonitoringEnabled = enableHeartbeatMonitoring;
+		this.heartbeatTimeoutMs = heartbeatTimeoutMs;
 
 		this.webSocket = new WebSocket(wsUrl);
 
@@ -215,7 +219,8 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 	) {
 		const newMWS = new MultiplexWebSocket<T>(
 			newSubscriptionProps.wsUrl,
-			newSubscriptionProps.enableHeartbeatMonitoring ?? false
+			newSubscriptionProps.enableHeartbeatMonitoring ?? false,
+			newSubscriptionProps.heartbeatTimeoutMs ?? DEFAULT_HEARTBEAT_TIMEOUT_MS
 		);
 
 		newMWS.subscribe(newSubscriptionProps);
@@ -253,6 +258,16 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 					`but new subscription requests ${
 						requestedHeartbeat ? 'enabled' : 'disabled'
 					}. Using existing setting.`
+			);
+		}
+
+		// Check if heartbeat timeout settings match for the same websocket URL (note that this assumes that all types of subscriptions from the same websocket URL are expected to have the same heartbeat interval)
+		const requestedTimeout =
+			newSubscriptionProps.heartbeatTimeoutMs ?? DEFAULT_HEARTBEAT_TIMEOUT_MS;
+		if (existingMWS.heartbeatTimeoutMs !== requestedTimeout) {
+			console.warn(
+				`WebSocket for ${wsUrl} already exists with heartbeat timeout ${existingMWS.heartbeatTimeoutMs}ms, ` +
+					`but new subscription requests ${requestedTimeout}ms. Using existing setting.`
 			);
 		}
 
@@ -540,10 +555,10 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 		// Set new timeout
 		this.heartbeatTimeout = setTimeout(() => {
 			console.warn(
-				`No heartbeat received within ${DEFAULT_HEARTBEAT_TIMEOUT_MS}ms - connection appears dead`
+				`No heartbeat received within ${this.heartbeatTimeoutMs}ms - connection appears dead`
 			);
 			this.refreshWebSocket();
-		}, DEFAULT_HEARTBEAT_TIMEOUT_MS);
+		}, this.heartbeatTimeoutMs);
 	}
 
 	private isHeartbeatMessage(message: WebSocketMessage<T>): boolean {
