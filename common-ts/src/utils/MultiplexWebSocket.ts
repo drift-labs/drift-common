@@ -1,4 +1,4 @@
-import { Subject, catchError, Subscription } from 'rxjs';
+import { Subject, Subscription, catchError } from 'rxjs';
 import WebSocket, { MessageEvent } from 'isomorphic-ws';
 
 type WebSocketMessage<T = Record<string, unknown>> = T;
@@ -10,8 +10,8 @@ type WebSocketSubscriptionProps<T = Record<string, unknown>> = {
 	unsubscribeMessage: string;
 	onError: (err?: any) => void;
 	onMessage: (message: WebSocketMessage<T>) => void;
-	messageFilter: (message: WebSocketMessage<T>) => boolean;
-	errorMessageFilter: (message: WebSocketMessage<T>) => boolean;
+	messageFilter?: (message: WebSocketMessage<T>) => boolean;
+	errorMessageFilter?: (message: WebSocketMessage<T>) => boolean;
 	onClose?: () => void;
 	enableHeartbeatMonitoring?: boolean;
 };
@@ -358,6 +358,7 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 			subscriptionState.hasSentSubscribeMessage = true;
 		}
 
+		// Create internal subscription for message handling
 		const subjectSubscription = this.subject
 			.pipe(
 				catchError((err) => {
@@ -369,9 +370,9 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 			.subscribe({
 				next: (message: WebSocketMessage<T>) => {
 					try {
-						if (!messageFilter(message)) return;
+						if (messageFilter && !messageFilter(message)) return;
 
-						if (errorMessageFilter(message)) {
+						if (errorMessageFilter && errorMessageFilter(message)) {
 							onError();
 							return;
 						}

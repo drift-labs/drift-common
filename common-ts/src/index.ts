@@ -31,6 +31,7 @@ export * from './clients/candleClient';
 export * from './clients/marketDataFeed';
 export * from './clients/swiftClient';
 export * from './clients/tvFeed';
+export * from './clients/DlobWebsocketClient';
 export * from './utils/pollingSequenceGuard';
 export * from './utils/driftEvents';
 export * from './utils/MultiplexWebSocket';
