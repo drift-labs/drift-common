@@ -32,6 +32,8 @@ const OPEN_POSITION_SOL_LONG: OpenPosition = {
 	realizedPnl: new BN(100),
 	lpShares: new BN(100),
 	maxMarginRatio: 20,
+	isolatedPositionScaledBalance: new BN(100),
+	positionFlag: 0,
 };
 
 const OPEN_POSITION_BTC_SHORT: OpenPosition = {
@@ -60,6 +62,8 @@ const OPEN_POSITION_BTC_SHORT: OpenPosition = {
 	pnlIsClaimable: true,
 	lpShares: new BN(100),
 	maxMarginRatio: 20,
+	isolatedPositionScaledBalance: new BN(100),
+	positionFlag: 0,
 };
 
 describe('Equality Checks', () => {
