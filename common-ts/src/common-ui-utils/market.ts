@@ -12,7 +12,6 @@ import {
 	PerpMarkets,
 	SpotMarkets,
 	DriftClient,
-	isVariant,
 } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '../utils';
 import { DEFAULT_MAX_MARKET_LEVERAGE } from '../constants/markets';
@@ -123,38 +122,39 @@ function getMarketConfig(
 	}
 }
 
-const getMaxLeverageForMarket = (
+const getMaxLeverageForMarketAccount = (
 	marketType: MarketType,
-	marketIndex: number,
-	driftClient: DriftClient
+	marketAccount: PerpMarketAccount | SpotMarketAccount
 ): {
 	maxLeverage: number;
 	highLeverageMaxLeverage: number;
 	hasHighLeverage: boolean;
 } => {
+	const isPerp = ENUM_UTILS.match(marketType, MarketType.PERP);
+
 	try {
-		if (isVariant(marketType, 'perp')) {
-			const marketAccount = driftClient.getPerpMarketAccount(marketIndex);
+		if (isPerp) {
+			const perpMarketAccount = marketAccount as PerpMarketAccount;
 
 			const maxLeverage = parseFloat(
 				(
 					1 /
-					((marketAccount?.marginRatioInitial
-						? marketAccount.marginRatioInitial
+					((perpMarketAccount?.marginRatioInitial
+						? perpMarketAccount.marginRatioInitial
 						: 10000 / DEFAULT_MAX_MARKET_LEVERAGE) /
 						10000)
 				).toFixed(2)
 			);
 
 			const marketHasHighLeverageMode =
-				!!marketAccount?.highLeverageMarginRatioInitial;
+				!!perpMarketAccount?.highLeverageMarginRatioInitial;
 
 			const highLeverageMaxLeverage = marketHasHighLeverageMode
 				? parseFloat(
 						(
 							1 /
-							((marketAccount?.highLeverageMarginRatioInitial
-								? marketAccount?.highLeverageMarginRatioInitial
+							((perpMarketAccount?.highLeverageMarginRatioInitial
+								? perpMarketAccount?.highLeverageMarginRatioInitial
 								: 10000 / DEFAULT_MAX_MARKET_LEVERAGE) /
 								10000)
 						).toFixed(1)
@@ -167,10 +167,10 @@ const getMaxLeverageForMarket = (
 				hasHighLeverage: marketHasHighLeverageMode,
 			};
 		} else {
-			const marketAccount = driftClient.getSpotMarketAccount(marketIndex);
+			const spotMarketAccount = marketAccount as SpotMarketAccount;
 
-			const liabilityWeight = marketAccount
-				? marketAccount.initialLiabilityWeight / 10000
+			const liabilityWeight = spotMarketAccount
+				? spotMarketAccount.initialLiabilityWeight / 10000
 				: 0;
 
 			return {
@@ -189,6 +189,22 @@ const getMaxLeverageForMarket = (
 	}
 };
 
+const getMaxLeverageForMarket = (
+	marketType: MarketType,
+	marketIndex: number,
+	driftClient: DriftClient
+): {
+	maxLeverage: number;
+	highLeverageMaxLeverage: number;
+	hasHighLeverage: boolean;
+} => {
+	const marketAccount = ENUM_UTILS.match(marketType, MarketType.PERP)
+		? driftClient.getPerpMarketAccount(marketIndex)
+		: driftClient.getSpotMarketAccount(marketIndex);
+
+	return getMaxLeverageForMarketAccount(marketType, marketAccount);
+};
+
 export const MARKET_UTILS = {
 	getBaseAssetSymbol,
 	getPausedOperations,
@@ -197,4 +213,5 @@ export const MARKET_UTILS = {
 	InsuranceFundOperationsMap,
 	getMarketConfig,
 	getMaxLeverageForMarket,
+	getMaxLeverageForMarketAccount,
 };

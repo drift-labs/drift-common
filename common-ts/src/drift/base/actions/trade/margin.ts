@@ -1,4 +1,9 @@
-import { DriftClient, User } from '@drift-labs/sdk';
+import {
+	DriftClient,
+	MarketType,
+	PerpMarketAccount,
+	User,
+} from '@drift-labs/sdk';
 import {
 	PublicKey,
 	Transaction,
@@ -7,11 +12,12 @@ import {
 } from '@solana/web3.js';
 import { WithTxnParams } from '../../types';
 import { TRADING_UTILS } from '../../../../common-ui-utils/trading';
+import { MARKET_UTILS } from '../../../../common-ui-utils';
 
 export interface CreateUpdateMarketMaxLeverageIxParams {
 	driftClient: DriftClient;
 	user: User;
-	perpMarketIndex: number;
+	perpMarketAccount: PerpMarketAccount;
 	leverage: number;
 	mainSignerOverride?: PublicKey;
 }
@@ -23,23 +29,55 @@ export interface CreateUpdateMarketMaxLeverageIxParams {
  */
 export const createUpdateMarketMaxLeverageIx = async (
 	params: CreateUpdateMarketMaxLeverageIxParams
-): Promise<TransactionInstruction> => {
-	const { driftClient, perpMarketIndex, leverage, mainSignerOverride } = params;
+): Promise<TransactionInstruction[]> => {
+	const { driftClient, perpMarketAccount, leverage, mainSignerOverride, user } =
+		params;
 
-	const marginRatio = TRADING_UTILS.convertLeverageToMarginRatio(leverage);
-	const userAccount = params.user.getUserAccount();
+	const userAccount = user.getUserAccount();
 	const subAccountIdToUse = userAccount.subAccountId;
 
-	return driftClient.getUpdateUserPerpPositionCustomMarginRatioIx(
-		perpMarketIndex,
-		marginRatio,
-		subAccountIdToUse,
-		{
-			userAccountPublicKey: params.user.getUserAccountPublicKey(),
-			authority: userAccount.authority,
-			signingAuthority: mainSignerOverride,
-		}
-	);
+	const ixs = [];
+
+	// Add enable High Leverage Mode ix for user if needed
+	const { maxLeverage: marketMaxNonHLLeverage } =
+		MARKET_UTILS.getMaxLeverageForMarketAccount(
+			MarketType.PERP,
+			perpMarketAccount
+		);
+	const isUserInHighLeverageMode = user.isHighLeverageMode('Initial');
+	const enableHLMForUser =
+		!isUserInHighLeverageMode && marketMaxNonHLLeverage < leverage;
+
+	if (enableHLMForUser) {
+		ixs.push(
+			await driftClient.getEnableHighLeverageModeIx(
+				subAccountIdToUse,
+				undefined,
+				{
+					user,
+					signingAuthority: mainSignerOverride,
+				}
+			)
+		);
+	}
+
+	// Update max leverage of perp market for user
+	const marginRatio = TRADING_UTILS.convertLeverageToMarginRatio(leverage);
+	const perpMarketIndex = perpMarketAccount.marketIndex;
+	const updateMaxLeverageIx =
+		await driftClient.getUpdateUserPerpPositionCustomMarginRatioIx(
+			perpMarketIndex,
+			marginRatio,
+			subAccountIdToUse,
+			{
+				userAccountPublicKey: params.user.getUserAccountPublicKey(),
+				authority: userAccount.authority,
+				signingAuthority: mainSignerOverride,
+			}
+		);
+	ixs.push(updateMaxLeverageIx);
+
+	return ixs;
 };
 
 type CreateUpdateMarketMaxMarginTxnParams =
