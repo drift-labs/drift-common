@@ -14,7 +14,7 @@ import { WithTxnParams } from '../../types';
 import { TRADING_UTILS } from '../../../../common-ui-utils/trading';
 import { MARKET_UTILS } from '../../../../common-ui-utils';
 
-export interface CreateUpdateMarketMaxLeverageIxParams {
+export interface CreateUpdateMarketMaxLeverageIxsParams {
 	driftClient: DriftClient;
 	user: User;
 	perpMarketAccount: PerpMarketAccount;
@@ -23,12 +23,12 @@ export interface CreateUpdateMarketMaxLeverageIxParams {
 }
 
 /**
- * Creates a transaction instruction to update a user's perp market max leverage
+ * Creates transaction instructions to update a user's perp market max leverage
  * @param params - Parameters for updating market max leverage
- * @returns Promise that resolves to a TransactionInstruction
+ * @returns Promise that resolves to an array of transaction instructions
  */
-export const createUpdateMarketMaxLeverageIx = async (
-	params: CreateUpdateMarketMaxLeverageIxParams
+export const createUpdateMarketMaxLeverageIxs = async (
+	params: CreateUpdateMarketMaxLeverageIxsParams
 ): Promise<TransactionInstruction[]> => {
 	const { driftClient, perpMarketAccount, leverage, mainSignerOverride, user } =
 		params;
@@ -36,7 +36,7 @@ export const createUpdateMarketMaxLeverageIx = async (
 	const userAccount = user.getUserAccount();
 	const subAccountIdToUse = userAccount.subAccountId;
 
-	const ixs = [];
+	const ixs: TransactionInstruction[] = [];
 
 	// Add enable High Leverage Mode ix for user if needed
 	const { maxLeverage: marketMaxNonHLLeverage } =
@@ -81,7 +81,7 @@ export const createUpdateMarketMaxLeverageIx = async (
 };
 
 type CreateUpdateMarketMaxMarginTxnParams =
-	WithTxnParams<CreateUpdateMarketMaxLeverageIxParams>;
+	WithTxnParams<CreateUpdateMarketMaxLeverageIxsParams>;
 
 /**
  * Creates a complete transaction to update a user's market max leverage
@@ -95,7 +95,7 @@ export const createUpdateMarketMaxLeverageTxn = async ({
 	Transaction | VersionedTransaction
 > => {
 	return params.driftClient.buildTransaction(
-		await createUpdateMarketMaxLeverageIx(params),
+		await createUpdateMarketMaxLeverageIxs(params),
 		txParams
 	);
 };
