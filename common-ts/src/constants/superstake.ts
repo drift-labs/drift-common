@@ -11,7 +11,7 @@ export type LST = {
 	defaultLeverage: number;
 	// Symbol of the token offered as emissions if there's an emissions APY on top of the normal APY
 	emissionsTokenSymbol?: string;
-	// use direct route for Jupiter swap
+	// use direct route for swap
 	onlyDirectRoute?: boolean;
 };
 
