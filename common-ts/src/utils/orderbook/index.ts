@@ -6,6 +6,7 @@ import {
 	MMOraclePriceData,
 	BigNum,
 	PERCENTAGE_PRECISION_EXP,
+	L2Level,
 } from '@drift-labs/sdk';
 import { MarketId } from '../../types';
 import { COMMON_MATH } from '../math';
@@ -70,7 +71,7 @@ export type RawL2Output = {
 	slot?: number;
 };
 
-export type LiquidityType = 'vamm' | 'dlob' | 'serum' | 'phoenix' | 'openbook';
+export type LiquidityType = keyof L2Level['sources'];
 
 /**
  * Helper function to deserialize the response from the dlob server. (See https://drift-labs.github.io/v2-teacher/#get-l2-l3)
