@@ -23,11 +23,13 @@ import { MarketId, TradeOffsetPrice } from '../../../../../../types';
 import {
 	convertToL2OrderBook,
 	deserializeL2Response,
-	L2WithOracleAndMarketData,
-	RawL2Output,
 	calculateDynamicSlippageFromL2,
 	DynamicSlippageConfig,
 } from '../../../../../../utils/orderbook';
+import {
+	L2WithOracleAndMarketData,
+	RawL2Output,
+} from '../../../../../../utils/orderbook/types';
 import { PollingSequenceGuard } from '../../../../../../utils/pollingSequenceGuard';
 import { calculatePriceImpactFromL2 } from '../../../../../../utils/priceImpact';
 import { COMMON_UI_UTILS } from '../../../../../../common-ui-utils';

@@ -70,7 +70,7 @@ import {
 	CreateRevenueShareEscrowParams,
 } from './DriftOperations/types';
 import { Initialize } from '../../../../Config';
-import { L2WithOracleAndMarketData } from '../../../../utils/orderbook';
+import { L2WithOracleAndMarketData } from '../../../../utils/orderbook/types';
 import { GeoBlockError } from '../../constants/errors';
 import {
 	DEFAULT_ORDERBOOK_GROUPING,

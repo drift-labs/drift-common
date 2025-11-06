@@ -1,6 +1,6 @@
 import { Subject, Observable } from 'rxjs';
 import { MarketId, MarketKey } from '../../../types/MarketId';
-import { L2WithOracleAndMarketData } from '../../../utils/orderbook';
+import { L2WithOracleAndMarketData } from '../../../utils/orderbook/types';
 import { PollingCategory } from '../constants/blockchain';
 import { fetchBulkMarketsDlobL2Data } from '../../base/actions/trade/openPerpOrder/dlobServer';
 

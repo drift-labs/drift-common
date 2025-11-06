@@ -1,10 +1,10 @@
 import { Subject, Subscription } from 'rxjs';
 import { MarketId } from '../../../../types';
+import { deserializeL2Response } from '../../../../utils/orderbook';
 import {
 	L2WithOracleAndMarketData,
 	RawL2Output,
-	deserializeL2Response,
-} from '../../../../utils/orderbook';
+} from '../../../../utils/orderbook/types';
 import { MultiplexWebSocket } from '../../../../utils/MultiplexWebSocket';
 import {
 	DLOB_SERVER_WEBSOCKET_UTILS,
