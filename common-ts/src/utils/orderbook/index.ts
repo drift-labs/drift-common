@@ -23,9 +23,10 @@ import {
 	RawL2Output,
 } from './types';
 import { COMMON_UTILS } from '..';
-import { EMPTY_ROW } from './constants';
+import { EMPTY_ORDERBOOK_ROW } from './constants';
 
 export * from './types';
+export * from './constants';
 
 /**
  * Helper function to deserialize the response from the dlob server. (See https://drift-labs.github.io/v2-teacher/#get-l2-l3)
@@ -655,7 +656,7 @@ export const getEmptyFilledBidsAsks = (
 	bidsOrAsks: OrderBookDisplayStateBidAsk[],
 	depth: number
 ): (OrderBookDisplayStateBidAsk | EmptyRow)[] => {
-	const result = Array(depth).fill(EMPTY_ROW);
+	const result = Array(depth).fill(EMPTY_ORDERBOOK_ROW);
 
 	bidsOrAsks.forEach((bidOrAsk, index) => {
 		if (index < depth) {
