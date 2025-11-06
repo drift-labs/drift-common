@@ -7,6 +7,7 @@ import {
 	BN,
 	MMOraclePriceData,
 	L2Level,
+	BigNum,
 } from '@drift-labs/sdk';
 
 export interface L2WithOracle extends L2OrderBook {
@@ -90,3 +91,33 @@ export enum CUMULATIVE_SIZE_CURRENCY {
 export type GroupingSizeQuoteValue = Opaque<number, 'GroupingSizeQuoteValue'>;
 
 export type CategorisedLiquidity = Partial<Record<LiquidityType, number>>;
+
+export type GroupingSizeSelectionState = {
+	options: number[];
+	selectionIndex: number;
+	updateSelectionIndex: (newVal: number | string) => void;
+};
+
+export type MarketPriceState = {
+	bestBid: BigNum;
+	bestAsk: BigNum;
+	markPrice: BigNum;
+	spreadPct: BigNum;
+	spreadQuote: BigNum;
+};
+
+export type OrderBookDisplayStateBidAsk = {
+	price: number;
+	size: CategorisedLiquidity;
+	cumulativeSize: CategorisedLiquidity;
+	cumulativeAvgPrice: number;
+};
+
+export type OrderBookDisplayState = {
+	bids: OrderBookDisplayStateBidAsk[];
+	asks: OrderBookDisplayStateBidAsk[];
+	bidTotalSize: number;
+	askTotalSize: number;
+};
+
+export type EmptyRow = Opaque<'EmptyRow', string>;

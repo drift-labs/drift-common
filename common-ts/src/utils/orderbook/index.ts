@@ -3,19 +3,27 @@ import {
 	BN,
 	BigNum,
 	PERCENTAGE_PRECISION_EXP,
+	PRICE_PRECISION_EXP,
+	L2Level,
+	ZERO,
+	groupL2,
 } from '@drift-labs/sdk';
 import { MarketId } from '../../types';
 import { COMMON_MATH } from '../math';
 import {
+	BidsAndAsks,
 	CategorisedLiquidity,
 	CUMULATIVE_SIZE_CURRENCY,
+	EmptyRow,
 	GroupingSizeQuoteValue,
 	L2WithOracleAndMarketData,
 	LiquidityType,
 	OrderBookBidAsk,
+	OrderBookDisplayStateBidAsk,
 	RawL2Output,
 } from './types';
 import { COMMON_UTILS } from '..';
+import { EMPTY_ROW } from './constants';
 
 export * from './types';
 
@@ -383,4 +391,277 @@ export const getZeroPaddingForGroupingSize = (
 	if (precision >= 0 || _groupingSize === 0) return 0;
 
 	return Math.abs(precision);
+};
+
+const sizeToNum = (size: BN, precision: BN) =>
+	BigNum.from(size, precision).toNum();
+
+export const getCategorisedLiquidityForLevel = (
+	level: L2Level,
+	basePrecision: BN
+): CategorisedLiquidity => {
+	const dlobSize = sizeToNum(level?.sources?.dlob ?? ZERO, basePrecision);
+	const vammSize = sizeToNum(level?.sources?.vamm ?? ZERO, basePrecision);
+	const serumSize = sizeToNum(level?.sources?.serum ?? ZERO, basePrecision);
+	const phoenixSize = sizeToNum(level?.sources?.phoenix ?? ZERO, basePrecision);
+	const openbookSize = sizeToNum(
+		level?.sources?.openbook ?? ZERO,
+		basePrecision
+	);
+	const indicativeSize = sizeToNum(
+		level?.sources?.indicative ?? ZERO,
+		basePrecision
+	);
+
+	const categorisedLiquidity: CategorisedLiquidity = {
+		dlob: dlobSize,
+		vamm: vammSize,
+		serum: serumSize,
+		phoenix: phoenixSize,
+		openbook: openbookSize,
+		indicative: indicativeSize,
+	};
+
+	return categorisedLiquidity;
+};
+
+const formatLevelsToDisplay = (
+	levels: L2Level[],
+	basePrecision: BN,
+	depth?: number
+): {
+	formattedLevels: OrderBookDisplayStateBidAsk[];
+	bestLevel: number;
+	cumulativeSize: number;
+} => {
+	const relevantSources: Set<LiquidityType> = new Set();
+
+	for (const level of levels) {
+		for (const source of Object.keys(level.sources)) {
+			relevantSources.add(source as LiquidityType);
+		}
+	}
+
+	const cumulativeSizes: CategorisedLiquidity = Array.from(
+		relevantSources
+	).reduce((acc, source) => {
+		acc[source] = 0;
+		return acc;
+	}, {} as CategorisedLiquidity);
+
+	let cumulativePriceSizeProduct = 0;
+	let cumulativeTotalSize = 0;
+
+	const formattedLevels: OrderBookDisplayStateBidAsk[] = levels.map((level) => {
+		const bucketSize = getCategorisedLiquidityForLevel(level, basePrecision);
+		const price = BigNum.from(level.price, PRICE_PRECISION_EXP).toNum();
+		const totalSize = Object.values(bucketSize).reduce(
+			(sum, size) => sum + size,
+			0
+		);
+
+		for (const source of relevantSources) {
+			const currentValue = cumulativeSizes[source];
+			if (currentValue !== undefined) {
+				cumulativeSizes[source] = currentValue + (bucketSize[source] ?? 0);
+			}
+		}
+
+		cumulativePriceSizeProduct += price * totalSize;
+		cumulativeTotalSize += totalSize;
+
+		return {
+			price,
+			size: bucketSize,
+			cumulativeSize: { ...cumulativeSizes },
+			cumulativeAvgPrice:
+				cumulativeTotalSize > 0
+					? cumulativePriceSizeProduct / cumulativeTotalSize
+					: 0,
+		};
+	});
+
+	if (depth && depth > 0) {
+		const visibleLevels = formattedLevels.slice(0, depth);
+		const maxCumulativeSize = Math.max(
+			0,
+			...visibleLevels.map((level) =>
+				Object.values(level.cumulativeSize).reduce((sum, size) => sum + size, 0)
+			)
+		);
+
+		return {
+			formattedLevels: visibleLevels,
+			bestLevel: visibleLevels?.[0]?.price,
+			cumulativeSize: maxCumulativeSize,
+		};
+	}
+
+	const totalSizeToReturn = Object.values(cumulativeSizes).reduce(
+		(total, current) => total + current,
+		0
+	);
+
+	return {
+		formattedLevels,
+		bestLevel: formattedLevels?.[0]?.price,
+		cumulativeSize: totalSizeToReturn,
+	};
+};
+
+export const formatL2ToDisplay = (
+	l2State: L2OrderBook,
+	basePrecision: BN,
+	depth?: number
+) => {
+	const formattedBids = formatLevelsToDisplay(
+		l2State.bids,
+		basePrecision,
+		depth
+	);
+	const formattedAsks = formatLevelsToDisplay(
+		l2State.asks,
+		basePrecision,
+		depth
+	);
+
+	return {
+		bids: formattedBids.formattedLevels,
+		asks: formattedAsks.formattedLevels,
+		bidTotalSize: formattedBids.cumulativeSize,
+		askTotalSize: formattedAsks.cumulativeSize,
+	};
+};
+
+const filterOutDisabledLiquidityTypes = (
+	l2Levels: L2Level[],
+	disabledLiquidityTypes: LiquidityType[]
+) =>
+	l2Levels
+		.map((level) => {
+			let totalDisabledSize = ZERO;
+			const disabledSourceObj: Record<LiquidityType, BN> = {} as Record<
+				LiquidityType,
+				BN
+			>;
+
+			for (const liquidityType of disabledLiquidityTypes) {
+				const disabledLiqSize = level.sources?.[liquidityType];
+				if (disabledLiqSize?.gt(ZERO)) {
+					totalDisabledSize = totalDisabledSize.add(disabledLiqSize);
+					disabledSourceObj[liquidityType] = ZERO;
+				}
+			}
+
+			return totalDisabledSize.gt(ZERO)
+				? {
+						...level,
+						size: level.size.sub(totalDisabledSize),
+						sources: {
+							...level.sources,
+							...disabledSourceObj,
+						},
+				  }
+				: level;
+		})
+		.filter((level) => level.size.gt(ZERO));
+
+export const l2ToDisplayBidsAndAsks = (
+	l2Orderbook: L2OrderBook,
+	oraclePrice: BN,
+	tickSizeForMarket: BN,
+	groupSizeTickMultiplier: number,
+	userBidsAndAsks: BidsAndAsks,
+	basePrecisionForMarket: BN,
+	disabledLiquidityTypes: LiquidityType[],
+	maxDepth: number,
+	depth?: number // limit the number of visible rows to calculate totalSize from
+) => {
+	const filteredBids =
+		disabledLiquidityTypes.length > 0
+			? filterOutDisabledLiquidityTypes(
+					l2Orderbook.bids,
+					disabledLiquidityTypes
+			  )
+			: l2Orderbook.bids;
+
+	const filteredAsks =
+		disabledLiquidityTypes.length > 0
+			? filterOutDisabledLiquidityTypes(
+					l2Orderbook.asks,
+					disabledLiquidityTypes
+			  )
+			: l2Orderbook.asks;
+
+	// # Uncross the liquidity
+	const uncrossed = {
+		l2Orderbook,
+		bids: filteredBids,
+		asks: filteredAsks,
+	};
+
+	// Group the orderbook into levels based on the grouping size
+	const grouped = groupL2(
+		uncrossed,
+		tickSizeForMarket.muln(groupSizeTickMultiplier ?? 1), // one user had a weird error where .muln was throwing assertion failed error
+		maxDepth
+	);
+
+	// # Convert to UI format
+	const formatted = formatL2ToDisplay(grouped, basePrecisionForMarket, depth);
+
+	// Check that bids are in descending order
+	if (
+		formatted.bids.some((bid, index) => {
+			if (index === 0) return false;
+
+			return bid.price > formatted.bids[index - 1].price;
+		})
+	) {
+		console.log('orderbook - bids_not_in_descending_order', {
+			l2Orderbook,
+			oraclePrice,
+			tickSizeForMarket,
+			userBidsAndAsks,
+			basePrecisionForMarket,
+			uncrossed,
+			formatted,
+		});
+	}
+
+	// Check that asks are in ascending order
+	if (
+		formatted.asks.some((ask, index) => {
+			if (index === 0) return false;
+
+			return ask.price < formatted.asks[index - 1].price;
+		})
+	) {
+		console.log('orderbook - asks_not_in_ascending_order', {
+			l2Orderbook,
+			oraclePrice,
+			tickSizeForMarket,
+			userBidsAndAsks,
+			basePrecisionForMarket,
+			uncrossed,
+			formatted,
+		});
+	}
+
+	return formatted;
+};
+
+export const getEmptyFilledBidsAsks = (
+	bidsOrAsks: OrderBookDisplayStateBidAsk[],
+	depth: number
+): (OrderBookDisplayStateBidAsk | EmptyRow)[] => {
+	const result = Array(depth).fill(EMPTY_ROW);
+
+	bidsOrAsks.forEach((bidOrAsk, index) => {
+		if (index < depth) {
+			result[index] = bidOrAsk;
+		}
+	});
+
+	return result;
 };
