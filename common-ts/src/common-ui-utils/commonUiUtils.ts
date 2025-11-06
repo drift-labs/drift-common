@@ -354,6 +354,9 @@ const getMarketAuctionParams = ({
 	auctionEndPriceOffset,
 	additionalEndPriceBuffer,
 	forceUpToSlippage,
+	bestBidPrice,
+	bestAskPrice,
+	ensureCrossingEndPrice,
 }: {
 	direction: PositionDirection;
 	startPriceFromSettings: BN;
@@ -368,6 +371,9 @@ const getMarketAuctionParams = ({
 	auctionEndPriceOffset: number;
 	additionalEndPriceBuffer?: BN;
 	forceUpToSlippage?: boolean;
+	bestBidPrice?: BN;
+	bestAskPrice?: BN;
+	ensureCrossingEndPrice?: boolean;
 }): AuctionParams => {
 	let auctionStartPrice: BN;
 	let auctionEndPrice: BN;
@@ -412,6 +418,14 @@ const getMarketAuctionParams = ({
 			constrainedBySlippage = limitPrice.lt(auctionEndPrice);
 		}
 
+		// if ensureCrossingEndPrice is passed, ensure auction end price crosses bestAskPrice
+		if (ensureCrossingEndPrice && bestAskPrice) {
+			auctionEndPrice = BN.max(
+				auctionEndPrice,
+				bestAskPrice.add(auctionEndPriceBuffer)
+			);
+		}
+
 		auctionStartPrice = BN.min(auctionStartPrice, auctionEndPrice);
 	} else {
 		auctionStartPrice = startPriceFromSettings.add(auctionStartPriceBuffer);
@@ -440,6 +454,14 @@ const getMarketAuctionParams = ({
 		if (additionalEndPriceBuffer) {
 			auctionEndPrice = auctionEndPrice.sub(additionalEndPriceBuffer);
 			constrainedBySlippage = limitPrice.gt(auctionEndPrice);
+		}
+
+		// if ensureCrossingEndPrice is passed, ensure auction end price crosses bestBidPrice
+		if (ensureCrossingEndPrice && bestBidPrice) {
+			auctionEndPrice = BN.min(
+				auctionEndPrice,
+				bestBidPrice.sub(auctionEndPriceBuffer)
+			);
 		}
 
 		auctionStartPrice = BN.max(auctionStartPrice, auctionEndPrice);
@@ -482,6 +504,9 @@ const deriveMarketOrderParams = ({
 	isOracleOrder,
 	additionalEndPriceBuffer,
 	forceUpToSlippage,
+	bestBidPrice,
+	bestAskPrice,
+	ensureCrossingEndPrice,
 }: {
 	marketType: MarketType;
 	marketIndex: number;
@@ -509,6 +534,9 @@ const deriveMarketOrderParams = ({
 	isOracleOrder?: boolean;
 	additionalEndPriceBuffer?: BN;
 	forceUpToSlippage?: boolean;
+	bestBidPrice?: BN;
+	bestAskPrice?: BN;
+	ensureCrossingEndPrice?: boolean;
 }): OptionalOrderParams & { constrainedBySlippage?: boolean } => {
 	const priceObject = getPriceObject({
 		oraclePrice,
@@ -542,6 +570,9 @@ const deriveMarketOrderParams = ({
 		auctionEndPriceOffset: auctionEndPriceOffset,
 		additionalEndPriceBuffer,
 		forceUpToSlippage,
+		bestBidPrice,
+		bestAskPrice,
+		ensureCrossingEndPrice,
 	});
 
 	let orderParams = getMarketOrderParams({
@@ -557,17 +588,12 @@ const deriveMarketOrderParams = ({
 	if (isOracleOrder) {
 		// wont work if oracle is zero
 		if (!oraclePrice.eq(ZERO)) {
-			// BEST (slippageLimitPrice, auctionEndPrice)
-			const oracleAuctionEndPrice = isVariant(direction, 'long')
-				? BN.min(limitPrice, auctionParams.auctionEndPrice)
-				: BN.max(limitPrice, auctionParams.auctionEndPrice);
-
 			const oracleAuctionParams = deriveOracleAuctionParams({
 				direction: direction,
 				oraclePrice,
 				auctionStartPrice: auctionParams.auctionStartPrice,
-				auctionEndPrice: oracleAuctionEndPrice,
-				limitPrice: oracleAuctionEndPrice,
+				auctionEndPrice: auctionParams.auctionEndPrice,
+				limitPrice: auctionParams.auctionEndPrice,
 				auctionPriceCaps: auctionPriceCaps,
 			});
 
