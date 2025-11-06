@@ -104,6 +104,7 @@ export type MarketPriceState = {
 	markPrice: BigNum;
 	spreadPct: BigNum;
 	spreadQuote: BigNum;
+	slot?: number;
 };
 
 export type OrderBookDisplayStateBidAsk = {
