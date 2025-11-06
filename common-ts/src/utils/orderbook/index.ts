@@ -1,77 +1,23 @@
 import {
-	MarketType,
-	OraclePriceData,
 	L2OrderBook,
 	BN,
-	MMOraclePriceData,
 	BigNum,
 	PERCENTAGE_PRECISION_EXP,
-	L2Level,
 } from '@drift-labs/sdk';
 import { MarketId } from '../../types';
 import { COMMON_MATH } from '../math';
+import {
+	CategorisedLiquidity,
+	CUMULATIVE_SIZE_CURRENCY,
+	GroupingSizeQuoteValue,
+	L2WithOracleAndMarketData,
+	LiquidityType,
+	OrderBookBidAsk,
+	RawL2Output,
+} from './types';
+import { COMMON_UTILS } from '..';
 
-export interface L2WithOracle extends L2OrderBook {
-	oracleData: OraclePriceData;
-	markPrice: BN;
-	bestBidPrice: BN;
-	bestAskPrice: BN;
-	spreadPct: BN;
-	spreadQuote: BN;
-	mmOracleData?: MMOraclePriceData;
-}
-
-export interface L2WithOracleAndMarketData extends L2WithOracle {
-	marketSlot: number;
-	marketIndex: number;
-	marketName: string;
-	marketType?: MarketType;
-}
-
-export type RawL2Output = {
-	marketIndex: number;
-	marketType: MarketType;
-	marketName: string;
-	marketSlot: number;
-	asks: {
-		price: string;
-		size: string;
-		sources: {
-			[key: string]: string;
-		};
-	}[];
-	bids: {
-		price: string;
-		size: string;
-		sources: {
-			[key: string]: string;
-		};
-	}[];
-	oracleData: {
-		price: string;
-		slot: string;
-		confidence: string;
-		hasSufficientNumberOfDataPoints: boolean;
-		twap?: string;
-		twapConfidence?: string;
-		maxPrice?: string;
-	};
-	mmOracleData?: {
-		price: string;
-		slot: string;
-		confidence: string;
-		hasSufficientNumberOfDataPoints: boolean;
-		isMMOracleActive: boolean;
-	};
-	markPrice: string;
-	bestBidPrice: string;
-	bestAskPrice: string;
-	spreadPct: string;
-	spreadQuote: string;
-	slot?: number;
-};
-
-export type LiquidityType = keyof L2Level['sources'];
+export * from './types';
 
 /**
  * Helper function to deserialize the response from the dlob server. (See https://drift-labs.github.io/v2-teacher/#get-l2-l3)
@@ -268,4 +214,173 @@ export const calculateDynamicSlippageFromL2 = ({
 
 	// Round to avoid floating point precision issues, preserving 6 decimal places
 	return Math.round(finalSlippage * 1000000) / 1000000;
+};
+
+export const getFormattedSize = (
+	sizesObject: Partial<Record<LiquidityType, number>>,
+	price: number,
+	currency: CUMULATIVE_SIZE_CURRENCY,
+	displayDecimals: number
+) => {
+	const sizeSum = Object.values(sizesObject || {}).reduce(
+		(acc, curr) => acc + curr,
+		0
+	);
+
+	const displayValue =
+		currency === CUMULATIVE_SIZE_CURRENCY.USD && price
+			? sizeSum * price
+			: sizeSum;
+
+	return BigNum.fromPrint(
+		displayValue.toFixed(displayDecimals),
+		new BN(displayDecimals)
+	).toMillified(3);
+};
+
+export const getLiquidityPcts = (
+	totalSize: number,
+	cumulativeSize: CategorisedLiquidity = {}
+) => {
+	const totalCumulativeSize = Object.values(cumulativeSize).reduce(
+		(acc, curr) => acc + curr,
+		0
+	);
+
+	const cumulativeSizePct = totalSize
+		? (totalCumulativeSize / totalSize) * 100
+		: 0; // This is the portion of the total size of the orderbook that the cumulative size of the liquidity should be occupying.
+
+	const cumulativeRestingSize =
+		totalCumulativeSize - (cumulativeSize?.indicative ?? 0);
+	const cumulativeIndicativeSize = cumulativeSize?.indicative ?? 0;
+
+	const restingLiquidityPct =
+		(cumulativeRestingSize / totalCumulativeSize) * cumulativeSizePct; // This is the portion of the width of the orderbook that the resting liquidity should be occupying
+
+	const indicativeLiquidityPct =
+		(cumulativeIndicativeSize / totalCumulativeSize) * cumulativeSizePct; // This is the portion of the width of the orderbook that the indicative liquidity should be occupying
+
+	return {
+		restingLiquidityPct,
+		indicativeLiquidityPct,
+	};
+};
+
+const roundForOrderbook = (num: number) => Number(num.toFixed(6));
+
+export const getBucketFloorForPrice = (
+	price: number,
+	groupingSize: GroupingSizeQuoteValue
+) => {
+	const priceIsNegative = price < 0;
+
+	const _groupingSize = groupingSize as unknown as number;
+
+	if (COMMON_UTILS.dividesExactly(price, _groupingSize)) {
+		return roundForOrderbook(price);
+	}
+
+	const amountToDeduct = priceIsNegative
+		? _groupingSize - (Math.abs(price) % _groupingSize)
+		: Math.abs(price) % _groupingSize;
+
+	const floorPrice = price - amountToDeduct;
+
+	return roundForOrderbook(floorPrice);
+};
+
+export const getUserLiquidityForPrice = ({
+	price,
+	side,
+	groupingSizeValue,
+	userAskPriceBucketLookup,
+	userBidPriceBucketLookup,
+}: {
+	price: number;
+	side: 'bid' | 'ask';
+	groupingSizeValue: GroupingSizeQuoteValue;
+	userAskPriceBucketLookup: Map<number, OrderBookBidAsk>;
+	userBidPriceBucketLookup: Map<number, OrderBookBidAsk>;
+}) => {
+	let isCurrentUserLiquidity = false;
+	let currentUserLiquiditySize = 0;
+
+	const priceToUse = price;
+	const priceBucket = getBucketFloorForPrice(priceToUse, groupingSizeValue);
+
+	const lookupBucket =
+		side === 'bid' ? userBidPriceBucketLookup : userAskPriceBucketLookup;
+
+	const matchingUserBidAsk = lookupBucket.get(priceBucket);
+
+	if (matchingUserBidAsk) {
+		isCurrentUserLiquidity = true;
+		currentUserLiquiditySize = matchingUserBidAsk.size;
+	}
+
+	return { isCurrentUserLiquidity, currentUserLiquiditySize };
+};
+
+const getBucketCeilingForPrice = (
+	price: number,
+	groupingSize: GroupingSizeQuoteValue
+) => {
+	const _groupingSize = groupingSize as unknown as number;
+	return getBucketFloorForPrice(price + _groupingSize, groupingSize);
+};
+
+export const getBucketAnchorPrice = (
+	type: 'bid' | 'ask',
+	price: number,
+	groupingSize: GroupingSizeQuoteValue
+) => {
+	// If the grouping size matches exactly then the anchor price should be the same as the floor price regardless
+	if (COMMON_UTILS.dividesExactly(price, groupingSize as unknown as number)) {
+		return getBucketFloorForPrice(price, groupingSize);
+	}
+
+	if (type === 'bid') {
+		return getBucketFloorForPrice(price, groupingSize);
+	} else {
+		return getBucketCeilingForPrice(price, groupingSize);
+	}
+};
+
+export const getBucketForUserLiquidity = (
+	price: number,
+	groupingSize: GroupingSizeQuoteValue,
+	type: 'bid' | 'ask'
+) => getBucketAnchorPrice(type, price, groupingSize);
+
+export const mergeBidsAndAsksForGroupsize = (
+	type: 'bid' | 'ask',
+	bidsAsks: OrderBookBidAsk[],
+	groupingSize: GroupingSizeQuoteValue
+): OrderBookBidAsk[] => {
+	const bidsAsksBucketLookup = new Map<number, OrderBookBidAsk>();
+
+	for (const bidAsk of bidsAsks) {
+		const anchorPrice = getBucketAnchorPrice(type, bidAsk.price, groupingSize);
+		const existingBucket = bidsAsksBucketLookup.get(anchorPrice);
+		if (existingBucket) {
+			existingBucket.size += bidAsk.size;
+		} else {
+			bidsAsksBucketLookup.set(anchorPrice, { ...bidAsk });
+		}
+	}
+
+	return Array.from(bidsAsksBucketLookup.values());
+};
+
+export const getZeroPaddingForGroupingSize = (
+	groupingSize: GroupingSizeQuoteValue
+) => {
+	const _groupingSize = groupingSize as unknown as number;
+
+	const precision = Math.floor(Math.log10(_groupingSize));
+
+	if (precision >= 0 || _groupingSize === 0) return 0;
+
+	return Math.abs(precision);
 };

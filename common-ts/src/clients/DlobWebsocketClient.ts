@@ -2,12 +2,11 @@
 
 import {
 	MarketId,
-	RawL2Output,
 	deserializeL2Response,
 	OrderbookGrouping,
 	DLOB_SERVER_WEBSOCKET_UTILS,
 	DlobServerChannel,
-} from '../index';
+} from '..';
 import { Observable, Subject, BehaviorSubject, EMPTY } from 'rxjs';
 import {
 	map,
@@ -20,6 +19,7 @@ import {
 } from 'rxjs/operators';
 import { ResultSlotIncrementer } from '../utils/ResultSlotIncrementer';
 import { MultiplexWebSocket } from '../utils/MultiplexWebSocket';
+import { RawL2Output } from '../utils/orderbook/types';
 
 export type OrderbookChannelTypes = Extract<
 	DlobServerChannel,
