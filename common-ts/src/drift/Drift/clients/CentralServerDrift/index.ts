@@ -64,7 +64,7 @@ import { CentralServerDriftMarkets } from './markets';
  * This is useful for an API server that fetches user data on-demand, and return transaction messages specific to a given user
  */
 export class CentralServerDrift {
-	private driftClient: DriftClient;
+	private _driftClient: DriftClient;
 	private _perpMarketConfigs: PerpMarketConfig[];
 	private _spotMarketConfigs: SpotMarketConfig[];
 	/**
@@ -142,20 +142,20 @@ export class CentralServerDrift {
 			oracleInfos: oracleInfos.oracleInfos,
 			...config.additionalDriftClientConfig,
 		};
-		this.driftClient = new DriftClient(driftClientConfig);
-		this.markets = new CentralServerDriftMarkets(this.driftClient);
+		this._driftClient = new DriftClient(driftClientConfig);
+		this.markets = new CentralServerDriftMarkets(this._driftClient);
 
 		const txSender = new WhileValidTxSender({
 			connection,
 			wallet,
 			additionalConnections: [],
 			additionalTxSenderCallbacks: [],
-			txHandler: this.driftClient.txHandler,
+			txHandler: this._driftClient.txHandler,
 			confirmationStrategy: DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 			retrySleep: DEFAULT_TX_SENDER_RETRY_INTERVAL,
 		});
 
-		this.driftClient.txSender = txSender;
+		this._driftClient.txSender = txSender;
 
 		// set up Drift endpoints
 		const driftDlobServerHttpUrlToUse =
@@ -172,12 +172,16 @@ export class CentralServerDrift {
 		};
 	}
 
+	public get driftClient() {
+		return this._driftClient;
+	}
+
 	public async subscribe() {
-		await this.driftClient.subscribe();
+		await this._driftClient.subscribe();
 	}
 
 	public async unsubscribe() {
-		await this.driftClient.unsubscribe();
+		await this._driftClient.unsubscribe();
 	}
 
 	/**
@@ -197,12 +201,12 @@ export class CentralServerDrift {
 		operation: (user: User) => Promise<T>
 	): Promise<T> {
 		const user = new User({
-			driftClient: this.driftClient,
+			driftClient: this._driftClient,
 			userAccountPublicKey,
 			accountSubscription: {
 				type: 'custom',
 				userAccountSubscriber: new OneShotUserAccountSubscriber(
-					this.driftClient.program,
+					this._driftClient.program,
 					userAccountPublicKey,
 					undefined,
 					undefined
@@ -211,17 +215,17 @@ export class CentralServerDrift {
 		});
 
 		// Store original state
-		const originalWallet = this.driftClient.wallet;
-		const originalAuthority = this.driftClient.authority;
+		const originalWallet = this._driftClient.wallet;
+		const originalAuthority = this._driftClient.authority;
 
 		try {
 			// Setup: Subscribe to user and configure DriftClient
 			await user.subscribe();
 
 			const authority = user.getUserAccount().authority;
-			this.driftClient.authority = authority;
+			this._driftClient.authority = authority;
 
-			const success = await this.driftClient.addUser(
+			const success = await this._driftClient.addUser(
 				user.getUserAccount().subAccountId,
 				authority
 			);
@@ -245,10 +249,10 @@ export class CentralServerDrift {
 			};
 
 			// Update wallet in all places that reference it
-			this.driftClient.wallet = userWallet;
+			this._driftClient.wallet = userWallet;
 			//@ts-ignore
-			this.driftClient.provider.wallet = userWallet;
-			this.driftClient.txHandler.updateWallet(userWallet);
+			this._driftClient.provider.wallet = userWallet;
+			this._driftClient.txHandler.updateWallet(userWallet);
 
 			// Execute the operation
 			const result = await operation(user);
@@ -256,13 +260,13 @@ export class CentralServerDrift {
 			return result;
 		} finally {
 			// Cleanup: Always restore original state and unsubscribe
-			this.driftClient.wallet = originalWallet;
-			this.driftClient.txHandler.updateWallet(originalWallet);
-			this.driftClient.authority = originalAuthority;
+			this._driftClient.wallet = originalWallet;
+			this._driftClient.txHandler.updateWallet(originalWallet);
+			this._driftClient.authority = originalAuthority;
 
 			try {
 				await user.unsubscribe();
-				this.driftClient.users.clear();
+				this._driftClient.users.clear();
 			} catch (cleanupError) {
 				console.warn('Error during cleanup:', cleanupError);
 				// Don't throw cleanup errors, but log them
@@ -279,13 +283,13 @@ export class CentralServerDrift {
 	 */
 	public async getUser(userAccountPublicKey: PublicKey): Promise<User> {
 		const oneShotUserAccountSubscriber = new OneShotUserAccountSubscriber(
-			this.driftClient.program,
+			this._driftClient.program,
 			userAccountPublicKey,
 			undefined,
 			undefined
 		);
 		const user = new User({
-			driftClient: this.driftClient,
+			driftClient: this._driftClient,
 			userAccountPublicKey,
 			accountSubscription: {
 				type: 'custom',
@@ -324,13 +328,13 @@ export class CentralServerDrift {
 		}
 
 		const userStatsAccount = await fetchUserStatsAccount(
-			this.driftClient.connection,
-			this.driftClient.program,
+			this._driftClient.connection,
+			this._driftClient.program,
 			authority
 		);
 
-		const originalWallet = this.driftClient.wallet;
-		const originalAuthority = this.driftClient.authority;
+		const originalWallet = this._driftClient.wallet;
+		const originalAuthority = this._driftClient.authority;
 
 		const authorityWallet = {
 			publicKey: authority,
@@ -341,14 +345,14 @@ export class CentralServerDrift {
 		};
 
 		try {
-			this.driftClient.wallet = authorityWallet;
+			this._driftClient.wallet = authorityWallet;
 			// @ts-ignore
-			this.driftClient.provider.wallet = authorityWallet;
-			this.driftClient.txHandler.updateWallet(authorityWallet);
-			this.driftClient.authority = authority;
+			this._driftClient.provider.wallet = authorityWallet;
+			this._driftClient.txHandler.updateWallet(authorityWallet);
+			this._driftClient.authority = authority;
 
 			return await createUserAndDepositCollateralBaseTxn({
-				driftClient: this.driftClient,
+				driftClient: this._driftClient,
 				amount,
 				spotMarketConfig,
 				authority,
@@ -361,11 +365,11 @@ export class CentralServerDrift {
 				txParams: options?.txParams,
 			});
 		} finally {
-			this.driftClient.wallet = originalWallet;
-			this.driftClient.txHandler.updateWallet(originalWallet);
+			this._driftClient.wallet = originalWallet;
+			this._driftClient.txHandler.updateWallet(originalWallet);
 			// @ts-ignore
-			this.driftClient.provider.wallet = originalWallet;
-			this.driftClient.authority = originalAuthority;
+			this._driftClient.provider.wallet = originalWallet;
+			this._driftClient.authority = originalAuthority;
 		}
 	}
 
@@ -391,7 +395,7 @@ export class CentralServerDrift {
 				}
 
 				const depositTxn = await createDepositTxn({
-					driftClient: this.driftClient,
+					driftClient: this._driftClient,
 					user,
 					amount: BigNum.from(amount, spotMarketConfig.precisionExp),
 					spotMarketConfig,
@@ -411,7 +415,7 @@ export class CentralServerDrift {
 	): Promise<VersionedTransaction | Transaction> {
 		return this.driftClientContextWrapper(userAccountPublicKey, async () => {
 			return deleteUserTxn({
-				driftClient: this.driftClient,
+				driftClient: this._driftClient,
 				userPublicKey: userAccountPublicKey,
 				txParams: options?.txParams,
 			});
@@ -442,7 +446,7 @@ export class CentralServerDrift {
 				}
 
 				const withdrawTxn = await createWithdrawTxn({
-					driftClient: this.driftClient,
+					driftClient: this._driftClient,
 					user,
 					amount: BigNum.from(amount, spotMarketConfig.precisionExp),
 					spotMarketConfig,
@@ -466,7 +470,7 @@ export class CentralServerDrift {
 			userAccountPublicKey,
 			async (user) => {
 				const settleFundingTxn = await createSettleFundingTxn({
-					driftClient: this.driftClient,
+					driftClient: this._driftClient,
 					user,
 					txParams: options?.txParams,
 				});
@@ -487,7 +491,7 @@ export class CentralServerDrift {
 			userAccountPublicKey,
 			async (user) => {
 				const settlePnlTxn = await createSettlePnlTxn({
-					driftClient: this.driftClient,
+					driftClient: this._driftClient,
 					user,
 					marketIndexes,
 					txParams: options?.txParams,
@@ -524,7 +528,7 @@ export class CentralServerDrift {
 							...swiftOptions,
 							swiftServerUrl: this._driftEndpoints.swiftServerUrl,
 						},
-						driftClient: this.driftClient,
+						driftClient: this._driftClient,
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 					});
@@ -534,7 +538,7 @@ export class CentralServerDrift {
 						...otherProps,
 						placeAndTake,
 						useSwift: false,
-						driftClient: this.driftClient,
+						driftClient: this._driftClient,
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 					});
@@ -574,7 +578,7 @@ export class CentralServerDrift {
 							...swiftOptions,
 							swiftServerUrl: this._driftEndpoints.swiftServerUrl,
 						},
-						driftClient: this.driftClient,
+						driftClient: this._driftClient,
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 					});
@@ -583,7 +587,7 @@ export class CentralServerDrift {
 					const openPerpNonMarketOrderTxn = await createOpenPerpNonMarketOrder({
 						...otherProps,
 						useSwift: false,
-						driftClient: this.driftClient,
+						driftClient: this._driftClient,
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 					});
@@ -620,7 +624,7 @@ export class CentralServerDrift {
 			userAccountPublicKey,
 			async (user) => {
 				const editOrderTxn = await createEditOrderTxn({
-					driftClient: this.driftClient,
+					driftClient: this._driftClient,
 					user,
 					orderId,
 					editOrderParams,
@@ -642,7 +646,7 @@ export class CentralServerDrift {
 			userAccountPublicKey,
 			async (user) => {
 				const cancelOrdersTxn = await createCancelOrdersTxn({
-					driftClient: this.driftClient,
+					driftClient: this._driftClient,
 					user,
 					orderIds,
 				});
@@ -664,14 +668,14 @@ export class CentralServerDrift {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const ix = await this.driftClient.getCancelOrdersIx(
+				const ix = await this._driftClient.getCancelOrdersIx(
 					marketType ?? null,
 					marketIndex ?? null,
 					direction ?? null,
 					user.getUserAccount().subAccountId
 				);
 
-				const cancelAllOrdersTxn = await this.driftClient.buildTransaction(ix);
+				const cancelAllOrdersTxn = await this._driftClient.buildTransaction(ix);
 
 				return cancelAllOrdersTxn;
 			}
@@ -717,7 +721,7 @@ export class CentralServerDrift {
 
 				// Initialize Jupiter client
 				const jupiterClient = new JupiterClient({
-					connection: this.driftClient.connection,
+					connection: this._driftClient.connection,
 				});
 
 				// Get quote if not provided
@@ -734,7 +738,7 @@ export class CentralServerDrift {
 				}
 
 				const swapTxn = await createSwapTxn({
-					driftClient: this.driftClient,
+					driftClient: this._driftClient,
 					jupiterClient,
 					user,
 					swapFromMarketIndex: fromMarketIndex,
@@ -753,6 +757,6 @@ export class CentralServerDrift {
 	}
 
 	public async sendSignedTransaction(tx: VersionedTransaction | Transaction) {
-		return this.driftClient.sendTransaction(tx, undefined, undefined, true);
+		return this._driftClient.sendTransaction(tx, undefined, undefined, true);
 	}
 }
