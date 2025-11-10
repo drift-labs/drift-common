@@ -215,6 +215,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 					auctionDurationPercentage:
 						orderConfig.limitAuction.usePlaceAndTake.auctionDurationPercentage,
 					referrerInfo: orderConfig.limitAuction.usePlaceAndTake.referrerInfo,
+					highLeverageOptions,
 				});
 				allIxs.push(placeAndTakeIx);
 				createdPlaceAndTakeIx = true;
