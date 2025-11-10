@@ -26,7 +26,10 @@ import {
 	fetchTopMakers,
 	OptionalAuctionParamsRequestInputs,
 } from '../dlobServer';
-import { ORDER_COMMON_UTILS } from '../../../../../../common-ui-utils/order';
+import {
+	HighLeverageOptions,
+	ORDER_COMMON_UTILS,
+} from '../../../../../../common-ui-utils/order';
 import { WithTxnParams } from '../../../../types';
 import { TxnOrSwiftResult } from '../types';
 import { NoTopMakersError } from '../../../../../Drift/constants/errors';
@@ -89,6 +92,7 @@ export interface OpenPerpMarketOrderBaseParams {
 		 */
 		builderFeeTenthBps: number;
 	};
+	highLeverageOptions?: HighLeverageOptions;
 }
 
 export interface OpenPerpMarketOrderBaseParamsWithSwift
@@ -130,6 +134,7 @@ export async function createSwiftMarketOrder({
 	userOrderId = 0,
 	positionMaxLeverage,
 	builderParams,
+	highLeverageOptions,
 }: OpenPerpMarketOrderBaseParamsWithSwift): Promise<void> {
 	if (amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
@@ -156,7 +161,8 @@ export async function createSwiftMarketOrder({
 		driftClient,
 		user,
 		totalQuoteAmount,
-		direction
+		direction,
+		highLeverageOptions
 	);
 
 	const orderParams = {
@@ -202,6 +208,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	auctionDurationPercentage,
 	optionalAuctionParamsInputs,
 	mainSignerOverride,
+	highLeverageOptions,
 }: OpenPerpMarketOrderBaseParams & {
 	direction: PositionDirection;
 	dlobServerHttpUrl: string;
@@ -210,6 +217,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	user: User;
 	referrerInfo?: ReferrerInfo;
 	auctionDurationPercentage?: number;
+	highLeverageOptions?: HighLeverageOptions;
 }) => {
 	const counterPartySide = ENUM_UTILS.match(direction, PositionDirection.LONG)
 		? 'ask'
@@ -244,7 +252,8 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		driftClient,
 		user,
 		totalQuoteAmount,
-		direction
+		direction,
+		highLeverageOptions
 	);
 	fetchedOrderParams.bitFlags = bitFlags;
 	fetchedOrderParams.userOrderId = userOrderId;
@@ -308,6 +317,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 	optionalAuctionParamsInputs = {},
 	positionMaxLeverage,
 	mainSignerOverride,
+	highLeverageOptions,
 }: OpenPerpMarketOrderBaseParams): Promise<TransactionInstruction[]> => {
 	if (!amount || amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
@@ -373,7 +383,8 @@ export const createOpenPerpMarketOrderIxs = async ({
 			driftClient,
 			user,
 			totalQuoteAmount,
-			direction
+			direction,
+			highLeverageOptions
 		);
 
 		const orderParams = {

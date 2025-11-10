@@ -257,6 +257,11 @@ function getPerpAuctionDuration(
 	return clamped.toNumber();
 }
 
+export type HighLeverageOptions = {
+	numOfOpenHighLeverageSpots?: number; // if not provided, the method will assume that there is spots open
+	enterHighLeverageModeBufferPct?: number;
+};
+
 /**
  * Mainly checks if the user will be entering high leverage mode through this order.
  */
@@ -266,9 +271,17 @@ function getPerpOrderParamsBitFlags(
 	userAccount: User,
 	quoteSize: BN,
 	side: PositionDirection,
-	enterHighLeverageModeBufferPct = 2
+	highLeverageOptions?: {
+		numOfOpenHighLeverageSpots?: number; // if not provided, the method will assume that there is spots open
+		enterHighLeverageModeBufferPct?: number;
+	}
 ): number | undefined {
-	if (quoteSize.lte(ZERO)) {
+	const {
+		numOfOpenHighLeverageSpots = Number.MAX_SAFE_INTEGER,
+		enterHighLeverageModeBufferPct = 2,
+	} = highLeverageOptions || {};
+
+	if (quoteSize.lte(ZERO) || numOfOpenHighLeverageSpots <= 0) {
 		return undefined;
 	}
 

@@ -24,7 +24,10 @@ import {
 	resolveBaseAssetAmount,
 } from '../../../../../utils/orderParams';
 import { ENUM_UTILS } from '../../../../../../utils';
-import { ORDER_COMMON_UTILS } from '../../../../../../common-ui-utils';
+import {
+	HighLeverageOptions,
+	ORDER_COMMON_UTILS,
+} from '../../../../../../common-ui-utils';
 import { createPlaceAndTakePerpMarketOrderIx } from '../openPerpMarketOrder';
 import {
 	TxnOrSwiftResult,
@@ -63,6 +66,7 @@ export interface OpenPerpNonMarketOrderBaseParams
 		builderIdx: number;
 		builderFeeTenthBps: number;
 	};
+	highLeverageOptions?: HighLeverageOptions;
 }
 
 export interface OpenPerpNonMarketOrderParamsWithSwift
@@ -140,6 +144,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 		userOrderId = 0,
 		positionMaxLeverage,
 		mainSignerOverride,
+		highLeverageOptions,
 	} = params;
 	// Support both new (amount + assetType) and legacy (baseAssetAmount) approaches
 	const finalBaseAssetAmount = resolveBaseAssetAmount({
@@ -249,7 +254,8 @@ export const createOpenPerpNonMarketOrderIxs = async (
 			driftClient,
 			user,
 			totalQuoteAmount,
-			direction
+			direction,
+			highLeverageOptions
 		);
 		orderParams.bitFlags = bitFlags;
 

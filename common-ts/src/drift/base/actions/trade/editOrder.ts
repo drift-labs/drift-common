@@ -21,6 +21,7 @@ import {
 	LimitOrderParamsOrderConfig,
 } from './openPerpOrder/types';
 import { WithTxnParams } from '../../types';
+import { HighLeverageOptions } from '../../../../common-ui-utils/order';
 
 /**
  * Parameters for editing an existing order
@@ -54,6 +55,8 @@ interface EditOrderParams {
 	maxTs?: BN;
 	/** Order policy configuration */
 	policy?: number;
+	/** Optional high leverage options */
+	highLeverageOptions?: HighLeverageOptions;
 }
 
 export interface CreateEditOrderIxParams {

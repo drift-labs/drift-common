@@ -15,6 +15,7 @@ import {
 import {
 	ORDER_COMMON_UTILS,
 	COMMON_UI_UTILS,
+	HighLeverageOptions,
 } from '../../../../../common-ui-utils';
 import { DEFAULT_LIMIT_AUCTION_DURATION } from '../../../constants/auction';
 import { ENUM_UTILS } from '../../../../../utils';
@@ -33,6 +34,7 @@ export const getLimitAuctionOrderParams = async ({
 	reduceOnly = false,
 	postOnly = PostOnlyParams.NONE,
 	orderConfig,
+	highLeverageOptions,
 }: {
 	driftClient: DriftClient;
 	user: User;
@@ -46,6 +48,7 @@ export const getLimitAuctionOrderParams = async ({
 	orderConfig: LimitOrderParamsOrderConfig & {
 		limitAuction: LimitAuctionConfig;
 	};
+	highLeverageOptions?: HighLeverageOptions;
 }): Promise<OptionalOrderParams> => {
 	const orderParams = await fetchAuctionOrderParams({
 		driftClient,
@@ -114,7 +117,8 @@ export const getLimitAuctionOrderParams = async ({
 		driftClient,
 		user,
 		totalQuoteAmount,
-		direction
+		direction,
+		highLeverageOptions
 	);
 
 	return {
