@@ -1,8 +1,9 @@
 # drift-common
 
+## quick start
 
-### quick start
-```
+```bash
+
 git submodule init
 git submodule update
 
