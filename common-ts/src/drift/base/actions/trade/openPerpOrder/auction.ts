@@ -6,7 +6,6 @@ import {
 	BigNum,
 	PRICE_PRECISION_EXP,
 	getLimitOrderParams,
-	BASE_PRECISION,
 	oraclePriceBands as getOraclePriceBands,
 	DriftClient,
 	User,
@@ -30,6 +29,7 @@ export const getLimitAuctionOrderParams = async ({
 	marketType,
 	direction,
 	baseAssetAmount,
+	positionMaxLeverage,
 	userOrderId = 0,
 	reduceOnly = false,
 	postOnly = PostOnlyParams.NONE,
@@ -42,6 +42,7 @@ export const getLimitAuctionOrderParams = async ({
 	marketType: MarketType;
 	direction: PositionDirection;
 	baseAssetAmount: BN;
+	positionMaxLeverage: number;
 	userOrderId?: number;
 	reduceOnly?: boolean;
 	postOnly?: PostOnlyParams;
@@ -109,15 +110,11 @@ export const getLimitAuctionOrderParams = async ({
 		...limitAuctionParams,
 	});
 
-	const oraclePrice = driftClient.getOracleDataForPerpMarket(marketIndex).price;
-	const totalQuoteAmount = baseAssetAmount.mul(oraclePrice).div(BASE_PRECISION);
-
 	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 		marketIndex,
 		driftClient,
 		user,
-		totalQuoteAmount,
-		direction,
+		positionMaxLeverage,
 		highLeverageOptions
 	);
 

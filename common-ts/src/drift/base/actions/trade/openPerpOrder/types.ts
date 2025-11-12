@@ -72,12 +72,12 @@ export interface NonMarketOrderParamsConfig {
 	postOnly?: PostOnlyParams;
 	userOrderId?: number;
 	/**
-	 * Optional per-market leverage to set for this position.
-	 * If provided and different from current position's leverage, will add an instruction
+	 * The leverage to be used for this position.
+	 * If different from current position's leverage, will add an instruction
 	 * to update the position's maxMarginRatio before placing the order.
 	 * Example: 5 for 5x leverage, 10 for 10x leverage
 	 */
-	positionMaxLeverage?: number;
+	positionMaxLeverage: number;
 	orderConfig:
 		| LimitOrderParamsOrderConfig
 		| {

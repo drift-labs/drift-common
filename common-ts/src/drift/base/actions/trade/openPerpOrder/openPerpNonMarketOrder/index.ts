@@ -7,7 +7,6 @@ import {
 	OptionalOrderParams,
 	PositionDirection,
 	OrderParamsBitFlag,
-	BASE_PRECISION,
 } from '@drift-labs/sdk';
 import {
 	PublicKey,
@@ -210,6 +209,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 					driftClient,
 					user,
 					userOrderId,
+					positionMaxLeverage,
 					optionalAuctionParamsInputs:
 						orderConfig.limitAuction.optionalLimitAuctionParams,
 					auctionDurationPercentage:
@@ -242,20 +242,14 @@ export const createOpenPerpNonMarketOrderIxs = async (
 			reduceOnly,
 			postOnly,
 			userOrderId,
+			positionMaxLeverage,
 		});
-
-		const oraclePrice =
-			driftClient.getOracleDataForPerpMarket(marketIndex).price;
-		const totalQuoteAmount = finalBaseAssetAmount
-			.mul(oraclePrice)
-			.div(BASE_PRECISION);
 
 		const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 			marketIndex,
 			driftClient,
 			user,
-			totalQuoteAmount,
-			direction,
+			positionMaxLeverage,
 			highLeverageOptions
 		);
 		orderParams.bitFlags = bitFlags;
@@ -284,6 +278,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 				limitPrice: orderConfig.bracketOrders.takeProfit.limitPrice,
 			},
 			reduceOnly: orderConfig.bracketOrders.takeProfit.reduceOnly ?? true,
+			positionMaxLeverage,
 		});
 		allOrders.push(takeProfitParams);
 	}
@@ -302,6 +297,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 				limitPrice: orderConfig.bracketOrders.stopLoss.limitPrice,
 			},
 			reduceOnly: orderConfig.bracketOrders.stopLoss.reduceOnly ?? true,
+			positionMaxLeverage,
 		});
 		allOrders.push(stopLossParams);
 	}
@@ -362,6 +358,7 @@ export const createSwiftLimitOrder = async (
 				reduceOnly: params.reduceOnly,
 				postOnly: params.postOnly,
 				userOrderId: params.userOrderId,
+				positionMaxLeverage: params.positionMaxLeverage,
 		  });
 
 	const userAccount = user.getUserAccount();

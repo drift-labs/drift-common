@@ -7,7 +7,6 @@ import {
 	MarketType,
 	getUserStatsAccountPublicKey,
 	ReferrerInfo,
-	BASE_PRECISION,
 } from '@drift-labs/sdk';
 import {
 	PublicKey,
@@ -58,7 +57,7 @@ export interface OpenPerpMarketOrderBaseParams {
 	 * to update the position's maxMarginRatio before placing the order.
 	 * Example: 5 for 5x leverage, 10 for 10x leverage
 	 */
-	positionMaxLeverage?: number;
+	positionMaxLeverage: number;
 	/**
 	 * If provided, will override the main signer for the order. Otherwise, the main signer will be the user's authority.
 	 * This is only applicable for non-SWIFT orders.
@@ -153,15 +152,11 @@ export async function createSwiftMarketOrder({
 		optionalAuctionParamsInputs,
 	});
 
-	const oraclePrice = driftClient.getOracleDataForPerpMarket(marketIndex).price;
-	const totalQuoteAmount = amount.mul(oraclePrice).div(BASE_PRECISION);
-
 	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 		marketIndex,
 		driftClient,
 		user,
-		totalQuoteAmount,
-		direction,
+		positionMaxLeverage,
 		highLeverageOptions
 	);
 
@@ -209,6 +204,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	optionalAuctionParamsInputs,
 	mainSignerOverride,
 	highLeverageOptions,
+	positionMaxLeverage,
 }: OpenPerpMarketOrderBaseParams & {
 	direction: PositionDirection;
 	dlobServerHttpUrl: string;
@@ -244,15 +240,11 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		}),
 	]);
 
-	const oraclePrice = driftClient.getOracleDataForPerpMarket(marketIndex).price;
-	const totalQuoteAmount = amount.mul(oraclePrice).div(BASE_PRECISION);
-
 	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 		marketIndex,
 		driftClient,
 		user,
-		totalQuoteAmount,
-		direction,
+		positionMaxLeverage,
 		highLeverageOptions
 	);
 	fetchedOrderParams.bitFlags = bitFlags;
@@ -351,6 +343,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 				auctionDurationPercentage: placeAndTake.auctionDurationPercentage,
 				optionalAuctionParamsInputs,
 				mainSignerOverride,
+				positionMaxLeverage,
 			});
 			allIxs.push(placeAndTakeIx);
 		} catch (e) {
@@ -374,16 +367,11 @@ export const createOpenPerpMarketOrderIxs = async ({
 			optionalAuctionParamsInputs,
 		});
 
-		const oraclePrice =
-			driftClient.getOracleDataForPerpMarket(marketIndex).price;
-		const totalQuoteAmount = amount.mul(oraclePrice).div(BASE_PRECISION);
-
 		const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 			marketIndex,
 			driftClient,
 			user,
-			totalQuoteAmount,
-			direction,
+			positionMaxLeverage,
 			highLeverageOptions
 		);
 
@@ -415,6 +403,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 				limitPrice: bracketOrders.takeProfit.limitPrice,
 			},
 			reduceOnly: bracketOrders.takeProfit.reduceOnly ?? true,
+			positionMaxLeverage,
 		});
 		allOrders.push(takeProfitParams);
 	}
@@ -431,6 +420,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 				limitPrice: bracketOrders.stopLoss.limitPrice,
 			},
 			reduceOnly: bracketOrders.stopLoss.reduceOnly ?? true,
+			positionMaxLeverage,
 		});
 		allOrders.push(stopLossParams);
 	}

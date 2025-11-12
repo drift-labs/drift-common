@@ -465,6 +465,7 @@ export class DriftOperations {
 						optionalAuctionParamsInputs:
 							params.orderConfig.optionalAuctionParamsInputs,
 						builderParams: params.builderParams,
+						positionMaxLeverage: params.positionMaxLeverage,
 					});
 
 					return swiftOrderResult;
@@ -481,6 +482,7 @@ export class DriftOperations {
 							params.orderConfig.optionalAuctionParamsInputs,
 						dlobServerHttpUrl: this.dlobServerHttpUrl,
 						useSwift: false,
+						positionMaxLeverage: params.positionMaxLeverage,
 					});
 
 					const { txSig } = await this.driftClient.sendTransaction(result);
@@ -523,6 +525,7 @@ export class DriftOperations {
 							...params.orderConfig.swiftOptions,
 						},
 						builderParams: params.builderParams,
+						positionMaxLeverage: params.positionMaxLeverage,
 					});
 
 					return swiftOrderResult;
@@ -543,6 +546,7 @@ export class DriftOperations {
 						postOnly: params.postOnly,
 						useSwift: false,
 						txParams: this.getTxParams(),
+						positionMaxLeverage: params.positionMaxLeverage,
 					});
 
 					const { txSig } = await this.driftClient.sendTransaction(txn);
@@ -567,6 +571,7 @@ export class DriftOperations {
 					reduceOnly: params.reduceOnly,
 					useSwift: false,
 					txParams: this.getTxParams(),
+					positionMaxLeverage: params.positionMaxLeverage,
 				});
 
 				const { txSig } = await this.driftClient.sendTransaction(txn);
@@ -588,6 +593,7 @@ export class DriftOperations {
 					reduceOnly: params.reduceOnly,
 					useSwift: false,
 					txParams: this.getTxParams(),
+					positionMaxLeverage: params.positionMaxLeverage,
 				});
 
 				const { txSig } = await this.driftClient.sendTransaction(txn);
