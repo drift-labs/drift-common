@@ -7,6 +7,7 @@ import {
 } from '@drift-labs/sdk';
 import { Transaction, VersionedTransaction } from '@solana/web3.js';
 import { OptionalAuctionParamsRequestInputs } from './dlobServer';
+import { AuctionParamsFetchedCallback } from '../../../../utils/auctionParamsResponseMapper';
 
 export type TxnOrSwiftResult<T extends boolean> = T extends true
 	? void
@@ -39,6 +40,7 @@ export interface LimitAuctionConfig {
 		referrerInfo?: ReferrerInfo; // needed for place and take fallback
 		auctionDurationPercentage?: number;
 	};
+	onAuctionParamsFetched?: AuctionParamsFetchedCallback;
 }
 
 export interface OptionalTriggerOrderParams {

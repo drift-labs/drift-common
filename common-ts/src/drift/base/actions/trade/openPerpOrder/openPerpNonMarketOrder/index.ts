@@ -316,8 +316,6 @@ export const createOpenPerpNonMarketOrderIxs = async (
 	return allIxs;
 };
 
-export const MINIMUM_SWIFT_LIMIT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 35;
-
 export const createSwiftLimitOrder = async (
 	params: OpenPerpNonMarketOrderParamsWithSwift & {
 		orderConfig: LimitOrderParamsOrderConfig;
@@ -362,18 +360,13 @@ export const createSwiftLimitOrder = async (
 		  });
 
 	const userAccount = user.getUserAccount();
-	const slotBuffer = Math.max(
-		(swiftOptions.signedMessageOrderSlotBuffer || 0) +
-			(orderParams.auctionDuration || 0),
-		MINIMUM_SWIFT_LIMIT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS
-	); // limit orders require a much larger buffer, to replace the auction duration usually found in market orders
 
 	await prepSignAndSendSwiftOrder({
 		driftClient,
 		subAccountId: userAccount.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
-		slotBuffer,
+		userSigningSlotBuffer: swiftOptions.userSigningSlotBuffer,
 		swiftOptions,
 		orderParams: {
 			main: orderParams,

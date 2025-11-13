@@ -21,6 +21,7 @@ import { ENUM_UTILS } from '../../../../../utils';
 import invariant from 'tiny-invariant';
 import { fetchAuctionOrderParams } from './dlobServer';
 import { LimitOrderParamsOrderConfig, LimitAuctionConfig } from './types';
+import { AuctionParamsFetchedCallback } from '../../../../utils/auctionParamsResponseMapper';
 
 export const getLimitAuctionOrderParams = async ({
 	driftClient,
@@ -35,6 +36,7 @@ export const getLimitAuctionOrderParams = async ({
 	postOnly = PostOnlyParams.NONE,
 	orderConfig,
 	highLeverageOptions,
+	onAuctionParamsFetched,
 }: {
 	driftClient: DriftClient;
 	user: User;
@@ -50,6 +52,7 @@ export const getLimitAuctionOrderParams = async ({
 		limitAuction: LimitAuctionConfig;
 	};
 	highLeverageOptions?: HighLeverageOptions;
+	onAuctionParamsFetched?: AuctionParamsFetchedCallback;
 }): Promise<OptionalOrderParams> => {
 	const orderParams = await fetchAuctionOrderParams({
 		driftClient,
@@ -62,6 +65,7 @@ export const getLimitAuctionOrderParams = async ({
 		dlobServerHttpUrl: orderConfig.limitAuction.dlobServerHttpUrl,
 		optionalAuctionParamsInputs:
 			orderConfig.limitAuction.optionalLimitAuctionParams,
+		onAuctionParamsFetched: onAuctionParamsFetched,
 	});
 
 	const isPerp = ENUM_UTILS.match(marketType, MarketType.PERP);

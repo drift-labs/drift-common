@@ -20,7 +20,7 @@ export interface MappedAuctionParams {
 	immediateOrCancel?: boolean;
 	triggerPrice?: BN | null;
 	triggerCondition?: OrderTriggerCondition;
-	oraclePriceOffset?: BN;
+	oraclePriceOffset?: number | null;
 	auctionDuration: number | undefined;
 	maxTs?: BN | null;
 	auctionStartPrice: BN | undefined;
@@ -61,6 +61,11 @@ export interface ServerAuctionParamsResponse {
 	};
 }
 
+export type AuctionParamsFetchedCallback = (
+	urlSearchParams: URLSearchParams,
+	response: ServerAuctionParamsResponse
+) => void;
+
 const FIELD_MAPPING: Record<keyof ServerAuctionParams, FieldConfig> = {
 	// Enums (string -> enum object)
 	orderType: { type: 'enum' },
@@ -73,6 +78,7 @@ const FIELD_MAPPING: Record<keyof ServerAuctionParams, FieldConfig> = {
 	userOrderId: { type: 'number' },
 	marketIndex: { type: 'number' },
 	auctionDuration: { type: 'number' },
+	oraclePriceOffset: { type: 'number' },
 
 	// Booleans
 	reduceOnly: { type: 'boolean' },
@@ -84,7 +90,6 @@ const FIELD_MAPPING: Record<keyof ServerAuctionParams, FieldConfig> = {
 	auctionEndPrice: { type: 'bn' },
 
 	// Nullable BNs
-	oraclePriceOffset: { type: 'bn_nullable' },
 	triggerPrice: { type: 'bn_nullable' },
 	maxTs: { type: 'bn_nullable' },
 };
