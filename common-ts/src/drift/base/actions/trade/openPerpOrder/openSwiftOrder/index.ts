@@ -13,7 +13,10 @@ import {
 	OptionalOrderParams,
 	PublicKey,
 } from '@drift-labs/sdk';
-import { getSwiftConfirmationTimeoutMs } from '../../../../../../utils';
+import {
+	ENUM_UTILS,
+	getSwiftConfirmationTimeoutMs,
+} from '../../../../../../utils';
 import {
 	SwiftClient,
 	SwiftOrderConfirmedEvent,
@@ -26,7 +29,6 @@ import { MarketId } from '../../../../../../types';
 import { Observable, Subscription } from 'rxjs';
 import { OptionalTriggerOrderParams } from '../types';
 import { TRADING_UTILS } from '../../../../../../common-ui-utils/trading';
-import { ENUM_UTILS } from '@drift/common';
 
 /**
  * Buffer slots to account for signing of message by the user (default: 7 slots ~3 second, assumes user have to approves the signing in a UI wallet).
