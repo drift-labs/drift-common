@@ -594,6 +594,7 @@ async function openPerpMarketOrderCommand(args: CliArgs): Promise<void> {
 		direction: directionEnum,
 		amount: amountBN,
 		useSwift: false,
+		positionMaxLeverage: 10,
 	});
 
 	await executeTransaction(orderTxn as VersionedTransaction, 'Open Perp Order');
@@ -655,6 +656,7 @@ async function openPerpMarketOrderSwiftCommand(args: CliArgs): Promise<void> {
 				},
 				callbacks: createSwiftOrderCallbacks('Open Perp Order'),
 			},
+			positionMaxLeverage: 10,
 		});
 		console.log('✅ [CLI] Swift order finished');
 	} catch (error) {
@@ -779,6 +781,7 @@ async function openPerpNonMarketOrderCommand(args: CliArgs): Promise<void> {
 		postOnly: postOnlyEnum,
 		assetType: assetType as 'base' | 'quote',
 		amount: amountBN,
+		positionMaxLeverage: 10,
 	});
 
 	await executeTransaction(
@@ -891,6 +894,7 @@ async function openPerpNonMarketOrderSwiftCommand(
 			amount: amountBN,
 			useSwift: true,
 			swiftOptions,
+			positionMaxLeverage: 10,
 		});
 
 		console.log('✅ [CLI] Swift order finished');

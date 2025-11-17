@@ -7,6 +7,7 @@ import {
 } from '@drift-labs/sdk';
 import { Transaction, VersionedTransaction } from '@solana/web3.js';
 import { OptionalAuctionParamsRequestInputs } from './dlobServer';
+import { AuctionParamsFetchedCallback } from '../../../../utils/auctionParamsResponseMapper';
 
 export type TxnOrSwiftResult<T extends boolean> = T extends true
 	? void
@@ -39,6 +40,7 @@ export interface LimitAuctionConfig {
 		referrerInfo?: ReferrerInfo; // needed for place and take fallback
 		auctionDurationPercentage?: number;
 	};
+	onAuctionParamsFetched?: AuctionParamsFetchedCallback;
 }
 
 export interface OptionalTriggerOrderParams {
@@ -72,12 +74,12 @@ export interface NonMarketOrderParamsConfig {
 	postOnly?: PostOnlyParams;
 	userOrderId?: number;
 	/**
-	 * Optional per-market leverage to set for this position.
-	 * If provided and different from current position's leverage, will add an instruction
+	 * The leverage to be used for this position.
+	 * If different from current position's leverage, will add an instruction
 	 * to update the position's maxMarginRatio before placing the order.
 	 * Example: 5 for 5x leverage, 10 for 10x leverage
 	 */
-	positionMaxLeverage?: number;
+	positionMaxLeverage: number;
 	orderConfig:
 		| LimitOrderParamsOrderConfig
 		| {

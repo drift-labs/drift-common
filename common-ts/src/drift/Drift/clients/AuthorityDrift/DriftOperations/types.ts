@@ -59,6 +59,7 @@ export type PerpOrderParams = {
 	direction: PositionDirection;
 	assetType: 'base' | 'quote';
 	size: BigNum;
+	positionMaxLeverage: number;
 	reduceOnly?: boolean;
 	postOnly?: PostOnlyParams;
 	isMaxLeverage?: boolean;

@@ -618,6 +618,7 @@ export class CentralServerDrift {
 			bitFlags?: number;
 			maxTs?: BN;
 			policy?: number;
+			positionMaxLeverage?: number;
 		}
 	): Promise<VersionedTransaction | Transaction> {
 		return this.driftClientContextWrapper(

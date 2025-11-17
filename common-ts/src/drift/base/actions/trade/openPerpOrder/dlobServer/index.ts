@@ -17,6 +17,7 @@ import {
 	mapAuctionParamsResponse,
 	ServerAuctionParamsResponse,
 	MappedAuctionParams,
+	AuctionParamsFetchedCallback,
 } from '../../../../../utils/auctionParamsResponseMapper';
 import { encodeQueryParams } from '../../../../../../utils/fetch';
 import { MarketId, TradeOffsetPrice } from '../../../../../../types';
@@ -62,6 +63,7 @@ interface RegularOrderParams {
 	optionalAuctionParamsInputs?: OptionalAuctionParamsRequestInputs;
 	dlobServerHttpUrl: string;
 	dynamicSlippageConfig?: DynamicSlippageConfig;
+	onAuctionParamsFetched?: AuctionParamsFetchedCallback;
 }
 
 export interface BulkL2FetchingQueryParams {
@@ -262,7 +264,7 @@ export async function fetchAuctionOrderParamsFromDlob({
 		triggerPrice: mappedParams.triggerPrice || null,
 		triggerCondition:
 			mappedParams.triggerCondition ?? DefaultOrderParams.triggerCondition,
-		oraclePriceOffset: mappedParams.oraclePriceOffset?.toNumber() || null,
+		oraclePriceOffset: mappedParams.oraclePriceOffset || null,
 		auctionDuration: mappedParams.auctionDuration || null,
 		maxTs: mappedParams.maxTs,
 		auctionStartPrice: mappedParams.auctionStartPrice || null,

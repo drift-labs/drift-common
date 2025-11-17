@@ -7,7 +7,6 @@ import {
 	OptionalOrderParams,
 	PositionDirection,
 	OrderParamsBitFlag,
-	BASE_PRECISION,
 } from '@drift-labs/sdk';
 import {
 	PublicKey,
@@ -210,6 +209,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 					driftClient,
 					user,
 					userOrderId,
+					positionMaxLeverage,
 					optionalAuctionParamsInputs:
 						orderConfig.limitAuction.optionalLimitAuctionParams,
 					auctionDurationPercentage:
@@ -242,20 +242,14 @@ export const createOpenPerpNonMarketOrderIxs = async (
 			reduceOnly,
 			postOnly,
 			userOrderId,
+			positionMaxLeverage,
 		});
-
-		const oraclePrice =
-			driftClient.getOracleDataForPerpMarket(marketIndex).price;
-		const totalQuoteAmount = finalBaseAssetAmount
-			.mul(oraclePrice)
-			.div(BASE_PRECISION);
 
 		const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
 			marketIndex,
 			driftClient,
 			user,
-			totalQuoteAmount,
-			direction,
+			positionMaxLeverage,
 			highLeverageOptions
 		);
 		orderParams.bitFlags = bitFlags;
@@ -284,6 +278,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 				limitPrice: orderConfig.bracketOrders.takeProfit.limitPrice,
 			},
 			reduceOnly: orderConfig.bracketOrders.takeProfit.reduceOnly ?? true,
+			positionMaxLeverage,
 		});
 		allOrders.push(takeProfitParams);
 	}
@@ -302,6 +297,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 				limitPrice: orderConfig.bracketOrders.stopLoss.limitPrice,
 			},
 			reduceOnly: orderConfig.bracketOrders.stopLoss.reduceOnly ?? true,
+			positionMaxLeverage,
 		});
 		allOrders.push(stopLossParams);
 	}
@@ -319,8 +315,6 @@ export const createOpenPerpNonMarketOrderIxs = async (
 
 	return allIxs;
 };
-
-export const MINIMUM_SWIFT_LIMIT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS = 35;
 
 export const createSwiftLimitOrder = async (
 	params: OpenPerpNonMarketOrderParamsWithSwift & {
@@ -362,21 +356,17 @@ export const createSwiftLimitOrder = async (
 				reduceOnly: params.reduceOnly,
 				postOnly: params.postOnly,
 				userOrderId: params.userOrderId,
+				positionMaxLeverage: params.positionMaxLeverage,
 		  });
 
 	const userAccount = user.getUserAccount();
-	const slotBuffer = Math.max(
-		(swiftOptions.signedMessageOrderSlotBuffer || 0) +
-			(orderParams.auctionDuration || 0),
-		MINIMUM_SWIFT_LIMIT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS
-	); // limit orders require a much larger buffer, to replace the auction duration usually found in market orders
 
 	await prepSignAndSendSwiftOrder({
 		driftClient,
 		subAccountId: userAccount.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
-		slotBuffer,
+		userSigningSlotBuffer: swiftOptions.userSigningSlotBuffer,
 		swiftOptions,
 		orderParams: {
 			main: orderParams,

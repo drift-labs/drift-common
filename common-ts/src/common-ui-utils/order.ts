@@ -269,28 +269,31 @@ function getPerpOrderParamsBitFlags(
 	marketIndex: number,
 	driftClient: DriftClient,
 	userAccount: User,
-	quoteSize: BN,
-	side: PositionDirection,
+	attemptedLeverage: number,
 	highLeverageOptions?: {
 		numOfOpenHighLeverageSpots?: number; // if not provided, the method will assume that there is spots open
-		enterHighLeverageModeBufferPct?: number;
 	}
 ): number | undefined {
-	const {
-		numOfOpenHighLeverageSpots = Number.MAX_SAFE_INTEGER,
-		enterHighLeverageModeBufferPct = 2,
-	} = highLeverageOptions || {};
-
-	if (quoteSize.lte(ZERO) || numOfOpenHighLeverageSpots <= 0) {
+	if (attemptedLeverage < 5) {
+		// there is no high leverage mode leverage that is higher than 4
 		return undefined;
 	}
 
-	const { hasHighLeverage: isMarketAHighLeverageMarket } =
-		MARKET_UTILS.getMaxLeverageForMarket(
-			MarketType.PERP,
-			marketIndex,
-			driftClient
-		);
+	const { numOfOpenHighLeverageSpots = Number.MAX_SAFE_INTEGER } =
+		highLeverageOptions || {};
+
+	if (numOfOpenHighLeverageSpots <= 0) {
+		return undefined;
+	}
+
+	const {
+		hasHighLeverage: isMarketAHighLeverageMarket,
+		maxLeverage: regularMaxLeverage,
+	} = MARKET_UTILS.getMaxLeverageForMarket(
+		MarketType.PERP,
+		marketIndex,
+		driftClient
+	);
 
 	if (!isMarketAHighLeverageMarket) {
 		return undefined;
@@ -301,23 +304,7 @@ function getPerpOrderParamsBitFlags(
 		return undefined;
 	}
 
-	// Get max trade size without entering high leverage mode
-	const maxTradeWithoutHLM = userAccount.getMaxTradeSizeUSDCForPerp(
-		marketIndex,
-		side,
-		undefined,
-		false // enterHighLeverageMode = false
-	);
-
-	// If order exceeds non-HLM free collateral, enable high leverage mode
-	// if within 2%, also enable high lev mode to avoid failures
-	if (
-		quoteSize.gte(
-			maxTradeWithoutHLM.tradeSize.muln(
-				1 - enterHighLeverageModeBufferPct / 100
-			)
-		)
-	) {
+	if (attemptedLeverage > regularMaxLeverage) {
 		return OrderParamsBitFlag.UpdateHighLeverageMode;
 	}
 

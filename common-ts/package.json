@@ -1,6 +1,6 @@
 {
 	"name": "@drift-labs/common",
-	"version": "1.0.14",
+	"version": "1.0.16",
 	"description": "Common functions for Drift",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -64,7 +64,7 @@
 		"lib"
 	],
 	"engines": {
-		"node": ">=14"
+		"node": ">=22.14.0"
 	},
 	"devDependencies": {
 		"@drift-labs/sdk": "file:../protocol/sdk",

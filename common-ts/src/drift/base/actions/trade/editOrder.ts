@@ -57,6 +57,8 @@ interface EditOrderParams {
 	policy?: number;
 	/** Optional high leverage options */
 	highLeverageOptions?: HighLeverageOptions;
+	/** The leverage to be used for this position. */
+	positionMaxLeverage?: number;
 }
 
 export interface CreateEditOrderIxParams {
@@ -118,6 +120,7 @@ export const createEditOrderIx = async (
 			reduceOnly: currentOrder.reduceOnly,
 			postOnly: currentOrder.postOnly,
 			orderConfig: limitAuctionOrderConfig,
+			positionMaxLeverage: editOrderParams.positionMaxLeverage,
 		});
 
 		finalEditOrderParams = {

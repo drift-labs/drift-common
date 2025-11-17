@@ -239,12 +239,14 @@ const checkIfUserAccountExists = async (
  * There are a few scenarios for how a market's max leverage is defined:
  *
  * 1. When the user does not have a position ("empty" or not) in the market in their `UserAccount` data,
- * and creates an order for the market, an "empty" `PerpPosition` will be added to the `UserAccount` data,
+ * and creates an order for the market, an "empty" `PerpPosition` will be upsert to the `UserAccount` data,
  * and will contain the max margin ratio set by the user. Note that the `UserAccount` data can store up
  * to 8 `PerpPosition` structs, and most of the time the majority of the `PerpPosition` structs will be
- * "empty" if the user does not have the max 8 perp positions open.
+ * "empty" if the user does not have the max 8 perp positions open. The max leverage is then derived from
+ * the max margin ratio set in the `PerpPosition` struct.
  *
- * 2. When the user has a position ("empty" or not), the max margin ratio is retrieved from the `PerpPosition` struct.
+ * 2. If the user has a position ("empty" or not), but no open orders and is provided with a saved max leverage,
+ * the saved max leverage is used.
  *
  * 3. When the user does not have a position ("empty" or not), it is expected of the UI to store and persist
  * the max leverage in the UI client.
@@ -279,30 +281,34 @@ const getUserMaxLeverageForMarket = (
 	}
 
 	const positionHasMaxMarginRatioSet = !!openOrClosedPosition.maxMarginRatio;
+	const isPositionOpen = !openOrClosedPosition.baseAssetAmount.eq(ZERO);
+	const hasNoOpenOrders = openOrClosedPosition.openOrders === 0;
 
 	if (positionHasMaxMarginRatioSet) {
+		// Special case: open position with no orders - use UI saved value if available
+		if (isPositionOpen && hasNoOpenOrders && uiSavedMaxLeverage) {
+			return uiSavedMaxLeverage;
+		}
+
 		return parseFloat(
 			((1 / openOrClosedPosition.maxMarginRatio) * 10000).toFixed(2)
 		);
-	} else {
-		const isOpenPositionWithoutMaxMarginRatio =
-			!openOrClosedPosition.baseAssetAmount.eq(ZERO);
-
-		if (isOpenPositionWithoutMaxMarginRatio) {
-			// user has an existing position from before PML ship (this means no max margin ratio set onchain)
-			// display max leverage for the leverage mode their account is in
-			const isUserInHighLeverageMode = user.isHighLeverageMode('Initial');
-			const grandfatheredMaxLev = isUserInHighLeverageMode
-				? marketLeverageDetails.hasHighLeverage
-					? marketLeverageDetails.highLeverageMaxLeverage
-					: marketLeverageDetails.regularMaxLeverage
-				: marketLeverageDetails.regularMaxLeverage;
-			return grandfatheredMaxLev;
-		} else {
-			// user has closed position with no margin ratio set, return default value
-			return DEFAULT_MAX_LEVERAGE;
-		}
 	}
+
+	if (isPositionOpen) {
+		// user has an existing position from before PML ship (this means no max margin ratio set onchain yet)
+		// display max leverage for the leverage mode their account is in
+		const isUserInHighLeverageMode = user.isHighLeverageMode('Initial');
+		const grandfatheredMaxLev = isUserInHighLeverageMode
+			? marketLeverageDetails.hasHighLeverage
+				? marketLeverageDetails.highLeverageMaxLeverage
+				: marketLeverageDetails.regularMaxLeverage
+			: marketLeverageDetails.regularMaxLeverage;
+		return grandfatheredMaxLev;
+	}
+
+	// user has closed position with no margin ratio set, return default value
+	return DEFAULT_MAX_LEVERAGE;
 };
 
 export const USER_UTILS = {
