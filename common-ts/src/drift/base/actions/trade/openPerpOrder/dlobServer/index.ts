@@ -40,7 +40,6 @@ export interface OptionalAuctionParamsRequestInputs {
 	// Optional parameters that can override defaults or provide additional configuration
 	maxLeverageSelected?: boolean;
 	maxLeverageOrderSize?: BN;
-	reduceOnly?: boolean;
 	auctionDuration?: number;
 	auctionStartPriceOffset?: number;
 	auctionEndPriceOffset?: number;
@@ -60,8 +59,9 @@ interface RegularOrderParams {
 	marketIndex: number;
 	direction: PositionDirection;
 	amount: BN;
-	optionalAuctionParamsInputs?: OptionalAuctionParamsRequestInputs;
 	dlobServerHttpUrl: string;
+	reduceOnly?: boolean;
+	optionalAuctionParamsInputs?: OptionalAuctionParamsRequestInputs;
 	dynamicSlippageConfig?: DynamicSlippageConfig;
 	onAuctionParamsFetched?: AuctionParamsFetchedCallback;
 }
@@ -209,6 +209,7 @@ export async function fetchAuctionOrderParamsFromDlob({
 	dlobServerHttpUrl,
 	assetType,
 	driftClient,
+	reduceOnly,
 	optionalAuctionParamsInputs = {},
 }: RegularOrderParams): Promise<OptionalOrderParams> {
 	const baseAmount =
@@ -224,6 +225,7 @@ export async function fetchAuctionOrderParamsFromDlob({
 		marketIndex: marketIndex.toString(),
 		direction: ENUM_UTILS.toStr(direction),
 		amount: baseAmount.toString(),
+		reduceOnly: reduceOnly ? 'true' : 'false',
 	};
 
 	// Add defined optional parameters
@@ -285,6 +287,7 @@ export async function fetchAuctionOrderParamsFromL2({
 	direction,
 	assetType,
 	amount,
+	reduceOnly,
 	optionalAuctionParamsInputs,
 	driftClient,
 	dynamicSlippageConfig,
@@ -347,7 +350,7 @@ export async function fetchAuctionOrderParamsFromL2({
 		maxLeverageSelected: optionalAuctionParamsInputs.maxLeverageSelected,
 		maxLeverageOrderSize: optionalAuctionParamsInputs.maxLeverageOrderSize,
 		baseAmount: baseAmount,
-		reduceOnly: optionalAuctionParamsInputs.reduceOnly,
+		reduceOnly: reduceOnly,
 		allowInfSlippage: false,
 		oraclePrice: oraclePriceBn,
 		bestPrice: priceImpactData.bestPrice,

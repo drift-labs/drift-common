@@ -131,7 +131,8 @@ export function buildNonMarketOrderParams({
 		}
 
 		const triggerCondition = getTriggerCondition(direction, orderType);
-		const hasLimitPrice = !!orderConfig.limitPrice;
+		const hasLimitPrice =
+			!!orderConfig.limitPrice && !orderConfig.limitPrice.isZero();
 
 		if (hasLimitPrice) {
 			return getTriggerLimitOrderParams({

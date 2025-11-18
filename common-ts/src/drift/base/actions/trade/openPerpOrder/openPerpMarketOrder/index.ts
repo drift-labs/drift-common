@@ -44,6 +44,7 @@ export interface OpenPerpMarketOrderBaseParams {
 	direction: PositionDirection;
 	amount: BN;
 	dlobServerHttpUrl: string;
+	reduceOnly?: boolean;
 	// mainly used for UI order identification
 	userOrderId?: number;
 	placeAndTake?: PlaceAndTakeParams;
@@ -130,6 +131,7 @@ export async function createSwiftMarketOrder({
 	marketIndex,
 	direction,
 	amount,
+	reduceOnly,
 	bracketOrders,
 	dlobServerHttpUrl,
 	optionalAuctionParamsInputs,
@@ -155,6 +157,7 @@ export async function createSwiftMarketOrder({
 		amount,
 		dlobServerHttpUrl,
 		optionalAuctionParamsInputs,
+		reduceOnly,
 		onAuctionParamsFetched: callbacks?.onAuctionParamsFetched,
 	});
 
@@ -204,6 +207,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	user,
 	userOrderId,
 	amount,
+	reduceOnly,
 	referrerInfo,
 	auctionDurationPercentage,
 	optionalAuctionParamsInputs,
@@ -234,6 +238,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 			marketType: MarketType.PERP,
 			direction,
 			amount,
+			reduceOnly,
 			dlobServerHttpUrl,
 			optionalAuctionParamsInputs,
 			onAuctionParamsFetched: callbacks?.onAuctionParamsFetched,
@@ -309,6 +314,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 	marketIndex,
 	direction,
 	amount,
+	reduceOnly,
 	bracketOrders,
 	dlobServerHttpUrl,
 	placeAndTake,
@@ -347,6 +353,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 				driftClient,
 				user,
 				userOrderId,
+				reduceOnly,
 				referrerInfo: placeAndTake.referrerInfo,
 				auctionDurationPercentage: placeAndTake.auctionDurationPercentage,
 				optionalAuctionParamsInputs,
@@ -373,6 +380,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 			amount,
 			dlobServerHttpUrl,
 			optionalAuctionParamsInputs,
+			reduceOnly,
 			onAuctionParamsFetched: callbacks?.onAuctionParamsFetched,
 		});
 
