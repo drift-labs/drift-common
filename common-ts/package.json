@@ -67,7 +67,6 @@
 		"node": ">=22.14.0"
 	},
 	"devDependencies": {
-		"@drift-labs/sdk": "file:../protocol/sdk",
 		"@jest/globals": "29.3.1",
 		"@types/mocha": "10.0.4",
 		"@types/sinon": "^17.0.4",
