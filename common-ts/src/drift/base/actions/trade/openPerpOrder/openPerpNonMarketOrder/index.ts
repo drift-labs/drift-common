@@ -95,8 +95,6 @@ export type OpenPerpNonMarketOrderParams<
 export const createMultipleOpenPerpNonMarketOrderIx = async (params: {
 	driftClient: DriftClient;
 	user: User;
-	marketIndex: number;
-	direction: PositionDirection;
 	orderParamsConfigs: NonMarketOrderParamsConfig[];
 	enterHighLeverageMode?: boolean;
 	/**
@@ -209,6 +207,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 					driftClient,
 					user,
 					userOrderId,
+					reduceOnly,
 					positionMaxLeverage,
 					optionalAuctionParamsInputs:
 						orderConfig.limitAuction.optionalLimitAuctionParams,

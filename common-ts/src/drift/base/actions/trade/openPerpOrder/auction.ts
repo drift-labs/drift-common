@@ -62,6 +62,7 @@ export const getLimitAuctionOrderParams = async ({
 		marketType,
 		direction,
 		amount: baseAssetAmount,
+		reduceOnly,
 		dlobServerHttpUrl: orderConfig.limitAuction.dlobServerHttpUrl,
 		optionalAuctionParamsInputs:
 			orderConfig.limitAuction.optionalLimitAuctionParams,
