@@ -1,6 +1,7 @@
 import {
 	BN,
 	DriftClient,
+	getUserAccountPublicKeySync,
 	PublicKey,
 	ReferrerInfo,
 	ReferrerNameAccount,
@@ -30,6 +31,7 @@ interface CreateUserAndDepositCollateralBaseIxsParams {
 	poolId?: number;
 	fromSubAccountId?: number;
 	customMaxMarginRatio?: number;
+	delegate?: PublicKey;
 }
 
 /**
@@ -49,6 +51,7 @@ interface CreateUserAndDepositCollateralBaseIxsParams {
  * @param poolId - The pool ID to associate the account with (defaults to MAIN_POOL_ID)
  * @param fromSubAccountId - Optional sub-account ID to transfer funds from
  * @param customMaxMarginRatio - Optional custom maximum margin ratio for the account
+ * @param delegate - Optional delegate public key for the account. Immediately assigns this as the delegate of the account.
  *
  * @returns Promise resolving to an object containing:
  *   - subAccountId: The ID of the newly created sub-account
@@ -66,12 +69,13 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 	poolId = MAIN_POOL_ID,
 	fromSubAccountId,
 	customMaxMarginRatio,
+	delegate,
 }: CreateUserAndDepositCollateralBaseIxsParams): Promise<{
 	subAccountId: number;
 	userAccountPublicKey: PublicKey;
 	ixs: TransactionInstruction[];
 }> => {
-	const nextUserId = userStatsAccount?.numberOfSubAccountsCreated ?? 0; // userId is zero indexed
+	const nextSubaccountId = userStatsAccount?.numberOfSubAccountsCreated ?? 0; // userId is zero indexed
 
 	const associatedDepositTokenAddressPromise =
 		getTokenAddressForDepositAndWithdraw(spotMarketConfig.mint, authority);
@@ -83,7 +87,7 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 		driftClient,
 		{
 			type: 'subAccountId',
-			subAccountId: nextUserId,
+			subAccountId: nextSubaccountId,
 			authority,
 		}
 	);
@@ -101,9 +105,9 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 
 	const accountNameToUse =
 		accountName ??
-		(poolId !== MAIN_POOL_ID || nextUserId === 0
+		(poolId !== MAIN_POOL_ID || nextSubaccountId === 0
 			? DEFAULT_ACCOUNT_NAMES_BY_POOL_ID[poolId]
-			: `Account ${nextUserId}`);
+			: `Account ${nextSubaccountId}`);
 
 	const referrerInfo: ReferrerInfo | undefined = referrerNameAccount
 		? {
@@ -112,12 +116,13 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 		  }
 		: undefined;
 
-	const { ixs, userAccountPublicKey } =
+	const ixs = [];
+	const { ixs: createAndDepositIxs, userAccountPublicKey } =
 		await driftClient.createInitializeUserAccountAndDepositCollateralIxs(
 			amount,
 			associatedDepositTokenAddress,
 			spotMarketConfig.marketIndex,
-			nextUserId,
+			nextSubaccountId,
 			accountNameToUse,
 			fromSubAccountId,
 			referrerInfo,
@@ -125,9 +130,27 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 			customMaxMarginRatio,
 			poolId
 		);
+	ixs.push(...createAndDepositIxs);
+
+	const nextSubAccountPublicKey = getUserAccountPublicKeySync(
+		driftClient.program.programId,
+		authority,
+		nextSubaccountId
+	);
+	const delegateIx = delegate
+		? await driftClient.getUpdateUserDelegateIx(delegate, {
+				subAccountId: nextSubaccountId,
+				userAccountPublicKey: nextSubAccountPublicKey,
+				authority,
+		  })
+		: undefined;
+
+	if (delegateIx) {
+		ixs.push(delegateIx);
+	}
 
 	return {
-		subAccountId: nextUserId,
+		subAccountId: nextSubaccountId,
 		userAccountPublicKey,
 		ixs,
 	};
