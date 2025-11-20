@@ -112,10 +112,12 @@ const getCandleFetchUrl = ({
 	countToFetch,
 }: CandleFetchUrlConfig) => {
 	const baseDataApiUrl = getBaseDataApiUrl(env);
-	
+
 	// Cache key for this URL configuration
-	const cacheKey = `${marketId.key}-${resolution}-${countToFetch}-${env.key}-${startTs ?? 'none'}`;
-	
+	const cacheKey = `${marketId.key}-${resolution}-${countToFetch}-${env.key}-${
+		startTs ?? 'none'
+	}`;
+
 	if (urlCache.has(cacheKey)) {
 		return urlCache.get(cacheKey)!;
 	}

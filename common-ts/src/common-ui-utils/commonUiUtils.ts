@@ -44,13 +44,16 @@ const uiStringCache = new Map<string, string>();
 const MAX_UI_STRING_CACHE_SIZE = 2000;
 
 // Helper function to cache common string patterns
-function getCachedUiString(pattern: string, ...values: (string | number)[]): string {
+function getCachedUiString(
+	pattern: string,
+	...values: (string | number)[]
+): string {
 	const cacheKey = `${pattern}:${values.join(':')}`;
-	
+
 	if (uiStringCache.has(cacheKey)) {
 		return uiStringCache.get(cacheKey)!;
 	}
-	
+
 	let result: string;
 	switch (pattern) {
 		case 'abbreviate': {
@@ -71,12 +74,12 @@ function getCachedUiString(pattern: string, ...values: (string | number)[]): str
 		default:
 			result = values.join('_');
 	}
-	
+
 	// Cache if not too large
 	if (uiStringCache.size < MAX_UI_STRING_CACHE_SIZE) {
 		uiStringCache.set(cacheKey, result);
 	}
-	
+
 	return result;
 }
 

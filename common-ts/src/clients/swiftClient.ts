@@ -16,17 +16,17 @@ const MAX_SWIFT_URL_CACHE_SIZE = 200;
 
 function getCachedUrl(baseUrl: string, endpoint: string): string {
 	const cacheKey = `${baseUrl}:${endpoint}`;
-	
+
 	if (swiftUrlCache.has(cacheKey)) {
 		return swiftUrlCache.get(cacheKey)!;
 	}
-	
+
 	const result = `${baseUrl}${endpoint}`;
-	
+
 	if (swiftUrlCache.size < MAX_SWIFT_URL_CACHE_SIZE) {
 		swiftUrlCache.set(cacheKey, result);
 	}
-	
+
 	return result;
 }
 import { Observable, Subscriber } from 'rxjs';
@@ -137,7 +137,10 @@ export class SwiftClient {
 			body: SwiftServerOrderProcessResponse;
 			status: number;
 		}>((res) => {
-			const postRequest = new Request(getCachedUrl(this.baseUrl, url), requestOptions);
+			const postRequest = new Request(
+				getCachedUrl(this.baseUrl, url),
+				requestOptions
+			);
 
 			fetch(postRequest)
 				.then(async (response) => {

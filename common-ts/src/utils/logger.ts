@@ -14,22 +14,30 @@ const logTemplateCache = new Map<string, string>();
 const MAX_TEMPLATE_CACHE_SIZE = 100;
 
 // Optimized log formatter that caches common template patterns
-function formatLogMessage(timestamp: string, level: string, message: string): string {
+function formatLogMessage(
+	timestamp: string,
+	level: string,
+	message: string
+): string {
 	const upperLevel = level.toUpperCase();
 	const templateKey = `${upperLevel}_template`;
-	
+
 	if (logTemplateCache.has(templateKey)) {
 		const template = logTemplateCache.get(templateKey)!;
-		return template.replace('{{timestamp}}', timestamp).replace('{{message}}', message);
+		return template
+			.replace('{{timestamp}}', timestamp)
+			.replace('{{message}}', message);
 	}
-	
+
 	const template = '[{{timestamp}}] ' + upperLevel + ': {{message}}';
-	
+
 	if (logTemplateCache.size < MAX_TEMPLATE_CACHE_SIZE) {
 		logTemplateCache.set(templateKey, template);
 	}
-	
-	return template.replace('{{timestamp}}', timestamp).replace('{{message}}', message);
+
+	return template
+		.replace('{{timestamp}}', timestamp)
+		.replace('{{message}}', message);
 }
 
 const loggerTransports: TransportStream[] = [
@@ -68,7 +76,11 @@ export const logger = createLogger({
 	format: format.combine(
 		format.timestamp(),
 		format.printf(({ timestamp, level, message }) => {
-			return formatLogMessage(String(timestamp), String(level), String(message));
+			return formatLogMessage(
+				String(timestamp),
+				String(level),
+				String(message)
+			);
 		})
 	),
 });
@@ -90,14 +102,14 @@ export const allEnvDlog = (
 	// Cache debug message format to reduce string concatenation
 	const debugKey = `debug_${key}`;
 	let cachedFormat = logTemplateCache.get(debugKey);
-	
+
 	if (!cachedFormat) {
 		cachedFormat = `🔧::${key}::\n{{message}}`;
 		if (logTemplateCache.size < MAX_TEMPLATE_CACHE_SIZE) {
 			logTemplateCache.set(debugKey, cachedFormat);
 		}
 	}
-	
+
 	const formattedMessage = cachedFormat.replace('{{message}}', String(message));
 	console.debug(formattedMessage, ...optionalParams);
 };

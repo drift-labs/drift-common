@@ -6,20 +6,23 @@ const eventIdCache = new Map<string, string>();
 const MAX_EVENT_ID_CACHE_SIZE = 5000;
 
 // Helper function to create cached event IDs
-function createEventId(template: string, ...values: (string | number)[]): string {
+function createEventId(
+	template: string,
+	...values: (string | number)[]
+): string {
 	const cacheKey = `${template}:${values.join(':')}`;
-	
+
 	if (eventIdCache.has(cacheKey)) {
 		return eventIdCache.get(cacheKey)!;
 	}
-	
+
 	const result = values.join('_');
-	
+
 	// Cache if not too large
 	if (eventIdCache.size < MAX_EVENT_ID_CACHE_SIZE) {
 		eventIdCache.set(cacheKey, result);
 	}
-	
+
 	return result;
 }
 
@@ -52,7 +55,8 @@ export const getDriftEventKey = (event: UniqableDriftEvent) => {
 	switch (_eventType) {
 		case 'SwapRecord': {
 			const _typedEvent = event as WrappedEvent<'SwapRecord'>;
-			return createEventId('SwapRecord', 
+			return createEventId(
+				'SwapRecord',
 				_typedEvent.eventType,
 				_typedEvent.user.toString(),
 				_typedEvent.txSig,
@@ -62,7 +66,8 @@ export const getDriftEventKey = (event: UniqableDriftEvent) => {
 		}
 		case 'OrderRecord': {
 			const _typedEvent = event as WrappedEvent<'OrderRecord'>;
-			return createEventId('OrderRecord',
+			return createEventId(
+				'OrderRecord',
 				_typedEvent.eventType,
 				_typedEvent.user.toString(),
 				_typedEvent.order.userOrderId,
