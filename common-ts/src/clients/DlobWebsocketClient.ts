@@ -52,6 +52,10 @@ export class DlobWebsocketClient {
 	private resultIncrementer: ResultSlotIncrementer;
 	private destroy$ = new Subject<void>();
 
+	// String caches to prevent repeated string concatenation
+	private static readonly stringCache = new Map<string, string>();
+	private static readonly maxCacheSize = 1000;
+
 	// Subjects for reactive streams
 	private marketSubscriptions$ = new BehaviorSubject<MarketSubscription[]>([]);
 	private rawMessages$ = new Subject<{
@@ -131,9 +135,34 @@ export class DlobWebsocketClient {
 		for (const subscriptionKey of this.subscriptions.keys()) {
 			// Extract marketId and channel from subscription key
 			const [marketKey, channel] = subscriptionKey.split('_');
-			const resultKey = `${channel}_${marketKey}`;
+			const resultKey = this.getCachedString(
+				`${channel}_${marketKey}`,
+				'result'
+			);
 			this.resultIncrementer.resetKey(resultKey);
 		}
+	}
+
+	/**
+	 * Cache frequently used strings to reduce memory allocation
+	 */
+	private getCachedString(baseString: string, type: string): string {
+		const cacheKey = `${type}:${baseString}`;
+
+		if (DlobWebsocketClient.stringCache.has(cacheKey)) {
+			return DlobWebsocketClient.stringCache.get(cacheKey)!;
+		}
+
+		// If cache is getting too large, clear oldest entries
+		if (
+			DlobWebsocketClient.stringCache.size >= DlobWebsocketClient.maxCacheSize
+		) {
+			const firstKey = DlobWebsocketClient.stringCache.keys().next().value;
+			DlobWebsocketClient.stringCache.delete(firstKey);
+		}
+
+		DlobWebsocketClient.stringCache.set(cacheKey, baseString);
+		return baseString;
 	}
 
 	/**
@@ -224,7 +253,10 @@ export class DlobWebsocketClient {
 			}>({
 				wsUrl: this.config.websocketUrl,
 				enableHeartbeatMonitoring: true,
-				subscriptionId: `${this.config.websocketUrl}_dlob_liquidity_${marketId.key}`,
+				subscriptionId: this.getCachedString(
+					`${this.config.websocketUrl}_dlob_liquidity_${marketId.key}`,
+					'subscription'
+				),
 				subscribeMessage: JSON.stringify(
 					DLOB_SERVER_WEBSOCKET_UTILS.getSubscriptionProps({
 						type: channel,
@@ -279,7 +311,10 @@ export class DlobWebsocketClient {
 	): ProcessedMarketData | null {
 		try {
 			const parsed = this.tryParse(data) as RawL2Output;
-			const resultKey = `${channel}_${marketId.key}`;
+			const resultKey = this.getCachedString(
+				`${channel}_${marketId.key}`,
+				'result'
+			);
 			const messageTimestamp = Date.now(); // Capture when we received this message
 
 			const validResult = this.resultIncrementer.handleResult(
@@ -322,7 +357,10 @@ export class DlobWebsocketClient {
 
 	private getSubscriptionKey(subscription: MarketSubscription): string {
 		const { marketId, channel, grouping } = subscription;
-		return `${marketId.key}_${channel}${grouping ? `_${grouping}` : ''}`;
+		const baseKey = `${marketId.key}_${channel}${
+			grouping ? `_${grouping}` : ''
+		}`;
+		return this.getCachedString(baseKey, 'subscription_key');
 	}
 }
 

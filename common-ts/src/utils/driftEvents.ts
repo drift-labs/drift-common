@@ -1,6 +1,28 @@
 import { EventType, WrappedEvent } from '@drift-labs/sdk';
 import { ENUM_UTILS } from '.';
 
+// Cache for event ID string patterns to reduce repeated concatenation
+const eventIdCache = new Map<string, string>();
+const MAX_EVENT_ID_CACHE_SIZE = 5000;
+
+// Helper function to create cached event IDs
+function createEventId(template: string, ...values: (string | number)[]): string {
+	const cacheKey = `${template}:${values.join(':')}`;
+	
+	if (eventIdCache.has(cacheKey)) {
+		return eventIdCache.get(cacheKey)!;
+	}
+	
+	const result = values.join('_');
+	
+	// Cache if not too large
+	if (eventIdCache.size < MAX_EVENT_ID_CACHE_SIZE) {
+		eventIdCache.set(cacheKey, result);
+	}
+	
+	return result;
+}
+
 // Pick the relevant fields from OrderActionRecord that we care about for getDriftEventKey. This enables us to use UISerializableOrderActionRecord and OrderActionRecord interchangeably.
 type UniqableOrderActionRecord = Pick<
 	WrappedEvent<'OrderActionRecord'>,
@@ -30,15 +52,22 @@ export const getDriftEventKey = (event: UniqableDriftEvent) => {
 	switch (_eventType) {
 		case 'SwapRecord': {
 			const _typedEvent = event as WrappedEvent<'SwapRecord'>;
-			return `${_typedEvent.eventType}_${_typedEvent.user.toString()}_${
-				_typedEvent.txSig
-			}_${_typedEvent.inMarketIndex}_${_typedEvent.outMarketIndex}`;
+			return createEventId('SwapRecord', 
+				_typedEvent.eventType,
+				_typedEvent.user.toString(),
+				_typedEvent.txSig,
+				_typedEvent.inMarketIndex,
+				_typedEvent.outMarketIndex
+			);
 		}
 		case 'OrderRecord': {
 			const _typedEvent = event as WrappedEvent<'OrderRecord'>;
-			return `${_typedEvent.eventType}_${_typedEvent.user.toString()}_${
-				_typedEvent.order.userOrderId
-			}_${_typedEvent.order.orderId}`;
+			return createEventId('OrderRecord',
+				_typedEvent.eventType,
+				_typedEvent.user.toString(),
+				_typedEvent.order.userOrderId,
+				_typedEvent.order.orderId
+			);
 		}
 		case 'CurveRecord': {
 			const _typedEvent = event as WrappedEvent<'CurveRecord'>;
