@@ -123,6 +123,8 @@ interface PrepSwiftOrderParams {
 		takeProfit?: OptionalTriggerOrderParams;
 		/** Optional max leverage for the position */
 		positionMaxLeverage?: number;
+		/** Optional isolated position deposit amount */
+		isolatedPositionDeposit?: BN;
 	};
 	/**
 	 * Buffer slots to account for the user to sign the message. Affects the auction start slot.
@@ -238,6 +240,7 @@ export const prepSwiftOrder = ({
 					orderParams.positionMaxLeverage
 			  )
 			: null,
+		isolatedPositionDeposit: orderParams.isolatedPositionDeposit ?? null,
 		// Include builder params if provided
 		builderIdx: builderParams?.builderIdx ?? null,
 		builderFeeTenthBps: builderParams?.builderFeeTenthBps ?? null,
@@ -452,6 +455,10 @@ type PrepSignAndSendSwiftOrderParams = {
 		 * Adjusts the max leverage of a position.
 		 */
 		positionMaxLeverage?: number;
+		/**
+		 * Optional isolated position deposit amount for isolated positions.
+		 */
+		isolatedPositionDeposit?: BN;
 	};
 	/**
 	 * Optional builder code parameters for revenue sharing.

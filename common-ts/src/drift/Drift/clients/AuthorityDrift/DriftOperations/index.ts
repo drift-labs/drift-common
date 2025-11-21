@@ -466,6 +466,7 @@ export class DriftOperations {
 							params.orderConfig.optionalAuctionParamsInputs,
 						builderParams: params.builderParams,
 						positionMaxLeverage: params.positionMaxLeverage,
+						isolatedPositionDeposit: params.isolatedPositionDeposit,
 					});
 
 					return swiftOrderResult;
@@ -483,6 +484,7 @@ export class DriftOperations {
 						dlobServerHttpUrl: this.dlobServerHttpUrl,
 						useSwift: false,
 						positionMaxLeverage: params.positionMaxLeverage,
+						isolatedPositionDeposit: params.isolatedPositionDeposit,
 					});
 
 					const { txSig } = await this.driftClient.sendTransaction(result);
