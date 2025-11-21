@@ -28,6 +28,7 @@ import {
 import { OpenPosition, UIMarket } from '../types';
 import { TRADING_UTILS } from './trading';
 import { ENUM_UTILS } from '../utils';
+import { COMMON_UI_UTILS } from './commonUiUtils';
 
 const getOpenPositionData = (
 	driftClient: DriftClient,
@@ -255,6 +256,8 @@ const checkIfUserAccountExists = async (
  * position is not expected to have a max margin ratio set, and the UI should display the regular max
  * leverage for the market, unless the user is already in High Leverage Mode, in which case the UI should
  * display the high leverage max leverage for the market (if any).
+ *
+ * 5. In cases where the user has a custom account level max margin ratio, the stricter of this and the position max margin ratio is used.
  */
 const getUserMaxLeverageForMarket = (
 	user: User | undefined,
@@ -274,10 +277,15 @@ const getUserMaxLeverageForMarket = (
 		return DEFAULT_MAX_LEVERAGE;
 	}
 
+	const userAccountMaxMarginRatio = user.getUserAccount()?.maxMarginRatio;
+	const userAccountMaxLeverage = userAccountMaxMarginRatio
+		? COMMON_UI_UTILS.convertMarginRatioToLeverage(userAccountMaxMarginRatio)
+		: DEFAULT_MAX_LEVERAGE;
+
 	const openOrClosedPosition = user.getPerpPosition(marketIndex); // this position does not have to be open, it can be a closed position (a.k.a "empty") but has max margin ratio set.
 
 	if (!openOrClosedPosition) {
-		return DEFAULT_MAX_LEVERAGE;
+		return Math.min(DEFAULT_MAX_LEVERAGE, userAccountMaxLeverage);
 	}
 
 	const positionHasMaxMarginRatioSet = !!openOrClosedPosition.maxMarginRatio;
@@ -290,8 +298,11 @@ const getUserMaxLeverageForMarket = (
 			return uiSavedMaxLeverage;
 		}
 
-		return parseFloat(
-			((1 / openOrClosedPosition.maxMarginRatio) * 10000).toFixed(2)
+		return Math.min(
+			COMMON_UI_UTILS.convertMarginRatioToLeverage(
+				openOrClosedPosition.maxMarginRatio
+			),
+			userAccountMaxLeverage
 		);
 	}
 
@@ -304,11 +315,11 @@ const getUserMaxLeverageForMarket = (
 				? marketLeverageDetails.highLeverageMaxLeverage
 				: marketLeverageDetails.regularMaxLeverage
 			: marketLeverageDetails.regularMaxLeverage;
-		return grandfatheredMaxLev;
+		return Math.min(grandfatheredMaxLev, userAccountMaxLeverage);
 	}
 
 	// user has closed position with no margin ratio set, return default value
-	return DEFAULT_MAX_LEVERAGE;
+	return Math.min(DEFAULT_MAX_LEVERAGE, userAccountMaxLeverage);
 };
 
 export const USER_UTILS = {
