@@ -50,7 +50,7 @@ export function computeIsolatedPositionDepositForTrade({
 	marginRatio,
 	entryPrice,
 	numOfOpenHighLeverageSpots,
-}: ComputeIsolatedPositionDepositParams): BN {
+}: ComputeIsolatedPositionDepositParams): BN | null {
 	// Only require isolated deposit if the order will increase the position (when direction is provided)
 	if (direction !== undefined) {
 		const maybeOrderParams: OptionalOrderParams = {
@@ -66,7 +66,7 @@ export function computeIsolatedPositionDepositForTrade({
 			subAccountId
 		);
 		if (!isIncreasing) {
-			return new BN(0);
+			return null;
 		}
 	}
 
