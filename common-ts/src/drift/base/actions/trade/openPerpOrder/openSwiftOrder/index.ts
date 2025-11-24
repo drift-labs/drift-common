@@ -219,6 +219,11 @@ export const prepSwiftOrder = ({
 
 	const signedMsgOrderUuid = generateSignedMsgUuid();
 
+	console.log(
+		'DEBUG swift prep orderParams.isolatedPositionDeposit',
+		orderParams.isolatedPositionDeposit?.toString()
+	);
+
 	const baseSignedMsgOrderParamsMessage = {
 		signedMsgOrderParams: mainOrderParams,
 		uuid: signedMsgOrderUuid,

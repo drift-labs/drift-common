@@ -29,14 +29,12 @@ import {
 	HighLeverageOptions,
 	ORDER_COMMON_UTILS,
 } from '../../../../../../common-ui-utils/order';
-import { TRADING_UTILS } from '../../../../../../common-ui-utils/trading';
 import { WithTxnParams } from '../../../../types';
 import { TxnOrSwiftResult } from '../types';
 import { NoTopMakersError } from '../../../../../Drift/constants/errors';
 import { PlaceAndTakeParams, OptionalTriggerOrderParams } from '../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
 import { AuctionParamsFetchedCallback } from '../../../../../utils/auctionParamsResponseMapper';
-import { computeIsolatedPositionDepositForTrade } from '../isolatedPositionDeposit';
 
 export interface OpenPerpMarketOrderBaseParams {
 	driftClient: DriftClient;
@@ -198,20 +196,7 @@ export async function createSwiftMarketOrder({
 			takeProfit: bracketOrders?.takeProfit,
 			stopLoss: bracketOrders?.stopLoss,
 			positionMaxLeverage,
-			isolatedPositionDeposit:
-				isolatedPositionDeposit ??
-				computeIsolatedPositionDepositForTrade({
-					driftClient,
-					user,
-					marketIndex,
-					baseAssetAmount: amount,
-					direction,
-					marginRatio:
-						TRADING_UTILS.convertLeverageToMarginRatio(positionMaxLeverage) ??
-						0,
-					numOfOpenHighLeverageSpots:
-						highLeverageOptions?.numOfOpenHighLeverageSpots,
-				}),
+			isolatedPositionDeposit,
 		},
 		builderParams,
 	});
@@ -237,7 +222,6 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	mainSignerOverride,
 	highLeverageOptions,
 	positionMaxLeverage,
-	isolatedPositionDeposit,
 	callbacks,
 }: OpenPerpMarketOrderBaseParams & {
 	direction: PositionDirection;
