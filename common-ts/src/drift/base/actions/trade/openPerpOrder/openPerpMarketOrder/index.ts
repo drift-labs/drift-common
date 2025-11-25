@@ -35,6 +35,7 @@ import { NoTopMakersError } from '../../../../../Drift/constants/errors';
 import { PlaceAndTakeParams, OptionalTriggerOrderParams } from '../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
 import { AuctionParamsFetchedCallback } from '../../../../../utils/auctionParamsResponseMapper';
+import { getIsolatedPositionDepositIxIfNeeded } from '../isolatedPositionDeposit';
 
 export interface OpenPerpMarketOrderBaseParams {
 	driftClient: DriftClient;
@@ -351,6 +352,17 @@ export const createOpenPerpMarketOrderIxs = async ({
 		allIxs.push(leverageIx);
 	}
 
+	const isolatedPositionDepositIx = await getIsolatedPositionDepositIxIfNeeded(
+		driftClient,
+		user,
+		marketIndex,
+		isolatedPositionDeposit
+	);
+
+	if (isolatedPositionDepositIx) {
+		allIxs.push(isolatedPositionDepositIx);
+	}
+
 	if (placeAndTake?.enable) {
 		try {
 			const placeAndTakeIx = await createPlaceAndTakePerpMarketOrderIx({
@@ -368,7 +380,6 @@ export const createOpenPerpMarketOrderIxs = async ({
 				optionalAuctionParamsInputs,
 				mainSignerOverride,
 				positionMaxLeverage,
-				isolatedPositionDeposit,
 			});
 			allIxs.push(placeAndTakeIx);
 		} catch (e) {

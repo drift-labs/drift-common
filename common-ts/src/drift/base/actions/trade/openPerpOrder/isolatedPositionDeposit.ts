@@ -8,6 +8,7 @@ import {
 	MarketType,
 	OrderType,
 } from '@drift-labs/sdk';
+import { TransactionInstruction } from '@solana/web3.js';
 
 export const ISOLATED_POSITION_DEPOSIT_BUFFER_BPS = 200;
 
@@ -88,4 +89,24 @@ export function computeIsolatedPositionDepositForTrade({
 	return marginRequired.add(
 		marginRequired.div(new BN(ISOLATED_POSITION_DEPOSIT_BUFFER_BPS))
 	); // buffer in basis points
+}
+
+export async function getIsolatedPositionDepositIxIfNeeded(
+	driftClient: DriftClient,
+	user: User,
+	marketIndex: number,
+	isolatedPositionDeposit?: BN
+): Promise<TransactionInstruction | undefined> {
+	if (!isolatedPositionDeposit) {
+		return undefined;
+	}
+	if (isolatedPositionDeposit.isZero()) {
+		return undefined;
+	}
+
+	return driftClient.getTransferIsolatedPerpPositionDepositIx(
+		isolatedPositionDeposit,
+		marketIndex,
+		user.getUserAccount().subAccountId
+	);
 }

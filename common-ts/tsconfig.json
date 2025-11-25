@@ -18,6 +18,7 @@
 			"@drift-labs/sdk": ["../protocol/sdk"]
 		},
 		"outDir": "./lib"
+		// "strictNullChecks": true // TODO: we should enable this
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules"]

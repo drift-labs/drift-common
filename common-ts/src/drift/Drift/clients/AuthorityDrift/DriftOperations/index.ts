@@ -528,6 +528,7 @@ export class DriftOperations {
 						},
 						builderParams: params.builderParams,
 						positionMaxLeverage: params.positionMaxLeverage,
+						isolatedPositionDeposit: params.isolatedPositionDeposit,
 					});
 
 					return swiftOrderResult;
@@ -549,6 +550,7 @@ export class DriftOperations {
 						useSwift: false,
 						txParams: this.getTxParams(),
 						positionMaxLeverage: params.positionMaxLeverage,
+						isolatedPositionDeposit: params.isolatedPositionDeposit,
 					});
 
 					const { txSig } = await this.driftClient.sendTransaction(txn);
