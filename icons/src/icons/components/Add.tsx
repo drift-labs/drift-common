@@ -2,8 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const Add = (allProps: IconProps) => {
-	const { svgProps: props, ...restProps } = allProps;
+const Add = ({ svgProps, ...rest }: IconProps) => {
 	return (
 		<IconWrapper
 			icon={
@@ -11,18 +10,17 @@ const Add = (allProps: IconProps) => {
 					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
-					{...props}
+					{...svgProps}
 				>
 					<path
-						fillRule="evenodd"
-						clipRule="evenodd"
-						d="M12 4.25a.75.75 0 01.75.75v6.321h6.321a.75.75 0 010 1.5H12.75v6.321a.75.75 0 01-1.5 0v-6.32H4.929a.75.75 0 010-1.5h6.321V5a.75.75 0 01.75-.75z"
-						fill={allProps.color ? allProps.color : 'currentColor'}
+						d="M20 11.25a.75.75 0 0 1 0 1.5h-7.25V20a.75.75 0 1 1-1.5 0v-7.25H4a.75.75 0 0 1 0-1.5h7.25V4a.75.75 0 1 1 1.5 0v7.25z"
+						fill={svgProps.color ? svgProps.color : 'currentColor'}
 					/>
 				</svg>
 			}
-			{...restProps}
+			{...rest}
 		/>
 	);
 };
+
 export default Add;

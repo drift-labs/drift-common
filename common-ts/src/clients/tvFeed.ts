@@ -196,6 +196,8 @@ export class DriftTvFeed {
 	private onResetCache: () => void;
 	private perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
+	private positiveColor: string;
+	private negativeColor: string;
 	private tvAppTradeDataManager: TvAppTradeDataManager | undefined;
 	private marketDecimalConfig: MarketDecimalConfig | undefined;
 
@@ -205,6 +207,8 @@ export class DriftTvFeed {
 		driftClient: DriftClient,
 		perpMarketConfigs: PerpMarketConfig[],
 		spotMarketConfigs: SpotMarketConfig[],
+		positiveColor: string,
+		negativeColor: string,
 		tvAppTradeDataManager?: TvAppTradeDataManager,
 		marketDecimalConfig?: MarketDecimalConfig
 	) {
@@ -214,6 +218,8 @@ export class DriftTvFeed {
 		this.driftClient = driftClient;
 		this.perpMarketConfigs = perpMarketConfigs;
 		this.spotMarketConfigs = spotMarketConfigs;
+		this.positiveColor = positiveColor;
+		this.negativeColor = negativeColor;
 		this.tvAppTradeDataManager = tvAppTradeDataManager;
 		this.marketDecimalConfig = marketDecimalConfig;
 	}
@@ -435,7 +441,7 @@ export class DriftTvFeed {
 				isLong = trade.takerOrderDirection === 'long';
 			}
 
-			const color = isLong ? '#5DD5A0' : '#FF615C';
+			const color = isLong ? this.positiveColor : this.negativeColor;
 			const baseAmount = Number(trade.baseAssetAmountFilled);
 			const quoteAmount = Number(trade.quoteAssetAmountFilled);
 			const avgPrice = quoteAmount / baseAmount;
