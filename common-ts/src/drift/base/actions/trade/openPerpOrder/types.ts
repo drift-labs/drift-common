@@ -80,6 +80,7 @@ export interface NonMarketOrderParamsConfig {
 	 * Example: 5 for 5x leverage, 10 for 10x leverage
 	 */
 	positionMaxLeverage: number;
+	isolatedPositionDeposit?: BN;
 	orderConfig:
 		| LimitOrderParamsOrderConfig
 		| {
