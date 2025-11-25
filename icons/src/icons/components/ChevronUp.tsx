@@ -14,7 +14,7 @@ const ChevronUp = ({ svgProps, ...rest }: IconProps) => {
 				>
 					<path
 						d="M11.526 7.418a.75.75 0 0 1 1.004.052l8 8a.75.75 0 1 1-1.06 1.06L12 9.06l-7.47 7.47a.75.75 0 1 1-1.06-1.06l8-8z"
-						fill={svgProps.color ? svgProps.color : 'currentColor'}
+						fill={rest.color ? rest.color : 'currentColor'}
 					/>
 				</svg>
 			}

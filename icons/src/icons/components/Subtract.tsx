@@ -16,7 +16,7 @@ const Subtract = ({ svgProps, ...rest }: IconProps) => {
 						fillRule="evenodd"
 						clipRule="evenodd"
 						d="M19.821 12.071a.75.75 0 0 1-.75.75H4.93a.75.75 0 0 1 0-1.5H19.07a.75.75 0 0 1 .75.75"
-						fill={svgProps.color ? svgProps.color : 'currentColor'}
+						fill={rest.color ? rest.color : 'currentColor'}
 					/>
 				</svg>
 			}
