@@ -304,7 +304,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
  * @param optionalAuctionParamsInputs - Optional parameters for auction params endpoint and order configuration
  * @param positionMaxLeverage - Optional per-market leverage (e.g., 5 for 5x). If provided and different from current,
  *                               adds an instruction to update the position's maxMarginRatio before placing the order.
- *
+ * @param userOrderId - the order ID in terms of incremental fills (usually 0). do NOT use the nextOrderId from the user account. values over 255 will cause the order to fail onchain.
  * @returns Promise resolving to an array of transaction instructions for regular orders
  */
 export const createOpenPerpMarketOrderIxs = async ({

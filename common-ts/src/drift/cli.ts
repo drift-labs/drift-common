@@ -42,6 +42,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
  *
  * Usage Examples:
  *   ts-node cli.ts deposit --marketIndex=0 --amount=2 --userAccount=11111111111111111111111111111111
+ *   ts-node cli.ts deposit --marketIndex=0 --amount=2 --userAccount=11111111111111111111111111111111 --fromWallet=22222222222222222222222222222222
  *   ts-node cli.ts withdraw --marketIndex=0 --amount=1.5 --userAccount=11111111111111111111111111111111
  *   ts-node cli.ts settleFunding --userAccount=11111111111111111111111111111111
  *   ts-node cli.ts settlePnl --marketIndexes=0,1 --userAccount=11111111111111111111111111111111
@@ -332,6 +333,7 @@ async function depositCommand(args: CliArgs): Promise<void> {
 	const userAccount = args.userAccount as string;
 	const marketIndex = parseInt(args.marketIndex as string);
 	const amount = args.amount as string;
+	const fromWallet = args.fromWallet as string | undefined;
 
 	if (!userAccount || isNaN(marketIndex) || !amount) {
 		throw new Error(
@@ -347,10 +349,19 @@ async function depositCommand(args: CliArgs): Promise<void> {
 	console.log(`🏪 Market Index: ${marketIndex}`);
 	console.log(`💰 Amount: ${amount} (${amountBN.toString()} raw units)`);
 
+	// Parse external wallet if provided
+	const externalWallet = fromWallet ? new PublicKey(fromWallet) : undefined;
+	if (externalWallet) {
+		console.log(`💼 From External Wallet: ${externalWallet.toBase58()}`);
+	}
+
 	const depositTxn = await centralServerDrift.getDepositTxn(
 		userAccountPubkey,
 		amountBN,
-		marketIndex
+		marketIndex,
+		{
+			externalWallet,
+		}
 	);
 
 	await executeTransaction(depositTxn as VersionedTransaction, 'Deposit');
@@ -915,10 +926,13 @@ function showUsage(): void {
 
 	console.log('💰 deposit');
 	console.log(
-		'  ts-node cli.ts deposit --userAccount=<pubkey> --marketIndex=<num> --amount=<num>'
+		'  ts-node cli.ts deposit --userAccount=<pubkey> --marketIndex=<num> --amount=<num> [--fromWallet=<pubkey>]'
 	);
 	console.log(
 		'  Example: ts-node cli.ts deposit --userAccount=11111111111111111111111111111111 --marketIndex=0 --amount=100'
+	);
+	console.log(
+		'  Example (external wallet): ts-node cli.ts deposit --userAccount=11111111111111111111111111111111 --marketIndex=0 --amount=100 --fromWallet=22222222222222222222222222222222'
 	);
 	console.log('');
 
