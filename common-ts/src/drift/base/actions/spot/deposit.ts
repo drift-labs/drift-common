@@ -1,9 +1,11 @@
 import {
 	BigNum,
 	DriftClient,
+	getTokenProgramForSpotMarket,
 	SpotMarketConfig,
 	TxParams,
 	User,
+	WRAPPED_SOL_MINT,
 } from '@drift-labs/sdk';
 import {
 	PublicKey,
@@ -11,7 +13,7 @@ import {
 	TransactionInstruction,
 	VersionedTransaction,
 } from '@solana/web3.js';
-import { getTokenAddressForDepositAndWithdraw } from '../../../../utils/token';
+import { getAssociatedTokenAddress } from '@solana/spl-token';
 
 interface CreateDepositIxParams {
 	driftClient: DriftClient;
@@ -47,11 +49,18 @@ export const createDepositIxs = async ({
 	externalWallet,
 }: CreateDepositIxParams): Promise<TransactionInstruction[]> => {
 	const authority = externalWallet ?? user.getUserAccount().authority;
-	const associatedDepositTokenAddress =
-		await getTokenAddressForDepositAndWithdraw(
-			spotMarketConfig.mint,
-			authority
-		);
+	const spotMarketAccount = driftClient.getSpotMarketAccount(
+		spotMarketConfig.marketIndex
+	);
+	const isSol = spotMarketAccount.mint.equals(WRAPPED_SOL_MINT);
+	const associatedDepositTokenAddress = isSol
+		? authority
+		: await getAssociatedTokenAddress(
+				spotMarketAccount.mint,
+				authority,
+				true,
+				getTokenProgramForSpotMarket(spotMarketAccount)
+		  );
 
 	let finalDepositAmount = amount;
 
@@ -136,13 +145,22 @@ export const createDepositTxn = async ({
 		externalWallet,
 	});
 
+	// Wrapper to filter out null lookup tables from the driftClient
+	const fetchFilteredLookupTables = async () => {
+		const lookupTables = await driftClient.fetchAllLookupTableAccounts();
+		// Filter out null/undefined values and return empty array if undefined
+		return (
+			lookupTables?.filter((table) => table !== null && table !== undefined) ??
+			[]
+		);
+	};
+
 	const depositTxn = await driftClient.txHandler.buildTransaction({
 		instructions: depositIxs,
 		txVersion: 0,
 		connection: driftClient.connection,
 		preFlightCommitment: 'confirmed',
-		fetchAllMarketLookupTableAccounts:
-			driftClient.fetchAllLookupTableAccounts.bind(driftClient),
+		fetchAllMarketLookupTableAccounts: fetchFilteredLookupTables,
 		txParams,
 	});
 
