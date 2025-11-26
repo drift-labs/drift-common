@@ -379,6 +379,11 @@ export class CentralServerDrift {
 		spotMarketIndex: number,
 		options?: {
 			txParams?: TxParams;
+			/**
+			 * Optional external wallet to deposit from. If provided, the deposit will be made
+			 * from this wallet instead of the user's authority wallet.
+			 */
+			externalWallet?: PublicKey;
 		}
 	): Promise<VersionedTransaction | Transaction> {
 		return this.driftClientContextWrapper(
@@ -400,6 +405,7 @@ export class CentralServerDrift {
 					amount: BigNum.from(amount, spotMarketConfig.precisionExp),
 					spotMarketConfig,
 					txParams: options?.txParams,
+					externalWallet: options?.externalWallet,
 				});
 
 				return depositTxn;
