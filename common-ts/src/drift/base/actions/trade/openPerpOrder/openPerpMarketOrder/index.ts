@@ -7,6 +7,7 @@ import {
 	MarketType,
 	getUserStatsAccountPublicKey,
 	ReferrerInfo,
+	OrderType,
 } from '@drift-labs/sdk';
 import {
 	PublicKey,
@@ -207,6 +208,8 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	user,
 	userOrderId,
 	amount,
+	orderType,
+	price,
 	reduceOnly,
 	referrerInfo,
 	auctionDurationPercentage,
@@ -216,6 +219,8 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	positionMaxLeverage,
 	callbacks,
 }: OpenPerpMarketOrderBaseParams & {
+	orderType?: OrderType;
+	price?: BN;
 	direction: PositionDirection;
 	dlobServerHttpUrl: string;
 	marketIndex: number;
@@ -261,6 +266,15 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	);
 	fetchedOrderParams.bitFlags = bitFlags;
 	fetchedOrderParams.userOrderId = userOrderId;
+
+	if (orderType) {
+		fetchedOrderParams.orderType = orderType;
+	}
+
+	if (price) {
+		fetchedOrderParams.price = price;
+		fetchedOrderParams.auctionEndPrice = price;
+	}
 
 	if (!topMakersResult || topMakersResult.length === 0) {
 		throw new NoTopMakersError('No top makers found', fetchedOrderParams);
