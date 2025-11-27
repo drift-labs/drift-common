@@ -19,6 +19,9 @@ import {
 	OrderTriggerCondition,
 	PerpMarketConfig,
 	PositionDirection,
+	PriorityFeeMethod,
+	PriorityFeeSubscriber,
+	PriorityFeeSubscriberConfig,
 	PublicKey,
 	QuoteResponse,
 	SpotMarketConfig,
@@ -34,6 +37,7 @@ import {
 	DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS,
 	DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 	DEFAULT_TX_SENDER_RETRY_INTERVAL,
+	HIGH_ACTIVITY_MARKET_ACCOUNTS,
 } from '../../constants';
 import { createDepositTxn } from '../../../base/actions/spot/deposit';
 import { createWithdrawTxn } from '../../../base/actions/spot/withdraw';
@@ -57,6 +61,7 @@ import {
 	CentralServerGetOpenPerpNonMarketOrderTxnParams,
 } from './types';
 import { CentralServerDriftMarkets } from './markets';
+import { DriftOperations } from '../AuthorityDrift/DriftOperations';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.
@@ -75,6 +80,11 @@ export class CentralServerDrift {
 		swiftServerUrl: string;
 	};
 
+	/**
+	 * Handles priority fee tracking and calculation for optimized transaction costs.
+	 */
+	private priorityFeeSubscriber!: PriorityFeeSubscriber;
+
 	public readonly markets: CentralServerDriftMarkets;
 
 	/**
@@ -89,6 +99,7 @@ export class CentralServerDrift {
 		supportedPerpMarkets: number[];
 		supportedSpotMarkets: number[];
 		additionalDriftClientConfig?: Partial<Omit<DriftClientConfig, 'env'>>;
+		priorityFeeSubscriberConfig?: Partial<PriorityFeeSubscriberConfig>;
 	}) {
 		const driftEnv = config.driftEnv;
 
@@ -170,6 +181,15 @@ export class CentralServerDrift {
 			dlobServerHttpUrl: driftDlobServerHttpUrlToUse,
 			swiftServerUrl: swiftServerUrlToUse,
 		};
+
+		const priorityFeeConfig: PriorityFeeSubscriberConfig = {
+			connection: this.driftClient.connection,
+			priorityFeeMethod: PriorityFeeMethod.SOLANA,
+			addresses: HIGH_ACTIVITY_MARKET_ACCOUNTS,
+			...config.priorityFeeSubscriberConfig,
+		};
+
+		this.priorityFeeSubscriber = new PriorityFeeSubscriber(priorityFeeConfig);
 	}
 
 	public get driftClient() {
@@ -178,10 +198,12 @@ export class CentralServerDrift {
 
 	public async subscribe() {
 		await this._driftClient.subscribe();
+		await this.priorityFeeSubscriber.subscribe();
 	}
 
 	public async unsubscribe() {
 		await this._driftClient.unsubscribe();
+		await this.priorityFeeSubscriber.unsubscribe();
 	}
 
 	/**
@@ -301,6 +323,28 @@ export class CentralServerDrift {
 		return user;
 	}
 
+	/**
+	 * Gets transaction parameters with dynamic priority fees.
+	 * Falls back to default if priority fee function is not available.
+	 */
+	getTxParams(overrides?: Partial<TxParams>): TxParams {
+		const unsafePriorityFee = Math.floor(
+			this.priorityFeeSubscriber.getCustomStrategyResult() ??
+				DriftOperations.DEFAULT_TX_PARAMS.computeUnitsPrice
+		);
+
+		const safePriorityFee = Math.min(
+			unsafePriorityFee,
+			DriftOperations.MAX_COMPUTE_UNITS_PRICE
+		);
+
+		return {
+			...DriftOperations.DEFAULT_TX_PARAMS,
+			computeUnitsPrice: safePriorityFee,
+			...overrides,
+		};
+	}
+
 	public async getCreateAndDepositTxn(
 		authority: PublicKey,
 		amount: BN,
@@ -363,7 +407,7 @@ export class CentralServerDrift {
 				poolId: options?.poolId,
 				fromSubAccountId: options?.fromSubAccountId,
 				customMaxMarginRatio: options?.customMaxMarginRatio,
-				txParams: options?.txParams,
+				txParams: options?.txParams ?? this.getTxParams(),
 			});
 		} finally {
 			this._driftClient.wallet = originalWallet;
@@ -405,7 +449,7 @@ export class CentralServerDrift {
 					user,
 					amount: BigNum.from(amount, spotMarketConfig.precisionExp),
 					spotMarketConfig,
-					txParams: options?.txParams,
+					txParams: options?.txParams ?? this.getTxParams(),
 					externalWallet: options?.externalWallet,
 				});
 
@@ -425,7 +469,7 @@ export class CentralServerDrift {
 			return deleteUserTxn({
 				driftClient: this._driftClient,
 				userPublicKey: userAccountPublicKey,
-				txParams: options?.txParams,
+				txParams: options?.txParams ?? this.getTxParams(),
 			});
 		});
 	}
@@ -460,7 +504,7 @@ export class CentralServerDrift {
 					spotMarketConfig,
 					isBorrow: options?.isBorrow,
 					isMax: options?.isMax,
-					txParams: options?.txParams,
+					txParams: options?.txParams ?? this.getTxParams(),
 				});
 
 				return withdrawTxn;
@@ -480,7 +524,7 @@ export class CentralServerDrift {
 				const settleFundingTxn = await createSettleFundingTxn({
 					driftClient: this._driftClient,
 					user,
-					txParams: options?.txParams,
+					txParams: options?.txParams ?? this.getTxParams(),
 				});
 
 				return settleFundingTxn;
@@ -502,7 +546,7 @@ export class CentralServerDrift {
 					driftClient: this._driftClient,
 					user,
 					marketIndexes,
-					txParams: options?.txParams,
+					txParams: options?.txParams ?? this.getTxParams(),
 				});
 
 				return settlePnlTxn;
@@ -526,11 +570,16 @@ export class CentralServerDrift {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user): Promise<TxnOrSwiftResult<T>> => {
-				const { useSwift, swiftOptions, placeAndTake, ...otherProps } = rest;
+				const {
+					useSwift,
+					swiftOptions,
+					placeAndTake,
+					txParams,
+					...otherProps
+				} = rest;
 
 				if (useSwift) {
 					const swiftOrderResult = await createOpenPerpMarketOrder({
-						...otherProps,
 						useSwift: true,
 						swiftOptions: {
 							...swiftOptions,
@@ -539,16 +588,19 @@ export class CentralServerDrift {
 						driftClient: this._driftClient,
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+						txParams: txParams ?? this.getTxParams(),
+						...otherProps,
 					});
 					return swiftOrderResult as TxnOrSwiftResult<T>;
 				} else {
 					const openPerpMarketOrderTxn = await createOpenPerpMarketOrder({
-						...otherProps,
 						placeAndTake,
 						useSwift: false,
 						driftClient: this._driftClient,
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+						txParams: txParams ?? this.getTxParams(),
+						...otherProps,
 					});
 					return openPerpMarketOrderTxn as TxnOrSwiftResult<T>;
 				}
@@ -576,11 +628,10 @@ export class CentralServerDrift {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const { useSwift, swiftOptions, ...otherProps } = rest;
+				const { useSwift, swiftOptions, txParams, ...otherProps } = rest;
 
 				if (useSwift) {
 					const swiftOrderResult = await createOpenPerpNonMarketOrder({
-						...otherProps,
 						useSwift: true,
 						swiftOptions: {
 							...swiftOptions,
@@ -589,15 +640,18 @@ export class CentralServerDrift {
 						driftClient: this._driftClient,
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+						txParams: txParams ?? this.getTxParams(),
+						...otherProps,
 					});
 					return swiftOrderResult as TxnOrSwiftResult<T>;
 				} else {
 					const openPerpNonMarketOrderTxn = await createOpenPerpNonMarketOrder({
-						...otherProps,
 						useSwift: false,
 						driftClient: this._driftClient,
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+						txParams: txParams ?? this.getTxParams(),
+						...otherProps,
 					});
 					return openPerpNonMarketOrderTxn as TxnOrSwiftResult<T>;
 				}
