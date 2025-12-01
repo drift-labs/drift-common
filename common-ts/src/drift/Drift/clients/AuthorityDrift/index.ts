@@ -826,7 +826,7 @@ export class AuthorityDrift {
 	}
 
 	public async getSwapQuote(
-		params: Omit<SwapParams, 'jupiterQuote'> & {
+		params: Omit<SwapParams, 'quote'> & {
 			slippageBps?: number;
 			swapMode?: SwapMode;
 			onlyDirectRoutes?: boolean;

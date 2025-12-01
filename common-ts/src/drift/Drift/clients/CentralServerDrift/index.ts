@@ -11,7 +11,6 @@ import {
 	DriftEnv,
 	fetchUserStatsAccount,
 	getMarketsAndOraclesForSubscription,
-	JupiterClient,
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
 	MarketType,
@@ -23,10 +22,11 @@ import {
 	PriorityFeeSubscriber,
 	PriorityFeeSubscriberConfig,
 	PublicKey,
-	QuoteResponse,
 	SpotMarketConfig,
 	SwapMode,
 	TxParams,
+	UnifiedQuoteResponse,
+	UnifiedSwapClient,
 	User,
 	WhileValidTxSender,
 } from '@drift-labs/sdk';
@@ -757,7 +757,7 @@ export class CentralServerDrift {
 			slippageBps?: number;
 			swapMode?: SwapMode;
 			onlyDirectRoutes?: boolean;
-			quote?: QuoteResponse;
+			quote?: UnifiedQuoteResponse;
 		}
 	): Promise<VersionedTransaction | Transaction> {
 		return this.driftClientContextWrapper(
@@ -782,15 +782,15 @@ export class CentralServerDrift {
 					);
 				}
 
-				// Initialize Jupiter client
-				const jupiterClient = new JupiterClient({
+				const swapClient = new UnifiedSwapClient({
+					clientType: 'jupiter',
 					connection: this._driftClient.connection,
 				});
 
 				// Get quote if not provided
 				let quote = options?.quote;
 				if (!quote) {
-					quote = await jupiterClient.getQuote({
+					quote = await swapClient.getQuote({
 						inputMint: fromSpotMarketConfig.mint,
 						outputMint: toSpotMarketConfig.mint,
 						amount,
@@ -802,7 +802,7 @@ export class CentralServerDrift {
 
 				const swapTxn = await createSwapTxn({
 					driftClient: this._driftClient,
-					jupiterClient,
+					swapClient,
 					user,
 					swapFromMarketIndex: fromMarketIndex,
 					swapToMarketIndex: toMarketIndex,
