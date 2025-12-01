@@ -7,6 +7,7 @@ import {
 	OptionalOrderParams,
 	PositionDirection,
 	OrderParamsBitFlag,
+	OrderType,
 } from '@drift-labs/sdk';
 import {
 	PublicKey,
@@ -201,6 +202,8 @@ export const createOpenPerpNonMarketOrderIxs = async (
 				const placeAndTakeIx = await createPlaceAndTakePerpMarketOrderIx({
 					assetType: 'base',
 					amount: finalBaseAssetAmount,
+					orderType: OrderType.LIMIT,
+					price: orderConfig.limitPrice,
 					direction,
 					dlobServerHttpUrl: orderConfig.limitAuction.dlobServerHttpUrl,
 					marketIndex,

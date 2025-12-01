@@ -7,6 +7,7 @@ import {
 	MarketType,
 	getUserStatsAccountPublicKey,
 	ReferrerInfo,
+	OrderType,
 } from '@drift-labs/sdk';
 import {
 	PublicKey,
@@ -207,6 +208,8 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	user,
 	userOrderId,
 	amount,
+	orderType,
+	price,
 	reduceOnly,
 	referrerInfo,
 	auctionDurationPercentage,
@@ -216,6 +219,8 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	positionMaxLeverage,
 	callbacks,
 }: OpenPerpMarketOrderBaseParams & {
+	orderType?: OrderType;
+	price?: BN;
 	direction: PositionDirection;
 	dlobServerHttpUrl: string;
 	marketIndex: number;
@@ -262,6 +267,15 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	fetchedOrderParams.bitFlags = bitFlags;
 	fetchedOrderParams.userOrderId = userOrderId;
 
+	if (orderType) {
+		fetchedOrderParams.orderType = orderType;
+	}
+
+	if (price) {
+		fetchedOrderParams.price = price;
+		fetchedOrderParams.auctionEndPrice = price;
+	}
+
 	if (!topMakersResult || topMakersResult.length === 0) {
 		throw new NoTopMakersError('No top makers found', fetchedOrderParams);
 	}
@@ -304,7 +318,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
  * @param optionalAuctionParamsInputs - Optional parameters for auction params endpoint and order configuration
  * @param positionMaxLeverage - Optional per-market leverage (e.g., 5 for 5x). If provided and different from current,
  *                               adds an instruction to update the position's maxMarginRatio before placing the order.
- *
+ * @param userOrderId - the order ID in terms of incremental fills (usually 0). do NOT use the nextOrderId from the user account. values over 255 will cause the order to fail onchain.
  * @returns Promise resolving to an array of transaction instructions for regular orders
  */
 export const createOpenPerpMarketOrderIxs = async ({

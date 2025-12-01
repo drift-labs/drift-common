@@ -7,6 +7,7 @@ import {
 	QuoteResponse,
 	SwapMode,
 	TxParams,
+	UnifiedSwapClient,
 	User,
 	UserStatsAccount,
 	ZERO,
@@ -608,7 +609,7 @@ export class DriftOperations {
 	}
 
 	async getSwapQuote(
-		params: Omit<SwapParams, 'jupiterQuote'> & {
+		params: Omit<SwapParams, 'quote'> & {
 			slippageBps?: number;
 			swapMode?: SwapMode;
 			onlyDirectRoutes?: boolean;
@@ -671,22 +672,32 @@ export class DriftOperations {
 			throw new Error('User not found');
 		}
 
-		const jupiterClient = new JupiterClient({
+		const auth =
+			params.swapClientType?.type === 'titan'
+				? {
+						authToken: params.swapClientType.authToken,
+						url: params.swapClientType.url,
+				  }
+				: undefined;
+
+		const swapClient = new UnifiedSwapClient({
+			clientType: params.swapClientType?.type ?? 'jupiter',
 			connection: this.driftClient.connection,
+			...auth,
 		});
 
-		const jupiterQuote = params.jupiterQuote
-			? params.jupiterQuote
+		const swapQuote = params.quote
+			? params.quote
 			: await this.getSwapQuote(params);
 
 		const swapTxn = await createSwapTxn({
 			driftClient: this.driftClient,
-			jupiterClient,
+			swapClient,
 			user: accountData.userClient,
 			swapFromMarketIndex: params.fromMarketIndex,
 			swapToMarketIndex: params.toMarketIndex,
 			amount: params.amount.val,
-			quote: jupiterQuote,
+			quote: swapQuote,
 			txParams: this.getTxParams(),
 		});
 

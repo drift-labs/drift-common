@@ -127,7 +127,16 @@ export interface SwapParams {
 	toMarketIndex: number;
 	amount: BigNum;
 	subAccountId: number;
-	jupiterQuote?: QuoteResponse;
+	quote?: QuoteResponse;
+	swapClientType?:
+		| {
+				type: 'jupiter';
+		  }
+		| {
+				type: 'titan';
+				authToken: string;
+				url: string;
+		  };
 }
 
 /**
