@@ -2,8 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const ChevronLeft = (allProps: IconProps) => {
-	const { svgProps: props, ...restProps } = allProps;
+const ChevronLeft = ({ svgProps, ...rest }: IconProps) => {
 	return (
 		<IconWrapper
 			icon={
@@ -11,18 +10,17 @@ const ChevronLeft = (allProps: IconProps) => {
 					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
-					{...props}
+					{...svgProps}
 				>
 					<path
-						fillRule="evenodd"
-						clipRule="evenodd"
-						d="M8.47 12.53a.75.75 0 010-1.06l6-6a.75.75 0 111.06 1.06L10.06 12l5.47 5.47a.75.75 0 11-1.06 1.06l-6-6z"
-						fill={allProps.color ? allProps.color : 'currentColor'}
+						d="M7.25 12C7.25 11.7838 7.34318 11.578 7.50586 11.4355L15.5059 4.43555C15.8175 4.16283 16.2917 4.19426 16.5645 4.50586C16.8372 4.81754 16.8057 5.29167 16.4941 5.56445L9.13867 12L16.4941 18.4355C16.8057 18.7083 16.8372 19.1825 16.5645 19.4941C16.2917 19.8057 15.8175 19.8372 15.5059 19.5645L7.50586 12.5645L7.44824 12.5078C7.32149 12.3701 7.25 12.1891 7.25 12Z"
+						fill={rest.color ? rest.color : 'currentColor'}
 					/>
 				</svg>
 			}
-			{...restProps}
+			{...rest}
 		/>
 	);
 };
+
 export default ChevronLeft;

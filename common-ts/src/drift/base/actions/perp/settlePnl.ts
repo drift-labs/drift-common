@@ -3,6 +3,7 @@ import {
 	Transaction,
 	TransactionInstruction,
 	VersionedTransaction,
+	PublicKey,
 } from '@solana/web3.js';
 
 interface SettlePnlParams {
@@ -10,6 +11,7 @@ interface SettlePnlParams {
 	user: User;
 	marketIndexes: number[];
 	mode?: typeof SettlePnlMode.TRY_SETTLE | typeof SettlePnlMode.MUST_SETTLE;
+	mainSignerOverride?: PublicKey;
 }
 
 /**
@@ -27,6 +29,7 @@ export const createSettlePnlIx = async ({
 	user,
 	marketIndexes,
 	mode = SettlePnlMode.TRY_SETTLE,
+	mainSignerOverride,
 }: SettlePnlParams): Promise<TransactionInstruction> => {
 	const userAccountPublicKey = user.getUserAccountPublicKey();
 	const userAccount = user.getUserAccount();
@@ -35,7 +38,10 @@ export const createSettlePnlIx = async ({
 		userAccountPublicKey,
 		userAccount,
 		marketIndexes,
-		mode
+		mode,
+		{
+			authority: mainSignerOverride,
+		}
 	);
 
 	return settlePnlIx;
@@ -62,12 +68,14 @@ export const createSettlePnlTxn = async ({
 	marketIndexes,
 	mode = SettlePnlMode.TRY_SETTLE,
 	txParams,
+	mainSignerOverride,
 }: CreateSettlePnlTxnParams): Promise<Transaction | VersionedTransaction> => {
 	const settlePnlIxs = await createSettlePnlIx({
 		driftClient,
 		user,
 		marketIndexes,
 		mode,
+		mainSignerOverride,
 	});
 
 	const settlePnlTxn = await driftClient.buildTransaction(

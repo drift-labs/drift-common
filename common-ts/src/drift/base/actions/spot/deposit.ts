@@ -1,16 +1,19 @@
 import {
 	BigNum,
 	DriftClient,
+	getTokenProgramForSpotMarket,
 	SpotMarketConfig,
 	TxParams,
 	User,
+	WRAPPED_SOL_MINT,
 } from '@drift-labs/sdk';
 import {
+	PublicKey,
 	Transaction,
 	TransactionInstruction,
 	VersionedTransaction,
 } from '@solana/web3.js';
-import { getTokenAddressForDepositAndWithdraw } from '../../../../utils/token';
+import { getAssociatedTokenAddress } from '@solana/spl-token';
 
 interface CreateDepositIxParams {
 	driftClient: DriftClient;
@@ -18,6 +21,11 @@ interface CreateDepositIxParams {
 	amount: BigNum;
 	spotMarketConfig: Pick<SpotMarketConfig, 'mint' | 'marketIndex'>;
 	isMaxBorrowRepayment?: boolean;
+	/**
+	 * Optional external wallet to deposit from. If provided, the deposit will be made
+	 * from this wallet instead of the user's authority wallet.
+	 */
+	externalWallet?: PublicKey;
 }
 
 /**
@@ -28,6 +36,7 @@ interface CreateDepositIxParams {
  * @param amount - The amount to deposit (in BigNum format)
  * @param spotMarketConfig - The spot market configuration for the token being deposited
  * @param isMaxBorrowRepayment - Whether this deposit is for maximum borrow repayment (scales amount by 2x, set to reduce only)
+ * @param externalWallet - Optional external wallet to deposit from (instead of user's authority wallet)
  *
  * @returns Promise resolving to an array of transaction instructions for the deposit
  */
@@ -37,13 +46,21 @@ export const createDepositIxs = async ({
 	amount,
 	spotMarketConfig,
 	isMaxBorrowRepayment,
+	externalWallet,
 }: CreateDepositIxParams): Promise<TransactionInstruction[]> => {
-	const authority = user.getUserAccount().authority;
-	const associatedDepositTokenAddress =
-		await getTokenAddressForDepositAndWithdraw(
-			spotMarketConfig.mint,
-			authority
-		);
+	const authority = externalWallet ?? user.getUserAccount().authority;
+	const spotMarketAccount = driftClient.getSpotMarketAccount(
+		spotMarketConfig.marketIndex
+	);
+	const isSol = spotMarketAccount.mint.equals(WRAPPED_SOL_MINT);
+	const associatedDepositTokenAddress = isSol
+		? authority
+		: await getAssociatedTokenAddress(
+				spotMarketAccount.mint,
+				authority,
+				true,
+				getTokenProgramForSpotMarket(spotMarketAccount)
+		  );
 
 	let finalDepositAmount = amount;
 
@@ -58,7 +75,8 @@ export const createDepositIxs = async ({
 		spotMarketConfig.marketIndex,
 		associatedDepositTokenAddress,
 		user.getUserAccount().subAccountId,
-		isMaxBorrowRepayment
+		isMaxBorrowRepayment,
+		externalWallet ? { authority: externalWallet } : undefined
 	);
 
 	return depositIxs;
@@ -79,6 +97,7 @@ interface CreateDepositTxnParams extends CreateDepositIxParams {
  * @param isMaxBorrowRepayment - Whether this deposit is for maximum borrow repayment (scales amount by 2x)
  * @param txParams - Optional transaction parameters for building the transaction (compute units, priority fees, etc.)
  * @param initSwiftAccount - Optional flag to initialize a Swift account during the deposit
+ * @param externalWallet - Optional external wallet to deposit from (instead of user's authority wallet)
  *
  * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
  */
@@ -90,6 +109,7 @@ export const createDepositTxn = async ({
 	isMaxBorrowRepayment,
 	txParams,
 	initSwiftAccount: _initSwiftAccount,
+	externalWallet,
 }: CreateDepositTxnParams): Promise<Transaction | VersionedTransaction> => {
 	// const authority = user.getUserAccount().authority;
 	// const associatedDepositTokenAddress =
@@ -122,15 +142,25 @@ export const createDepositTxn = async ({
 		amount: finalDepositAmount,
 		spotMarketConfig,
 		isMaxBorrowRepayment,
+		externalWallet,
 	});
+
+	// Wrapper to filter out null lookup tables from the driftClient
+	const fetchFilteredLookupTables = async () => {
+		const lookupTables = await driftClient.fetchAllLookupTableAccounts();
+		// Filter out null/undefined values and return empty array if undefined
+		return (
+			lookupTables?.filter((table) => table !== null && table !== undefined) ??
+			[]
+		);
+	};
 
 	const depositTxn = await driftClient.txHandler.buildTransaction({
 		instructions: depositIxs,
 		txVersion: 0,
 		connection: driftClient.connection,
 		preFlightCommitment: 'confirmed',
-		fetchAllMarketLookupTableAccounts:
-			driftClient.fetchAllLookupTableAccounts.bind(driftClient),
+		fetchAllMarketLookupTableAccounts: fetchFilteredLookupTables,
 		txParams,
 	});
 

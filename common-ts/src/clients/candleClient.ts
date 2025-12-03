@@ -100,6 +100,10 @@ const getBaseDataApiUrl = (env: UIEnv) => {
 	return dataApiUrl.replace('https://', '');
 };
 
+// Cache for URL construction to prevent repeated string concatenation
+const urlCache = new Map<string, string>();
+const MAX_URL_CACHE_SIZE = 500;
+
 const getCandleFetchUrl = ({
 	env,
 	marketId,
@@ -108,6 +112,15 @@ const getCandleFetchUrl = ({
 	countToFetch,
 }: CandleFetchUrlConfig) => {
 	const baseDataApiUrl = getBaseDataApiUrl(env);
+
+	// Cache key for this URL configuration
+	const cacheKey = `${marketId.key}-${resolution}-${countToFetch}-${env.key}-${
+		startTs ?? 'none'
+	}`;
+
+	if (urlCache.has(cacheKey)) {
+		return urlCache.get(cacheKey)!;
+	}
 
 	// Base URL without startTs parameter
 	let fetchUrl = `https://${baseDataApiUrl}/market/${getMarketSymbolForMarketId(
@@ -118,6 +131,11 @@ const getCandleFetchUrl = ({
 	// Only add startTs parameter if it's provided
 	if (startTs !== undefined) {
 		fetchUrl += `&startTs=${startTs}`;
+	}
+
+	// Cache the result if cache isn't too large
+	if (urlCache.size < MAX_URL_CACHE_SIZE) {
+		urlCache.set(cacheKey, fetchUrl);
 	}
 
 	return fetchUrl;

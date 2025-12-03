@@ -1,9 +1,8 @@
 import {
 	BN,
 	DriftClient,
-	JupiterClient,
-	QuoteResponse,
 	TxParams,
+	UnifiedQuoteResponse,
 	UnifiedSwapClient,
 	User,
 } from '@drift-labs/sdk';
@@ -21,14 +20,9 @@ interface CreateSwapIxDetailsParams {
 	/** The Drift client instance for interacting with the Drift protocol */
 	driftClient: DriftClient;
 	/** Quote response from swap provider containing swap route information */
-	quote: QuoteResponse;
-	/** Swap client instance for performing the swap (supports UnifiedSwapClient or JupiterClient) */
-	swapClient?: UnifiedSwapClient | JupiterClient;
-	/**
-	 * @deprecated Use swapClient instead. This parameter is kept for backwards compatibility.
-	 * Swap client instance for performing the swap
-	 */
-	jupiterClient?: JupiterClient;
+	quote: UnifiedQuoteResponse;
+	/** Swap client instance for performing the swap */
+	swapClient?: UnifiedSwapClient;
 	/** Market index of the token being swapped from */
 	swapFromMarketIndex: number;
 	/** Market index of the token being swapped to */
@@ -44,7 +38,6 @@ interface CreateSwapIxDetailsParams {
  *
  * @param driftClient - The Drift client instance
  * @param swapClient - The swap client instance for performing the swap (supports UnifiedSwapClient or JupiterClient)
- * @param jupiterClient - @deprecated Use swapClient instead. Kept for backwards compatibility.
  * @param quote - Quote response from swap provider with routing information
  * @param swapFromMarketIndex - Source token market index
  * @param swapToMarketIndex - Destination token market index
@@ -57,7 +50,6 @@ interface CreateSwapIxDetailsParams {
 export const createSwapIxDetails = async ({
 	driftClient,
 	swapClient,
-	jupiterClient,
 	quote,
 	swapFromMarketIndex,
 	swapToMarketIndex,
@@ -67,42 +59,16 @@ export const createSwapIxDetails = async ({
 	ixs: TransactionInstruction[];
 	lookupTables: AddressLookupTableAccount[];
 }> => {
-	// Use swapClient if provided, otherwise fall back to jupiterClient for backwards compatibility
-	const clientToUse = swapClient || jupiterClient;
+	const userPublicKey = user.userAccountPublicKey;
 
-	if (!clientToUse) {
-		throw new Error('Either swapClient or jupiterClient must be provided');
-	}
-
-	const userPublicKey = user.getUserAccountPublicKey();
-
-	let swapIxsDetails: {
-		ixs: TransactionInstruction[];
-		lookupTables: AddressLookupTableAccount[];
-	};
-
-	// Use the appropriate method based on client type
-	if (clientToUse instanceof UnifiedSwapClient) {
-		swapIxsDetails = await driftClient.getSwapIxV2({
-			swapClient: clientToUse,
-			outMarketIndex: swapToMarketIndex,
-			inMarketIndex: swapFromMarketIndex,
-			amount,
-			quote,
-		});
-	} else {
-		// JupiterClient path
-		swapIxsDetails = await driftClient.getJupiterSwapIxV6({
-			jupiterClient: clientToUse,
-			outMarketIndex: swapToMarketIndex,
-			inMarketIndex: swapFromMarketIndex,
-			amount,
-			quote,
-			userAccountPublicKey: userPublicKey,
-			// we skip passing in the associated token accounts and have the swap client derive them instead.
-			// The swap client will also add the ixs to create the associated token accounts if they don't exist.
-		});
-	}
+	const swapIxsDetails = await driftClient.getSwapIxV2({
+		swapClient,
+		outMarketIndex: swapToMarketIndex,
+		inMarketIndex: swapFromMarketIndex,
+		amount,
+		quote,
+		userAccountPublicKey: userPublicKey,
+	});
 
 	return swapIxsDetails;
 };
@@ -121,7 +87,6 @@ interface CreateSwapTxnParams extends CreateSwapIxDetailsParams {
  *
  * @param driftClient - The Drift client instance
  * @param swapClient - The swap client instance for performing the swap (supports UnifiedSwapClient or JupiterClient)
- * @param jupiterClient - @deprecated Use swapClient instead. Kept for backwards compatibility.
  * @param quote - Quote response from swap provider with routing information
  * @param swapFromMarketIndex - Source token market index
  * @param swapToMarketIndex - Destination token market index
@@ -133,7 +98,6 @@ interface CreateSwapTxnParams extends CreateSwapIxDetailsParams {
 export const createSwapTxn = async ({
 	driftClient,
 	swapClient,
-	jupiterClient,
 	quote,
 	swapFromMarketIndex,
 	swapToMarketIndex,
@@ -144,7 +108,6 @@ export const createSwapTxn = async ({
 	const swapIxsDetails = await createSwapIxDetails({
 		driftClient,
 		swapClient,
-		jupiterClient,
 		quote,
 		swapFromMarketIndex,
 		swapToMarketIndex,

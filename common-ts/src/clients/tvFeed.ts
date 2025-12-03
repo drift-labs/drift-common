@@ -196,6 +196,8 @@ export class DriftTvFeed {
 	private onResetCache: () => void;
 	private perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
+	private positiveColor: string;
+	private negativeColor: string;
 	private tvAppTradeDataManager: TvAppTradeDataManager | undefined;
 	private marketDecimalConfig: MarketDecimalConfig | undefined;
 
@@ -205,6 +207,8 @@ export class DriftTvFeed {
 		driftClient: DriftClient,
 		perpMarketConfigs: PerpMarketConfig[],
 		spotMarketConfigs: SpotMarketConfig[],
+		positiveColor: string,
+		negativeColor: string,
 		tvAppTradeDataManager?: TvAppTradeDataManager,
 		marketDecimalConfig?: MarketDecimalConfig
 	) {
@@ -214,6 +218,8 @@ export class DriftTvFeed {
 		this.driftClient = driftClient;
 		this.perpMarketConfigs = perpMarketConfigs;
 		this.spotMarketConfigs = spotMarketConfigs;
+		this.positiveColor = positiveColor;
+		this.negativeColor = negativeColor;
 		this.tvAppTradeDataManager = tvAppTradeDataManager;
 		this.marketDecimalConfig = marketDecimalConfig;
 	}
@@ -388,6 +394,26 @@ export class DriftTvFeed {
 			to: formattedToTs,
 		};
 	};
+	// Helper function to convert resolution string to seconds
+	private getResolutionInSeconds(resolution: string): number {
+		// Resolution can be: '1', '3', '5', '15', '30', '60', '120', '240', '1D', '1W', etc.
+		if (resolution.includes('D')) {
+			const days = parseInt(resolution);
+			return days * 24 * 60 * 60;
+		}
+		if (resolution.includes('W')) {
+			const weeks = parseInt(resolution);
+			return weeks * 7 * 24 * 60 * 60;
+		}
+		if (resolution.includes('M')) {
+			const months = parseInt(resolution);
+			return months * 30 * 24 * 60 * 60; // Approximate
+		}
+		// Default: minutes
+		const minutes = parseInt(resolution);
+		return minutes * 60;
+	}
+
 	// https://www.tradingview.com/charting-library-docs/latest/api/interfaces/Charting_Library.Mark/ reference for marks type
 	async getMarks(_symbolInfo, startDate, endDate, onDataCallback, _resolution) {
 		if (!this.tvAppTradeDataManager) {
@@ -401,6 +427,9 @@ export class DriftTvFeed {
 		const currentUserAccount =
 			this.tvAppTradeDataManager.getCurrentSubAccountAddress();
 
+		// Calculate resolution in seconds for aligning marks to candle start times
+		const resolutionInSeconds = this.getResolutionInSeconds(_resolution);
+
 		const tradeMarks = orderHistory.map((trade) => {
 			const currentUserIsMaker = trade.maker === currentUserAccount;
 			const currentUserIsTaker = trade.taker === currentUserAccount;
@@ -412,7 +441,7 @@ export class DriftTvFeed {
 				isLong = trade.takerOrderDirection === 'long';
 			}
 
-			const color = isLong ? '#5DD5A0' : '#FF615C';
+			const color = isLong ? this.positiveColor : this.negativeColor;
 			const baseAmount = Number(trade.baseAssetAmountFilled);
 			const quoteAmount = Number(trade.quoteAssetAmountFilled);
 			const avgPrice = quoteAmount / baseAmount;
@@ -430,9 +459,14 @@ export class DriftTvFeed {
 				}
 			};
 
+			// Align trade time to candle start time
+			// TradingView requires mark time to exactly match a bar time
+			const candleStartTime =
+				Math.floor(trade.ts / resolutionInSeconds) * resolutionInSeconds;
+
 			return {
 				id: trade.txSig,
-				time: trade.ts,
+				time: candleStartTime,
 				color: {
 					background: color,
 					border: '#152A44',
