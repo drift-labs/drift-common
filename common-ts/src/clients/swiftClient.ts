@@ -234,7 +234,7 @@ export class SwiftClient {
 			}, confirmDuration);
 
 			connection
-				.getAccountInfo(signedMsgUserOrdersAccount, 'confirmed')
+				.getAccountInfo(signedMsgUserOrdersAccount)
 				.then((accountInfo) => {
 					if (!accountInfo) {
 						reject(new Error('Swift message account not found'));
@@ -276,8 +276,7 @@ export class SwiftClient {
 						clearTimeout(timeout);
 						resolve(order.orderId);
 					}
-				},
-				'confirmed'
+				}
 			);
 		});
 	}

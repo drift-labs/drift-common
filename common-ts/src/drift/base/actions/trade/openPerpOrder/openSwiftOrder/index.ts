@@ -29,6 +29,7 @@ import { MarketId } from '../../../../../../types';
 import { Observable, Subscription } from 'rxjs';
 import { OptionalTriggerOrderParams } from '../types';
 import { TRADING_UTILS } from '../../../../../../common-ui-utils/trading';
+import { Connection } from '@solana/web3.js';
 
 /**
  * Buffer slots to account for signing of message by the user (default: 7 slots ~3 second, assumes user have to approves the signing in a UI wallet).
@@ -377,6 +378,8 @@ interface SendSwiftOrderParams {
 	slotsTillAuctionEnd: number;
 	/** Multiplier for the SWIFT confirmation timeout (after sending SWIFT order) */
 	confirmationMultiplier?: number;
+	/** Optionally send a different connection for the confirmation step, possibly for a faster commitment */
+	confirmationConnection?: Connection;
 }
 
 /**
@@ -409,6 +412,7 @@ export const sendSwiftOrder = ({
 	signingAuthority,
 	slotsTillAuctionEnd,
 	confirmationMultiplier,
+	confirmationConnection,
 }: SendSwiftOrderParams): SwiftOrderObservable => {
 	const signedMsgUserOrdersAccountPubkey = getSignedMsgUserAccountPublicKey(
 		driftClient.program.programId,
@@ -416,7 +420,7 @@ export const sendSwiftOrder = ({
 	);
 
 	const swiftOrderObservable = SwiftClient.sendAndConfirmSwiftOrderWS(
-		driftClient.connection,
+		confirmationConnection ?? driftClient.connection,
 		driftClient,
 		marketId.marketIndex,
 		marketId.marketType,
@@ -444,6 +448,7 @@ type PrepSignAndSendSwiftOrderParams = {
 	 * Higher multiplier means longer confirmation timeout.
 	 */
 	confirmationMultiplier?: number;
+	confirmationConnection?: Connection;
 	orderParams: {
 		main: OptionalOrderParams;
 		takeProfit?: OptionalTriggerOrderParams;
@@ -578,6 +583,10 @@ export const prepSignAndSendSwiftOrder = async ({
 			swiftOptions.wallet.takerAuthority,
 		slotsTillAuctionEnd,
 		confirmationMultiplier,
+		confirmationConnection: new Connection(
+			driftClient.connection.rpcEndpoint,
+			'processed'
+		),
 	});
 
 	const wrapSwiftOrderEvent = <T extends SwiftOrderEvent>(
