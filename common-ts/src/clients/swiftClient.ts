@@ -229,36 +229,75 @@ export class SwiftClient {
 			confirmDuration
 		);
 		return new Promise((resolve, reject) => {
-			const timeout = setTimeout(() => {
-				reject(new Error('Order not found'));
-			}, confirmDuration);
+			let settled = false;
+			let subId: number | undefined;
 
-			connection
-				.getAccountInfo(signedMsgUserOrdersAccount)
-				.then((accountInfo) => {
-					if (!accountInfo) {
-						reject(new Error('Swift message account not found'));
-						return;
-					}
+			const finalizeResolve = (orderId: number) => {
+				if (settled) return;
+				settled = true;
+				if (subId !== undefined) {
+					connection.removeAccountChangeListener(subId).catch(() => {});
+				}
+				clearTimeout(timeout);
+				resolve(orderId);
+			};
 
-					const order = this.findOrderInSignedMsgUserOrdersAccount(
+			const finalizeReject = (error: Error) => {
+				if (settled) return;
+				settled = true;
+				if (subId !== undefined) {
+					connection.removeAccountChangeListener(subId).catch(() => {});
+				}
+				clearTimeout(timeout);
+				reject(error);
+			};
+
+			const timeout = setTimeout(async () => {
+				try {
+					const lastOrderId = await this.confirmSwiftOrderRPCFetch(
+						connection,
 						client,
-						accountInfo,
+						signedMsgUserOrdersAccount,
 						signedMsgOrderUuid
 					);
+					if (lastOrderId !== undefined) {
+						allEnvDlog(
+							'swiftClient',
+							'confirmed in last RPC fetch orderID\n',
+							lastOrderId
+						);
+						finalizeResolve(lastOrderId);
+						return;
+					}
+				} catch (err) {
+					allEnvDlog('swiftClient', 'last RPC fetch error', err);
+				}
+				finalizeReject(new Error('Order not found'));
+			}, confirmDuration);
 
-					if (order) {
+			// Initial pre-subscription RPC check
+			this.confirmSwiftOrderRPCFetch(
+				connection,
+				client,
+				signedMsgUserOrdersAccount,
+				signedMsgOrderUuid
+			)
+				.then((initialOrderId) => {
+					if (initialOrderId !== undefined) {
 						allEnvDlog(
 							'swiftClient',
 							'confirmed in initial fetch orderID\n',
-							order.orderId
+							initialOrderId
 						);
-						clearTimeout(timeout);
-						resolve(order.orderId);
+						finalizeResolve(initialOrderId);
 					}
+				})
+				.catch((err) => {
+					allEnvDlog('swiftClient', 'initial RPC fetch error', err);
 				});
 
-			const subId = connection.onAccountChange(
+			// Subscribe for account change confirmations
+			subId = connection.onAccountChange(
 				signedMsgUserOrdersAccount,
 				(accountInfo) => {
 					const order = this.findOrderInSignedMsgUserOrdersAccount(
@@ -272,13 +311,31 @@ export class SwiftClient {
 							'confirmed in onAccountChange orderID\n',
 							order.orderId
 						);
-						connection.removeAccountChangeListener(subId);
-						clearTimeout(timeout);
-						resolve(order.orderId);
+						finalizeResolve(order.orderId);
 					}
 				}
 			);
 		});
+	}
+
+	private static async confirmSwiftOrderRPCFetch(
+		connection: Connection,
+		client: DriftClient,
+		signedMsgUserOrdersAccount: PublicKey,
+		signedMsgOrderUuid: Uint8Array
+	): Promise<number | undefined> {
+		const accountInfo = await connection.getAccountInfo(
+			signedMsgUserOrdersAccount
+		);
+		if (!accountInfo) {
+			return undefined;
+		}
+		const order = this.findOrderInSignedMsgUserOrdersAccount(
+			client,
+			accountInfo,
+			signedMsgOrderUuid
+		);
+		return order?.orderId;
 	}
 
 	static findOrderInSignedMsgUserOrdersAccount(
