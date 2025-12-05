@@ -26,8 +26,8 @@ export const EnvironmentConstants = {
 		mainnet: [
 			{
 				label: 'Triton RPC Pool 1',
-				value: 'https://drift-drift-951a.mainnet.rpcpool.com',
-				wsValue: 'wss://drift-drift-951a.mainnet.rpcpool.com/whirligig',
+				value: 'https://drift-drift_ma-39b5.mainnet.rpcpool.com/',
+				wsValue: 'wss://drift-drift_ma-39b5.mainnet.rpcpool.com/whirligig',
 				allowAdditionalConnection: true,
 			},
 			{
