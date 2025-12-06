@@ -410,13 +410,6 @@ export const createOpenPerpNonMarketOrder = async <T extends boolean>(
 			throw new Error('swiftOptions is required when useSwift is true');
 		}
 
-		if (
-			params.postOnly &&
-			!ENUM_UTILS.match(params.postOnly, PostOnlyParams.NONE)
-		) {
-			throw new Error('Post only orders are not supported with Swift');
-		}
-
 		const swiftOrderResult = await createSwiftLimitOrder({
 			...params,
 			swiftOptions,
