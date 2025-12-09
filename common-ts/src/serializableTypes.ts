@@ -745,6 +745,8 @@ export class UISerializableOrderRecordV2 {
 	lastActionExplanation: OrderActionExplanation;
 	@autoserializeAs(String) lastActionStatus: string;
 	@autoserializeAs(String) status: string;
+	@autoserializeUsing(NullableQuoteBigNumSerializeAndDeserializeFns)
+	cumulativeFee: BigNum | null;
 
 	static onDeserialized(
 		data: JsonObject,
