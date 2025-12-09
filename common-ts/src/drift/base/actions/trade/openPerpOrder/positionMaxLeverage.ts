@@ -1,5 +1,5 @@
 import { DriftClient, User } from '@drift-labs/sdk';
-import { TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { TRADING_UTILS } from '../../../../../common-ui-utils/trading';
 
 /**
@@ -10,7 +10,8 @@ export async function getPositionMaxLeverageIxIfNeeded(
 	driftClient: DriftClient,
 	user: User,
 	marketIndex: number,
-	positionMaxLeverage?: number
+	positionMaxLeverage?: number,
+	signingAuthority?: PublicKey
 ): Promise<TransactionInstruction | undefined> {
 	if (!positionMaxLeverage) {
 		return undefined;
@@ -36,7 +37,12 @@ export async function getPositionMaxLeverageIxIfNeeded(
 		return await driftClient.getUpdateUserPerpPositionCustomMarginRatioIx(
 			marketIndex,
 			targetMarginRatio,
-			userAccount.subAccountId
+			userAccount.subAccountId,
+			{
+				userAccountPublicKey: user.getUserAccountPublicKey(),
+				authority: userAccount.authority,
+				signingAuthority,
+			}
 		);
 	}
 

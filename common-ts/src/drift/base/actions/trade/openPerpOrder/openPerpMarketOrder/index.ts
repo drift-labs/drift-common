@@ -350,7 +350,8 @@ export const createOpenPerpMarketOrderIxs = async ({
 		driftClient,
 		user,
 		marketIndex,
-		positionMaxLeverage
+		positionMaxLeverage,
+		mainSignerOverride
 	);
 	if (leverageIx) {
 		allIxs.push(leverageIx);
