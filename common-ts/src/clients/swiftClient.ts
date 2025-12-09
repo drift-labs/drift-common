@@ -230,7 +230,7 @@ export class SwiftClient {
 		);
 		return new Promise((resolve, reject) => {
 			let settled = false;
-			let subId: number | undefined;
+			let subId: number | undefined = undefined;
 
 			const finalizeResolve = (orderId: number) => {
 				if (settled) return;
