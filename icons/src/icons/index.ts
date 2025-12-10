@@ -109,6 +109,7 @@ export { default as Loading95 } from './components/Loading95';
 export { default as Lock } from './components/Lock';
 export { default as Medium } from './components/Medium';
 export { default as Megaphone } from './components/Megaphone';
+export { default as MegaphoneNew } from './components/MegaphoneNew';
 export { default as Menu } from './components/Menu';
 export { default as Metadao } from './components/Metadao';
 export { default as Migration } from './components/Migration';

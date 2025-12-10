@@ -25,8 +25,8 @@ const FuelMini = (allProps: IconProps) => {
 							cx={0}
 							cy={0}
 							r={1}
+							gradientTransform="matrix(-.64794 39.1355 -1153470 -16858.5 12.659 -2.676)"
 							gradientUnits="userSpaceOnUse"
-							gradientTransform="matrix(-.64792 39.13544 -1153431.93309 -19096.17337 12.659 -2.676)"
 						>
 							<stop stopColor="#132236" />
 							<stop offset={0.41} stopColor="#F3ABFF" />

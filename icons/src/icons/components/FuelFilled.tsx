@@ -48,8 +48,8 @@ const FuelFilled = (allProps: IconProps) => {
 							cx={0}
 							cy={0}
 							r={1}
+							gradientTransform="matrix(-.4443 28.3733 -790948 -12222.5 12.451 1.31)"
 							gradientUnits="userSpaceOnUse"
-							gradientTransform="matrix(-.44429 28.37332 -790946.03887 -12385.13005 12.451 1.31)"
 						>
 							<stop stopColor="#132236" />
 							<stop offset={0.41} stopColor="#F3ABFF" />

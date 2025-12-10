@@ -19,7 +19,7 @@ const OrderbookHorizontal = (allProps: IconProps) => {
 						width={9.474}
 						height={4.211}
 						rx={0.5}
-						fill="#5DD5A0"
+						fill="#2BA866"
 					/>
 					<rect
 						x={12.526}
@@ -27,7 +27,7 @@ const OrderbookHorizontal = (allProps: IconProps) => {
 						width={9.474}
 						height={4.211}
 						rx={0.5}
-						fill="#FF887F"
+						fill="#E2563D"
 					/>
 					<rect
 						x={5.158}
@@ -35,7 +35,7 @@ const OrderbookHorizontal = (allProps: IconProps) => {
 						width={6.316}
 						height={4.211}
 						rx={0.5}
-						fill="#5DD5A0"
+						fill="#2BA866"
 					/>
 					<rect
 						x={12.526}
@@ -43,7 +43,7 @@ const OrderbookHorizontal = (allProps: IconProps) => {
 						width={6.316}
 						height={4.211}
 						rx={0.5}
-						fill="#FF887F"
+						fill="#E2563D"
 					/>
 					<rect
 						x={7.263}
@@ -51,7 +51,7 @@ const OrderbookHorizontal = (allProps: IconProps) => {
 						width={4.211}
 						height={4.211}
 						rx={0.5}
-						fill="#5DD5A0"
+						fill="#2BA866"
 					/>
 					<rect
 						x={12.526}
@@ -59,7 +59,7 @@ const OrderbookHorizontal = (allProps: IconProps) => {
 						width={4.211}
 						height={4.211}
 						rx={0.5}
-						fill="#FF887F"
+						fill="#E2563D"
 					/>
 					<rect
 						x={9.368}
@@ -67,7 +67,7 @@ const OrderbookHorizontal = (allProps: IconProps) => {
 						width={2.105}
 						height={4.211}
 						rx={0.5}
-						fill="#5DD5A0"
+						fill="#2BA866"
 					/>
 					<rect
 						x={12.526}
@@ -75,7 +75,7 @@ const OrderbookHorizontal = (allProps: IconProps) => {
 						width={2.105}
 						height={4.211}
 						rx={0.5}
-						fill="#FF887F"
+						fill="#E2563D"
 					/>
 				</svg>
 			}
