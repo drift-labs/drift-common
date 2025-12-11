@@ -924,7 +924,11 @@
 		"InvalidOrderMinOrderSize": {
 			"code": 6056,
 			"name": "InvalidOrderMinOrderSize",
-			"msg": "InvalidOrderMinOrderSize"
+			"msg": "InvalidOrderMinOrderSize",
+			"toast": {
+				"message": "Order size is below minimum order size.",
+				"description": ""
+			}
 		},
 		"MarketPlaceOrderPaused": {
 			"code": 6147,
