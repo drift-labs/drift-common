@@ -2,6 +2,7 @@ import { WRAPPED_SOL_MINT } from '@drift-labs/sdk';
 import {
 	createAssociatedTokenAccountInstruction,
 	getAssociatedTokenAddress,
+	TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 
@@ -26,17 +27,24 @@ export const getTokenAddress = (
  * This should be used for spot token movement in and out of the user's wallet.
  * @param mintAddress - The mint address
  * @param authorityPubKey - The authority's public key
+ * @param tokenProgram - The token program ID (defaults to TOKEN_PROGRAM_ID, use TOKEN_2022_PROGRAM_ID for Token-2022 tokens)
  * @returns The associated token address
  */
 export const getTokenAddressForDepositAndWithdraw = async (
 	mintAddress: PublicKey,
-	authorityPubKey: PublicKey
+	authorityPubKey: PublicKey,
+	tokenProgram: PublicKey = TOKEN_PROGRAM_ID
 ): Promise<PublicKey> => {
 	const isSol = mintAddress.equals(WRAPPED_SOL_MINT);
 
 	if (isSol) return authorityPubKey;
 
-	return getAssociatedTokenAddress(mintAddress, authorityPubKey, true);
+	return getAssociatedTokenAddress(
+		mintAddress,
+		authorityPubKey,
+		true,
+		tokenProgram
+	);
 };
 
 export const getTokenAccount = async (
