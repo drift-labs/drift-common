@@ -1,6 +1,7 @@
 import {
 	BN,
 	DriftClient,
+	getTokenProgramForSpotMarket,
 	getUserAccountPublicKeySync,
 	PublicKey,
 	ReferrerInfo,
@@ -77,8 +78,20 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 }> => {
 	const nextSubaccountId = userStatsAccount?.numberOfSubAccountsCreated ?? 0; // userId is zero indexed
 
+	// Get the spot market account to determine the correct token program for Token-2022 tokens
+	const spotMarketAccount = driftClient.getSpotMarketAccount(
+		spotMarketConfig.marketIndex
+	);
+	const tokenProgram = spotMarketAccount
+		? getTokenProgramForSpotMarket(spotMarketAccount)
+		: undefined;
+
 	const associatedDepositTokenAddressPromise =
-		getTokenAddressForDepositAndWithdraw(spotMarketConfig.mint, authority);
+		getTokenAddressForDepositAndWithdraw(
+			spotMarketConfig.mint,
+			authority,
+			tokenProgram
+		);
 	const referrerNameAccountPromise: Promise<ReferrerNameAccount | undefined> =
 		referrerName
 			? driftClient.fetchReferrerNameAccount(referrerName)
