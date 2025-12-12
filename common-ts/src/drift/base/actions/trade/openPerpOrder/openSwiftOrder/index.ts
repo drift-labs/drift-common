@@ -96,6 +96,10 @@ export interface SwiftOrderOptions {
 			swiftErroredEvent: SwiftOrderEventWithParams<SwiftOrderErroredEvent>
 		) => void;
 	};
+	/**
+	 * Used for internal tracking of the source of the swift order.
+	 */
+	source?: string;
 }
 
 export type SwiftOrderObservable = Observable<SwiftOrderEvent>;
@@ -568,7 +572,7 @@ export const prepSignAndSendSwiftOrder = async ({
 	);
 
 	// Initialize SwiftClient (required before using sendSwiftOrder)
-	SwiftClient.init(swiftOptions.swiftServerUrl);
+	SwiftClient.init(swiftOptions.swiftServerUrl, swiftOptions.source ?? '');
 
 	// Create a promise-based wrapper for the sendSwiftOrder callback-based API
 	const swiftOrderObservable = sendSwiftOrder({
