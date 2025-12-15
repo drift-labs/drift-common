@@ -154,7 +154,18 @@ const getOpenPositionData = (
 				markPrice,
 				entryPrice,
 				exitPrice: estExitPrice,
-				liqPrice: user.liquidationPrice(position.marketIndex, ZERO),
+				liqPrice: user.isPerpPositionIsolated(position)
+					? user.liquidationPrice(
+							position.marketIndex,
+							ZERO,
+							undefined,
+							undefined,
+							undefined,
+							undefined,
+							undefined,
+							'Isolated'
+					  )
+					: user.liquidationPrice(position.marketIndex, ZERO),
 				quoteAssetNotionalAmount: position.quoteAssetAmount,
 				quoteEntryAmount: position.quoteEntryAmount,
 				quoteBreakEvenAmount: position.quoteBreakEvenAmount,
