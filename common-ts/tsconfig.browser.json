@@ -1,0 +1,8 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"outDir": "./lib/browser"
+	},
+	"include": ["src/browser/index.ts"],
+	"exclude": ["node_modules", "tests"]
+}
