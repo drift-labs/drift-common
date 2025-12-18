@@ -40,7 +40,6 @@
 	},
 	"scripts": {
 		"build": "yarn clean && tsc",
-		"build:browser": "tsc -p tsconfig.browser.json",
 		"build:minify": "node build-browser.js && node build-node.js",
 		"build:minify:browser": "node build-browser.js",
 		"build:minify:node": "node build-node.js",
