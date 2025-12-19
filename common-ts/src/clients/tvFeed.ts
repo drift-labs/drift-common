@@ -198,6 +198,7 @@ export class DriftTvFeed {
 	private spotMarketConfigs: SpotMarketConfig[];
 	private positiveColor: string;
 	private negativeColor: string;
+	private buySellMarkStrokeColor: string;
 	private tvAppTradeDataManager: TvAppTradeDataManager | undefined;
 	private marketDecimalConfig: MarketDecimalConfig | undefined;
 
@@ -209,6 +210,7 @@ export class DriftTvFeed {
 		spotMarketConfigs: SpotMarketConfig[],
 		positiveColor: string,
 		negativeColor: string,
+		buySellMarkStrokeColor: string,
 		tvAppTradeDataManager?: TvAppTradeDataManager,
 		marketDecimalConfig?: MarketDecimalConfig
 	) {
@@ -220,6 +222,7 @@ export class DriftTvFeed {
 		this.spotMarketConfigs = spotMarketConfigs;
 		this.positiveColor = positiveColor;
 		this.negativeColor = negativeColor;
+		this.buySellMarkStrokeColor = buySellMarkStrokeColor;
 		this.tvAppTradeDataManager = tvAppTradeDataManager;
 		this.marketDecimalConfig = marketDecimalConfig;
 	}
@@ -469,13 +472,13 @@ export class DriftTvFeed {
 				time: candleStartTime,
 				color: {
 					background: color,
-					border: '#152A44',
+					border: this.buySellMarkStrokeColor,
 				},
 				borderWidth: 1,
 				hoveredBorderWidth: 1,
 				text: `${isLong ? 'Long' : 'Short'} at $${formatPrice(avgPrice)}`,
 				label: isLong ? 'B' : 'S',
-				labelFontColor: '#000000',
+				labelFontColor: this.buySellMarkStrokeColor,
 				minSize: 16,
 			};
 		});
