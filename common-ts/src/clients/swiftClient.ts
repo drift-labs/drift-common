@@ -223,14 +223,10 @@ export class SwiftClient {
 		signedMsgOrderUuid: Uint8Array,
 		confirmDuration: number
 	): Promise<number | undefined> {
-		allEnvDlog(
-			'swiftClient',
-			'confirmSwiftOrderWS - confirmation duration',
-			confirmDuration
-		);
 		return new Promise((resolve, reject) => {
 			let settled = false;
 			let subId: number | undefined = undefined;
+			let pollInterval: NodeJS.Timeout | undefined = undefined;
 
 			const finalizeResolve = (orderId: number) => {
 				if (settled) return;
@@ -239,6 +235,11 @@ export class SwiftClient {
 					connection.removeAccountChangeListener(subId).catch(() => {});
 				}
 				clearTimeout(timeout);
+
+				if (pollInterval) {
+					clearInterval(pollInterval);
+				}
+
 				resolve(orderId);
 			};
 
@@ -249,10 +250,17 @@ export class SwiftClient {
 					connection.removeAccountChangeListener(subId).catch(() => {});
 				}
 				clearTimeout(timeout);
+
+				if (pollInterval) {
+					clearInterval(pollInterval);
+				}
+
 				reject(error);
 			};
 
-			const timeout = setTimeout(async () => {
+			const checkOrder = async (
+				confirmType: 'initial' | 'poll' | 'timeout'
+			) => {
 				try {
 					const lastOrderId = await this.confirmSwiftOrderRPCFetch(
 						connection,
@@ -263,40 +271,31 @@ export class SwiftClient {
 					if (lastOrderId !== undefined) {
 						allEnvDlog(
 							'swiftClient',
-							'confirmed in last RPC fetch orderID\n',
+							`confirmed in ${confirmType} RPC fetch orderID\n`,
 							lastOrderId
 						);
 						finalizeResolve(lastOrderId);
-						return;
 					}
 				} catch (err) {
-					allEnvDlog('swiftClient', 'last RPC fetch error', err);
+					allEnvDlog('swiftClient', `${confirmType} RPC fetch error`, err);
 				}
-				finalizeReject(new Error('Order not found'));
+			};
+
+			const timeout = setTimeout(async () => {
+				await checkOrder('timeout');
+
+				if (!settled) {
+					finalizeReject(new Error('Order not found'));
+				}
 			}, confirmDuration);
 
-			// Initial pre-subscription RPC check
-			this.confirmSwiftOrderRPCFetch(
-				connection,
-				client,
-				signedMsgUserOrdersAccount,
-				signedMsgOrderUuid
-			)
-				.then((initialOrderId) => {
-					if (initialOrderId !== undefined) {
-						allEnvDlog(
-							'swiftClient',
-							'confirmed in initial fetch orderID\n',
-							initialOrderId
-						);
-						finalizeResolve(initialOrderId);
-					}
-				})
-				.catch((err) => {
-					allEnvDlog('swiftClient', 'initial RPC fetch error', err);
-				});
+			// Perform an initial check.
+			checkOrder('initial');
 
-			// Subscribe for account change confirmations
+			// Poll every 2 seconds as backup for unreliable websocket.
+			pollInterval = setInterval(() => checkOrder('poll'), 2000);
+
+			// Subscribe for account change confirmations via WS.
 			subId = connection.onAccountChange(
 				signedMsgUserOrdersAccount,
 				(accountInfo) => {
