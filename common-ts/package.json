@@ -17,7 +17,7 @@
 	],
 	"author": "Drift Labs",
 	"dependencies": {
-		"@drift-labs/sdk": "^2.153.0-beta.0",
+		"@drift-labs/sdk": "^2.153.0-beta.1",
 		"@slack/web-api": "6.4.0",
 		"@solana/spl-token": "0.3.8",
 		"@solana/web3.js": "1.98.0",
@@ -35,7 +35,7 @@
 		"winston-slack-webhook-transport": "2.3.5"
 	},
 	"peerDependencies": {
-		"@drift-labs/sdk": "^2.153.0-beta.0",
+		"@drift-labs/sdk": "^2.153.0-beta.1",
 		"@solana/web3.js": "1.98.0"
 	},
 	"scripts": {
