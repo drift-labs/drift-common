@@ -17,13 +17,22 @@
     "clean": "rm -rf dist",
     "clean-icons": "rm -rf src/icons/components/*",
     "build": "rm -rf dist && tsc -v && tsc",
-    "build:rollup": "rm -rf dist && tsc -v && rollup -c"
+    "build:rollup": "rm -rf dist && tsc -v && rollup -c",
+    "build:minify": "node build-browser.js"
   },
   "private": true,
   "dependencies": {
     "react": "19.0.0-rc-02c0e824-20241028"
   },
   "devDependencies": {
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.1",
+    "esbuild": "^0.27.1",
+    "os-browserify": "^0.3.0",
+    "path-browserify": "^1.0.1",
+    "process": "^0.11.10",
+    "stream-browserify": "^3.0.0",
+    "vm-browserify": "^1.1.2",
     "@rollup/plugin-commonjs": "22.0.2",
     "@rollup/plugin-node-resolve": "14.1.0",
     "@rollup/plugin-typescript": "8.5.0",

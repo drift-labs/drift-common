@@ -10,13 +10,22 @@
 		"lint": "eslint './**/*.{ts,tsx}' --quiet",
 		"build": "bun clean && tsc && bun copy-files",
 		"build:watch": "bun clean && tsc --watch",
+		"build:minify": "node build-browser.js",
 		"copy-files": "copyfiles -u 1 src/**/*.html src/**/*.css lib/",
-		"clean": "rm -rf lib"
+		"clean": "rm -rf lib && rm -rf dist"
 	},
 	"directories": {
 		"lib": "lib"
 	},
 	"devDependencies": {
+		"buffer": "^6.0.3",
+		"crypto-browserify": "^3.12.1",
+		"esbuild": "^0.27.1",
+		"os-browserify": "^0.3.0",
+		"path-browserify": "^1.0.1",
+		"process": "^0.11.10",
+		"stream-browserify": "^3.0.0",
+		"vm-browserify": "^1.1.2",
 		"@solana/spl-token": "0.3.8",
 		"@solana/web3.js": "1.92.3",
 		"@types/react": "npm:types-react@19.0.0-rc.1",
