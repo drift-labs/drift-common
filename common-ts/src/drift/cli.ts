@@ -12,6 +12,7 @@ import {
 	PRICE_PRECISION,
 	MainnetSpotMarkets,
 	DevnetSpotMarkets,
+	DriftEnv,
 } from '@drift-labs/sdk';
 import { sign } from 'tweetnacl';
 import { CentralServerDrift } from './Drift/clients/CentralServerDrift';
@@ -56,6 +57,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
  *   ts-node cli.ts swap --userAccount=11111111111111111111111111111111 --fromMarketIndex=1 --toMarketIndex=0 --fromAmount=1.5 --slippage=100 --swapMode=ExactIn
  *   ts-node cli.ts swap --userAccount=11111111111111111111111111111111 --fromMarketIndex=1 --toMarketIndex=0 --toAmount=150 --slippage=100 --swapMode=ExactOut
  *   ts-node cli.ts createUserAndDeposit --marketIndex=0 --amount=100 --accountName="Primary"
+ *   ts-node cli.ts createUserAndDeposit --marketIndex=0 --amount=100 --fromWallet=22222222222222222222222222222222 --forAuthority=33333333333333333333333333333333
  */
 
 // Shared configuration
@@ -242,10 +244,12 @@ async function initializeCentralServerDrift(): Promise<void> {
 	console.log(`✅ RPC Endpoint: ${process.env.ENDPOINT}\n`);
 
 	// Initialize CentralServerDrift
-	console.log('🏗️  Initializing CentralServerDrift...');
+	const driftEnv = (process.env.DRIFT_ENV as DriftEnv) ?? 'devnet';
+	console.log(`🏗️  Initializing CentralServerDrift... (${driftEnv})`);
+	const rpcEndpoint = process.env.ENDPOINT as string;
 	centralServerDrift = new CentralServerDrift({
-		solanaRpcEndpoint: process.env.ENDPOINT as string,
-		driftEnv: 'mainnet-beta', // Change to 'devnet' for devnet testing
+		solanaRpcEndpoint: rpcEndpoint,
+		driftEnv,
 		supportedPerpMarkets: [0, 1, 2], // SOL, BTC, ETH
 		supportedSpotMarkets: [0, 1], // USDC, SOL
 		additionalDriftClientConfig: {
@@ -380,9 +384,18 @@ async function createUserAndDepositCommand(args: CliArgs): Promise<void> {
 	const customMaxMarginRatioArg = args.customMaxMarginRatio as
 		| string
 		| undefined;
+	const fromWallet = args.fromWallet as string | undefined;
+	const forAuthority = args.forAuthority as string | undefined;
 
 	if (!marketIndexArg || !amountArg) {
 		throw new Error('Required arguments: --marketIndex, --amount');
+	}
+
+	// If external wallet is provided, authority must also be specified
+	if (fromWallet && !forAuthority) {
+		throw new Error(
+			'When using --fromWallet, you must also specify --forAuthority (the account owner)'
+		);
 	}
 
 	const marketIndex = parseInt(marketIndexArg, 10);
@@ -399,6 +412,7 @@ async function createUserAndDepositCommand(args: CliArgs): Promise<void> {
 		poolId?: number;
 		fromSubAccountId?: number;
 		customMaxMarginRatio?: number;
+		externalWallet?: PublicKey;
 	} = {};
 
 	if (referrerName) {
@@ -435,8 +449,17 @@ async function createUserAndDepositCommand(args: CliArgs): Promise<void> {
 		options.customMaxMarginRatio = customMaxMarginRatio;
 	}
 
+	// Parse external wallet and authority if provided
+	const externalWallet = fromWallet ? new PublicKey(fromWallet) : undefined;
+	const authority = forAuthority
+		? new PublicKey(forAuthority)
+		: wallet.publicKey;
+	if (externalWallet) {
+		options.externalWallet = externalWallet;
+	}
+
 	console.log('--- 🆕 Create User & Deposit Transaction ---');
-	console.log(`🔑 Authority (wallet): ${wallet.publicKey.toString()}`);
+	console.log(`🔑 Authority (account owner): ${authority.toString()}`);
 	console.log(`🏪 Spot Market Index: ${marketIndex}`);
 	console.log(
 		`💰 Initial Deposit: ${amountArg} (${amountBN.toString()} raw units)`
@@ -456,11 +479,14 @@ async function createUserAndDepositCommand(args: CliArgs): Promise<void> {
 	if (options.customMaxMarginRatio !== undefined) {
 		console.log(`📐 Custom Max Margin Ratio: ${options.customMaxMarginRatio}`);
 	}
+	if (externalWallet) {
+		console.log(`💼 From External Wallet: ${externalWallet.toBase58()}`);
+	}
 
 	const hasOptions = Object.keys(options).length > 0;
 	const { transaction, userAccountPublicKey, subAccountId } =
 		await centralServerDrift.getCreateAndDepositTxn(
-			wallet.publicKey,
+			authority,
 			amountBN,
 			marketIndex,
 			hasOptions ? options : undefined
@@ -938,10 +964,13 @@ function showUsage(): void {
 
 	console.log('🆕 createUserAndDeposit');
 	console.log(
-		'  ts-node cli.ts createUserAndDeposit --marketIndex=<num> --amount=<num> [--accountName=<string>] [--referrerName=<string>] [--poolId=<num>] [--fromSubAccountId=<num>] [--customMaxMarginRatio=<num>]'
+		'  ts-node cli.ts createUserAndDeposit --marketIndex=<num> --amount=<num> [--accountName=<string>] [--referrerName=<string>] [--poolId=<num>] [--fromSubAccountId=<num>] [--customMaxMarginRatio=<num>] [--fromWallet=<pubkey> --forAuthority=<pubkey>]'
 	);
 	console.log(
 		'  Example: ts-node cli.ts createUserAndDeposit --marketIndex=0 --amount=100 --accountName="Primary"'
+	);
+	console.log(
+		'  Example (external wallet): ts-node cli.ts createUserAndDeposit --marketIndex=0 --amount=100 --fromWallet=22222222222222222222222222222222 --forAuthority=33333333333333333333333333333333'
 	);
 	console.log('');
 

@@ -356,6 +356,11 @@ export class CentralServerDrift {
 			fromSubAccountId?: number;
 			customMaxMarginRatio?: number;
 			txParams?: TxParams;
+			/**
+			 * Optional external wallet to deposit from. If provided, the deposit will be made
+			 * from this wallet instead of the authority wallet.
+			 */
+			externalWallet?: PublicKey;
 		}
 	): Promise<{
 		transaction: VersionedTransaction | Transaction;
@@ -381,8 +386,10 @@ export class CentralServerDrift {
 		const originalWallet = this._driftClient.wallet;
 		const originalAuthority = this._driftClient.authority;
 
+		// Use external wallet for transaction signing context if provided
+		const walletPublicKey = options?.externalWallet ?? authority;
 		const authorityWallet = {
-			publicKey: authority,
+			publicKey: walletPublicKey,
 			signTransaction: () =>
 				Promise.reject('This is a placeholder - do not sign with this wallet'),
 			signAllTransactions: () =>
@@ -395,6 +402,9 @@ export class CentralServerDrift {
 			this._driftClient.provider.wallet = authorityWallet;
 			this._driftClient.txHandler.updateWallet(authorityWallet);
 			this._driftClient.authority = authority;
+			// Clear userStatsAccountPublicKey cache so it's recalculated for the new authority
+			// @ts-ignore - accessing private property for cache invalidation
+			this._driftClient.userStatsAccountPublicKey = undefined;
 
 			return await createUserAndDepositCollateralBaseTxn({
 				driftClient: this._driftClient,
@@ -408,6 +418,7 @@ export class CentralServerDrift {
 				fromSubAccountId: options?.fromSubAccountId,
 				customMaxMarginRatio: options?.customMaxMarginRatio,
 				txParams: options?.txParams ?? this.getTxParams(),
+				externalWallet: options?.externalWallet,
 			});
 		} finally {
 			this._driftClient.wallet = originalWallet;

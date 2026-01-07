@@ -33,6 +33,11 @@ interface CreateUserAndDepositCollateralBaseIxsParams {
 	fromSubAccountId?: number;
 	customMaxMarginRatio?: number;
 	delegate?: PublicKey;
+	/**
+	 * Optional external wallet to deposit from. If provided, the deposit will be made
+	 * from this wallet instead of the authority wallet.
+	 */
+	externalWallet?: PublicKey;
 }
 
 /**
@@ -53,6 +58,7 @@ interface CreateUserAndDepositCollateralBaseIxsParams {
  * @param fromSubAccountId - Optional sub-account ID to transfer funds from
  * @param customMaxMarginRatio - Optional custom maximum margin ratio for the account
  * @param delegate - Optional delegate public key for the account. Immediately assigns this as the delegate of the account.
+ * @param externalWallet - Optional external wallet to deposit from (instead of authority wallet)
  *
  * @returns Promise resolving to an object containing:
  *   - subAccountId: The ID of the newly created sub-account
@@ -71,6 +77,7 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 	fromSubAccountId,
 	customMaxMarginRatio,
 	delegate,
+	externalWallet,
 }: CreateUserAndDepositCollateralBaseIxsParams): Promise<{
 	subAccountId: number;
 	userAccountPublicKey: PublicKey;
@@ -86,10 +93,12 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 		? getTokenProgramForSpotMarket(spotMarketAccount)
 		: undefined;
 
+	// Use external wallet for token address if provided, otherwise use authority
+	const depositSourceWallet = externalWallet ?? authority;
 	const associatedDepositTokenAddressPromise =
 		getTokenAddressForDepositAndWithdraw(
 			spotMarketConfig.mint,
-			authority,
+			depositSourceWallet,
 			tokenProgram
 		);
 	const referrerNameAccountPromise: Promise<ReferrerNameAccount | undefined> =
@@ -129,7 +138,6 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 		  }
 		: undefined;
 
-	const ixs = [];
 	const { ixs: createAndDepositIxs, userAccountPublicKey } =
 		await driftClient.createInitializeUserAccountAndDepositCollateralIxs(
 			amount,
@@ -141,9 +149,10 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 			referrerInfo,
 			ZERO,
 			customMaxMarginRatio,
-			poolId
+			poolId,
+			externalWallet ? { externalWallet } : undefined
 		);
-	ixs.push(...createAndDepositIxs);
+	const ixs: TransactionInstruction[] = [...createAndDepositIxs];
 
 	const nextSubAccountPublicKey = getUserAccountPublicKeySync(
 		driftClient.program.programId,
@@ -192,6 +201,7 @@ interface CreateUserAndDepositCollateralBaseTxnParams
  * @param fromSubAccountId - Optional sub-account ID to transfer funds from
  * @param customMaxMarginRatio - Optional custom maximum margin ratio for the account
  * @param txParams - Transaction parameters for building the transaction (compute units, priority fees, etc.)
+ * @param externalWallet - Optional external wallet to deposit from (instead of authority wallet)
  *
  * @returns Promise resolving to an object containing:
  *   - transaction: The built transaction ready for signing (Transaction or VersionedTransaction)
@@ -210,6 +220,7 @@ export const createUserAndDepositCollateralBaseTxn = async ({
 	fromSubAccountId,
 	customMaxMarginRatio,
 	txParams,
+	externalWallet,
 }: CreateUserAndDepositCollateralBaseTxnParams): Promise<{
 	transaction: Transaction | VersionedTransaction;
 	userAccountPublicKey: PublicKey;
@@ -227,6 +238,7 @@ export const createUserAndDepositCollateralBaseTxn = async ({
 			poolId,
 			fromSubAccountId,
 			customMaxMarginRatio,
+			externalWallet,
 		});
 
 	const tx = await driftClient.buildTransaction(ixs, txParams);
