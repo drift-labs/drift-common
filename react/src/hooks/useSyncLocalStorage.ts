@@ -46,7 +46,7 @@ export function useSyncLocalStorage<T>(
 
 			return initialValue;
 		} catch (error) {
-			console.log(error);
+			console.log('error in useSyncLocalStorage on key ', key, error);
 			return initialValue;
 		}
 	});
