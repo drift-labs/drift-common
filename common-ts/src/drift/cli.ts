@@ -12,6 +12,7 @@ import {
 	PRICE_PRECISION,
 	MainnetSpotMarkets,
 	DevnetSpotMarkets,
+	DriftEnv,
 } from '@drift-labs/sdk';
 import { sign } from 'tweetnacl';
 import { CentralServerDrift } from './Drift/clients/CentralServerDrift';
@@ -243,10 +244,12 @@ async function initializeCentralServerDrift(): Promise<void> {
 	console.log(`✅ RPC Endpoint: ${process.env.ENDPOINT}\n`);
 
 	// Initialize CentralServerDrift
-	console.log('🏗️  Initializing CentralServerDrift...');
+	const driftEnv = (process.env.DRIFT_ENV as DriftEnv) ?? 'devnet';
+	console.log(`🏗️  Initializing CentralServerDrift... (${driftEnv})`);
+	const rpcEndpoint = process.env.ENDPOINT as string;
 	centralServerDrift = new CentralServerDrift({
-		solanaRpcEndpoint: process.env.ENDPOINT as string,
-		driftEnv: 'mainnet-beta', // Change to 'devnet' for devnet testing
+		solanaRpcEndpoint: rpcEndpoint,
+		driftEnv,
 		supportedPerpMarkets: [0, 1, 2], // SOL, BTC, ETH
 		supportedSpotMarkets: [0, 1], // USDC, SOL
 		additionalDriftClientConfig: {
