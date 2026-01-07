@@ -79,6 +79,15 @@ export class ResultSlotIncrementer {
 	}
 
 	/**
+	 * Reset all tracking (useful on full reconnection)
+	 */
+	resetAll() {
+		this.resultIncrements.clear();
+		this.isInTabReturnMode = false;
+		this.tabReturnTimestamp = null;
+	}
+
+	/**
 	 * Configure the tab return behavior
 	 */
 	configureTabReturn(debounceMs: number, slotJumpThreshold: number) {
