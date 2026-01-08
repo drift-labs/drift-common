@@ -1509,6 +1509,14 @@ export class UISerializableLiquidationRecordV2 {
 	liquidatePerp_liquidatorFee: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	liquidatePerp_ifFee: BigNum;
+	@autoserializeUsing(BNArraySerializeAndDeserializeFns)
+	liquidatePerp_orderIds: BN[];
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	liquidatePerp_userPnl: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	liquidatePerp_liquidatorPnl: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	liquidatePerp_canceledOrdersFee: BigNum;
 
 	// Liquidate Spot
 	@autoserializeAs(Number) liquidateSpot_assetMarketIndex: number;
@@ -2404,6 +2412,107 @@ export function transformDataApiOrderActionRecordToSerializableOrderActionRecord
 	return transformedRecord;
 }
 
+/**
+ * Transforms a Data API liquidation record (V2 flattened format) to V1 nested format
+ * Used by the all liquidations table which expects nested UISerializableLiquidationRecord
+ */
+export function transformDataApiLiquidationRecordToUISerializableLiquidationRecord(
+	v2Record: JsonObject
+): UISerializableLiquidationRecord {
+	const deserializedV2Record = Deserialize(
+		v2Record,
+		UISerializableLiquidationRecordV2
+	);
+
+	const transformedRecord: UISerializableLiquidationRecord = {
+		liquidationId: deserializedV2Record.liquidationId,
+		txSig: deserializedV2Record.txSig,
+		txSigIndex: deserializedV2Record.txSigIndex,
+		slot: deserializedV2Record.slot,
+		ts: deserializedV2Record.ts,
+		user: deserializedV2Record.user,
+		liquidator: deserializedV2Record.liquidator,
+		totalCollateral: deserializedV2Record.totalCollateral,
+		liquidationType: deserializedV2Record.liquidationType,
+		marginRequirement: deserializedV2Record.marginRequirement,
+		marginFreed: deserializedV2Record.marginFreed,
+		bankrupt: deserializedV2Record.bankrupt,
+		canceledOrderIds: deserializedV2Record.canceledOrderIds,
+		liquidatePerp: {
+			marketIndex: deserializedV2Record.liquidatePerp_marketIndex,
+			oraclePrice: deserializedV2Record.liquidatePerp_oraclePrice,
+			baseAssetAmount: deserializedV2Record.liquidatePerp_baseAssetAmount,
+			quoteAssetAmount: deserializedV2Record.liquidatePerp_quoteAssetAmount,
+			lpShares: deserializedV2Record.liquidatePerp_lpShares,
+			fillRecordId: deserializedV2Record.liquidatePerp_fillRecordId,
+			userOrderId: deserializedV2Record.liquidatePerp_userOrderId,
+			liquidatorOrderId: deserializedV2Record.liquidatePerp_liquidatorOrderId,
+			liquidatorFee: deserializedV2Record.liquidatePerp_liquidatorFee,
+			ifFee: deserializedV2Record.liquidatePerp_ifFee,
+			orderIds: deserializedV2Record.liquidatePerp_orderIds,
+			userPnl: deserializedV2Record.liquidatePerp_userPnl,
+			liquidatorPnl: deserializedV2Record.liquidatePerp_liquidatorPnl,
+			canceledOrdersFee: deserializedV2Record.liquidatePerp_canceledOrdersFee,
+		},
+		liquidateSpot: {
+			assetMarketIndex: deserializedV2Record.liquidateSpot_assetMarketIndex,
+			assetPrice: deserializedV2Record.liquidateSpot_assetPrice,
+			assetTransfer: deserializedV2Record.liquidateSpot_assetTransfer,
+			liabilityMarketIndex:
+				deserializedV2Record.liquidateSpot_liabilityMarketIndex,
+			liabilityPrice: deserializedV2Record.liquidateSpot_liabilityPrice,
+			liabilityTransfer: deserializedV2Record.liquidateSpot_liabilityTransfer,
+			// V2 has ifFee as BigNum, V1 expects BN
+			ifFee: deserializedV2Record.liquidateSpot_ifFee?.val,
+		},
+		liquidateBorrowForPerpPnl: {
+			perpMarketIndex:
+				deserializedV2Record.liquidateBorrowForPerpPnl_perpMarketIndex,
+			marketOraclePrice:
+				deserializedV2Record.liquidateBorrowForPerpPnl_marketOraclePrice,
+			pnlTransfer: deserializedV2Record.liquidateBorrowForPerpPnl_pnlTransfer,
+			liabilityMarketIndex:
+				deserializedV2Record.liquidateBorrowForPerpPnl_liabilityMarketIndex,
+			liabilityPrice:
+				deserializedV2Record.liquidateBorrowForPerpPnl_liabilityPrice,
+			liabilityTransfer:
+				deserializedV2Record.liquidateBorrowForPerpPnl_liabilityTransfer,
+		},
+		liquidatePerpPnlForDeposit: {
+			perpMarketIndex:
+				deserializedV2Record.liquidatePerpPnlForDeposit_perpMarketIndex,
+			marketOraclePrice:
+				deserializedV2Record.liquidatePerpPnlForDeposit_marketOraclePrice,
+			pnlTransfer: deserializedV2Record.liquidatePerpPnlForDeposit_pnlTransfer,
+			assetMarketIndex:
+				deserializedV2Record.liquidatePerpPnlForDeposit_assetMarketIndex,
+			assetPrice: deserializedV2Record.liquidatePerpPnlForDeposit_assetPrice,
+			assetTransfer:
+				deserializedV2Record.liquidatePerpPnlForDeposit_assetTransfer,
+		},
+		// V1 doesn't override perpBankruptcy/spotBankruptcy, so they use BN fields
+		perpBankruptcy: {
+			marketIndex: deserializedV2Record.perpBankruptcy_marketIndex,
+			pnl: deserializedV2Record.perpBankruptcy_pnl?.val,
+			ifPayment: deserializedV2Record.perpBankruptcy_ifPayment?.val,
+			clawbackUser: deserializedV2Record.perpBankruptcy_clawbackUser,
+			clawbackUserPayment:
+				deserializedV2Record.perpBankruptcy_clawbackUserPayment?.val,
+			cumulativeFundingRateDelta:
+				deserializedV2Record.perpBankruptcy_cumulativeFundingRateDelta?.val,
+		},
+		spotBankruptcy: {
+			marketIndex: deserializedV2Record.spotBankruptcy_marketIndex,
+			borrowAmount: deserializedV2Record.spotBankruptcy_borrowAmount?.val,
+			ifPayment: deserializedV2Record.spotBankruptcy_ifPayment?.val,
+			cumulativeDepositInterestDelta:
+				deserializedV2Record.spotBankruptcy_cumulativeDepositInterestDelta?.val,
+		},
+	} as UISerializableLiquidationRecord;
+
+	return transformedRecord;
+}
+
 // Serializer
 export const Serializer = {
 	Serialize: {
@@ -2527,6 +2636,8 @@ export const Serializer = {
 			Deserialize(cls, UISerializableLiquidationRecord),
 		UILiquidationV2: (cls: JsonObject) =>
 			Deserialize(cls, UISerializableLiquidationRecordV2),
+		DataApiUILiquidation: (cls: JsonObject) =>
+			transformDataApiLiquidationRecordToUISerializableLiquidationRecord(cls),
 		SettlePnl: (cls: JsonObject) =>
 			Deserialize(cls, SerializableSettlePnlRecord) as SettlePnlRecordEvent,
 		SpotInterest: (cls: JsonObject) =>
