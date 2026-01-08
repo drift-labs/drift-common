@@ -10,7 +10,7 @@ import {
 } from '@drift-labs/sdk';
 import { TransactionInstruction } from '@solana/web3.js';
 
-export const ISOLATED_POSITION_DEPOSIT_BUFFER_BPS = 200;
+export const ISOLATED_POSITION_DEPOSIT_BUFFER_BPS = 300;
 
 export interface ComputeIsolatedPositionDepositParams {
 	driftClient: DriftClient;
