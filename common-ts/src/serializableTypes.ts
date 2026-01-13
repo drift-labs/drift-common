@@ -36,6 +36,7 @@ import {
 	QUOTE_PRECISION_EXP,
 	SettlePnlExplanation,
 	SettlePnlRecord,
+	SIX,
 	SpotBalanceType,
 	SpotBankruptcyRecord,
 	SpotInterestRecord,
@@ -2187,6 +2188,30 @@ export class SerializableSwapRecord implements SwapRecordEvent {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fee: BN;
 }
 
+// LP Mint Redeem Record
+export class SerializableLPMintRedeemRecord {
+	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) slot: BN;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) authority: PublicKey;
+	@autoserializeAs(Number) description: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) amount: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) fee: BN;
+	@autoserializeAs(Number) spotMarketIndex: number;
+	@autoserializeAs(Number) constituentIndex: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) oraclePrice: BN;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) mint: PublicKey;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) lpMint: PublicKey;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) lpAmount: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) lpFee: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) lpPrice: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) mintRedeemId: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) lastAum: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) lastAumSlot: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) inMarketCurrentWeight: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) inMarketTargetWeight: BN;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) lpPool: PublicKey;
+}
+
 @inheritSerialization(SerializableSwapRecord)
 export class UISerializableSwapRecord extends SerializableSwapRecord {
 	// @ts-ignore
@@ -2218,6 +2243,51 @@ export class UISerializableSwapRecord extends SerializableSwapRecord {
 			instance.fee.precision = inPrecision;
 		} catch (e) {
 			console.error('Error in swap serializer', e);
+		}
+	}
+}
+
+@inheritSerialization(SerializableLPMintRedeemRecord)
+export class UISerializableLPMintRedeemRecord extends SerializableLPMintRedeemRecord {
+	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	amount: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	fee: BigNum;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	oraclePrice: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	lpAmount: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	lpFee: BigNum;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	lpPrice: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	lastAum: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	inMarketCurrentWeight: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
+	// @ts-ignore
+	inMarketTargetWeight: BigNum;
+
+	static onDeserialized(
+		data: JsonObject,
+		instance: UISerializableLPMintRedeemRecord
+	) {
+		assert(Config.initialized, 'Common Config Not Initialised');
+		try {
+			const precision = SIX;
+
+			instance.amount.precision = precision;
+		} catch (e) {
+			console.error('Error in LP mint/redeem serializer', e);
 		}
 	}
 }
@@ -2580,6 +2650,10 @@ export const Serializer = {
 		UILPRecord: (cls: any) => Serialize(cls, UISerializableLPRecord),
 		SwapRecord: (cls: any) => Serialize(cls, SerializableSwapRecord),
 		UISwapRecord: (cls: any) => Serialize(cls, UISerializableSwapRecord),
+		LPMintRedeemRecord: (cls: any) =>
+			Serialize(cls, SerializableLPMintRedeemRecord),
+		UILPMintRedeemRecord: (cls: any) =>
+			Serialize(cls, UISerializableLPMintRedeemRecord),
 	},
 	Deserialize: {
 		Order: (cls: JsonObject) => Deserialize(cls, SerializableOrder) as Order,
@@ -2702,6 +2776,10 @@ export const Serializer = {
 			Deserialize(cls, SerializableSwapRecord) as SwapRecordEvent,
 		UISwapRecord: (cls: JsonObject) =>
 			Deserialize(cls, UISerializableSwapRecord),
+		LPMintRedeemRecord: (cls: JsonObject) =>
+			Deserialize(cls, SerializableLPMintRedeemRecord),
+		UILPMintRedeemRecord: (cls: JsonObject) =>
+			Deserialize(cls, UISerializableLPMintRedeemRecord),
 	},
 	setDeserializeFromSnakeCase: () => {
 		SetDeserializeKeyTransform(SnakeCase);
