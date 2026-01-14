@@ -39,7 +39,7 @@ export const STOP_LIMIT_ORDER_TYPE_CONFIG: UIOrderTypeValue = {
 
 // Take Profit Market order type
 export const TAKE_PROFIT_MARKET_ORDER_TYPE_CONFIG: UIOrderTypeValue = {
-	label: 'Take Profit',
+	label: 'TP Market',
 	value: 'takeProfitMarket',
 	orderType: OrderType.TRIGGER_MARKET,
 	description:
@@ -48,7 +48,7 @@ export const TAKE_PROFIT_MARKET_ORDER_TYPE_CONFIG: UIOrderTypeValue = {
 
 // Take Profit Limit order type
 export const TAKE_PROFIT_LIMIT_ORDER_TYPE_CONFIG: UIOrderTypeValue = {
-	label: 'Take Profit Limit',
+	label: 'TP Limit',
 	value: 'takeProfitLimit',
 	orderType: OrderType.TRIGGER_LIMIT,
 	description:

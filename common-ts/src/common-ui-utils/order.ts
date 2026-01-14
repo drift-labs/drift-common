@@ -72,31 +72,19 @@ const getOrderLabelFromOrderDetails = (
 			orderDetails.triggerCondition,
 			OrderTriggerCondition.ABOVE
 		);
-		const isExistingPositionShort = matchEnum(
-			orderDetails.existingPositionDirection,
-			PositionDirection.SHORT
-		);
 		const isOrderDirectionShort = matchEnum(
 			orderDetails.direction,
 			PositionDirection.SHORT
 		);
 
 		if (isTriggerAbove) {
-			return isExistingPositionShort
-				? isOrderDirectionShort
-					? 'Trigger Market' // trigger above, existing position short, order direction short
-					: UI_ORDER_TYPES.stopMarket.label // trigger above, existing position short, order direction long
-				: isOrderDirectionShort
-				? UI_ORDER_TYPES.takeProfitMarket.label // trigger above, existing position long, order direction short
-				: 'Trigger Market'; // trigger above, existing position long, order direction long
+			return isOrderDirectionShort
+				? UI_ORDER_TYPES.takeProfitMarket.label
+				: UI_ORDER_TYPES.stopMarket.label;
 		} else {
-			return isExistingPositionShort
-				? isOrderDirectionShort
-					? 'Trigger Market' // trigger below, existing position short, order direction short
-					: UI_ORDER_TYPES.takeProfitMarket.label // trigger below, existing position short, order direction long
-				: isOrderDirectionShort
-				? UI_ORDER_TYPES.stopMarket.label // trigger below, existing position long, order direction short
-				: 'Trigger Market'; // trigger below, existing position long, order direction long
+			return isOrderDirectionShort
+				? UI_ORDER_TYPES.stopMarket.label
+				: UI_ORDER_TYPES.takeProfitMarket.label;
 		}
 	}
 
@@ -115,13 +103,9 @@ const getOrderLabelFromOrderDetails = (
 			orderDetails.triggerCondition,
 			OrderTriggerCondition.ABOVE
 		);
-		const isExistingPositionLong = matchEnum(
-			orderDetails.existingPositionDirection,
-			PositionDirection.LONG
-		);
-		const isOrderDirectionLong = matchEnum(
+		const isOrderDirectionShort = matchEnum(
 			orderDetails.direction,
-			PositionDirection.LONG
+			PositionDirection.SHORT
 		);
 
 		if (isTriggered) {
@@ -129,21 +113,13 @@ const getOrderLabelFromOrderDetails = (
 		}
 
 		if (isTriggerAbove) {
-			return isExistingPositionLong
-				? isOrderDirectionLong
-					? 'Trigger Limit' // trigger above, existing position long, order direction long
-					: UI_ORDER_TYPES.takeProfitLimit.label // trigger above, existing position long, order direction short
-				: isExistingPositionLong
-				? UI_ORDER_TYPES.stopLimit.label // trigger above, existing position short, order direction long
-				: 'Trigger Limit'; // trigger above, existing position short, order direction short
+			return isOrderDirectionShort
+				? UI_ORDER_TYPES.takeProfitLimit.label
+				: UI_ORDER_TYPES.stopLimit.label;
 		} else {
-			return isExistingPositionLong
-				? isOrderDirectionLong
-					? 'Trigger Limit' // trigger below, existing position long, order direction long
-					: UI_ORDER_TYPES.stopLimit.label // trigger below, existing position long, order direction short
-				: isExistingPositionLong
-				? UI_ORDER_TYPES.takeProfitLimit.label // trigger below, existing position short, order direction long
-				: 'Trigger Limit'; // trigger below, existing position short, order direction short
+			return isOrderDirectionShort
+				? UI_ORDER_TYPES.stopLimit.label
+				: UI_ORDER_TYPES.takeProfitLimit.label;
 		}
 	}
 
