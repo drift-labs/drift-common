@@ -133,7 +133,7 @@ const getOrderLabelFromOrderDetails = (
 				? isOrderDirectionLong
 					? 'Trigger Limit' // trigger above, existing position long, order direction long
 					: UI_ORDER_TYPES.takeProfitLimit.label // trigger above, existing position long, order direction short
-				: isExistingPositionLong
+				: isOrderDirectionLong
 				? UI_ORDER_TYPES.stopLimit.label // trigger above, existing position short, order direction long
 				: 'Trigger Limit'; // trigger above, existing position short, order direction short
 		} else {
@@ -141,7 +141,7 @@ const getOrderLabelFromOrderDetails = (
 				? isOrderDirectionLong
 					? 'Trigger Limit' // trigger below, existing position long, order direction long
 					: UI_ORDER_TYPES.stopLimit.label // trigger below, existing position long, order direction short
-				: isExistingPositionLong
+				: isOrderDirectionLong
 				? UI_ORDER_TYPES.takeProfitLimit.label // trigger below, existing position short, order direction long
 				: 'Trigger Limit'; // trigger below, existing position short, order direction short
 		}
