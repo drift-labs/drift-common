@@ -8,7 +8,7 @@ import {
 	MarketType,
 	OrderType,
 } from '@drift-labs/sdk';
-import { TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 
 export const ISOLATED_POSITION_DEPOSIT_BUFFER_BPS = 300;
 
@@ -95,7 +95,8 @@ export async function getIsolatedPositionDepositIxIfNeeded(
 	driftClient: DriftClient,
 	user: User,
 	marketIndex: number,
-	isolatedPositionDeposit?: BN
+	isolatedPositionDeposit?: BN,
+	signingAuthority?: PublicKey
 ): Promise<TransactionInstruction | undefined> {
 	if (!isolatedPositionDeposit) {
 		return undefined;
@@ -107,6 +108,8 @@ export async function getIsolatedPositionDepositIxIfNeeded(
 	return driftClient.getTransferIsolatedPerpPositionDepositIx(
 		isolatedPositionDeposit,
 		marketIndex,
-		user.getUserAccount().subAccountId
+		user.getUserAccount().subAccountId,
+		undefined, // noAmountBuffer
+		signingAuthority
 	);
 }

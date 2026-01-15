@@ -181,7 +181,8 @@ export const createOpenPerpNonMarketOrderIxs = async (
 			driftClient,
 			user,
 			marketIndex,
-			isolatedPositionDeposit
+			isolatedPositionDeposit,
+			mainSignerOverride
 		);
 	if (isolatedPositionDepositIx) {
 		allIxs.push(isolatedPositionDepositIx);
