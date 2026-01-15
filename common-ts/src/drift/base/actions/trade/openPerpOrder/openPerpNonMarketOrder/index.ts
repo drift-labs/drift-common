@@ -38,6 +38,7 @@ import {
 import { WithTxnParams } from '../../../../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
 import { getLimitAuctionOrderParams } from '../auction';
+import { getIsolatedPositionDepositIxIfNeeded } from '../isolatedPositionDeposit';
 
 export interface OpenPerpNonMarketOrderBaseParams
 	extends Omit<NonMarketOrderParamsConfig, 'marketType' | 'baseAssetAmount'> {
@@ -141,6 +142,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 		orderConfig,
 		userOrderId = 0,
 		positionMaxLeverage,
+		isolatedPositionDeposit,
 		mainSignerOverride,
 		highLeverageOptions,
 	} = params;
@@ -172,6 +174,18 @@ export const createOpenPerpNonMarketOrderIxs = async (
 	);
 	if (leverageIx) {
 		allIxs.push(leverageIx);
+	}
+
+	const isolatedPositionDepositIx: TransactionInstruction | undefined =
+		await getIsolatedPositionDepositIxIfNeeded(
+			driftClient,
+			user,
+			marketIndex,
+			isolatedPositionDeposit,
+			mainSignerOverride
+		);
+	if (isolatedPositionDepositIx) {
+		allIxs.push(isolatedPositionDepositIx);
 	}
 
 	// handle limit auction
@@ -359,7 +373,7 @@ export const createSwiftLimitOrder = async (
 				reduceOnly: params.reduceOnly,
 				postOnly: params.postOnly,
 				userOrderId: params.userOrderId,
-				positionMaxLeverage: params.positionMaxLeverage,
+				positionMaxLeverage: params.positionMaxLeverage, // TODO: this isn't referenced in the function... do we need it?
 		  });
 
 	const userAccount = user.getUserAccount();
@@ -376,6 +390,7 @@ export const createSwiftLimitOrder = async (
 			takeProfit: orderConfig.bracketOrders?.takeProfit,
 			stopLoss: orderConfig.bracketOrders?.stopLoss,
 			positionMaxLeverage: params.positionMaxLeverage,
+			isolatedPositionDeposit: params.isolatedPositionDeposit,
 		},
 		builderParams: params.builderParams,
 	});

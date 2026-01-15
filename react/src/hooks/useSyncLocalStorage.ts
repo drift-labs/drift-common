@@ -46,7 +46,7 @@ export function useSyncLocalStorage<T>(
 
 			return initialValue;
 		} catch (error) {
-			console.log(error);
+			console.log('localStorage sync error on key:', key, error);
 			return initialValue;
 		}
 	});
@@ -64,6 +64,7 @@ export function useSyncLocalStorage<T>(
 
 				// Store the value in `localStorage` if it's not nullish. Else, remove it.
 				if (valueToStore != null) {
+					console.log('localStorage setValue setting key:', key, valueToStore);
 					storage.setItem(key, getValueToStore(valueToStore));
 				} else {
 					storage.removeItem(key);
@@ -71,7 +72,7 @@ export function useSyncLocalStorage<T>(
 
 				window.dispatchEvent(new Event(LOCAL_STORAGE_EVENT_TYPE));
 			} catch (error) {
-				console.log(error);
+				console.log('localStorage setValue error on key:', key, error);
 			}
 		},
 		[storedValue, storage]
@@ -93,7 +94,11 @@ export function useSyncLocalStorage<T>(
 
 				setStoredValue(parseValueFromStorage<T>(newValue));
 			} catch (error) {
-				console.log(error);
+				console.log(
+					'localStorage handleStorageChange error on key:',
+					key,
+					error
+				);
 			}
 		};
 

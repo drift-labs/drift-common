@@ -36,6 +36,7 @@ import { NoTopMakersError } from '../../../../../Drift/constants/errors';
 import { PlaceAndTakeParams, OptionalTriggerOrderParams } from '../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
 import { AuctionParamsFetchedCallback } from '../../../../../utils/auctionParamsResponseMapper';
+import { getIsolatedPositionDepositIxIfNeeded } from '../isolatedPositionDeposit';
 
 export interface OpenPerpMarketOrderBaseParams {
 	driftClient: DriftClient;
@@ -61,6 +62,12 @@ export interface OpenPerpMarketOrderBaseParams {
 	 * Example: 5 for 5x leverage, 10 for 10x leverage
 	 */
 	positionMaxLeverage: number;
+	/**
+	 * Optional isolated position deposit amount.
+	 * If provided, it will be added to the order params as isolatedPositionDeposit.
+	 * This field is used for opening isolated positions.
+	 */
+	isolatedPositionDeposit?: BN;
 	/**
 	 * If provided, will override the main signer for the order. Otherwise, the main signer will be the user's authority.
 	 * This is only applicable for non-SWIFT orders.
@@ -139,6 +146,7 @@ export async function createSwiftMarketOrder({
 	swiftOptions,
 	userOrderId = 0,
 	positionMaxLeverage,
+	isolatedPositionDeposit,
 	builderParams,
 	highLeverageOptions,
 	callbacks,
@@ -190,6 +198,7 @@ export async function createSwiftMarketOrder({
 			takeProfit: bracketOrders?.takeProfit,
 			stopLoss: bracketOrders?.stopLoss,
 			positionMaxLeverage,
+			isolatedPositionDeposit,
 		},
 		builderParams,
 	});
@@ -337,6 +346,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 	positionMaxLeverage,
 	mainSignerOverride,
 	highLeverageOptions,
+	isolatedPositionDeposit,
 	callbacks,
 }: OpenPerpMarketOrderBaseParams): Promise<TransactionInstruction[]> => {
 	if (!amount || amount.isZero()) {
@@ -355,6 +365,18 @@ export const createOpenPerpMarketOrderIxs = async ({
 	);
 	if (leverageIx) {
 		allIxs.push(leverageIx);
+	}
+
+	const isolatedPositionDepositIx = await getIsolatedPositionDepositIxIfNeeded(
+		driftClient,
+		user,
+		marketIndex,
+		isolatedPositionDeposit,
+		mainSignerOverride
+	);
+
+	if (isolatedPositionDepositIx) {
+		allIxs.push(isolatedPositionDepositIx);
 	}
 
 	if (placeAndTake?.enable) {
