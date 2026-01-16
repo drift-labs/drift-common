@@ -111,7 +111,9 @@ const getUserKey = (userId: number, authority: PublicKey) => {
  */
 const getIdAndAuthorityFromKey = (
 	key: string
-): { userId: number; userAuthority: PublicKey } => {
+):
+	| { userId: number; userAuthority: PublicKey }
+	| { userId: undefined; userAuthority: undefined } => {
 	const splitKey = key?.split('_');
 
 	if (!splitKey || splitKey.length !== 2)
