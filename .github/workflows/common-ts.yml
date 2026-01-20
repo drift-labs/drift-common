@@ -1,0 +1,146 @@
+name: common-ts
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+defaults:
+  run:
+    shell: bash
+    working-directory: .
+
+jobs:
+  tests:
+    runs-on: ubicloud
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./common-ts
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.2.15
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: bun run build
+
+      - name: Run tests
+        run: bun run test:ci
+
+  check-for-common-ts-changes:
+    runs-on: ubicloud
+    outputs:
+      common-ts: ${{ steps.filter.outputs.common-ts }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            common-ts:
+              - 'common-ts/**'
+
+  release:
+    runs-on: ubicloud
+    needs: [tests, check-for-common-ts-changes]
+    if: ${{ github.ref == 'refs/heads/master' && needs.check-for-common-ts-changes.outputs.common-ts == 'true' }}
+    defaults:
+      run:
+        working-directory: ./common-ts
+    outputs:
+      version: ${{ steps.git-commit.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.2.15
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: bun run build
+
+      - name: Update package version
+        run: |
+          VERSION=$(node -e "console.log(require('./package.json').version);")
+          npm version patch
+          echo "PACKAGE_VERSION=$(node -e "console.log(require('./package.json').version);")" >> $GITHUB_ENV
+
+      - name: Git commit
+        id: git-commit
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add ..
+          git commit -a -m "common-ts: release v$PACKAGE_VERSION"
+          git pull --rebase origin master
+          git push origin HEAD || {
+            echo "Push failed. Retrying after pulling latest changes..."
+            git pull --rebase origin master
+            git push origin HEAD
+          }
+          echo "version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Publish to npm
+        run: npm publish --access=public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        with:
+          channel-id: '#code-review'
+          slack-message: '<!here> ❌ common-ts deployment failed! Check the logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
+  emit-dispatch-events:
+    runs-on: ubicloud
+    needs: [release, check-for-common-ts-changes]
+    if: ${{ github.ref == 'refs/heads/master' && needs.check-for-common-ts-changes.outputs.common-ts == 'true' }}
+    strategy:
+      matrix:
+        repo: ["dlob-server", "internal-keeper-bot", "history-server"]
+    steps:
+      - name: Checkout code with new updated version
+        uses: actions/checkout@v4
+      - name: Emit dispatch event
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: token ${{ secrets.GH_PAT }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/drift-labs/${{ matrix.repo }}/dispatches" \
+            -d "{\"event_type\": \"drift-common-update\", \"client_payload\": {
+              \"version\": \"$VERSION\"
+            }}"
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          VERSION: ${{ needs.release.outputs.version }}
+        working-directory: ./common-ts

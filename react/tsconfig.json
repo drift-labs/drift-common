@@ -14,7 +14,6 @@
 		"skipLibCheck": true,
 		"declaration": true,
 		"paths": {
-			"@drift-labs/sdk": ["../protocol/sdk"],
 			"@drift/common": ["../common-ts"],
 			"@drift-labs/icons": ["../icons/dist"]
 		}

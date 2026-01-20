@@ -17,7 +17,7 @@
 	],
 	"author": "Drift Labs",
 	"dependencies": {
-		"@drift-labs/sdk": "2.155.0-beta.6",
+		"@drift-labs/sdk": "^2.155.0-beta.5",
 		"@slack/web-api": "6.4.0",
 		"@solana/spl-token": "0.3.8",
 		"@solana/web3.js": "1.98.0",
@@ -35,7 +35,7 @@
 		"winston-slack-webhook-transport": "2.3.5"
 	},
 	"peerDependencies": {
-		"@drift-labs/sdk": "^2.155.0-beta.5",
+		"@drift-labs/sdk": "^2.155.0-beta.6",
 		"@solana/web3.js": "1.98.0"
 	},
 	"scripts": {
@@ -55,7 +55,8 @@
 		"update-jup-errors": "node src/scripts/update-jup-error-codes.js",
 		"update-drift-errors": "node src/scripts/update-drift-error-codes.js",
 		"circular-deps": "bunx madge --circular --circular --extensions ts,tsx src",
-		"build-and-pack": "bun run build && npm pack"
+		"build-and-pack": "bun run build && npm pack",
+		"update-sdk": "node scripts/update-sdk.js"
 	},
 	"directories": {
 		"lib": "lib"
@@ -96,6 +97,8 @@
 		"access": "public"
 	},
 	"resolutions": {
-		"@solana/errors": "2.0.0-preview.4"
+		"@solana/web3.js": "1.98.0",
+		"@solana/errors": "2.0.0-preview.4",
+		"@solana/codecs-data-structures": "2.0.0-preview.4"
 	}
 }
