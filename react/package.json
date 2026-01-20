@@ -17,8 +17,9 @@
 		"lib": "lib"
 	},
 	"devDependencies": {
+		"@drift-labs/sdk": "^2.155.0-beta.5",
 		"@solana/spl-token": "0.3.8",
-		"@solana/web3.js": "1.92.3",
+		"@solana/web3.js": "1.98.0",
 		"@types/react": "npm:types-react@19.0.0-rc.1",
 		"copyfiles": "2.4.1",
 		"encoding": "0.1.13",
@@ -30,9 +31,9 @@
 		"typescript": "5.1.6"
 	},
 	"peerDependencies": {
-		"@drift-labs/sdk": "2.32.1-beta.12",
+		"@drift-labs/sdk": "^2.155.0-beta.5",
 		"@solana/spl-token": "0.3.8",
-		"@solana/web3.js": "1.92.3",
+		"@solana/web3.js": "1.98.0",
 		"react": "19.0.3",
 		"react-dom": "19.0.3"
 	},
@@ -59,6 +60,9 @@
 	"resolutions": {
 		"@types/react": "npm:types-react@19.0.3",
 		"@types/react-dom": "npm:types-react-dom@19.0.3",
-		"@ledgerhq/errors": "6.16.3"
+		"@ledgerhq/errors": "6.16.3",
+		"@solana/web3.js": "1.98.0",
+		"@solana/errors": "2.0.0-preview.4",
+		"@solana/codecs-data-structures": "2.0.0-preview.4"
 	}
 }
