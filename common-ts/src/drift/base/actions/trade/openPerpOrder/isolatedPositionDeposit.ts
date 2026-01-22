@@ -10,7 +10,7 @@ import {
 } from '@drift-labs/sdk';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 
-export const ISOLATED_POSITION_DEPOSIT_BUFFER_BPS = 300;
+export const ISOLATED_POSITION_DEPOSIT_BUFFER_BPS = 20;
 
 export interface ComputeIsolatedPositionDepositParams {
 	driftClient: DriftClient;
@@ -36,6 +36,10 @@ export interface ComputeIsolatedPositionDepositParams {
 	 * If greater than 0, we will consider the trade as entering high leverage mode.
 	 */
 	numOfOpenHighLeverageSpots?: number;
+	/**
+	 * Whether to use the buffer for the isolated position deposit.
+	 */
+	bufferBpsDenominator?: number;
 }
 
 /**
@@ -51,6 +55,7 @@ export function computeIsolatedPositionDepositForTrade({
 	marginRatio,
 	entryPrice,
 	numOfOpenHighLeverageSpots,
+	bufferBpsDenominator,
 }: ComputeIsolatedPositionDepositParams): BN | null {
 	// Only require isolated deposit if the order will increase the position (when direction is provided)
 	if (direction !== undefined) {
@@ -87,7 +92,9 @@ export function computeIsolatedPositionDepositForTrade({
 	);
 
 	return marginRequired.add(
-		marginRequired.div(new BN(ISOLATED_POSITION_DEPOSIT_BUFFER_BPS))
+		marginRequired.div(
+			new BN(bufferBpsDenominator ?? ISOLATED_POSITION_DEPOSIT_BUFFER_BPS)
+		)
 	); // buffer in basis points
 }
 
