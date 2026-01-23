@@ -40,6 +40,7 @@ export * from './utils/CircularBuffers';
 export * from './utils/rxjs';
 export * from './utils/priorityFees';
 export * from './utils/NumLib';
+export * from './utils/markets/precisions';
 export * from './drift';
 
 // External Program Errors
