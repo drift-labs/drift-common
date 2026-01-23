@@ -37,9 +37,25 @@ export interface ComputeIsolatedPositionDepositParams {
 	 */
 	numOfOpenHighLeverageSpots?: number;
 	/**
-	 * Whether to use the buffer for the isolated position deposit.
+	 * Optional buffer denominator for the isolated position deposit.
+	 * 
+	 * Smaller numbers mean a bigger buffer.
+	 * 
+	 * bufferDenominator ->  Buffer %
+	 * 
+	 * 15 ->                6.67%
+	 * 
+	 * 20 (default) ->       5.00%
+	 * 
+	 * 50 ->                2.00%
+	 * 
+	 * 100 ->               1.00%
+	 * 
+	 * 180 ->               0.56%
+	 * 
+	 * 200 ->               0.50%
 	 */
-	bufferBpsDenominator?: number;
+	bufferDenominator?: number;
 }
 
 /**
@@ -55,7 +71,7 @@ export function computeIsolatedPositionDepositForTrade({
 	marginRatio,
 	entryPrice,
 	numOfOpenHighLeverageSpots,
-	bufferBpsDenominator,
+	bufferDenominator,
 }: ComputeIsolatedPositionDepositParams): BN | null {
 	// Only require isolated deposit if the order will increase the position (when direction is provided)
 	if (direction !== undefined) {
@@ -93,7 +109,7 @@ export function computeIsolatedPositionDepositForTrade({
 
 	return marginRequired.add(
 		marginRequired.div(
-			new BN(bufferBpsDenominator ?? ISOLATED_POSITION_DEPOSIT_BUFFER_BPS)
+			new BN(bufferDenominator ?? ISOLATED_POSITION_DEPOSIT_BUFFER_BPS)
 		)
 	); // buffer in basis points
 }
