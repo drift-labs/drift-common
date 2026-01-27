@@ -33,7 +33,11 @@ import {
 import { WithTxnParams } from '../../../../types';
 import { TxnOrSwiftResult } from '../types';
 import { NoTopMakersError } from '../../../../../Drift/constants/errors';
-import { PlaceAndTakeParams, OptionalTriggerOrderParams } from '../types';
+import {
+	PlaceAndTakeParams,
+	OptionalTriggerOrderParams,
+	AdditionalIsolatedPositionDeposit,
+} from '../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
 import { AuctionParamsFetchedCallback } from '../../../../../utils/auctionParamsResponseMapper';
 import { getIsolatedPositionDepositIxIfNeeded } from '../isolatedPositionDeposit';
@@ -68,6 +72,12 @@ export interface OpenPerpMarketOrderBaseParams {
 	 * This field is used for opening isolated positions.
 	 */
 	isolatedPositionDeposit?: BN;
+	/**
+	 * Additional isolated position deposits needed to top up other
+	 * under-collateralized isolated positions before placing the order.
+	 * Each deposit will create a separate instruction.
+	 */
+	additionalIsolatedPositionDeposits?: AdditionalIsolatedPositionDeposit[];
 	/**
 	 * If provided, will override the main signer for the order. Otherwise, the main signer will be the user's authority.
 	 * This is only applicable for non-SWIFT orders.
@@ -347,6 +357,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 	mainSignerOverride,
 	highLeverageOptions,
 	isolatedPositionDeposit,
+	additionalIsolatedPositionDeposits,
 	callbacks,
 }: OpenPerpMarketOrderBaseParams): Promise<TransactionInstruction[]> => {
 	if (!amount || amount.isZero()) {
@@ -365,6 +376,26 @@ export const createOpenPerpMarketOrderIxs = async ({
 	);
 	if (leverageIx) {
 		allIxs.push(leverageIx);
+	}
+
+	// Add additional isolated position deposit ixs for other under-collateralized positions
+	if (additionalIsolatedPositionDeposits?.length) {
+		const additionalDepositIxPromises = additionalIsolatedPositionDeposits.map(
+			(deposit) =>
+				getIsolatedPositionDepositIxIfNeeded(
+					driftClient,
+					user,
+					deposit.marketIndex,
+					deposit.amount,
+					mainSignerOverride
+				)
+		);
+		const additionalDepositIxs = await Promise.all(additionalDepositIxPromises);
+		for (const ix of additionalDepositIxs) {
+			if (ix) {
+				allIxs.push(ix);
+			}
+		}
 	}
 
 	const isolatedPositionDepositIx = await getIsolatedPositionDepositIxIfNeeded(
