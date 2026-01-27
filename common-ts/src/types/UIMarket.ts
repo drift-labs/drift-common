@@ -158,7 +158,10 @@ export class UIMarket {
 			return false;
 		}
 
-		return (marketConfig as PerpMarketConfig).category?.includes('Prediction') ?? false;
+		return (
+			(marketConfig as PerpMarketConfig).category?.includes('Prediction') ??
+			false
+		);
 	}
 
 	get isSpot() {

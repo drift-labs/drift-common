@@ -11,7 +11,7 @@ import {
 } from '@drift-labs/sdk';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 
-export const ISOLATED_POSITION_DEPOSIT_BUFFER_BPS = 20;
+export const ISOLATED_POSITION_DEPOSIT_BUFFER_BPS = 15;
 
 export interface IsolatedMarginShortfall {
 	marketIndex: number;
@@ -71,7 +71,10 @@ export function getOtherIsolatedMarginShortfalls(
 	const result: IsolatedMarginShortfall[] = [];
 
 	for (const [marketIndex, shortfall] of shortfalls) {
-		if (excludeMarketIndex !== undefined && marketIndex === excludeMarketIndex) {
+		if (
+			excludeMarketIndex !== undefined &&
+			marketIndex === excludeMarketIndex
+		) {
 			continue;
 		}
 		result.push({ marketIndex, shortfall });
@@ -117,21 +120,21 @@ export interface ComputeIsolatedPositionDepositParams {
 	numOfOpenHighLeverageSpots?: number;
 	/**
 	 * Optional buffer denominator for the isolated position deposit.
-	 * 
+	 *
 	 * Smaller numbers mean a bigger buffer.
-	 * 
+	 *
 	 * bufferDenominator ->  Buffer %
-	 * 
+	 *
 	 * 15 ->                6.67%
-	 * 
+	 *
 	 * 20 (default) ->       5.00%
-	 * 
+	 *
 	 * 50 ->                2.00%
-	 * 
+	 *
 	 * 100 ->               1.00%
-	 * 
+	 *
 	 * 180 ->               0.56%
-	 * 
+	 *
 	 * 200 ->               0.50%
 	 */
 	bufferDenominator?: number;
