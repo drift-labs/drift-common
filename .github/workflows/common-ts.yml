@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22.14.x'
+          node-version: '24.x.x'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Setup bun
@@ -71,7 +71,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22.14.x'
+          node-version: '24.x.x'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Setup bun
