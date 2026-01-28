@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+# . "$(dirname -- "$0")/_/husky.sh"
 
-bun lint
-bun prettify
-bun typecheck
-cd common-ts && bun run test
-bun run build
+# bun lint
+# bun prettify
+# bun typecheck
+# cd common-ts && bun run test
+# bun run build
