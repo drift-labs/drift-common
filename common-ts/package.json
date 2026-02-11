@@ -35,7 +35,7 @@
 		"winston-slack-webhook-transport": "2.3.5"
 	},
 	"peerDependencies": {
-		"@drift-labs/sdk": "^2.157.0-beta.2",
+		"@drift-labs/sdk": "^2.158.0-beta.0",
 		"@solana/web3.js": "1.98.0"
 	},
 	"scripts": {
