@@ -17,7 +17,7 @@
 	],
 	"author": "Drift Labs",
 	"dependencies": {
-		"@drift-labs/sdk": "^2.157.0-beta.2",
+		"@drift-labs/sdk": "^2.158.0-beta.0",
 		"@slack/web-api": "6.4.0",
 		"@solana/spl-token": "^0.4.14",
 		"@solana/web3.js": "1.98.0",
