@@ -20,7 +20,7 @@
         "zustand": "4.3.8",
       },
       "devDependencies": {
-        "@drift-labs/sdk": "^2.157.0-beta.2",
+        "@drift-labs/sdk": "^2.158.0-beta.0",
         "@solana/spl-token": "0.3.8",
         "@solana/web3.js": "1.98.0",
         "@types/react": "npm:types-react@19.0.0-rc.1",
@@ -31,10 +31,10 @@
         "pino-pretty": "10.2.3",
         "react": "19.0.3",
         "react-dom": "19.0.3",
-        "typescript": "5.1.6",
+        "typescript": "5.1.6"
       },
       "peerDependencies": {
-        "@drift-labs/sdk": "^2.157.0-beta.2",
+        "@drift-labs/sdk": "^2.158.0-beta.0",
         "@solana/spl-token": "0.3.8",
         "@solana/web3.js": "1.98.0",
         "react": "19.0.3",

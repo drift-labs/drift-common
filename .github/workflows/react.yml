@@ -1,0 +1,44 @@
+name: react
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+defaults:
+  run:
+    shell: bash
+    working-directory: .
+
+jobs:
+  build:
+    runs-on: ubicloud
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./react
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.3.9
+
+      - name: Install and build common-ts
+        run: bun install && bun run build
+        working-directory: ./common-ts
+
+      - name: Install and build icons
+        run: bun install && bun run build
+        working-directory: ./icons
+
+      - name: Install and build react
+        run: bun install && bun run build
