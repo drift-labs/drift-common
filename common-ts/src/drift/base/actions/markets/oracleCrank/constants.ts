@@ -1,0 +1,5 @@
+export const MAX_PYTH_LAZER_CRANKS = 1;
+
+export const MAX_PYTH_PULL_CRANKS = 1;
+
+export const DEFAULT_PRECEDING_IXS_COUNT = 2;
