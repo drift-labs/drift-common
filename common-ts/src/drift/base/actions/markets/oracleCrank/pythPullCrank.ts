@@ -33,7 +33,7 @@ export const getPythPullUpdateIxs = async (
 	try {
 		const crankIxs = await driftClient.getPostPythPullOracleUpdateAtomicIxs(
 			result.data,
-			feedIds.slice(0, 2)
+			feedIds
 		);
 		return crankIxs;
 	} catch (e) {
