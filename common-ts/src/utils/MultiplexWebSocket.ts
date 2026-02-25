@@ -349,8 +349,8 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 				}
 			}
 
-			// Restart the websocket connection on error
-			this.refreshWebSocket();
+			// Note: onclose always fires after onerror, so reconnection is handled there
+			// to avoid double-counting reconnection attempts.
 		};
 
 		this.#webSocket = webSocket;
@@ -580,8 +580,24 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 			this.stopHeartbeatMonitoring();
 		}
 
-		const { shouldReconnect, delay } =
-			this.reconnectionManager.attemptReconnection(this.wsUrl);
+		let shouldReconnect: boolean;
+		let delay: number;
+
+		try {
+			({ shouldReconnect, delay } =
+				this.reconnectionManager.attemptReconnection(this.wsUrl));
+		} catch (error) {
+			// Max reconnect attempts exceeded — close gracefully and notify all subscribers
+			console.error('WebSocket reconnection failed', error);
+
+			// Forward error to all subscriptions before closing
+			for (const [, subscription] of this.subscriptions.entries()) {
+				subscription.onError(error);
+			}
+
+			this.close();
+			return;
+		}
 
 		if (!shouldReconnect) {
 			return;
