@@ -12,9 +12,7 @@ export const DEFAULT_MAX_MARKET_LEVERAGE = 10;
  * Direct URL navigation (e.g. /TIA-PERP) is unaffected.
  */
 export const HIDDEN_PERP_MARKET_INDEXES: ReadonlySet<number> = new Set([
-	3, // APT
 	5, // POL
-	6, // ARB
 	10, // 1MPEPE
 	11, // OP
 	14, // HNT
