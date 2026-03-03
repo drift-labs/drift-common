@@ -1,0 +1,296 @@
+import { expect } from 'chai';
+import * as sinon from 'sinon';
+import { BN } from '@coral-xyz/anchor';
+import { VersionedTransaction } from '@solana/web3.js';
+import { PositionDirection } from '@drift-labs/sdk';
+import {
+	centralServerDrift,
+	driftClient,
+	setupTestContext,
+	teardownTestContext,
+} from './context';
+import { assertComputeBudgetThenProgram } from '../../../../utils/txAssertions';
+import { getDevWallet } from '../../../../utils/wallet';
+
+describe('CentralServerDrift - Isolated Position Transactions', function () {
+	this.timeout(10_000);
+	const devWalletContext = getDevWallet();
+	const devWalletUser0 = devWalletContext.devUser0;
+
+	before(async () => {
+		await setupTestContext();
+	});
+
+	beforeEach(async () => {
+		await new Promise((resolve) => setTimeout(resolve, 2000));
+	});
+
+	after(async () => {
+		await teardownTestContext();
+	});
+
+	afterEach(async () => {
+		sinon.restore();
+	});
+
+	describe('getOpenIsolatedPerpPositionTxn', () => {
+		it('should create open isolated position transaction with transfer before order', async () => {
+			const txn = await centralServerDrift.getOpenIsolatedPerpPositionTxn({
+				userAccountPublicKey: devWalletUser0,
+				marketIndex: 0,
+				direction: PositionDirection.LONG,
+				amount: new BN(100_000),
+				assetType: 'quote',
+				positionMaxLeverage: 5,
+				isolatedPositionDeposit: new BN(1_000_000),
+				txParams: { computeUnits: 1_000_000, computeUnitsPrice: 1_000 },
+			});
+			expect(txn).to.exist;
+			assertComputeBudgetThenProgram(
+				txn as VersionedTransaction,
+				driftClient.program.programId,
+				2
+			);
+			const vTx = txn as VersionedTransaction;
+			expect(vTx.message.compiledInstructions.length).to.be.greaterThan(2);
+		});
+
+		it('should reject zero isolatedPositionDeposit', async () => {
+			try {
+				await centralServerDrift.getOpenIsolatedPerpPositionTxn({
+					userAccountPublicKey: devWalletUser0,
+					marketIndex: 0,
+					direction: PositionDirection.LONG,
+					amount: new BN(100_000),
+					assetType: 'quote',
+					positionMaxLeverage: 5,
+					isolatedPositionDeposit: new BN(0),
+				});
+				expect.fail('Should have thrown');
+			} catch (error: unknown) {
+				expect((error as Error).message).to.include(
+					'isolatedPositionDeposit is required'
+				);
+			}
+		});
+
+		it('should reject invalid market index', async () => {
+			try {
+				await centralServerDrift.getOpenIsolatedPerpPositionTxn({
+					userAccountPublicKey: devWalletUser0,
+					marketIndex: 999,
+					direction: PositionDirection.LONG,
+					amount: new BN(100_000),
+					assetType: 'quote',
+					positionMaxLeverage: 5,
+					isolatedPositionDeposit: new BN(1_000_000),
+				});
+				expect.fail('Should have thrown');
+			} catch (error: unknown) {
+				expect((error as Error).message).to.include(
+					'Perp market config not found'
+				);
+			}
+		});
+	});
+
+	describe('getCloseIsolatedPerpPositionTxn', () => {
+		it('should create reduce-only close isolated position transaction', async () => {
+			const txn = await centralServerDrift.getCloseIsolatedPerpPositionTxn({
+				userAccountPublicKey: devWalletUser0,
+				marketIndex: 0,
+				baseAssetAmount: new BN(100_000_000),
+				direction: PositionDirection.SHORT,
+				assetType: 'base',
+				txParams: { computeUnits: 1_000_000, computeUnitsPrice: 1_000 },
+			});
+			expect(txn).to.exist;
+			assertComputeBudgetThenProgram(
+				txn as VersionedTransaction,
+				driftClient.program.programId,
+				2
+			);
+		});
+
+		it('should reject invalid market index', async () => {
+			try {
+				await centralServerDrift.getCloseIsolatedPerpPositionTxn({
+					userAccountPublicKey: devWalletUser0,
+					marketIndex: 999,
+					baseAssetAmount: new BN(100_000),
+					direction: PositionDirection.SHORT,
+				});
+				expect.fail('Should have thrown');
+			} catch (error: unknown) {
+				expect((error as Error).message).to.include(
+					'Perp market config not found'
+				);
+			}
+		});
+	});
+
+	describe('getWithdrawIsolatedPerpPositionCollateralTxn', () => {
+		it('should create withdraw collateral transaction', async () => {
+			const txn =
+				await centralServerDrift.getWithdrawIsolatedPerpPositionCollateralTxn({
+					userAccountPublicKey: devWalletUser0,
+					marketIndex: 0,
+					amount: new BN(500_000),
+					txParams: { computeUnits: 1_000_000, computeUnitsPrice: 1_000 },
+				});
+			expect(txn).to.exist;
+			assertComputeBudgetThenProgram(
+				txn as VersionedTransaction,
+				driftClient.program.programId,
+				2
+			);
+		});
+
+		it('should include settle PnL ix when settlePnlFirst is true', async () => {
+			const txn =
+				await centralServerDrift.getWithdrawIsolatedPerpPositionCollateralTxn({
+					userAccountPublicKey: devWalletUser0,
+					marketIndex: 0,
+					amount: new BN(500_000),
+					settlePnlFirst: true,
+					txParams: { computeUnits: 1_000_000, computeUnitsPrice: 1_000 },
+				});
+			expect(txn).to.exist;
+			const vTx = txn as VersionedTransaction;
+			expect(vTx.message.compiledInstructions.length).to.be.greaterThan(2);
+		});
+
+		it('should reject invalid market index', async () => {
+			try {
+				await centralServerDrift.getWithdrawIsolatedPerpPositionCollateralTxn({
+					userAccountPublicKey: devWalletUser0,
+					marketIndex: 999,
+					amount: new BN(500_000),
+				});
+				expect.fail('Should have thrown');
+			} catch (error: unknown) {
+				expect((error as Error).message).to.include(
+					'Perp market config not found'
+				);
+			}
+		});
+	});
+
+	describe('getCloseAndWithdrawIsolatedPerpPositionTxn', () => {
+		it('should create close-only transaction when withdrawCollateralAfterClose is false', async () => {
+			const txn =
+				await centralServerDrift.getCloseAndWithdrawIsolatedPerpPositionTxn({
+					userAccountPublicKey: devWalletUser0,
+					marketIndex: 0,
+					baseAssetAmount: new BN(100_000_000),
+					direction: PositionDirection.SHORT,
+					withdrawCollateralAfterClose: false,
+					txParams: { computeUnits: 1_000_000, computeUnitsPrice: 1_000 },
+				});
+			expect(txn).to.exist;
+			assertComputeBudgetThenProgram(
+				txn as VersionedTransaction,
+				driftClient.program.programId,
+				2
+			);
+		});
+
+		it('should create close+withdraw transaction when withdrawCollateralAfterClose is true', async () => {
+			const txn =
+				await centralServerDrift.getCloseAndWithdrawIsolatedPerpPositionTxn({
+					userAccountPublicKey: devWalletUser0,
+					marketIndex: 0,
+					baseAssetAmount: new BN(100_000_000),
+					direction: PositionDirection.SHORT,
+					withdrawCollateralAfterClose: true,
+					txParams: { computeUnits: 1_000_000, computeUnitsPrice: 1_000 },
+				});
+			expect(txn).to.exist;
+			const vTx = txn as VersionedTransaction;
+			expect(vTx.message.compiledInstructions.length).to.be.greaterThan(2);
+		});
+
+		it('should reject invalid market index', async () => {
+			try {
+				await centralServerDrift.getCloseAndWithdrawIsolatedPerpPositionTxn({
+					userAccountPublicKey: devWalletUser0,
+					marketIndex: 999,
+					baseAssetAmount: new BN(100_000),
+					direction: PositionDirection.SHORT,
+				});
+				expect.fail('Should have thrown');
+			} catch (error: unknown) {
+				expect((error as Error).message).to.include(
+					'Perp market config not found'
+				);
+			}
+		});
+	});
+
+	describe('getDepositAndOpenIsolatedPerpPositionTxn', () => {
+		it('should create deposit + open isolated position transaction', async () => {
+			const txn =
+				await centralServerDrift.getDepositAndOpenIsolatedPerpPositionTxn({
+					userAccountPublicKey: devWalletUser0,
+					marketIndex: 0,
+					direction: PositionDirection.LONG,
+					amount: new BN(100_000),
+					assetType: 'quote',
+					positionMaxLeverage: 5,
+					depositAmount: new BN(1_000_000),
+					txParams: {
+						computeUnits: 1_000_000,
+						computeUnitsPrice: 1_000,
+					},
+				});
+			expect(txn).to.exist;
+			assertComputeBudgetThenProgram(
+				txn as VersionedTransaction,
+				driftClient.program.programId,
+				2
+			);
+			const vTx = txn as VersionedTransaction;
+			expect(vTx.message.compiledInstructions.length).to.be.greaterThan(2);
+		});
+
+		it('should reject zero depositAmount', async () => {
+			try {
+				await centralServerDrift.getDepositAndOpenIsolatedPerpPositionTxn({
+					userAccountPublicKey: devWalletUser0,
+					marketIndex: 0,
+					direction: PositionDirection.LONG,
+					amount: new BN(100_000),
+					assetType: 'quote',
+					positionMaxLeverage: 5,
+					depositAmount: new BN(0),
+				});
+				expect.fail('Should have thrown');
+			} catch (error: unknown) {
+				expect((error as Error).message).to.include(
+					'depositAmount is required'
+				);
+			}
+		});
+	});
+
+	describe('getCloseAndWithdrawIsolatedPerpPositionToWalletTxn', () => {
+		it('should create close + withdraw to wallet transaction', async () => {
+			const txn =
+				await centralServerDrift.getCloseAndWithdrawIsolatedPerpPositionToWalletTxn(
+					{
+						userAccountPublicKey: devWalletUser0,
+						marketIndex: 0,
+						baseAssetAmount: new BN(100_000_000),
+						direction: PositionDirection.SHORT,
+						txParams: {
+							computeUnits: 1_000_000,
+							computeUnitsPrice: 1_000,
+						},
+					}
+				);
+			expect(txn).to.exist;
+			const vTx = txn as VersionedTransaction;
+			expect(vTx.message.compiledInstructions.length).to.be.greaterThan(2);
+		});
+	});
+});

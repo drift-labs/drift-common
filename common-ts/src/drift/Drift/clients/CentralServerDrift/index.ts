@@ -14,6 +14,7 @@ import {
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
 	MarketType,
+	MIN_I64,
 	OneShotUserAccountSubscriber,
 	OrderTriggerCondition,
 	PerpMarketConfig,
@@ -22,6 +23,7 @@ import {
 	PriorityFeeSubscriber,
 	PriorityFeeSubscriberConfig,
 	PublicKey,
+	SettlePnlMode,
 	SpotMarketConfig,
 	SwapMode,
 	TxParams,
@@ -41,9 +43,16 @@ import {
 } from '../../constants';
 import { createDepositTxn } from '../../../base/actions/spot/deposit';
 import { createWithdrawTxn } from '../../../base/actions/spot/withdraw';
+import { getTokenAddressForDepositAndWithdraw } from '../../../../utils/token';
 import { createSettleFundingTxn } from '../../../base/actions/perp/settleFunding';
-import { createSettlePnlTxn } from '../../../base/actions/perp/settlePnl';
-import { createOpenPerpMarketOrder } from '../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
+import {
+	createSettlePnlIx,
+	createSettlePnlTxn,
+} from '../../../base/actions/perp/settlePnl';
+import {
+	createOpenPerpMarketOrder,
+	createOpenPerpMarketOrderIxs,
+} from '../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import {
 	createOpenPerpNonMarketOrder,
 	OpenPerpNonMarketOrderParams,
@@ -62,9 +71,24 @@ import { EnvironmentConstants } from '../../../../EnvironmentConstants';
 import {
 	CentralServerGetOpenPerpMarketOrderTxnParams,
 	CentralServerGetOpenPerpNonMarketOrderTxnParams,
+	CentralServerGetOpenIsolatedPerpPositionTxnParams,
+	CentralServerGetCloseIsolatedPerpPositionTxnParams,
+	CentralServerGetWithdrawIsolatedPerpPositionCollateralTxnParams,
+	CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams,
+	CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams,
+	CentralServerGetCloseAndWithdrawIsolatedPerpPositionToWalletTxnParams,
 } from './types';
 import { CentralServerDriftMarkets } from './markets';
 import { DriftOperations } from '../AuthorityDrift/DriftOperations';
+
+export type {
+	CentralServerGetOpenIsolatedPerpPositionTxnParams,
+	CentralServerGetCloseIsolatedPerpPositionTxnParams,
+	CentralServerGetWithdrawIsolatedPerpPositionCollateralTxnParams,
+	CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams,
+	CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams,
+	CentralServerGetCloseAndWithdrawIsolatedPerpPositionToWalletTxnParams,
+} from './types';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.
@@ -693,6 +717,352 @@ export class CentralServerDrift {
 					return openPerpNonMarketOrderTxn as TxnOrSwiftResult<T>;
 				}
 			}
+		);
+	}
+
+	/**
+	 * Create a transaction to open an isolated perp position.
+	 * Transfers collateral from cross account into isolated, then places the order.
+	 * Uses useSwift: false (Swift has limitations with isolated deposits).
+	 */
+	public async getOpenIsolatedPerpPositionTxn(
+		params: CentralServerGetOpenIsolatedPerpPositionTxnParams
+	): Promise<Transaction | VersionedTransaction> {
+		const {
+			isolatedPositionDeposit,
+			userAccountPublicKey,
+			externalWallet,
+			...rest
+		} = params;
+		if (!isolatedPositionDeposit || isolatedPositionDeposit.isZero()) {
+			throw new Error(
+				'isolatedPositionDeposit is required and must be non-zero'
+			);
+		}
+		const perpMarketConfig = this._perpMarketConfigs.find(
+			(m) => m.marketIndex === params.marketIndex
+		);
+		if (!perpMarketConfig) {
+			throw new Error(
+				`Perp market config not found for index ${params.marketIndex}`
+			);
+		}
+		return this.driftClientContextWrapper(
+			userAccountPublicKey,
+			async (user) => {
+				const openTxn = await createOpenPerpMarketOrder({
+					...rest,
+					useSwift: false,
+					driftClient: this._driftClient,
+					user,
+					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+					isolatedPositionDeposit,
+					txParams: params.txParams ?? this.getTxParams(),
+					mainSignerOverride:
+						externalWallet ??
+						(rest as { mainSignerOverride?: PublicKey }).mainSignerOverride,
+				});
+				return openTxn;
+			},
+			externalWallet
+		);
+	}
+
+	/**
+	 * Create a transaction to close an isolated perp position (reduce-only market order).
+	 * Does not transfer collateral out; use getWithdrawIsolatedPerpPositionCollateralTxn for that.
+	 */
+	public async getCloseIsolatedPerpPositionTxn(
+		params: CentralServerGetCloseIsolatedPerpPositionTxnParams
+	): Promise<VersionedTransaction | Transaction> {
+		const perpMarketConfig = this._perpMarketConfigs.find(
+			(m) => m.marketIndex === params.marketIndex
+		);
+		if (!perpMarketConfig) {
+			throw new Error(
+				`Perp market config not found for index ${params.marketIndex}`
+			);
+		}
+		return this.driftClientContextWrapper(
+			params.userAccountPublicKey,
+			async (user) => {
+				const closeTxn = await createOpenPerpMarketOrder({
+					useSwift: false,
+					driftClient: this._driftClient,
+					user,
+					marketIndex: params.marketIndex,
+					direction: params.direction,
+					amount: params.baseAssetAmount,
+					assetType: params.assetType ?? 'base',
+					reduceOnly: true,
+					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+					positionMaxLeverage: 0,
+					txParams: params.txParams ?? this.getTxParams(),
+					mainSignerOverride: params.externalWallet,
+				});
+				return closeTxn;
+			},
+			params.externalWallet
+		);
+	}
+
+	/**
+	 * Create a transaction to withdraw collateral from an isolated perp position back to cross.
+	 */
+	public async getWithdrawIsolatedPerpPositionCollateralTxn(
+		params: CentralServerGetWithdrawIsolatedPerpPositionCollateralTxnParams
+	): Promise<VersionedTransaction | Transaction> {
+		const perpMarketConfig = this._perpMarketConfigs.find(
+			(m) => m.marketIndex === params.marketIndex
+		);
+		if (!perpMarketConfig) {
+			throw new Error(
+				`Perp market config not found for index ${params.marketIndex}`
+			);
+		}
+		return this.driftClientContextWrapper(
+			params.userAccountPublicKey,
+			async (user) => {
+				const ixs: import('@solana/web3.js').TransactionInstruction[] = [];
+				const signingAuthority = params.externalWallet;
+				const shouldSettlePnl =
+					params.settlePnlFirst ?? params.isFullWithdrawal ?? false;
+				if (shouldSettlePnl) {
+					const settleIx = await createSettlePnlIx({
+						driftClient: this._driftClient,
+						user,
+						marketIndexes: [params.marketIndex],
+						mode: SettlePnlMode.TRY_SETTLE,
+						mainSignerOverride: signingAuthority,
+					});
+					ixs.push(settleIx);
+				}
+				const transferAmount = params.isFullWithdrawal
+					? MIN_I64
+					: params.amount.neg();
+				const transferIx =
+					await this._driftClient.getTransferIsolatedPerpPositionDepositIx(
+						transferAmount,
+						params.marketIndex,
+						user.getUserAccount().subAccountId,
+						true,
+						signingAuthority
+					);
+				ixs.push(transferIx);
+				return this._driftClient.buildTransaction(
+					ixs,
+					params.txParams ?? this.getTxParams()
+				);
+			},
+			params.externalWallet
+		);
+	}
+
+	/**
+	 * Best-effort single transaction: close isolated position + optionally withdraw collateral.
+	 * Fill-dependent: the withdraw ix uses MIN_I64 to pull all available isolated margin after
+	 * the close order fills. If the close does not fill in this tx, the withdraw may transfer
+	 * zero or less than expected. Prefer separate getCloseIsolatedPerpPositionTxn +
+	 * getWithdrawIsolatedPerpPositionCollateralTxn when fill guarantees matter.
+	 */
+	public async getCloseAndWithdrawIsolatedPerpPositionTxn(
+		params: CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams
+	): Promise<VersionedTransaction | Transaction> {
+		const perpMarketConfig = this._perpMarketConfigs.find(
+			(m) => m.marketIndex === params.marketIndex
+		);
+		if (!perpMarketConfig) {
+			throw new Error(
+				`Perp market config not found for index ${params.marketIndex}`
+			);
+		}
+		return this.driftClientContextWrapper(
+			params.userAccountPublicKey,
+			async (user) => {
+				const ixs: import('@solana/web3.js').TransactionInstruction[] = [];
+				const signingAuthority = params.externalWallet;
+				if (
+					params.settlePnlBeforeClose &&
+					params.withdrawCollateralAfterClose
+				) {
+					const settleIx = await createSettlePnlIx({
+						driftClient: this._driftClient,
+						user,
+						marketIndexes: [params.marketIndex],
+						mode: SettlePnlMode.TRY_SETTLE,
+						mainSignerOverride: signingAuthority,
+					});
+					ixs.push(settleIx);
+				}
+				const closeIxs = await createOpenPerpMarketOrderIxs({
+					driftClient: this._driftClient,
+					user,
+					marketIndex: params.marketIndex,
+					direction: params.direction,
+					amount: params.baseAssetAmount,
+					assetType: params.assetType ?? 'base',
+					reduceOnly: true,
+					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+					positionMaxLeverage: 0,
+					mainSignerOverride: signingAuthority,
+				});
+				ixs.push(...closeIxs);
+				if (params.withdrawCollateralAfterClose) {
+					const transferIx =
+						await this._driftClient.getTransferIsolatedPerpPositionDepositIx(
+							MIN_I64,
+							params.marketIndex,
+							user.getUserAccount().subAccountId,
+							true,
+							signingAuthority
+						);
+					ixs.push(transferIx);
+				}
+				return this._driftClient.buildTransaction(
+					ixs,
+					params.txParams ?? this.getTxParams()
+				);
+			},
+			params.externalWallet
+		);
+	}
+
+	/**
+	 * Deposit from wallet + open isolated perp position in one transaction.
+	 * Flow: deposit from wallet directly into isolated, then place order.
+	 */
+	public async getDepositAndOpenIsolatedPerpPositionTxn(
+		params: CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams
+	): Promise<Transaction | VersionedTransaction> {
+		const { depositAmount, userAccountPublicKey, externalWallet, ...rest } =
+			params;
+		if (!depositAmount || depositAmount.isZero()) {
+			throw new Error('depositAmount is required and must be non-zero');
+		}
+		const perpMarketConfig = this._perpMarketConfigs.find(
+			(m) => m.marketIndex === params.marketIndex
+		);
+		if (!perpMarketConfig) {
+			throw new Error(
+				`Perp market config not found for index ${params.marketIndex}`
+			);
+		}
+		return this.driftClientContextWrapper(
+			userAccountPublicKey,
+			async (user) => {
+				const signingAuthority =
+					externalWallet ??
+					(rest as { mainSignerOverride?: PublicKey }).mainSignerOverride;
+				const subAccountId = user.getUserAccount().subAccountId;
+
+				const perpMarketAccount = this._driftClient.getPerpMarketAccount(
+					params.marketIndex
+				);
+				const quoteSpotMarketIndex = perpMarketAccount.quoteSpotMarketIndex;
+				const spotMarketAccount =
+					this._driftClient.getSpotMarketAccount(quoteSpotMarketIndex);
+				const depositor = signingAuthority ?? user.getUserAccount().authority;
+				const tokenProgram =
+					this._driftClient.getTokenProgramForSpotMarket(spotMarketAccount);
+				const userTokenAccount = await getTokenAddressForDepositAndWithdraw(
+					spotMarketAccount.mint,
+					depositor,
+					tokenProgram
+				);
+
+				const depositIx =
+					await this._driftClient.getDepositIntoIsolatedPerpPositionIx(
+						depositAmount,
+						params.marketIndex,
+						userTokenAccount,
+						subAccountId
+					);
+
+				const orderIxs = await createOpenPerpMarketOrderIxs({
+					...rest,
+					driftClient: this._driftClient,
+					user,
+					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+					isolatedPositionDeposit: undefined,
+					mainSignerOverride: signingAuthority,
+				});
+
+				const ixs = [depositIx, ...orderIxs];
+				return this._driftClient.buildTransaction(
+					ixs,
+					params.txParams ?? this.getTxParams()
+				);
+			},
+			externalWallet
+		);
+	}
+
+	/**
+	 * Close isolated position + withdraw to wallet in one transaction.
+	 * Flow: close order, then withdraw from isolated directly to wallet (bundle handles settle if needed).
+	 * Fill-dependent: withdraw amount depends on the close order filling.
+	 */
+	public async getCloseAndWithdrawIsolatedPerpPositionToWalletTxn(
+		params: CentralServerGetCloseAndWithdrawIsolatedPerpPositionToWalletTxnParams
+	): Promise<VersionedTransaction | Transaction> {
+		const perpMarketConfig = this._perpMarketConfigs.find(
+			(m) => m.marketIndex === params.marketIndex
+		);
+		if (!perpMarketConfig) {
+			throw new Error(
+				`Perp market config not found for index ${params.marketIndex}`
+			);
+		}
+		return this.driftClientContextWrapper(
+			params.userAccountPublicKey,
+			async (user) => {
+				const signingAuthority = params.externalWallet;
+				const subAccountId = user.getUserAccount().subAccountId;
+
+				const closeIxs = await createOpenPerpMarketOrderIxs({
+					driftClient: this._driftClient,
+					user,
+					marketIndex: params.marketIndex,
+					direction: params.direction,
+					amount: params.baseAssetAmount,
+					assetType: params.assetType ?? 'base',
+					reduceOnly: true,
+					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+					positionMaxLeverage: 0,
+					mainSignerOverride: signingAuthority,
+				});
+
+				const perpMarketAccount = this._driftClient.getPerpMarketAccount(
+					params.marketIndex
+				);
+				const quoteSpotMarketIndex = perpMarketAccount.quoteSpotMarketIndex;
+				const spotMarketAccount =
+					this._driftClient.getSpotMarketAccount(quoteSpotMarketIndex);
+				const withdrawToAuthority =
+					params.externalWallet ?? user.getUserAccount().authority;
+				const userTokenAccount = await getTokenAddressForDepositAndWithdraw(
+					spotMarketAccount.mint,
+					withdrawToAuthority,
+					this._driftClient.getTokenProgramForSpotMarket(spotMarketAccount)
+				);
+
+				const withdrawAmount =
+					params.estimatedWithdrawAmount ?? new BN('18446744073709551615');
+				const withdrawIxs =
+					await this._driftClient.getWithdrawFromIsolatedPerpPositionIxsBundle(
+						withdrawAmount,
+						params.marketIndex,
+						subAccountId,
+						userTokenAccount
+					);
+
+				const ixs = [...closeIxs, ...withdrawIxs];
+				return this._driftClient.buildTransaction(
+					ixs,
+					params.txParams ?? this.getTxParams()
+				);
+			},
+			params.externalWallet
 		);
 	}
 

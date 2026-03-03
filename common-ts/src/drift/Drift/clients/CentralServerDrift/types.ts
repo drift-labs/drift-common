@@ -1,3 +1,4 @@
+import { BN, PositionDirection } from '@drift-labs/sdk';
 import { SwiftOrderOptions } from '../../../base/actions/trade/openPerpOrder/openSwiftOrder';
 import { WithTxnParams } from '../../../base/types';
 import { OpenPerpMarketOrderParams } from '../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
@@ -30,3 +31,94 @@ export type CentralServerGetOpenPerpNonMarketOrderTxnParams<
 > & {
 	userAccountPublicKey: PublicKey;
 };
+
+/** Params for opening an isolated perp position (transfer collateral in + place order). */
+export interface CentralServerGetOpenIsolatedPerpPositionTxnParams
+	extends Omit<
+		CentralServerGetOpenPerpMarketOrderTxnParams<false>,
+		'userAccountPublicKey'
+	> {
+	userAccountPublicKey: PublicKey;
+	/** Required isolated collateral amount to transfer from cross into isolated (QUOTE_PRECISION). */
+	isolatedPositionDeposit: BN;
+	/** Optional external wallet for signing context. */
+	externalWallet?: PublicKey;
+}
+
+/** Params for closing an isolated perp position (reduce-only order, no collateral transfer). */
+export interface CentralServerGetCloseIsolatedPerpPositionTxnParams {
+	userAccountPublicKey: PublicKey;
+	marketIndex: number;
+	/** Base asset amount to close (use position's baseAssetAmount for full close). */
+	baseAssetAmount: BN;
+	/** Direction of the close order (opposite of position, e.g. 'short' to close a long). */
+	direction: PositionDirection;
+	assetType?: 'base' | 'quote';
+	txParams?: import('@drift-labs/sdk').TxParams;
+	/** Optional external wallet for signing context. */
+	externalWallet?: PublicKey;
+}
+
+/** Params for withdrawing collateral from an isolated perp position (transfer to cross). */
+export interface CentralServerGetWithdrawIsolatedPerpPositionCollateralTxnParams {
+	userAccountPublicKey: PublicKey;
+	marketIndex: number;
+	/** Positive amount to withdraw in QUOTE_PRECISION. Ignored when isFullWithdrawal is true. */
+	amount: BN;
+	/** If true, transfers all available isolated margin (use when position is closed). Prepends settle PnL ix. */
+	isFullWithdrawal?: boolean;
+	/** If true, prepends settle PnL ix before transfer (recommended for full withdrawal or when position base is zero). */
+	settlePnlFirst?: boolean;
+	txParams?: import('@drift-labs/sdk').TxParams;
+	/** Optional external wallet for signing context. */
+	externalWallet?: PublicKey;
+}
+
+/** Params for single-tx close + withdraw (best-effort; fill-dependent). */
+export interface CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams {
+	userAccountPublicKey: PublicKey;
+	marketIndex: number;
+	/** Base asset amount to close. */
+	baseAssetAmount: BN;
+	/** Direction of the close order (opposite of position). */
+	direction: PositionDirection;
+	/** If true, includes collateral transfer ix after close order (will withdraw available isolated margin; amount is fill-dependent). */
+	withdrawCollateralAfterClose?: boolean;
+	/** If true and withdrawCollateralAfterClose, prepends settle PnL ix. */
+	settlePnlBeforeClose?: boolean;
+	assetType?: 'base' | 'quote';
+	txParams?: import('@drift-labs/sdk').TxParams;
+	externalWallet?: PublicKey;
+}
+
+/** Params for deposit from wallet + open isolated perp position (wallet → isolated → place). */
+export interface CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams
+	extends Omit<
+		CentralServerGetOpenIsolatedPerpPositionTxnParams,
+		'isolatedPositionDeposit' | 'userAccountPublicKey'
+	> {
+	userAccountPublicKey: PublicKey;
+	/** Amount to deposit from wallet directly into isolated (QUOTE_PRECISION, e.g. USDC). */
+	depositAmount: BN;
+	/** Wallet to deposit from; defaults to user authority. */
+	externalWallet?: PublicKey;
+}
+
+/** Params for close isolated position + withdraw to wallet (close → withdraw from isolated to wallet). */
+export interface CentralServerGetCloseAndWithdrawIsolatedPerpPositionToWalletTxnParams {
+	userAccountPublicKey: PublicKey;
+	marketIndex: number;
+	/** Base asset amount to close. */
+	baseAssetAmount: BN;
+	/** Direction of the close order (opposite of position). */
+	direction: PositionDirection;
+	/**
+	 * Amount to withdraw (QUOTE_PRECISION). When omitted or larger than available,
+	 * the SDK withdraws all. Pass a specific amount for partial withdrawal.
+	 */
+	estimatedWithdrawAmount?: BN;
+	assetType?: 'base' | 'quote';
+	txParams?: import('@drift-labs/sdk').TxParams;
+	/** Wallet that will receive the withdrawal; uses user authority if not specified. */
+	externalWallet?: PublicKey;
+}
