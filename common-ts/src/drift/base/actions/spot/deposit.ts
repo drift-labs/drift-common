@@ -1,11 +1,9 @@
 import {
 	BigNum,
 	DriftClient,
-	getTokenProgramForSpotMarket,
 	SpotMarketConfig,
 	TxParams,
 	User,
-	WRAPPED_SOL_MINT,
 } from '@drift-labs/sdk';
 import {
 	PublicKey,
@@ -13,7 +11,7 @@ import {
 	TransactionInstruction,
 	VersionedTransaction,
 } from '@solana/web3.js';
-import { getAssociatedTokenAddress } from '@solana/spl-token';
+import { getTokenAddressForDepositAndWithdraw } from '../../../../utils/token';
 
 interface CreateDepositIxParams {
 	driftClient: DriftClient;
@@ -52,15 +50,8 @@ export const createDepositIxs = async ({
 	const spotMarketAccount = driftClient.getSpotMarketAccount(
 		spotMarketConfig.marketIndex
 	);
-	const isSol = spotMarketAccount.mint.equals(WRAPPED_SOL_MINT);
-	const associatedDepositTokenAddress = isSol
-		? authority
-		: await getAssociatedTokenAddress(
-				spotMarketAccount.mint,
-				authority,
-				true,
-				getTokenProgramForSpotMarket(spotMarketAccount)
-		  );
+	const associatedDepositTokenAddress =
+		await getTokenAddressForDepositAndWithdraw(spotMarketAccount, authority);
 
 	let finalDepositAmount = amount;
 

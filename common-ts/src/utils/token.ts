@@ -1,8 +1,11 @@
-import { WRAPPED_SOL_MINT } from '@drift-labs/sdk';
+import {
+	SpotMarketAccount,
+	WRAPPED_SOL_MINT,
+	getTokenProgramForSpotMarket,
+} from '@drift-labs/sdk';
 import {
 	createAssociatedTokenAccountInstruction,
 	getAssociatedTokenAddress,
-	TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 
@@ -23,27 +26,26 @@ export const getTokenAddress = (
 };
 
 /**
- * Get the associated token address for the given mint and user public key. If the mint is SOL, return the user public key.
+ * Get the associated token address for the given spot market and authority. If the mint is SOL, return the authority public key.
  * This should be used for spot token movement in and out of the user's wallet.
- * @param mintAddress - The mint address
- * @param authorityPubKey - The authority's public key
- * @param tokenProgram - The token program ID (defaults to TOKEN_PROGRAM_ID, use TOKEN_2022_PROGRAM_ID for Token-2022 tokens)
+ * Automatically resolves the correct token program (TOKEN_PROGRAM_ID or TOKEN_2022_PROGRAM_ID) from the spot market account.
+ * @param spotMarketAccount - The spot market account
+ * @param authority - The authority's public key
  * @returns The associated token address
  */
 export const getTokenAddressForDepositAndWithdraw = async (
-	mintAddress: PublicKey,
-	authorityPubKey: PublicKey,
-	tokenProgram: PublicKey = TOKEN_PROGRAM_ID
+	spotMarketAccount: SpotMarketAccount,
+	authority: PublicKey
 ): Promise<PublicKey> => {
-	const isSol = mintAddress.equals(WRAPPED_SOL_MINT);
+	const isSol = spotMarketAccount.mint.equals(WRAPPED_SOL_MINT);
 
-	if (isSol) return authorityPubKey;
+	if (isSol) return authority;
 
 	return getAssociatedTokenAddress(
-		mintAddress,
-		authorityPubKey,
+		spotMarketAccount.mint,
+		authority,
 		true,
-		tokenProgram
+		getTokenProgramForSpotMarket(spotMarketAccount)
 	);
 };
 

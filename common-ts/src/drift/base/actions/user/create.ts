@@ -1,7 +1,6 @@
 import {
 	BN,
 	DriftClient,
-	getTokenProgramForSpotMarket,
 	getUserAccountPublicKeySync,
 	PublicKey,
 	ReferrerInfo,
@@ -89,17 +88,19 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 	const spotMarketAccount = driftClient.getSpotMarketAccount(
 		spotMarketConfig.marketIndex
 	);
-	const tokenProgram = spotMarketAccount
-		? getTokenProgramForSpotMarket(spotMarketAccount)
-		: undefined;
+
+	if (!spotMarketAccount) {
+		throw new Error(
+			`Spot market account not found for market index ${spotMarketConfig.marketIndex}`
+		);
+	}
 
 	// Use external wallet for token address if provided, otherwise use authority
 	const depositSourceWallet = externalWallet ?? authority;
 	const associatedDepositTokenAddressPromise =
 		getTokenAddressForDepositAndWithdraw(
-			spotMarketConfig.mint,
-			depositSourceWallet,
-			tokenProgram
+			spotMarketAccount,
+			depositSourceWallet
 		);
 	const referrerNameAccountPromise: Promise<ReferrerNameAccount | undefined> =
 		referrerName
