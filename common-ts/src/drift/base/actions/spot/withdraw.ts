@@ -1,6 +1,7 @@
 import {
 	BigNum,
 	DriftClient,
+	getTokenProgramForSpotMarket,
 	SpotMarketConfig,
 	TxParams,
 	User,
@@ -55,7 +56,10 @@ export const createWithdrawIx = async ({
 	const associatedDepositTokenAddress =
 		await getTokenAddressForDepositAndWithdraw(
 			spotMarketConfig.mint,
-			authority
+			authority,
+			getTokenProgramForSpotMarket(
+				driftClient.getSpotMarketAccount(spotMarketConfig.marketIndex)
+			)
 		);
 
 	const withdrawIxs = await driftClient.getWithdrawalIxs(
