@@ -85,7 +85,7 @@ export interface CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams {
 	/** If true and withdrawCollateralAfterClose, prepends settle PnL ix. */
 	settlePnlBeforeClose?: boolean;
 	assetType?: 'base' | 'quote';
-	txParams?: import('@drift-labs/sdk').TxParams;
+	txParams?: TxParams;
 	/** Optional signer override for transaction signing; defaults to user authority. */
 	mainSignerOverride?: PublicKey;
 }
@@ -115,7 +115,7 @@ export interface CentralServerGetCloseAndWithdrawIsolatedPerpPositionToWalletTxn
 	 */
 	estimatedWithdrawAmount?: BN;
 	assetType?: 'base' | 'quote';
-	txParams?: import('@drift-labs/sdk').TxParams;
+	txParams?: TxParams;
 	/** Optional signer override and withdrawal destination; when provided, used for signing and as the wallet that receives the withdrawal; defaults to user authority. */
 	mainSignerOverride?: PublicKey;
 }
