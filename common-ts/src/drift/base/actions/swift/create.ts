@@ -71,7 +71,7 @@ export const createSwiftAccountTxn = async ({
 	driftClient,
 	authority,
 	numOrders,
-	rentPayerOverride: externalWallet,
+	rentPayerOverride,
 	txParams,
 }: CreateSwiftAccountTxnParams): Promise<{
 	transaction: Transaction | VersionedTransaction;
@@ -81,7 +81,7 @@ export const createSwiftAccountTxn = async ({
 		driftClient,
 		authority,
 		numOrders,
-		rentPayerOverride: externalWallet,
+		rentPayerOverride,
 	});
 
 	const transaction = await driftClient.buildTransaction([ix], txParams);
