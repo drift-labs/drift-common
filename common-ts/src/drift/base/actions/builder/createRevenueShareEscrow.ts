@@ -6,7 +6,7 @@ import {
 	PublicKey,
 } from '@solana/web3.js';
 import { WithTxnParams } from '../../types';
-import { manageBuilderIx } from './manageBuilder';
+import { configureBuilderIx } from './configureBuilder';
 
 interface CreateRevenueShareEscrowIxParams {
 	driftClient: DriftClient;
@@ -149,7 +149,7 @@ export const createRevenueShareEscrowTxn = async (
 	const ixs = [createIx];
 
 	if (params.builder) {
-		const addBuilderIx = await manageBuilderIx({
+		const addBuilderIx = await configureBuilderIx({
 			driftClient: params.driftClient,
 			authority: params.authority,
 			builderAuthority: params.builder.builderAuthority,

@@ -7,10 +7,10 @@ import {
 } from '@solana/web3.js';
 import { WithTxnParams } from '../../types';
 
-interface ManageBuilderIxParams {
+interface ConfigureBuilderIxParams {
 	driftClient: DriftClient;
 	/**
-	 * The public key of the builder to manage.
+	 * The public key of the builder to configure.
 	 * This is the builder's authority address that owns their RevenueShare account.
 	 */
 	builderAuthority: PublicKey;
@@ -39,9 +39,9 @@ interface ManageBuilderIxParams {
 }
 
 /**
- * Creates a transaction instruction to manage a builder's approval status and fee cap.
+ * Creates a transaction instruction to configure a builder's approval status and fee cap.
  *
- * This unified function handles all builder management operations:
+ * This unified function handles all builder configuration operations:
  * - **Approve**: Add a new builder to the approved list
  * - **Update**: Modify an existing builder's max fee cap
  * - **Revoke**: Disable a builder by setting their max fee to 0
@@ -66,7 +66,7 @@ interface ManageBuilderIxParams {
  * - Builder must have initialized a RevenueShare account (for receiving fees)
  *
  * @param driftClient - The Drift client instance
- * @param builderAuthority - The public key of the builder to manage
+ * @param builderAuthority - The public key of the builder to configure
  * @param maxFeeTenthBps - Maximum fee cap in tenths of basis points
  *
  * @returns Promise resolving to a TransactionInstruction
@@ -74,7 +74,7 @@ interface ManageBuilderIxParams {
  * @example
  * ```typescript
  * // Approve a new builder with 5 bps max fee
- * const ix = await manageBuilderIx({
+ * const ix = await configureBuilderIx({
  *   driftClient,
  *   builderAuthority: new PublicKey('BuilderAddress...'),
  *   maxFeeTenthBps: 50  // 5 bps = 0.05%
@@ -84,7 +84,7 @@ interface ManageBuilderIxParams {
  * @example
  * ```typescript
  * // Update existing builder to 10 bps max fee
- * const ix = await manageBuilderIx({
+ * const ix = await configureBuilderIx({
  *   driftClient,
  *   builderAuthority: builderPubkey,
  *   maxFeeTenthBps: 100  // 10 bps = 0.1%
@@ -95,15 +95,15 @@ interface ManageBuilderIxParams {
  * ```typescript
  * // Revoke builder (set max fee to 0)
  * // IMPORTANT: Must settle all builder's orders first!
- * const ix = await manageBuilderIx({
+ * const ix = await configureBuilderIx({
  *   driftClient,
  *   builderAuthority: builderPubkey,
  *   maxFeeTenthBps: 0  // Revoked
  * });
  * ```
  */
-export const manageBuilderIx = async (
-	params: ManageBuilderIxParams
+export const configureBuilderIx = async (
+	params: ConfigureBuilderIxParams
 ): Promise<TransactionInstruction> => {
 	const { driftClient, builderAuthority, maxFeeTenthBps, authority, payer } =
 		params;
@@ -122,9 +122,9 @@ export const manageBuilderIx = async (
 };
 
 /**
- * Creates a transaction to manage a builder's approval status and fee cap.
+ * Creates a transaction to configure a builder's approval status and fee cap.
  *
- * This unified function handles all builder management operations:
+ * This unified function handles all builder configuration operations:
  * - **Approve**: Add a new builder to the approved list
  * - **Update**: Modify an existing builder's max fee cap
  * - **Revoke**: Disable a builder by setting their max fee to 0
@@ -149,7 +149,7 @@ export const manageBuilderIx = async (
  * - Builder must have initialized a RevenueShare account (for receiving fees)
  *
  * @param driftClient - The Drift client instance
- * @param builderAuthority - The public key of the builder to manage
+ * @param builderAuthority - The public key of the builder to configure
  * @param maxFeeTenthBps - Maximum fee cap in tenths of basis points
  * @param txParams - Optional transaction parameters for customizing the transaction
  *
@@ -158,7 +158,7 @@ export const manageBuilderIx = async (
  * @example
  * ```typescript
  * // Approve a new builder with 2 bps max fee
- * const tx = await manageBuilderTxn({
+ * const tx = await configureBuilderTxn({
  *   driftClient,
  *   builderAuthority: new PublicKey('BuilderAddress...'),
  *   maxFeeTenthBps: 20,
@@ -171,18 +171,18 @@ export const manageBuilderIx = async (
  * @example
  * ```typescript
  * // Update existing builder's fee
- * await manageBuilderTxn({
+ * await configureBuilderTxn({
  *   driftClient,
  *   builderAuthority: builderPubkey,
  *   maxFeeTenthBps: 100  // Increase to 10 bps
  * });
  * ```
  */
-export const manageBuilderTxn = async (
-	params: WithTxnParams<ManageBuilderIxParams>
+export const configureBuilderTxn = async (
+	params: WithTxnParams<ConfigureBuilderIxParams>
 ): Promise<Transaction | VersionedTransaction> => {
 	return params.driftClient.buildTransaction(
-		await manageBuilderIx(params),
+		await configureBuilderIx(params),
 		params.txParams
 	);
 };
