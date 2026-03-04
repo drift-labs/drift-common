@@ -770,6 +770,8 @@ export class CentralServerDrift {
 	/**
 	 * Create a transaction to close an isolated perp position (reduce-only market order).
 	 * Does not transfer collateral out; use getWithdrawIsolatedPerpPositionCollateralTxn for that.
+	 * If you intend to fully close and then withdraw in a follow-up tx, consider passing
+	 * placeAndTake: { enable: true, referrerInfo: undefined } so the close fills atomically.
 	 */
 	public async getCloseIsolatedPerpPositionTxn(
 		params: CentralServerGetCloseIsolatedPerpPositionTxnParams
@@ -798,6 +800,7 @@ export class CentralServerDrift {
 					positionMaxLeverage: 0,
 					txParams: params.txParams ?? this.getTxParams(),
 					mainSignerOverride: params.mainSignerOverride,
+					placeAndTake: params.placeAndTake,
 				});
 				return closeTxn;
 			},
@@ -861,11 +864,11 @@ export class CentralServerDrift {
 	}
 
 	/**
-	 * Best-effort single transaction: close isolated position + optionally withdraw collateral.
-	 * Fill-dependent: the withdraw ix uses MIN_I64 to pull all available isolated margin after
-	 * the close order fills. If the close does not fill in this tx, the withdraw may transfer
-	 * zero or less than expected. Prefer separate getCloseIsolatedPerpPositionTxn +
-	 * getWithdrawIsolatedPerpPositionCollateralTxn when fill guarantees matter.
+	 * Single transaction: close isolated position + optionally withdraw collateral.
+	 * Without placeAndTake that atomically fills the close, the entire transaction may FAIL:
+	 * the withdraw ix runs after the close, and if the close did not fill in this tx,
+	 * the whole tx will fail. Strongly consider placeAndTake: { enable: true, referrerInfo: undefined }
+	 * when closing and withdrawing in the same tx.
 	 */
 	public async getCloseAndWithdrawIsolatedPerpPositionTxn(
 		params: CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams
@@ -907,6 +910,7 @@ export class CentralServerDrift {
 					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 					positionMaxLeverage: 0,
 					mainSignerOverride: signingAuthority,
+					placeAndTake: params.placeAndTake,
 				});
 				ixs.push(...closeIxs);
 				if (params.withdrawCollateralAfterClose) {
@@ -999,7 +1003,9 @@ export class CentralServerDrift {
 	/**
 	 * Close isolated position + withdraw to wallet in one transaction.
 	 * Flow: close order, then withdraw from isolated directly to wallet (bundle handles settle if needed).
-	 * Fill-dependent: withdraw amount depends on the close order filling.
+	 * Without placeAndTake that atomically fills the close, the entire transaction may FAIL:
+	 * the withdraw runs after the close, and if the close did not fill in this tx, the withdraw may fail depending on withdraw amount.
+	 * Strongly consider placeAndTake: { enable: true, referrerInfo: undefined } when closing and withdrawing.
 	 */
 	public async getCloseAndWithdrawIsolatedPerpPositionToWalletTxn(
 		params: CentralServerGetCloseAndWithdrawIsolatedPerpPositionToWalletTxnParams
@@ -1029,6 +1035,7 @@ export class CentralServerDrift {
 					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 					positionMaxLeverage: 0,
 					mainSignerOverride: signingAuthority,
+					placeAndTake: params.placeAndTake,
 				});
 
 				const perpMarketAccount = this._driftClient.getPerpMarketAccount(
@@ -1046,7 +1053,11 @@ export class CentralServerDrift {
 				);
 
 				const withdrawAmount =
-					params.estimatedWithdrawAmount ?? new BN('18446744073709551615');
+					params.estimatedWithdrawAmount ??
+					this._driftClient.getIsolatedPerpPositionTokenAmount(
+						params.marketIndex,
+						subAccountId
+					);
 				const withdrawIxs =
 					await this._driftClient.getWithdrawFromIsolatedPerpPositionIxsBundle(
 						withdrawAmount,
