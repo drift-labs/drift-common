@@ -53,6 +53,9 @@ import { createCancelOrdersTxn } from '../../../base/actions/trade/cancelOrder';
 import { createSwapTxn } from '../../../base/actions/trade/swap';
 import { createUserAndDepositCollateralBaseTxn } from '../../../base/actions/user/create';
 import { deleteUserTxn } from '../../../base/actions/user/delete';
+import { createRevenueShareEscrowTxn } from '../../../base/actions/builder/createRevenueShareEscrow';
+import { createRevenueShareAccountTxn } from '../../../base/actions/builder/createRevenueShareAccount';
+import { configureBuilderTxn } from '../../../base/actions/builder/configureBuilder';
 import { TxnOrSwiftResult } from '../../../base/actions/trade/openPerpOrder/types';
 import { WithTxnParams } from '../../../base/types';
 import { EnvironmentConstants } from '../../../../EnvironmentConstants';
@@ -204,6 +207,49 @@ export class CentralServerDrift {
 	public async unsubscribe() {
 		await this._driftClient.unsubscribe();
 		await this.priorityFeeSubscriber.unsubscribe();
+	}
+
+	/**
+	 * Temporarily swaps the DriftClient wallet/authority context to build transactions
+	 * for a given authority, then restores the original state.
+	 *
+	 * Use this for authority-based operations that don't require a User account subscription
+	 * (e.g. creating revenue share accounts, managing builders).
+	 *
+	 * @param authority - The authority to set on the DriftClient
+	 * @param operation - The transaction creation operation to execute
+	 * @returns The result of the operation
+	 */
+	private async authorityContextWrapper<T>(
+		authority: PublicKey,
+		operation: () => Promise<T>
+	): Promise<T> {
+		const originalWallet = this._driftClient.wallet;
+		const originalAuthority = this._driftClient.authority;
+
+		const authorityWallet = {
+			publicKey: authority,
+			signTransaction: () =>
+				Promise.reject('This is a placeholder - do not sign with this wallet'),
+			signAllTransactions: () =>
+				Promise.reject('This is a placeholder - do not sign with this wallet'),
+		};
+
+		try {
+			this._driftClient.wallet = authorityWallet;
+			// @ts-ignore
+			this._driftClient.provider.wallet = authorityWallet;
+			this._driftClient.txHandler.updateWallet(authorityWallet);
+			this._driftClient.authority = authority;
+
+			return await operation();
+		} finally {
+			this._driftClient.wallet = originalWallet;
+			this._driftClient.txHandler.updateWallet(originalWallet);
+			// @ts-ignore
+			this._driftClient.provider.wallet = originalWallet;
+			this._driftClient.authority = originalAuthority;
+		}
 	}
 
 	/**
@@ -383,50 +429,30 @@ export class CentralServerDrift {
 			authority
 		);
 
-		const originalWallet = this._driftClient.wallet;
-		const originalAuthority = this._driftClient.authority;
+		return this.authorityContextWrapper(
+			options?.externalWallet ?? authority,
+			async () => {
+				this._driftClient.authority = authority;
+				// Clear userStatsAccountPublicKey cache so it's recalculated for the new authority
+				// @ts-ignore - accessing private property for cache invalidation
+				this._driftClient.userStatsAccountPublicKey = undefined;
 
-		// Use external wallet for transaction signing context if provided
-		const walletPublicKey = options?.externalWallet ?? authority;
-		const authorityWallet = {
-			publicKey: walletPublicKey,
-			signTransaction: () =>
-				Promise.reject('This is a placeholder - do not sign with this wallet'),
-			signAllTransactions: () =>
-				Promise.reject('This is a placeholder - do not sign with this wallet'),
-		};
-
-		try {
-			this._driftClient.wallet = authorityWallet;
-			// @ts-ignore
-			this._driftClient.provider.wallet = authorityWallet;
-			this._driftClient.txHandler.updateWallet(authorityWallet);
-			this._driftClient.authority = authority;
-			// Clear userStatsAccountPublicKey cache so it's recalculated for the new authority
-			// @ts-ignore - accessing private property for cache invalidation
-			this._driftClient.userStatsAccountPublicKey = undefined;
-
-			return await createUserAndDepositCollateralBaseTxn({
-				driftClient: this._driftClient,
-				amount,
-				spotMarketConfig,
-				authority,
-				userStatsAccount,
-				referrerName: options?.referrerName,
-				accountName: options?.accountName,
-				poolId: options?.poolId,
-				fromSubAccountId: options?.fromSubAccountId,
-				customMaxMarginRatio: options?.customMaxMarginRatio,
-				txParams: options?.txParams ?? this.getTxParams(),
-				externalWallet: options?.externalWallet,
-			});
-		} finally {
-			this._driftClient.wallet = originalWallet;
-			this._driftClient.txHandler.updateWallet(originalWallet);
-			// @ts-ignore
-			this._driftClient.provider.wallet = originalWallet;
-			this._driftClient.authority = originalAuthority;
-		}
+				return await createUserAndDepositCollateralBaseTxn({
+					driftClient: this._driftClient,
+					amount,
+					spotMarketConfig,
+					authority,
+					userStatsAccount,
+					referrerName: options?.referrerName,
+					accountName: options?.accountName,
+					poolId: options?.poolId,
+					fromSubAccountId: options?.fromSubAccountId,
+					customMaxMarginRatio: options?.customMaxMarginRatio,
+					txParams: options?.txParams ?? this.getTxParams(),
+					externalWallet: options?.externalWallet,
+				});
+			}
+		);
 	}
 
 	public async getDepositTxn(
@@ -827,6 +853,75 @@ export class CentralServerDrift {
 
 				return swapTxn;
 			}
+		);
+	}
+
+	/**
+	 * Create a transaction to initialize a RevenueShareEscrow account for a user.
+	 * Optionally bundles an initial builder approval in the same transaction.
+	 */
+	public async getCreateRevenueShareEscrowTxn(
+		authority: PublicKey,
+		options?: {
+			numOrders?: number;
+			builder?: {
+				builderAuthority: PublicKey;
+				maxFeeTenthBps: number;
+			};
+			txParams?: TxParams;
+		}
+	): Promise<VersionedTransaction | Transaction> {
+		return this.authorityContextWrapper(authority, () =>
+			createRevenueShareEscrowTxn({
+				driftClient: this._driftClient,
+				authority,
+				numOrders: options?.numOrders ?? 16,
+				builder: options?.builder,
+				txParams: options?.txParams ?? this.getTxParams(),
+			})
+		);
+	}
+
+	/**
+	 * Create a transaction to initialize a RevenueShare account for a builder.
+	 * This must be initialized before a builder can receive builder fees.
+	 */
+	public async getCreateRevenueShareAccountTxn(
+		authority: PublicKey,
+		options?: {
+			txParams?: TxParams;
+		}
+	): Promise<VersionedTransaction | Transaction> {
+		return this.authorityContextWrapper(authority, () =>
+			createRevenueShareAccountTxn({
+				driftClient: this._driftClient,
+				authority,
+				txParams: options?.txParams ?? this.getTxParams(),
+			})
+		);
+	}
+
+	/**
+	 * Create a transaction to configure a builder's approval status and fee cap.
+	 * Handles approve, update, and revoke operations.
+	 * Set maxFeeTenthBps to 0 to revoke a builder.
+	 */
+	public async getConfigureApprovedBuilderTxn(
+		authority: PublicKey,
+		builderAuthority: PublicKey,
+		maxFeeTenthBps: number,
+		options?: {
+			txParams?: TxParams;
+		}
+	): Promise<VersionedTransaction | Transaction> {
+		return this.authorityContextWrapper(authority, () =>
+			configureBuilderTxn({
+				driftClient: this._driftClient,
+				authority,
+				builderAuthority,
+				maxFeeTenthBps,
+				txParams: options?.txParams ?? this.getTxParams(),
+			})
 		);
 	}
 
