@@ -1,4 +1,4 @@
-import { BN, PositionDirection } from '@drift-labs/sdk';
+import { BN, PositionDirection, TxParams } from '@drift-labs/sdk';
 import { SwiftOrderOptions } from '../../../base/actions/trade/openPerpOrder/openSwiftOrder';
 import { WithTxnParams } from '../../../base/types';
 import { OpenPerpMarketOrderParams } from '../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
@@ -41,8 +41,6 @@ export interface CentralServerGetOpenIsolatedPerpPositionTxnParams
 	userAccountPublicKey: PublicKey;
 	/** Required isolated collateral amount to transfer from cross into isolated (QUOTE_PRECISION). */
 	isolatedPositionDeposit: BN;
-	/** Optional external wallet for signing context. */
-	externalWallet?: PublicKey;
 }
 
 /** Params for closing an isolated perp position (reduce-only order, no collateral transfer). */
@@ -54,9 +52,9 @@ export interface CentralServerGetCloseIsolatedPerpPositionTxnParams {
 	/** Direction of the close order (opposite of position, e.g. 'short' to close a long). */
 	direction: PositionDirection;
 	assetType?: 'base' | 'quote';
-	txParams?: import('@drift-labs/sdk').TxParams;
-	/** Optional external wallet for signing context. */
-	externalWallet?: PublicKey;
+	txParams?: TxParams;
+	/** Optional signer override for transaction signing; defaults to user authority. */
+	mainSignerOverride?: PublicKey;
 }
 
 /** Params for withdrawing collateral from an isolated perp position (transfer to cross). */
@@ -70,8 +68,8 @@ export interface CentralServerGetWithdrawIsolatedPerpPositionCollateralTxnParams
 	/** If true, prepends settle PnL ix before transfer (recommended for full withdrawal or when position base is zero). */
 	settlePnlFirst?: boolean;
 	txParams?: import('@drift-labs/sdk').TxParams;
-	/** Optional external wallet for signing context. */
-	externalWallet?: PublicKey;
+	/** Optional signer override for transaction signing; defaults to user authority. */
+	mainSignerOverride?: PublicKey;
 }
 
 /** Params for single-tx close + withdraw (best-effort; fill-dependent). */
@@ -88,7 +86,8 @@ export interface CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams {
 	settlePnlBeforeClose?: boolean;
 	assetType?: 'base' | 'quote';
 	txParams?: import('@drift-labs/sdk').TxParams;
-	externalWallet?: PublicKey;
+	/** Optional signer override for transaction signing; defaults to user authority. */
+	mainSignerOverride?: PublicKey;
 }
 
 /** Params for deposit from wallet + open isolated perp position (wallet → isolated → place). */
@@ -100,8 +99,6 @@ export interface CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams
 	userAccountPublicKey: PublicKey;
 	/** Amount to deposit from wallet directly into isolated (QUOTE_PRECISION, e.g. USDC). */
 	depositAmount: BN;
-	/** Wallet to deposit from; defaults to user authority. */
-	externalWallet?: PublicKey;
 }
 
 /** Params for close isolated position + withdraw to wallet (close → withdraw from isolated to wallet). */
@@ -119,6 +116,6 @@ export interface CentralServerGetCloseAndWithdrawIsolatedPerpPositionToWalletTxn
 	estimatedWithdrawAmount?: BN;
 	assetType?: 'base' | 'quote';
 	txParams?: import('@drift-labs/sdk').TxParams;
-	/** Wallet that will receive the withdrawal; uses user authority if not specified. */
-	externalWallet?: PublicKey;
+	/** Optional signer override and withdrawal destination; when provided, used for signing and as the wallet that receives the withdrawal; defaults to user authority. */
+	mainSignerOverride?: PublicKey;
 }

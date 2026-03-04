@@ -31,8 +31,14 @@ import {
 	UnifiedSwapClient,
 	User,
 	WhileValidTxSender,
+	ZERO,
 } from '@drift-labs/sdk';
-import { Connection, Transaction, VersionedTransaction } from '@solana/web3.js';
+import {
+	Connection,
+	Transaction,
+	TransactionInstruction,
+	VersionedTransaction,
+} from '@solana/web3.js';
 import { COMMON_UI_UTILS } from '../../../../common-ui-utils/commonUiUtils';
 import {
 	DEFAULT_ACCOUNT_LOADER_COMMITMENT,
@@ -728,13 +734,8 @@ export class CentralServerDrift {
 	public async getOpenIsolatedPerpPositionTxn(
 		params: CentralServerGetOpenIsolatedPerpPositionTxnParams
 	): Promise<Transaction | VersionedTransaction> {
-		const {
-			isolatedPositionDeposit,
-			userAccountPublicKey,
-			externalWallet,
-			...rest
-		} = params;
-		if (!isolatedPositionDeposit || isolatedPositionDeposit.isZero()) {
+		const { isolatedPositionDeposit, userAccountPublicKey, ...rest } = params;
+		if (isolatedPositionDeposit.isZero()) {
 			throw new Error(
 				'isolatedPositionDeposit is required and must be non-zero'
 			);
@@ -758,13 +759,11 @@ export class CentralServerDrift {
 					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 					isolatedPositionDeposit,
 					txParams: params.txParams ?? this.getTxParams(),
-					mainSignerOverride:
-						externalWallet ??
-						(rest as { mainSignerOverride?: PublicKey }).mainSignerOverride,
+					mainSignerOverride: rest.mainSignerOverride,
 				});
 				return openTxn;
 			},
-			externalWallet
+			rest.mainSignerOverride
 		);
 	}
 
@@ -798,16 +797,16 @@ export class CentralServerDrift {
 					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 					positionMaxLeverage: 0,
 					txParams: params.txParams ?? this.getTxParams(),
-					mainSignerOverride: params.externalWallet,
+					mainSignerOverride: params.mainSignerOverride,
 				});
 				return closeTxn;
 			},
-			params.externalWallet
+			params.mainSignerOverride
 		);
 	}
 
 	/**
-	 * Create a transaction to withdraw collateral from an isolated perp position back to cross.
+	 * Create a transaction to withdraw collateral from an isolated perp position back to cross. Often to be called after fully closing position
 	 */
 	public async getWithdrawIsolatedPerpPositionCollateralTxn(
 		params: CentralServerGetWithdrawIsolatedPerpPositionCollateralTxnParams
@@ -823,8 +822,8 @@ export class CentralServerDrift {
 		return this.driftClientContextWrapper(
 			params.userAccountPublicKey,
 			async (user) => {
+				const signingAuthority = params.mainSignerOverride;
 				const ixs: import('@solana/web3.js').TransactionInstruction[] = [];
-				const signingAuthority = params.externalWallet;
 				const shouldSettlePnl =
 					params.settlePnlFirst ?? params.isFullWithdrawal ?? false;
 				if (shouldSettlePnl) {
@@ -837,9 +836,12 @@ export class CentralServerDrift {
 					});
 					ixs.push(settleIx);
 				}
-				const transferAmount = params.isFullWithdrawal
-					? MIN_I64
-					: params.amount.neg();
+				const position =
+					user.getUserAccount().perpPositions[params.marketIndex];
+				const transferAmount =
+					params.isFullWithdrawal && position.baseAssetAmount.eq(ZERO)
+						? MIN_I64
+						: params.amount.neg();
 				const transferIx =
 					await this._driftClient.getTransferIsolatedPerpPositionDepositIx(
 						transferAmount,
@@ -854,7 +856,7 @@ export class CentralServerDrift {
 					params.txParams ?? this.getTxParams()
 				);
 			},
-			params.externalWallet
+			params.mainSignerOverride
 		);
 	}
 
@@ -879,8 +881,8 @@ export class CentralServerDrift {
 		return this.driftClientContextWrapper(
 			params.userAccountPublicKey,
 			async (user) => {
-				const ixs: import('@solana/web3.js').TransactionInstruction[] = [];
-				const signingAuthority = params.externalWallet;
+				const signingAuthority = params.mainSignerOverride;
+				const ixs: TransactionInstruction[] = [];
 				if (
 					params.settlePnlBeforeClose &&
 					params.withdrawCollateralAfterClose
@@ -923,7 +925,7 @@ export class CentralServerDrift {
 					params.txParams ?? this.getTxParams()
 				);
 			},
-			params.externalWallet
+			params.mainSignerOverride
 		);
 	}
 
@@ -934,8 +936,7 @@ export class CentralServerDrift {
 	public async getDepositAndOpenIsolatedPerpPositionTxn(
 		params: CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams
 	): Promise<Transaction | VersionedTransaction> {
-		const { depositAmount, userAccountPublicKey, externalWallet, ...rest } =
-			params;
+		const { depositAmount, userAccountPublicKey, ...rest } = params;
 		if (!depositAmount || depositAmount.isZero()) {
 			throw new Error('depositAmount is required and must be non-zero');
 		}
@@ -950,9 +951,7 @@ export class CentralServerDrift {
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const signingAuthority =
-					externalWallet ??
-					(rest as { mainSignerOverride?: PublicKey }).mainSignerOverride;
+				const signingAuthority = rest.mainSignerOverride;
 				const subAccountId = user.getUserAccount().subAccountId;
 
 				const perpMarketAccount = this._driftClient.getPerpMarketAccount(
@@ -993,7 +992,7 @@ export class CentralServerDrift {
 					params.txParams ?? this.getTxParams()
 				);
 			},
-			externalWallet
+			rest.mainSignerOverride
 		);
 	}
 
@@ -1016,7 +1015,7 @@ export class CentralServerDrift {
 		return this.driftClientContextWrapper(
 			params.userAccountPublicKey,
 			async (user) => {
-				const signingAuthority = params.externalWallet;
+				const signingAuthority = params.mainSignerOverride;
 				const subAccountId = user.getUserAccount().subAccountId;
 
 				const closeIxs = await createOpenPerpMarketOrderIxs({
@@ -1039,7 +1038,7 @@ export class CentralServerDrift {
 				const spotMarketAccount =
 					this._driftClient.getSpotMarketAccount(quoteSpotMarketIndex);
 				const withdrawToAuthority =
-					params.externalWallet ?? user.getUserAccount().authority;
+					params.mainSignerOverride ?? user.getUserAccount().authority;
 				const userTokenAccount = await getTokenAddressForDepositAndWithdraw(
 					spotMarketAccount.mint,
 					withdrawToAuthority,
@@ -1062,7 +1061,7 @@ export class CentralServerDrift {
 					params.txParams ?? this.getTxParams()
 				);
 			},
-			params.externalWallet
+			params.mainSignerOverride
 		);
 	}
 

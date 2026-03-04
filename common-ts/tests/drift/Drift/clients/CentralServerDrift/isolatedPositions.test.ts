@@ -44,6 +44,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 				positionMaxLeverage: 5,
 				isolatedPositionDeposit: new BN(1_000_000),
 				txParams: { computeUnits: 1_000_000, computeUnitsPrice: 1_000 },
+				useSwift: false,
 			});
 			expect(txn).to.exist;
 			assertComputeBudgetThenProgram(
@@ -65,6 +66,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 					assetType: 'quote',
 					positionMaxLeverage: 5,
 					isolatedPositionDeposit: new BN(0),
+					useSwift: false,
 				});
 				expect.fail('Should have thrown');
 			} catch (error: unknown) {
@@ -84,6 +86,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 					assetType: 'quote',
 					positionMaxLeverage: 5,
 					isolatedPositionDeposit: new BN(1_000_000),
+					useSwift: false,
 				});
 				expect.fail('Should have thrown');
 			} catch (error: unknown) {
@@ -242,6 +245,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 						computeUnits: 1_000_000,
 						computeUnitsPrice: 1_000,
 					},
+					useSwift: false,
 				});
 			expect(txn).to.exist;
 			assertComputeBudgetThenProgram(
@@ -263,6 +267,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 					assetType: 'quote',
 					positionMaxLeverage: 5,
 					depositAmount: new BN(0),
+					useSwift: false,
 				});
 				expect.fail('Should have thrown');
 			} catch (error: unknown) {
