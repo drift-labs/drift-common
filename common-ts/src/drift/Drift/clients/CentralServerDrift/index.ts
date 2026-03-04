@@ -965,12 +965,9 @@ export class CentralServerDrift {
 				const spotMarketAccount =
 					this._driftClient.getSpotMarketAccount(quoteSpotMarketIndex);
 				const depositor = signingAuthority ?? user.getUserAccount().authority;
-				const tokenProgram =
-					this._driftClient.getTokenProgramForSpotMarket(spotMarketAccount);
 				const userTokenAccount = await getTokenAddressForDepositAndWithdraw(
-					spotMarketAccount.mint,
-					depositor,
-					tokenProgram
+					spotMarketAccount,
+					depositor
 				);
 
 				const depositIx =
@@ -1047,9 +1044,8 @@ export class CentralServerDrift {
 				const withdrawToAuthority =
 					params.mainSignerOverride ?? user.getUserAccount().authority;
 				const userTokenAccount = await getTokenAddressForDepositAndWithdraw(
-					spotMarketAccount.mint,
-					withdrawToAuthority,
-					this._driftClient.getTokenProgramForSpotMarket(spotMarketAccount)
+					spotMarketAccount,
+					withdrawToAuthority
 				);
 
 				const withdrawAmount =
