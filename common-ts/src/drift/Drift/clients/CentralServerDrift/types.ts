@@ -33,32 +33,6 @@ export type CentralServerGetOpenPerpNonMarketOrderTxnParams<
 	userAccountPublicKey: PublicKey;
 };
 
-/** Params for opening an isolated perp position (transfer collateral in + place order). */
-export interface CentralServerGetOpenIsolatedPerpPositionTxnParams
-	extends Omit<
-		CentralServerGetOpenPerpMarketOrderTxnParams<false>,
-		'userAccountPublicKey'
-	> {
-	userAccountPublicKey: PublicKey;
-	/** Required isolated collateral amount to transfer from cross into isolated (QUOTE_PRECISION). */
-	isolatedPositionDeposit: BN;
-}
-
-/** Params for closing an isolated perp position (reduce-only order, no collateral transfer). */
-export interface CentralServerGetCloseIsolatedPerpPositionTxnParams {
-	userAccountPublicKey: PublicKey;
-	marketIndex: number;
-	/** Base asset amount to close (use position's baseAssetAmount for full close). */
-	baseAssetAmount: BN;
-	/** Direction of the close order (opposite of position, e.g. 'short' to close a long). */
-	direction: PositionDirection;
-	assetType?: 'base' | 'quote';
-	placeAndTake?: PlaceAndTakeParams;
-	txParams?: TxParams;
-	/** Optional signer override for transaction signing; defaults to user authority. */
-	mainSignerOverride?: PublicKey;
-}
-
 /** Params for withdrawing collateral from an isolated perp position (transfer to cross). */
 export interface CentralServerGetWithdrawIsolatedPerpPositionCollateralTxnParams {
 	userAccountPublicKey: PublicKey;
@@ -96,10 +70,9 @@ export interface CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams {
 /** Params for deposit from wallet + open isolated perp position (wallet → isolated → place). */
 export interface CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams
 	extends Omit<
-		CentralServerGetOpenIsolatedPerpPositionTxnParams,
-		'isolatedPositionDeposit' | 'userAccountPublicKey'
+		CentralServerGetOpenPerpMarketOrderTxnParams<false>,
+		'isolatedPositionDeposit'
 	> {
-	userAccountPublicKey: PublicKey;
 	/** Amount to deposit from wallet directly into isolated (QUOTE_PRECISION, e.g. USDC). */
 	depositAmount: BN;
 }

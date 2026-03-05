@@ -77,8 +77,6 @@ import { EnvironmentConstants } from '../../../../EnvironmentConstants';
 import {
 	CentralServerGetOpenPerpMarketOrderTxnParams,
 	CentralServerGetOpenPerpNonMarketOrderTxnParams,
-	CentralServerGetOpenIsolatedPerpPositionTxnParams,
-	CentralServerGetCloseIsolatedPerpPositionTxnParams,
 	CentralServerGetWithdrawIsolatedPerpPositionCollateralTxnParams,
 	CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams,
 	CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams,
@@ -88,8 +86,6 @@ import { CentralServerDriftMarkets } from './markets';
 import { DriftOperations } from '../AuthorityDrift/DriftOperations';
 
 export type {
-	CentralServerGetOpenIsolatedPerpPositionTxnParams,
-	CentralServerGetCloseIsolatedPerpPositionTxnParams,
 	CentralServerGetWithdrawIsolatedPerpPositionCollateralTxnParams,
 	CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams,
 	CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams,
@@ -634,6 +630,7 @@ export class CentralServerDrift {
 	}: CentralServerGetOpenPerpMarketOrderTxnParams<T>): Promise<
 		TxnOrSwiftResult<T>
 	> {
+		const { mainSignerOverride, ...restWithoutSigner } = rest;
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user): Promise<TxnOrSwiftResult<T>> => {
@@ -643,7 +640,7 @@ export class CentralServerDrift {
 					placeAndTake,
 					txParams,
 					...otherProps
-				} = rest;
+				} = restWithoutSigner;
 
 				if (useSwift) {
 					const swiftOrderResult = await createOpenPerpMarketOrder({
@@ -656,6 +653,7 @@ export class CentralServerDrift {
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 						txParams: txParams ?? this.getTxParams(),
+						mainSignerOverride,
 						...otherProps,
 					});
 					return swiftOrderResult as TxnOrSwiftResult<T>;
@@ -667,11 +665,13 @@ export class CentralServerDrift {
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 						txParams: txParams ?? this.getTxParams(),
+						mainSignerOverride,
 						...otherProps,
 					});
 					return openPerpMarketOrderTxn as TxnOrSwiftResult<T>;
 				}
-			}
+			},
+			mainSignerOverride
 		);
 	}
 
@@ -692,10 +692,12 @@ export class CentralServerDrift {
 	> & {
 		userAccountPublicKey: PublicKey;
 	}): Promise<TxnOrSwiftResult<T>> {
+		const { mainSignerOverride, ...restWithoutSigner } = rest;
 		return this.driftClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const { useSwift, swiftOptions, txParams, ...otherProps } = rest;
+				const { useSwift, swiftOptions, txParams, ...otherProps } =
+					restWithoutSigner;
 
 				if (useSwift) {
 					const swiftOrderResult = await createOpenPerpNonMarketOrder({
@@ -708,6 +710,7 @@ export class CentralServerDrift {
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 						txParams: txParams ?? this.getTxParams(),
+						mainSignerOverride,
 						...otherProps,
 					});
 					return swiftOrderResult as TxnOrSwiftResult<T>;
@@ -718,93 +721,13 @@ export class CentralServerDrift {
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 						txParams: txParams ?? this.getTxParams(),
+						mainSignerOverride,
 						...otherProps,
 					});
 					return openPerpNonMarketOrderTxn as TxnOrSwiftResult<T>;
 				}
-			}
-		);
-	}
-
-	/**
-	 * Create a transaction to open an isolated perp position.
-	 * Transfers collateral from cross account into isolated, then places the order.
-	 * Uses useSwift: false (Swift has limitations with isolated deposits).
-	 */
-	public async getOpenIsolatedPerpPositionTxn(
-		params: CentralServerGetOpenIsolatedPerpPositionTxnParams
-	): Promise<Transaction | VersionedTransaction> {
-		const { isolatedPositionDeposit, userAccountPublicKey, ...rest } = params;
-		if (isolatedPositionDeposit.isZero()) {
-			throw new Error(
-				'isolatedPositionDeposit is required and must be non-zero'
-			);
-		}
-		const perpMarketConfig = this._perpMarketConfigs.find(
-			(m) => m.marketIndex === params.marketIndex
-		);
-		if (!perpMarketConfig) {
-			throw new Error(
-				`Perp market config not found for index ${params.marketIndex}`
-			);
-		}
-		return this.driftClientContextWrapper(
-			userAccountPublicKey,
-			async (user) => {
-				const openTxn = await createOpenPerpMarketOrder({
-					...rest,
-					useSwift: false,
-					driftClient: this._driftClient,
-					user,
-					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
-					isolatedPositionDeposit,
-					txParams: params.txParams ?? this.getTxParams(),
-					mainSignerOverride: rest.mainSignerOverride,
-				});
-				return openTxn;
 			},
-			rest.mainSignerOverride
-		);
-	}
-
-	/**
-	 * Create a transaction to close an isolated perp position (reduce-only market order).
-	 * Does not transfer collateral out; use getWithdrawIsolatedPerpPositionCollateralTxn for that.
-	 * If you intend to fully close and then withdraw in a follow-up tx, consider passing
-	 * placeAndTake: { enable: true, referrerInfo: undefined } so the close fills atomically.
-	 */
-	public async getCloseIsolatedPerpPositionTxn(
-		params: CentralServerGetCloseIsolatedPerpPositionTxnParams
-	): Promise<VersionedTransaction | Transaction> {
-		const perpMarketConfig = this._perpMarketConfigs.find(
-			(m) => m.marketIndex === params.marketIndex
-		);
-		if (!perpMarketConfig) {
-			throw new Error(
-				`Perp market config not found for index ${params.marketIndex}`
-			);
-		}
-		return this.driftClientContextWrapper(
-			params.userAccountPublicKey,
-			async (user) => {
-				const closeTxn = await createOpenPerpMarketOrder({
-					useSwift: false,
-					driftClient: this._driftClient,
-					user,
-					marketIndex: params.marketIndex,
-					direction: params.direction,
-					amount: params.baseAssetAmount,
-					assetType: params.assetType ?? 'base',
-					reduceOnly: true,
-					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
-					positionMaxLeverage: 0,
-					txParams: params.txParams ?? this.getTxParams(),
-					mainSignerOverride: params.mainSignerOverride,
-					placeAndTake: params.placeAndTake,
-				});
-				return closeTxn;
-			},
-			params.mainSignerOverride
+			mainSignerOverride
 		);
 	}
 
