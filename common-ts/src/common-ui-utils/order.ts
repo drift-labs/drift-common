@@ -1,6 +1,7 @@
 import {
 	OrderType,
 	OrderTriggerCondition,
+	OrderStatus,
 	PositionDirection,
 	BigNum,
 	ZERO,
@@ -287,6 +288,31 @@ function getPerpOrderParamsBitFlags(
 	return undefined;
 }
 
+const isOrderTriggered = (
+	order: Pick<UISerializableOrder, 'orderType' | 'triggerCondition' | 'status'>
+): boolean => {
+	const isTriggerOrderType =
+		ENUM_UTILS.match(order.orderType, OrderType.TRIGGER_MARKET) ||
+		ENUM_UTILS.match(order.orderType, OrderType.TRIGGER_LIMIT);
+
+	const orderWasCancelled = ENUM_UTILS.match(
+		order.status,
+		OrderStatus.CANCELED
+	);
+
+	const orderWasTriggered =
+		ENUM_UTILS.match(
+			order.triggerCondition,
+			OrderTriggerCondition.TRIGGERED_ABOVE
+		) ||
+		ENUM_UTILS.match(
+			order.triggerCondition,
+			OrderTriggerCondition.TRIGGERED_BELOW
+		);
+
+	return isTriggerOrderType && orderWasTriggered && !orderWasCancelled;
+};
+
 export const ORDER_COMMON_UTILS = {
 	getOrderLabelFromOrderDetails,
 	getLimitPriceFromOracleOffset,
@@ -294,4 +320,5 @@ export const ORDER_COMMON_UTILS = {
 	getUIOrderTypeFromSdkOrderType,
 	getPerpAuctionDuration,
 	getPerpOrderParamsBitFlags,
+	isOrderTriggered,
 };
