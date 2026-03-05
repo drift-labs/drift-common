@@ -58,11 +58,14 @@ import {
 import {
 	createOpenPerpMarketOrder,
 	createOpenPerpMarketOrderIxs,
+	createSwiftMarketOrderMessage,
 } from '../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import {
 	createOpenPerpNonMarketOrder,
-	OpenPerpNonMarketOrderParams,
+	createSwiftLimitOrderMessage,
 } from '../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
+import { SwiftOrderMessage } from '../../../base/actions/trade/openPerpOrder/openSwiftOrder';
+import { LimitOrderParamsOrderConfig } from '../../../base/actions/trade/openPerpOrder/types';
 import { createEditOrderTxn } from '../../../base/actions/trade/editOrder';
 import { createCancelOrdersTxn } from '../../../base/actions/trade/cancelOrder';
 import { createSwapTxn } from '../../../base/actions/trade/swap';
@@ -71,8 +74,6 @@ import { deleteUserTxn } from '../../../base/actions/user/delete';
 import { createRevenueShareEscrowTxn } from '../../../base/actions/builder/createRevenueShareEscrow';
 import { createRevenueShareAccountTxn } from '../../../base/actions/builder/createRevenueShareAccount';
 import { configureBuilderTxn } from '../../../base/actions/builder/configureBuilder';
-import { TxnOrSwiftResult } from '../../../base/actions/trade/openPerpOrder/types';
-import { WithTxnParams } from '../../../base/types';
 import { EnvironmentConstants } from '../../../../EnvironmentConstants';
 import {
 	CentralServerGetOpenPerpMarketOrderTxnParams,
@@ -86,11 +87,15 @@ import { CentralServerDriftMarkets } from './markets';
 import { DriftOperations } from '../AuthorityDrift/DriftOperations';
 
 export type {
+	CentralServerGetOpenPerpMarketOrderTxnParams,
+	CentralServerGetOpenPerpNonMarketOrderTxnParams,
+	CentralServerSwiftOrderOptions,
 	CentralServerGetWithdrawIsolatedPerpPositionCollateralTxnParams,
 	CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams,
 	CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams,
 	CentralServerGetCloseAndWithdrawIsolatedPerpPositionToWalletTxnParams,
 } from './types';
+export type { SwiftOrderMessage } from '../../../base/actions/trade/openPerpOrder/openSwiftOrder';
 
 /**
  * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.
@@ -620,59 +625,55 @@ export class CentralServerDrift {
 	// overloads for better type inference
 	public async getOpenPerpMarketOrderTxn(
 		params: CentralServerGetOpenPerpMarketOrderTxnParams<true>
-	): Promise<void>;
+	): Promise<SwiftOrderMessage>;
 	public async getOpenPerpMarketOrderTxn(
 		params: CentralServerGetOpenPerpMarketOrderTxnParams<false>
 	): Promise<Transaction | VersionedTransaction>;
-	public async getOpenPerpMarketOrderTxn<T extends boolean>({
-		userAccountPublicKey,
-		...rest
-	}: CentralServerGetOpenPerpMarketOrderTxnParams<T>): Promise<
-		TxnOrSwiftResult<T>
-	> {
-		const { mainSignerOverride, ...restWithoutSigner } = rest;
-		return this.driftClientContextWrapper(
-			userAccountPublicKey,
-			async (user): Promise<TxnOrSwiftResult<T>> => {
-				const {
-					useSwift,
-					swiftOptions,
-					placeAndTake,
-					txParams,
-					...otherProps
-				} = restWithoutSigner;
+	public async getOpenPerpMarketOrderTxn(
+		params:
+			| CentralServerGetOpenPerpMarketOrderTxnParams<true>
+			| CentralServerGetOpenPerpMarketOrderTxnParams<false>
+	): Promise<SwiftOrderMessage | Transaction | VersionedTransaction> {
+		const { userAccountPublicKey, useSwift, ...genericRest } = params;
 
-				if (useSwift) {
-					const swiftOrderResult = await createOpenPerpMarketOrder({
-						useSwift: true,
-						swiftOptions: {
-							...swiftOptions,
-							swiftServerUrl: this._driftEndpoints.swiftServerUrl,
-						},
+		if (useSwift) {
+			const {
+				txParams: _tp,
+				swiftOptions,
+				...rest
+			} = genericRest as CentralServerGetOpenPerpMarketOrderTxnParams<true>;
+			return this.driftClientContextWrapper(
+				userAccountPublicKey,
+				async (user): Promise<SwiftOrderMessage> => {
+					return createSwiftMarketOrderMessage({
+						...rest,
 						driftClient: this._driftClient,
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
-						txParams: txParams ?? this.getTxParams(),
-						mainSignerOverride,
-						...otherProps,
+						userSigningSlotBuffer: swiftOptions?.userSigningSlotBuffer,
+						isDelegate: swiftOptions?.isDelegate ?? !!rest.mainSignerOverride,
 					});
-					return swiftOrderResult as TxnOrSwiftResult<T>;
-				} else {
+				}
+			);
+		} else {
+			const { txParams, ...rest } =
+				genericRest as CentralServerGetOpenPerpMarketOrderTxnParams<false>;
+			return this.driftClientContextWrapper(
+				userAccountPublicKey,
+				async (user): Promise<Transaction | VersionedTransaction> => {
 					const openPerpMarketOrderTxn = await createOpenPerpMarketOrder({
-						placeAndTake,
+						...rest,
 						useSwift: false,
 						driftClient: this._driftClient,
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 						txParams: txParams ?? this.getTxParams(),
-						mainSignerOverride,
-						...otherProps,
 					});
-					return openPerpMarketOrderTxn as TxnOrSwiftResult<T>;
-				}
-			},
-			mainSignerOverride
-		);
+					return openPerpMarketOrderTxn as Transaction | VersionedTransaction;
+				},
+				rest.mainSignerOverride
+			);
+		}
 	}
 
 	/**
@@ -680,55 +681,61 @@ export class CentralServerDrift {
 	 */
 	public async getOpenPerpNonMarketOrderTxn(
 		params: CentralServerGetOpenPerpNonMarketOrderTxnParams<true>
-	): Promise<void>;
+	): Promise<SwiftOrderMessage>;
 	public async getOpenPerpNonMarketOrderTxn(
 		params: CentralServerGetOpenPerpNonMarketOrderTxnParams<false>
 	): Promise<Transaction | VersionedTransaction>;
-	public async getOpenPerpNonMarketOrderTxn<T extends boolean>({
-		userAccountPublicKey,
-		...rest
-	}: WithTxnParams<
-		Omit<OpenPerpNonMarketOrderParams<T>, 'driftClient' | 'user'>
-	> & {
-		userAccountPublicKey: PublicKey;
-	}): Promise<TxnOrSwiftResult<T>> {
-		const { mainSignerOverride, ...restWithoutSigner } = rest;
-		return this.driftClientContextWrapper(
-			userAccountPublicKey,
-			async (user) => {
-				const { useSwift, swiftOptions, txParams, ...otherProps } =
-					restWithoutSigner;
+	public async getOpenPerpNonMarketOrderTxn(
+		params:
+			| CentralServerGetOpenPerpNonMarketOrderTxnParams<true>
+			| CentralServerGetOpenPerpNonMarketOrderTxnParams<false>
+	): Promise<SwiftOrderMessage | Transaction | VersionedTransaction> {
+		const { userAccountPublicKey, useSwift, ...genericRest } = params;
 
-				if (useSwift) {
-					const swiftOrderResult = await createOpenPerpNonMarketOrder({
-						useSwift: true,
-						swiftOptions: {
-							...swiftOptions,
-							swiftServerUrl: this._driftEndpoints.swiftServerUrl,
-						},
+		if (useSwift) {
+			const {
+				swiftOptions,
+				txParams: _tp,
+				...rest
+			} = genericRest as CentralServerGetOpenPerpNonMarketOrderTxnParams<true>;
+
+			if (rest.orderConfig.orderType !== 'limit') {
+				throw new Error('Only limit orders are supported with Swift');
+			}
+
+			return this.driftClientContextWrapper(
+				userAccountPublicKey,
+				async (user): Promise<SwiftOrderMessage> => {
+					return createSwiftLimitOrderMessage({
+						...rest,
 						driftClient: this._driftClient,
 						user,
-						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
-						txParams: txParams ?? this.getTxParams(),
-						mainSignerOverride,
-						...otherProps,
+						orderConfig: rest.orderConfig as LimitOrderParamsOrderConfig,
+						userSigningSlotBuffer: swiftOptions?.userSigningSlotBuffer,
+						isDelegate: swiftOptions?.isDelegate ?? !!rest.mainSignerOverride,
 					});
-					return swiftOrderResult as TxnOrSwiftResult<T>;
-				} else {
+				}
+			);
+		} else {
+			const { txParams, ...rest } =
+				genericRest as CentralServerGetOpenPerpNonMarketOrderTxnParams<false>;
+			return this.driftClientContextWrapper(
+				userAccountPublicKey,
+				async (user): Promise<Transaction | VersionedTransaction> => {
 					const openPerpNonMarketOrderTxn = await createOpenPerpNonMarketOrder({
+						...rest,
 						useSwift: false,
 						driftClient: this._driftClient,
 						user,
-						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 						txParams: txParams ?? this.getTxParams(),
-						mainSignerOverride,
-						...otherProps,
 					});
-					return openPerpNonMarketOrderTxn as TxnOrSwiftResult<T>;
-				}
-			},
-			mainSignerOverride
-		);
+					return openPerpNonMarketOrderTxn as
+						| Transaction
+						| VersionedTransaction;
+				},
+				rest.mainSignerOverride
+			);
+		}
 	}
 
 	/**
