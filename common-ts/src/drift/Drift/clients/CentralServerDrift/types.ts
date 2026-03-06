@@ -1,37 +1,63 @@
 import { BN, PositionDirection, TxParams } from '@drift-labs/sdk';
-import { SwiftOrderOptions } from '../../../base/actions/trade/openPerpOrder/openSwiftOrder';
 import { WithTxnParams } from '../../../base/types';
-import { OpenPerpMarketOrderParams } from '../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
-import { OpenPerpNonMarketOrderParams } from '../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
+import { OpenPerpMarketOrderBaseParams } from '../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
+import { OpenPerpNonMarketOrderBaseParams } from '../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 import { PlaceAndTakeParams } from '../../../base/actions/trade/openPerpOrder/types';
 import { PublicKey } from '@solana/web3.js';
 
-export type CentralServerSwiftOrderOptions = Omit<
-	SwiftOrderOptions,
-	'swiftServerUrl'
+export type CentralServerSwiftOrderOptions = {
+	userSigningSlotBuffer?: number;
+	isDelegate?: boolean;
+};
+
+type CsdBaseMarketOrderParams = Omit<
+	OpenPerpMarketOrderBaseParams,
+	'driftClient' | 'user' | 'dlobServerHttpUrl'
 >;
 
 export type CentralServerGetOpenPerpMarketOrderTxnParams<
 	T extends boolean = boolean
-> = WithTxnParams<
-	Omit<
-		OpenPerpMarketOrderParams<T, CentralServerSwiftOrderOptions>,
-		'driftClient' | 'user' | 'dlobServerHttpUrl'
-	>
-> & {
-	userAccountPublicKey: PublicKey;
-};
+> = T extends true
+	? WithTxnParams<
+			Omit<CsdBaseMarketOrderParams, 'placeAndTake'> & {
+				useSwift: true;
+				swiftOptions?: CentralServerSwiftOrderOptions;
+			}
+	  > & {
+			userAccountPublicKey: PublicKey;
+	  }
+	: WithTxnParams<
+			CsdBaseMarketOrderParams & {
+				useSwift: false;
+				placeAndTake?: PlaceAndTakeParams;
+			}
+	  > & {
+			userAccountPublicKey: PublicKey;
+	  };
+
+type CsdBaseNonMarketOrderParams = Omit<
+	OpenPerpNonMarketOrderBaseParams,
+	'driftClient' | 'user'
+>;
 
 export type CentralServerGetOpenPerpNonMarketOrderTxnParams<
 	T extends boolean = boolean
-> = WithTxnParams<
-	Omit<
-		OpenPerpNonMarketOrderParams<T, CentralServerSwiftOrderOptions>,
-		'driftClient' | 'user' | 'dlobServerHttpUrl'
-	>
-> & {
-	userAccountPublicKey: PublicKey;
-};
+> = T extends true
+	? WithTxnParams<
+			CsdBaseNonMarketOrderParams & {
+				useSwift: true;
+				swiftOptions?: CentralServerSwiftOrderOptions;
+			}
+	  > & {
+			userAccountPublicKey: PublicKey;
+	  }
+	: WithTxnParams<
+			CsdBaseNonMarketOrderParams & {
+				useSwift: false;
+			}
+	  > & {
+			userAccountPublicKey: PublicKey;
+	  };
 
 /** Params for withdrawing collateral from an isolated perp position (transfer to cross). */
 export interface CentralServerGetWithdrawIsolatedPerpPositionCollateralTxnParams {

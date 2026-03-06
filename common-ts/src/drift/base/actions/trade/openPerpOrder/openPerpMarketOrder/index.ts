@@ -18,7 +18,9 @@ import {
 import { ENUM_UTILS } from '../../../../../../utils';
 import {
 	prepSignAndSendSwiftOrder,
+	prepSwiftOrderMessage,
 	SwiftOrderOptions,
+	SwiftOrderMessage,
 } from '../openSwiftOrder';
 import { buildNonMarketOrderParams } from '../../../../../utils/orderParams';
 import {
@@ -140,32 +142,30 @@ export type OpenPerpMarketOrderParams<
 			swiftOptions?: never;
 	  };
 /**
- * Creates and submits a Swift (signed message) order. Only available for perp orders.
+ * Shared prep logic for swift market orders: validates input, fetches auction params,
+ * computes bit flags, and resolves the user account.
  */
-export async function createSwiftMarketOrder({
-	driftClient,
-	user,
-	assetType,
-	marketIndex,
-	direction,
-	amount,
-	reduceOnly,
-	bracketOrders,
-	dlobServerHttpUrl,
-	optionalAuctionParamsInputs,
-	swiftOptions,
-	userOrderId = 0,
-	positionMaxLeverage,
-	isolatedPositionDeposit,
-	builderParams,
-	highLeverageOptions,
-	callbacks,
-}: OpenPerpMarketOrderBaseParamsWithSwift): Promise<void> {
+async function prepSwiftMarketOrderData(params: OpenPerpMarketOrderBaseParams) {
+	const {
+		driftClient,
+		user,
+		assetType,
+		marketIndex,
+		direction,
+		amount,
+		reduceOnly,
+		dlobServerHttpUrl,
+		optionalAuctionParamsInputs,
+		positionMaxLeverage,
+		highLeverageOptions,
+		userOrderId = 0,
+		callbacks,
+	} = params;
+
 	if (amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
 	}
 
-	// Get order parameters from server
 	const fetchedOrderParams = await fetchAuctionOrderParams({
 		driftClient,
 		user,
@@ -196,6 +196,28 @@ export async function createSwiftMarketOrder({
 
 	const userAccount = user.getUserAccount();
 
+	return { userAccount, orderParams };
+}
+
+/**
+ * Creates and submits a Swift (signed message) order. Only available for perp orders.
+ */
+export async function createSwiftMarketOrder(
+	params: OpenPerpMarketOrderBaseParamsWithSwift
+): Promise<void> {
+	const {
+		driftClient,
+		user,
+		marketIndex,
+		bracketOrders,
+		swiftOptions,
+		positionMaxLeverage,
+		isolatedPositionDeposit,
+		builderParams,
+	} = params;
+
+	const { userAccount, orderParams } = await prepSwiftMarketOrderData(params);
+
 	await prepSignAndSendSwiftOrder({
 		driftClient,
 		subAccountId: userAccount.subAccountId,
@@ -203,6 +225,55 @@ export async function createSwiftMarketOrder({
 		marketIndex,
 		userSigningSlotBuffer: swiftOptions.userSigningSlotBuffer,
 		swiftOptions,
+		orderParams: {
+			main: orderParams,
+			takeProfit: bracketOrders?.takeProfit,
+			stopLoss: bracketOrders?.stopLoss,
+			positionMaxLeverage,
+			isolatedPositionDeposit,
+		},
+		builderParams,
+	});
+}
+
+export type CreateSwiftMarketOrderMessageParams = Omit<
+	OpenPerpMarketOrderBaseParams,
+	'placeAndTake' | 'mainSignerOverride'
+> & {
+	isDelegate?: boolean;
+	userSigningSlotBuffer?: number;
+};
+
+/**
+ * Prepares a Swift market order message without signing or sending it.
+ * Fetches auction params from the DLOB server and creates the prepared message.
+ *
+ * @returns The prepared SwiftOrderMessage ready for client-side signing and sending
+ */
+export async function createSwiftMarketOrderMessage(
+	params: CreateSwiftMarketOrderMessageParams
+): Promise<SwiftOrderMessage> {
+	const {
+		driftClient,
+		user,
+		marketIndex,
+		bracketOrders,
+		positionMaxLeverage,
+		isolatedPositionDeposit,
+		builderParams,
+		isDelegate = false,
+		userSigningSlotBuffer,
+	} = params;
+
+	const { userAccount, orderParams } = await prepSwiftMarketOrderData(params);
+
+	return prepSwiftOrderMessage({
+		driftClient,
+		subAccountId: userAccount.subAccountId,
+		userAccountPubKey: user.userAccountPublicKey,
+		marketIndex,
+		userSigningSlotBuffer,
+		isDelegate,
 		orderParams: {
 			main: orderParams,
 			takeProfit: bracketOrders?.takeProfit,
