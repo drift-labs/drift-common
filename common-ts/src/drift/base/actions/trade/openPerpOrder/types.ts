@@ -89,12 +89,6 @@ export interface NonMarketOrderParamsConfig {
 	 * Example: 5 for 5x leverage, 10 for 10x leverage
 	 */
 	positionMaxLeverage: number;
-	isolatedPositionDeposit?: BN;
-	/**
-	 * Additional isolated position deposits needed to top up other
-	 * under-collateralized isolated positions before placing the order.
-	 */
-	additionalIsolatedPositionDeposits?: AdditionalIsolatedPositionDeposit[];
 	orderConfig:
 		| LimitOrderParamsOrderConfig
 		| {

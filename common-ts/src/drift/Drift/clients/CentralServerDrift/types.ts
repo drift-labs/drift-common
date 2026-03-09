@@ -95,7 +95,7 @@ export interface CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams {
 export interface CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams
 	extends Omit<
 		CentralServerGetOpenPerpMarketOrderTxnParams<false>,
-		'isolatedPositionDeposit' | 'useSwift'
+		'isolatedPositionDeposit' | 'useSwift' | 'marginMode'
 	> {
 	/** Amount to deposit from wallet directly into isolated (QUOTE_PRECISION, e.g. USDC). */
 	depositAmount: BN;

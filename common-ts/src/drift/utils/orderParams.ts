@@ -104,7 +104,10 @@ export function buildNonMarketOrderParams({
 	reduceOnly = false,
 	postOnly = PostOnlyParams.NONE,
 	userOrderId = 0,
-}: NonMarketOrderParamsConfig): OptionalOrderParams {
+}: Omit<
+	NonMarketOrderParamsConfig,
+	'positionMaxLeverage'
+>): OptionalOrderParams {
 	const orderType = orderConfig.orderType;
 
 	// Build order params based on order type using SDK functions

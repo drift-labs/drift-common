@@ -1,6 +1,5 @@
 import {
 	BigNum,
-	BN,
 	PositionDirection,
 	PostOnlyParams,
 	PublicKey,
@@ -61,7 +60,7 @@ export type PerpOrderParams = {
 	assetType: 'base' | 'quote';
 	size: BigNum;
 	positionMaxLeverage: number;
-	isolatedPositionDeposit?: BN;
+	marginMode?: 'isolated' | 'cross';
 	reduceOnly?: boolean;
 	postOnly?: PostOnlyParams;
 	isMaxLeverage?: boolean;

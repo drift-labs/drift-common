@@ -10,6 +10,9 @@ import {
 	ZERO,
 } from '@drift-labs/sdk';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { TRADING_UTILS } from '../../../../../common-ui-utils/trading';
+import { AdditionalIsolatedPositionDeposit } from './types';
+import { getPositionMarginMode } from '../../../details/user/positionMarginMode';
 
 export const ISOLATED_POSITION_DEPOSIT_BUFFER_BPS = 15;
 
@@ -143,6 +146,11 @@ export interface ComputeIsolatedPositionDepositParams {
 	 * will be added to the deposit amount.
 	 */
 	includeExistingShortfall?: boolean;
+	/**
+	 * Pre-computed existing shortfall for the current market.
+	 * When provided alongside includeExistingShortfall, avoids a redundant getMarginCalculation call.
+	 */
+	existingShortfall?: BN;
 }
 
 /**
@@ -160,6 +168,7 @@ export function computeIsolatedPositionDepositForTrade({
 	numOfOpenHighLeverageSpots,
 	bufferDenominator,
 	includeExistingShortfall,
+	existingShortfall: precomputedShortfall,
 }: ComputeIsolatedPositionDepositParams): BN | null {
 	// Only require isolated deposit if the order will increase the position (when direction is provided)
 	if (direction !== undefined) {
@@ -199,11 +208,12 @@ export function computeIsolatedPositionDepositForTrade({
 		marginRequired.div(
 			new BN(bufferDenominator ?? ISOLATED_POSITION_DEPOSIT_BUFFER_BPS)
 		)
-	); // buffer in basis points
+	);
 
 	// Add existing shortfall for this market if requested
 	if (includeExistingShortfall) {
-		const existingShortfall = getIsolatedMarginShortfall(user, marketIndex);
+		const existingShortfall =
+			precomputedShortfall ?? getIsolatedMarginShortfall(user, marketIndex);
 		if (existingShortfall.gt(ZERO)) {
 			// Add shortfall with a 5% buffer on top (same as new margin)
 			const shortfallWithBuffer = existingShortfall.add(
@@ -216,6 +226,127 @@ export function computeIsolatedPositionDepositForTrade({
 	}
 
 	return depositAmount;
+}
+
+/**
+ * Error thrown when underwater isolated positions are detected and
+ * replenishUnderwaterPositions is not set to true.
+ */
+export class UnderwaterIsolatedPositionsError extends Error {
+	constructor(public readonly shortfalls: IsolatedMarginShortfall[]) {
+		super(
+			`Underwater isolated positions detected for markets: ${shortfalls
+				.map((s) => s.marketIndex)
+				.join(', ')}. ` +
+				`Set replenishUnderwaterPositions: true to auto-cover, or manually handle shortfalls.`
+		);
+		this.name = 'UnderwaterIsolatedPositionsError';
+	}
+}
+
+/**
+ * Calculates isolated position deposits for a trade.
+ * Auto-computes the main deposit from positionMaxLeverage.
+ * Also detects underwater positions on other markets and either throws or computes additional deposits.
+ */
+export function calculateIsolatedPositionDeposits(params: {
+	driftClient: DriftClient;
+	user: User;
+	marketIndex: number;
+	baseAssetAmount: BN;
+	direction?: PositionDirection;
+	positionMaxLeverage: number;
+	replenishUnderwaterPositions?: boolean;
+	numOfOpenHighLeverageSpots?: number;
+}): {
+	mainDeposit: BN | undefined;
+	additionalIsolatedPositionDeposits:
+		| AdditionalIsolatedPositionDeposit[]
+		| undefined;
+} {
+	// Compute all shortfalls once (single getMarginCalculation call)
+	// to avoid duplicate expensive margin calculations
+	const allShortfalls = getIsolatedMarginShortfalls(params.user);
+
+	// Extract current market's shortfall from the pre-computed map
+	const currentMarketShortfall = allShortfalls.get(params.marketIndex) ?? ZERO;
+
+	let mainIsolatedPositionDeposit: BN | undefined;
+	const marginRatio = TRADING_UTILS.convertLeverageToMarginRatio(
+		params.positionMaxLeverage
+	);
+
+	if (marginRatio) {
+		mainIsolatedPositionDeposit = computeIsolatedPositionDepositForTrade({
+			driftClient: params.driftClient,
+			user: params.user,
+			marketIndex: params.marketIndex,
+			baseAssetAmount: params.baseAssetAmount,
+			direction: params.direction,
+			marginRatio,
+			numOfOpenHighLeverageSpots: params.numOfOpenHighLeverageSpots,
+			bufferDenominator: ISOLATED_POSITION_DEPOSIT_BUFFER_BPS,
+			includeExistingShortfall: true,
+			// Use pre-computed shortfall to avoid a second getMarginCalculation call
+			existingShortfall: currentMarketShortfall,
+		});
+	}
+
+	// Check for underwater positions (excluding current market)
+	const otherShortfalls: IsolatedMarginShortfall[] = Array.from(allShortfalls)
+		.filter(([marketIndex]) => marketIndex !== params.marketIndex)
+		.map(([marketIndex, shortfall]) => ({ marketIndex, shortfall }));
+
+	if (otherShortfalls.length > 0 && !params.replenishUnderwaterPositions) {
+		throw new UnderwaterIsolatedPositionsError(otherShortfalls);
+	}
+
+	let additionalIsolatedPositionDeposits:
+		| AdditionalIsolatedPositionDeposit[]
+		| undefined;
+
+	if (otherShortfalls.length > 0 && params.replenishUnderwaterPositions) {
+		additionalIsolatedPositionDeposits = otherShortfalls.map((shortfall) => {
+			const shortfallWithBuffer = shortfall.shortfall.add(
+				shortfall.shortfall.div(new BN(ISOLATED_POSITION_DEPOSIT_BUFFER_BPS))
+			);
+			return {
+				marketIndex: shortfall.marketIndex,
+				amount: shortfallWithBuffer,
+			};
+		});
+	}
+
+	return {
+		mainDeposit: mainIsolatedPositionDeposit,
+		additionalIsolatedPositionDeposits,
+	};
+}
+
+/**
+ * Resolves isolated position deposits based on margin mode.
+ * Returns undefined for cross margin mode, otherwise computes deposits.
+ *
+ * If marginMode is not explicitly provided, derives it from the user's existing position.
+ */
+export function resolveIsolatedPositionDeposits(params: {
+	driftClient: DriftClient;
+	user: User;
+	marketIndex: number;
+	baseAssetAmount: BN;
+	direction?: PositionDirection;
+	positionMaxLeverage: number;
+	marginMode?: 'isolated' | 'cross';
+	replenishUnderwaterPositions?: boolean;
+	numOfOpenHighLeverageSpots?: number;
+}): ReturnType<typeof calculateIsolatedPositionDeposits> | undefined {
+	const isIsolated =
+		(params.marginMode ??
+			getPositionMarginMode(params.user, params.marketIndex)) === 'isolated';
+
+	if (!isIsolated) return undefined;
+
+	return calculateIsolatedPositionDeposits(params);
 }
 
 export async function getIsolatedPositionDepositIxIfNeeded(
