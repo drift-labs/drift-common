@@ -13,15 +13,6 @@ export type TxnOrSwiftResult<T extends boolean> = T extends true
 	? void
 	: Transaction | VersionedTransaction;
 
-/**
- * Represents an additional isolated position deposit needed to top up
- * an under-collateralized isolated position before placing an order.
- */
-export interface AdditionalIsolatedPositionDeposit {
-	marketIndex: number;
-	amount: BN;
-}
-
 export type PlaceAndTakeParams =
 	| {
 			enable: false;
@@ -90,11 +81,6 @@ export interface NonMarketOrderParamsConfig {
 	 */
 	positionMaxLeverage: number;
 	isolatedPositionDeposit?: BN;
-	/**
-	 * Additional isolated position deposits needed to top up other
-	 * under-collateralized isolated positions before placing the order.
-	 */
-	additionalIsolatedPositionDeposits?: AdditionalIsolatedPositionDeposit[];
 	orderConfig:
 		| LimitOrderParamsOrderConfig
 		| {
