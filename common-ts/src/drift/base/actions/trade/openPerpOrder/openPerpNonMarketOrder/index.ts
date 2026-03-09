@@ -36,7 +36,6 @@ import {
 	LimitAuctionConfig,
 	LimitOrderParamsOrderConfig,
 	NonMarketOrderParamsConfig,
-	AdditionalIsolatedPositionDeposit,
 } from '../types';
 import { WithTxnParams } from '../../../../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
@@ -71,12 +70,6 @@ export interface OpenPerpNonMarketOrderBaseParams
 		builderFeeTenthBps: number;
 	};
 	highLeverageOptions?: HighLeverageOptions;
-	/**
-	 * Additional isolated position deposits needed to top up other
-	 * under-collateralized isolated positions before placing the order.
-	 * Each deposit will create a separate instruction.
-	 */
-	additionalIsolatedPositionDeposits?: AdditionalIsolatedPositionDeposit[];
 }
 
 export interface OpenPerpNonMarketOrderParamsWithSwift
@@ -152,7 +145,6 @@ export const createOpenPerpNonMarketOrderIxs = async (
 		userOrderId = 0,
 		positionMaxLeverage,
 		isolatedPositionDeposit,
-		additionalIsolatedPositionDeposits,
 		mainSignerOverride,
 		highLeverageOptions,
 	} = params;
@@ -184,26 +176,6 @@ export const createOpenPerpNonMarketOrderIxs = async (
 	);
 	if (leverageIx) {
 		allIxs.push(leverageIx);
-	}
-
-	// Add additional isolated position deposit ixs for other under-collateralized positions
-	if (additionalIsolatedPositionDeposits?.length) {
-		const additionalDepositIxPromises = additionalIsolatedPositionDeposits.map(
-			(deposit) =>
-				getIsolatedPositionDepositIxIfNeeded(
-					driftClient,
-					user,
-					deposit.marketIndex,
-					deposit.amount,
-					mainSignerOverride
-				)
-		);
-		const additionalDepositIxs = await Promise.all(additionalDepositIxPromises);
-		for (const ix of additionalDepositIxs) {
-			if (ix) {
-				allIxs.push(ix);
-			}
-		}
 	}
 
 	const isolatedPositionDepositIx: TransactionInstruction | undefined =
