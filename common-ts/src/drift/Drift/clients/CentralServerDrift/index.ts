@@ -637,11 +637,8 @@ export class CentralServerDrift {
 		const { userAccountPublicKey, useSwift, ...genericRest } = params;
 
 		if (useSwift) {
-			const {
-				txParams: _tp,
-				swiftOptions,
-				...rest
-			} = genericRest as CentralServerGetOpenPerpMarketOrderTxnParams<true>;
+			const { swiftOptions, ...rest } =
+				genericRest as CentralServerGetOpenPerpMarketOrderTxnParams<true>;
 			return this.driftClientContextWrapper(
 				userAccountPublicKey,
 				async (user): Promise<SwiftOrderMessage> => {
@@ -693,11 +690,8 @@ export class CentralServerDrift {
 		const { userAccountPublicKey, useSwift, ...genericRest } = params;
 
 		if (useSwift) {
-			const {
-				swiftOptions,
-				txParams: _tp,
-				...rest
-			} = genericRest as CentralServerGetOpenPerpNonMarketOrderTxnParams<true>;
+			const { swiftOptions, ...rest } =
+				genericRest as CentralServerGetOpenPerpNonMarketOrderTxnParams<true>;
 
 			if (rest.orderConfig.orderType !== 'limit') {
 				throw new Error('Only limit orders are supported with Swift');

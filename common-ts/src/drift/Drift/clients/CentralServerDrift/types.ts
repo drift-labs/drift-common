@@ -18,18 +18,18 @@ type CsdBaseMarketOrderParams = Omit<
 export type CentralServerGetOpenPerpMarketOrderTxnParams<
 	T extends boolean = boolean
 > = T extends true
-	? WithTxnParams<
-			Omit<CsdBaseMarketOrderParams, 'placeAndTake'> & {
-				useSwift: true;
-				swiftOptions?: CentralServerSwiftOrderOptions;
-			}
+	? Omit<
+			CsdBaseMarketOrderParams,
+			'placeAndTake' | 'additionalIsolatedPositionDeposits'
 	  > & {
+			useSwift: true;
+			swiftOptions?: CentralServerSwiftOrderOptions;
+	  } & {
 			userAccountPublicKey: PublicKey;
 	  }
 	: WithTxnParams<
 			CsdBaseMarketOrderParams & {
 				useSwift: false;
-				placeAndTake?: PlaceAndTakeParams;
 			}
 	  > & {
 			userAccountPublicKey: PublicKey;
@@ -43,12 +43,10 @@ type CsdBaseNonMarketOrderParams = Omit<
 export type CentralServerGetOpenPerpNonMarketOrderTxnParams<
 	T extends boolean = boolean
 > = T extends true
-	? WithTxnParams<
-			CsdBaseNonMarketOrderParams & {
-				useSwift: true;
-				swiftOptions?: CentralServerSwiftOrderOptions;
-			}
-	  > & {
+	? Omit<CsdBaseNonMarketOrderParams, 'additionalIsolatedPositionDeposits'> & {
+			useSwift: true;
+			swiftOptions?: CentralServerSwiftOrderOptions;
+	  } & {
 			userAccountPublicKey: PublicKey;
 	  }
 	: WithTxnParams<
@@ -69,7 +67,7 @@ export interface CentralServerGetWithdrawIsolatedPerpPositionCollateralTxnParams
 	isFullWithdrawal?: boolean;
 	/** If true, prepends settle PnL ix before transfer (recommended for full withdrawal or when position base is zero). */
 	settlePnlFirst?: boolean;
-	txParams?: import('@drift-labs/sdk').TxParams;
+	txParams?: TxParams;
 	/** Optional signer override for transaction signing; defaults to user authority. */
 	mainSignerOverride?: PublicKey;
 }
@@ -97,7 +95,7 @@ export interface CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams {
 export interface CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams
 	extends Omit<
 		CentralServerGetOpenPerpMarketOrderTxnParams<false>,
-		'isolatedPositionDeposit'
+		'isolatedPositionDeposit' | 'useSwift'
 	> {
 	/** Amount to deposit from wallet directly into isolated (QUOTE_PRECISION, e.g. USDC). */
 	depositAmount: BN;
