@@ -229,6 +229,7 @@ export const prepSwiftOrder = ({
 		| SignedMsgOrderParamsDelegateMessage;
 	slotForSignedMsg: BN;
 	signedMsgOrderUuid: Uint8Array;
+	resolvedUserSigningSlotBuffer: number;
 } => {
 	const mainOrderParams = getOrderParams({
 		...orderParams.main,
@@ -314,6 +315,7 @@ export const prepSwiftOrder = ({
 		signedMsgOrderParamsMessage,
 		slotForSignedMsg: auctionStartSlot,
 		signedMsgOrderUuid,
+		resolvedUserSigningSlotBuffer: userSigningSlotBuffer,
 	};
 };
 
@@ -556,6 +558,7 @@ export const prepSwiftOrderMessage = async ({
 		signedMsgOrderUuid,
 		signedMsgOrderParamsMessage,
 		slotForSignedMsg,
+		resolvedUserSigningSlotBuffer,
 	} = prepSwiftOrder({
 		driftClient,
 		takerUserAccount: {
@@ -571,7 +574,7 @@ export const prepSwiftOrderMessage = async ({
 
 	const { slotsTillAuctionEnd, expirationTimeMs } = computeSwiftOrderTiming(
 		orderParams.main,
-		userSigningSlotBuffer
+		resolvedUserSigningSlotBuffer
 	);
 
 	return {

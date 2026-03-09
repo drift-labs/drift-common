@@ -322,7 +322,7 @@ async function signAndSendSwiftOrderMessage(
 
 	console.log('✅ Message signed successfully');
 
-	SwiftClient.init(swiftServerUrl, '');
+	SwiftClient.init(swiftServerUrl, 'common-ts-cli');
 
 	const swiftOrderObservable = sendSwiftOrder({
 		driftClient: centralServerDrift.driftClient,
