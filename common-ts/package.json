@@ -1,6 +1,6 @@
 {
 	"name": "@drift-labs/common",
-	"version": "1.0.46",
+	"version": "1.0.47",
 	"description": "Common functions for Drift",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
