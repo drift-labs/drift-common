@@ -17,7 +17,9 @@ import {
 } from '@solana/web3.js';
 import {
 	prepSignAndSendSwiftOrder,
+	prepSwiftOrderMessage,
 	SwiftOrderOptions,
+	SwiftOrderMessage,
 } from '../openSwiftOrder';
 import {
 	buildNonMarketOrderParams,
@@ -361,12 +363,16 @@ export const createOpenPerpNonMarketOrderIxs = async (
 	return allIxs;
 };
 
-export const createSwiftLimitOrder = async (
-	params: OpenPerpNonMarketOrderParamsWithSwift & {
+/**
+ * Shared prep logic for swift limit orders: validates limit price, resolves base asset amount,
+ * computes order params (with or without limit auction), and resolves the user account.
+ */
+async function prepSwiftLimitOrderData(
+	params: OpenPerpNonMarketOrderBaseParams & {
 		orderConfig: LimitOrderParamsOrderConfig;
 	}
-): Promise<void> => {
-	const { driftClient, user, marketIndex, swiftOptions, orderConfig } = params;
+) {
+	const { user, marketIndex, orderConfig } = params;
 
 	const limitPrice = orderConfig.limitPrice;
 
@@ -374,7 +380,6 @@ export const createSwiftLimitOrder = async (
 		throw new Error('LIMIT orders require limitPrice');
 	}
 
-	// Support both new (amount + assetType) and legacy (baseAssetAmount) approaches
 	const finalBaseAssetAmount = resolveBaseAssetAmount({
 		amount: 'amount' in params ? params.amount : undefined,
 		assetType: 'assetType' in params ? params.assetType : undefined,
@@ -401,10 +406,22 @@ export const createSwiftLimitOrder = async (
 				reduceOnly: params.reduceOnly,
 				postOnly: params.postOnly,
 				userOrderId: params.userOrderId,
-				positionMaxLeverage: params.positionMaxLeverage, // TODO: this isn't referenced in the function... do we need it?
+				positionMaxLeverage: params.positionMaxLeverage,
 		  });
 
 	const userAccount = user.getUserAccount();
+
+	return { userAccount, orderParams };
+}
+
+export const createSwiftLimitOrder = async (
+	params: OpenPerpNonMarketOrderParamsWithSwift & {
+		orderConfig: LimitOrderParamsOrderConfig;
+	}
+): Promise<void> => {
+	const { driftClient, user, marketIndex, swiftOptions, orderConfig } = params;
+
+	const { userAccount, orderParams } = await prepSwiftLimitOrderData(params);
 
 	await prepSignAndSendSwiftOrder({
 		driftClient,
@@ -413,6 +430,52 @@ export const createSwiftLimitOrder = async (
 		marketIndex,
 		userSigningSlotBuffer: swiftOptions.userSigningSlotBuffer,
 		swiftOptions,
+		orderParams: {
+			main: orderParams,
+			takeProfit: orderConfig.bracketOrders?.takeProfit,
+			stopLoss: orderConfig.bracketOrders?.stopLoss,
+			positionMaxLeverage: params.positionMaxLeverage,
+			isolatedPositionDeposit: params.isolatedPositionDeposit,
+		},
+		builderParams: params.builderParams,
+	});
+};
+
+export type CreateSwiftLimitOrderMessageParams = Omit<
+	OpenPerpNonMarketOrderBaseParams,
+	'mainSignerOverride'
+> & {
+	orderConfig: LimitOrderParamsOrderConfig;
+	isDelegate?: boolean;
+	userSigningSlotBuffer?: number;
+};
+
+/**
+ * Prepares a Swift limit order message without signing or sending it.
+ *
+ * @returns The prepared SwiftOrderMessage ready for client-side signing and sending
+ */
+export const createSwiftLimitOrderMessage = async (
+	params: CreateSwiftLimitOrderMessageParams
+): Promise<SwiftOrderMessage> => {
+	const {
+		driftClient,
+		user,
+		marketIndex,
+		orderConfig,
+		isDelegate = false,
+		userSigningSlotBuffer,
+	} = params;
+
+	const { userAccount, orderParams } = await prepSwiftLimitOrderData(params);
+
+	return prepSwiftOrderMessage({
+		driftClient,
+		subAccountId: userAccount.subAccountId,
+		userAccountPubKey: user.userAccountPublicKey,
+		marketIndex,
+		userSigningSlotBuffer,
+		isDelegate,
 		orderParams: {
 			main: orderParams,
 			takeProfit: orderConfig.bracketOrders?.takeProfit,

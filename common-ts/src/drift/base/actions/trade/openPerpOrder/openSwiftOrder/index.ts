@@ -102,6 +102,36 @@ export interface SwiftOrderOptions {
 	source?: string;
 }
 
+/**
+ * Represents a prepared SWIFT order message that is ready to be signed and sent.
+ * This is the output of the "prep" step, before signing occurs.
+ *
+ * Consumers should:
+ * 1. Sign `hexEncodedSwiftOrderMessage.uInt8Array` with the user's wallet
+ * 2. Send the signed message along with the other fields to the SWIFT server
+ */
+export interface SwiftOrderMessage {
+	/** The encoded order message in both Uint8Array (for signing) and string (for sending) formats */
+	hexEncodedSwiftOrderMessage: {
+		uInt8Array: Uint8Array;
+		string: string;
+	};
+	/** The order parameters message that was encoded */
+	signedMsgOrderParamsMessage:
+		| SignedMsgOrderParamsMessage
+		| SignedMsgOrderParamsDelegateMessage;
+	/** The slot number used for the signed message */
+	slotForSignedMsg: BN;
+	/** Unique identifier for the signed message order */
+	signedMsgOrderUuid: Uint8Array;
+	/** The market index this order is for */
+	marketIndex: number;
+	/** Number of slots till the auction ends (used for confirmation timeout) */
+	slotsTillAuctionEnd: number;
+	/** Time in milliseconds before the signing window expires */
+	expirationTimeMs: number;
+}
+
 export type SwiftOrderObservable = Observable<SwiftOrderEvent>;
 
 interface PrepSwiftOrderParams {
@@ -199,6 +229,7 @@ export const prepSwiftOrder = ({
 		| SignedMsgOrderParamsDelegateMessage;
 	slotForSignedMsg: BN;
 	signedMsgOrderUuid: Uint8Array;
+	resolvedUserSigningSlotBuffer: number;
 } => {
 	const mainOrderParams = getOrderParams({
 		...orderParams.main,
@@ -284,6 +315,7 @@ export const prepSwiftOrder = ({
 		signedMsgOrderParamsMessage,
 		slotForSignedMsg: auctionStartSlot,
 		signedMsgOrderUuid,
+		resolvedUserSigningSlotBuffer: userSigningSlotBuffer,
 	};
 };
 
@@ -448,6 +480,114 @@ export const sendSwiftOrder = ({
 	return swiftOrderObservable;
 };
 
+/**
+ * Computes the timing parameters for a SWIFT order:
+ * - slotsTillAuctionEnd: how many slots until the auction is considered ended
+ * - expirationTimeMs: how long (in ms) the user has to sign before the window expires
+ *
+ * For market orders, auction duration + signing buffer is used directly.
+ * For non-market orders, a minimum is enforced because limit auctions can have
+ * very small durations but the order is still valid after the auction ends.
+ */
+const computeSwiftOrderTiming = (
+	mainOrderParams: OptionalOrderParams,
+	userSigningSlotBuffer: number
+): { slotsTillAuctionEnd: number; expirationTimeMs: number } => {
+	const isMarketOrder =
+		ENUM_UTILS.match(mainOrderParams.orderType, OrderType.ORACLE) ||
+		ENUM_UTILS.match(mainOrderParams.orderType, OrderType.MARKET);
+	const slotsTillAuctionEnd = mainOrderParams.auctionDuration
+		? isMarketOrder
+			? userSigningSlotBuffer + mainOrderParams.auctionDuration
+			: Math.max(
+					MINIMUM_SWIFT_NON_AUCTION_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS,
+					userSigningSlotBuffer + mainOrderParams.auctionDuration
+			  )
+		: MINIMUM_SWIFT_NON_AUCTION_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS;
+
+	const expirationTimeMs =
+		Math.max(
+			slotsTillAuctionEnd - SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS,
+			MINIMUM_SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS
+		) * SLOT_TIME_ESTIMATE_MS;
+
+	return { slotsTillAuctionEnd, expirationTimeMs };
+};
+
+type PrepSwiftOrderMessageParams = {
+	driftClient: DriftClient;
+	subAccountId: number;
+	userAccountPubKey: PublicKey;
+	marketIndex: number;
+	userSigningSlotBuffer: number;
+	isDelegate?: boolean;
+	orderParams: {
+		main: OptionalOrderParams;
+		takeProfit?: OptionalTriggerOrderParams;
+		stopLoss?: OptionalTriggerOrderParams;
+		positionMaxLeverage?: number;
+		isolatedPositionDeposit?: BN;
+	};
+	builderParams?: {
+		builderIdx: number;
+		builderFeeTenthBps: number;
+	};
+};
+
+/**
+ * Prepares a SWIFT order message without signing or sending it.
+ * Returns all data needed for the consumer to sign and send the order themselves.
+ *
+ * This is useful for server-side contexts (e.g., CentralServerDrift) where
+ * the server prepares the message but the client handles signing and sending.
+ */
+export const prepSwiftOrderMessage = async ({
+	driftClient,
+	subAccountId,
+	userAccountPubKey,
+	marketIndex,
+	userSigningSlotBuffer,
+	isDelegate = false,
+	orderParams,
+	builderParams,
+}: PrepSwiftOrderMessageParams): Promise<SwiftOrderMessage> => {
+	const currentSlot = await driftClient.connection.getSlot('confirmed');
+
+	const {
+		hexEncodedSwiftOrderMessage,
+		signedMsgOrderUuid,
+		signedMsgOrderParamsMessage,
+		slotForSignedMsg,
+		resolvedUserSigningSlotBuffer,
+	} = prepSwiftOrder({
+		driftClient,
+		takerUserAccount: {
+			pubKey: userAccountPubKey,
+			subAccountId,
+		},
+		currentSlot,
+		isDelegate,
+		orderParams,
+		userSigningSlotBuffer,
+		builderParams,
+	});
+
+	const { slotsTillAuctionEnd, expirationTimeMs } = computeSwiftOrderTiming(
+		orderParams.main,
+		resolvedUserSigningSlotBuffer
+	);
+
+	return {
+		hexEncodedSwiftOrderMessage,
+		signedMsgOrderParamsMessage,
+		slotForSignedMsg,
+		signedMsgOrderUuid,
+		marketIndex,
+		slotsTillAuctionEnd,
+		expirationTimeMs,
+	};
+};
+
 type PrepSignAndSendSwiftOrderParams = {
 	driftClient: DriftClient;
 	subAccountId: number;
@@ -520,53 +660,26 @@ export const prepSignAndSendSwiftOrder = async ({
 	builderParams,
 	confirmationMultiplier,
 }: PrepSignAndSendSwiftOrderParams): Promise<void> => {
-	const currentSlot = await driftClient.connection.getSlot('confirmed');
-
 	const {
 		hexEncodedSwiftOrderMessage,
 		signedMsgOrderUuid,
 		signedMsgOrderParamsMessage,
-	} = prepSwiftOrder({
+		slotsTillAuctionEnd,
+		expirationTimeMs,
+	} = await prepSwiftOrderMessage({
 		driftClient,
-		takerUserAccount: {
-			pubKey: userAccountPubKey,
-			subAccountId: subAccountId,
-		},
-		currentSlot,
+		subAccountId,
+		userAccountPubKey,
+		marketIndex,
+		userSigningSlotBuffer,
 		isDelegate: swiftOptions.isDelegate || false,
 		orderParams,
-		userSigningSlotBuffer,
 		builderParams,
 	});
 
 	swiftOptions.callbacks?.onOrderParamsMessagePrepped?.(
 		signedMsgOrderParamsMessage
 	);
-
-	// both market and non-market orders can have auction durations.
-	//
-	// for market orders, the auction duration + user signing slot buffer is a good gauge for slots until auction end
-	//
-	// for non-market orders, if they have an auction duration, we use the maximum of MINIMUM_SWIFT_NON_AUCTION_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS
-	// and the (auction duration + user signing slot buffer). This is because limit auctions can have very small auction durations,
-	// but the limit order is still valid to be placed even after the auction ends, hence we enforce a minimum duration so that
-	// short limit auction durations can still be placed
-	const isMarketOrder =
-		ENUM_UTILS.match(orderParams.main.orderType, OrderType.ORACLE) ||
-		ENUM_UTILS.match(orderParams.main.orderType, OrderType.MARKET);
-	const slotsTillAuctionEnd = orderParams.main.auctionDuration
-		? isMarketOrder
-			? userSigningSlotBuffer + orderParams.main.auctionDuration
-			: Math.max(
-					MINIMUM_SWIFT_NON_AUCTION_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS,
-					userSigningSlotBuffer + orderParams.main.auctionDuration
-			  )
-		: MINIMUM_SWIFT_NON_AUCTION_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS;
-	const expirationTimeMs =
-		Math.max(
-			slotsTillAuctionEnd - SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS,
-			MINIMUM_SWIFT_ORDER_SIGNING_EXPIRATION_BUFFER_SLOTS
-		) * SLOT_TIME_ESTIMATE_MS;
 
 	// Ensure that the user signs the message before the expiration time
 	const signedMessage = await signSwiftOrderMsg({
