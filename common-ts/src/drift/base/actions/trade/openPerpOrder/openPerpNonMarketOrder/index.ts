@@ -36,13 +36,14 @@ import {
 	LimitAuctionConfig,
 	LimitOrderParamsOrderConfig,
 	NonMarketOrderParamsConfig,
+	IsolatedPositionDepositsOverride,
 } from '../types';
 import { WithTxnParams } from '../../../../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
 import { getLimitAuctionOrderParams } from '../auction';
 import {
 	getIsolatedPositionDepositIxIfNeeded,
-	resolveIsolatedPositionDeposits,
+	resolveIsolatedPositionDepositsWithOverride,
 } from '../isolatedPositionDeposit';
 
 export interface OpenPerpNonMarketOrderBaseParams
@@ -66,6 +67,11 @@ export interface OpenPerpNonMarketOrderBaseParams
 	 * and if that does not exist, it will default to 'cross'.
 	 */
 	marginMode?: 'isolated' | 'cross';
+	/**
+	 * Pre-computed isolated position deposits override. When provided,
+	 * skips auto-compute and uses these values directly.
+	 */
+	isolatedPositionDepositsOverride?: IsolatedPositionDepositsOverride;
 	autoEnterHighLeverageModeBufferPct?: number;
 	/**
 	 * If provided, will override the main signer for the order. Otherwise, the main signer will be the user's authority.
@@ -159,6 +165,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 		marginMode,
 		mainSignerOverride,
 		highLeverageOptions,
+		isolatedPositionDepositsOverride,
 	} = params;
 	// Support both new (amount + assetType) and legacy (baseAssetAmount) approaches
 	const finalBaseAssetAmount = resolveBaseAssetAmount({
@@ -176,21 +183,25 @@ export const createOpenPerpNonMarketOrderIxs = async (
 		throw new Error('Final base asset amount must be greater than zero');
 	}
 
-	const isolatedPositionDeposits = resolveIsolatedPositionDeposits({
-		driftClient,
-		user,
-		marketIndex,
-		baseAssetAmount: finalBaseAssetAmount,
-		direction,
-		positionMaxLeverage,
-		marginMode,
-		replenishUnderwaterPositions: true,
-		numOfOpenHighLeverageSpots: highLeverageOptions?.numOfOpenHighLeverageSpots,
-	});
+	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
+		isolatedPositionDepositsOverride,
+		{
+			driftClient,
+			user,
+			marketIndex,
+			baseAssetAmount: finalBaseAssetAmount,
+			direction,
+			positionMaxLeverage,
+			marginMode,
+			replenishUnderwaterPositions: true,
+			numOfOpenHighLeverageSpots:
+				highLeverageOptions?.numOfOpenHighLeverageSpots,
+		}
+	);
 
-	const mainIsolatedPositionDeposit = isolatedPositionDeposits?.mainDeposit;
-	const additionalIsolatedPositionDeposits =
-		isolatedPositionDeposits?.additionalIsolatedPositionDeposits;
+	const mainIsolatedPositionDeposit = resolvedDeposits?.mainDeposit;
+	const resolvedAdditionalDeposits =
+		resolvedDeposits?.additionalIsolatedPositionDeposits;
 
 	const allOrders: OptionalOrderParams[] = [];
 	const allIxs: TransactionInstruction[] = [];
@@ -205,9 +216,9 @@ export const createOpenPerpNonMarketOrderIxs = async (
 				positionMaxLeverage,
 				mainSignerOverride
 			),
-			additionalIsolatedPositionDeposits?.length
+			resolvedAdditionalDeposits?.length
 				? Promise.all(
-						additionalIsolatedPositionDeposits.map((deposit) =>
+						resolvedAdditionalDeposits.map((deposit) =>
 							getIsolatedPositionDepositIxIfNeeded(
 								driftClient,
 								user,
@@ -440,18 +451,21 @@ export const createSwiftLimitOrder = async (
 
 	const { userAccount, orderParams } = await prepSwiftLimitOrderData(params);
 
-	const isolatedPositionDeposits = resolveIsolatedPositionDeposits({
-		driftClient,
-		user,
-		marketIndex,
-		baseAssetAmount: orderParams.baseAssetAmount,
-		direction: orderParams.direction,
-		positionMaxLeverage: params.positionMaxLeverage,
-		marginMode: params.marginMode,
-		replenishUnderwaterPositions: false, // Swift doesn't support additional deposits, so throw on underwater positions
-		numOfOpenHighLeverageSpots:
-			params.highLeverageOptions?.numOfOpenHighLeverageSpots,
-	});
+	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
+		params.isolatedPositionDepositsOverride,
+		{
+			driftClient,
+			user,
+			marketIndex,
+			baseAssetAmount: orderParams.baseAssetAmount,
+			direction: orderParams.direction,
+			positionMaxLeverage: params.positionMaxLeverage,
+			marginMode: params.marginMode,
+			replenishUnderwaterPositions: false, // Swift doesn't support additional deposits, so throw on underwater positions
+			numOfOpenHighLeverageSpots:
+				params.highLeverageOptions?.numOfOpenHighLeverageSpots,
+		}
+	);
 
 	await prepSignAndSendSwiftOrder({
 		driftClient,
@@ -465,7 +479,7 @@ export const createSwiftLimitOrder = async (
 			takeProfit: orderConfig.bracketOrders?.takeProfit,
 			stopLoss: orderConfig.bracketOrders?.stopLoss,
 			positionMaxLeverage: params.positionMaxLeverage,
-			isolatedPositionDeposit: isolatedPositionDeposits?.mainDeposit,
+			isolatedPositionDeposit: resolvedDeposits?.mainDeposit,
 		},
 		builderParams: params.builderParams,
 	});
@@ -499,18 +513,21 @@ export const createSwiftLimitOrderMessage = async (
 
 	const { userAccount, orderParams } = await prepSwiftLimitOrderData(params);
 
-	const isolatedPositionDeposits = resolveIsolatedPositionDeposits({
-		driftClient,
-		user,
-		marketIndex,
-		baseAssetAmount: orderParams.baseAssetAmount,
-		direction: orderParams.direction,
-		positionMaxLeverage: params.positionMaxLeverage,
-		marginMode: params.marginMode,
-		replenishUnderwaterPositions: false, // Swift doesn't support additional deposits, so throw on underwater positions
-		numOfOpenHighLeverageSpots:
-			params.highLeverageOptions?.numOfOpenHighLeverageSpots,
-	});
+	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
+		params.isolatedPositionDepositsOverride,
+		{
+			driftClient,
+			user,
+			marketIndex,
+			baseAssetAmount: orderParams.baseAssetAmount,
+			direction: orderParams.direction,
+			positionMaxLeverage: params.positionMaxLeverage,
+			marginMode: params.marginMode,
+			replenishUnderwaterPositions: false, // Swift doesn't support additional deposits, so throw on underwater positions
+			numOfOpenHighLeverageSpots:
+				params.highLeverageOptions?.numOfOpenHighLeverageSpots,
+		}
+	);
 
 	return prepSwiftOrderMessage({
 		driftClient,
@@ -524,7 +541,7 @@ export const createSwiftLimitOrderMessage = async (
 			takeProfit: orderConfig.bracketOrders?.takeProfit,
 			stopLoss: orderConfig.bracketOrders?.stopLoss,
 			positionMaxLeverage: params.positionMaxLeverage,
-			isolatedPositionDeposit: isolatedPositionDeposits?.mainDeposit,
+			isolatedPositionDeposit: resolvedDeposits?.mainDeposit,
 		},
 		builderParams: params.builderParams,
 	});

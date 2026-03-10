@@ -2,7 +2,10 @@ import { BN, PositionDirection, TxParams } from '@drift-labs/sdk';
 import { WithTxnParams } from '../../../base/types';
 import { OpenPerpMarketOrderBaseParams } from '../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { OpenPerpNonMarketOrderBaseParams } from '../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
-import { PlaceAndTakeParams } from '../../../base/actions/trade/openPerpOrder/types';
+import {
+	IsolatedPositionDepositsOverride,
+	PlaceAndTakeParams,
+} from '../../../base/actions/trade/openPerpOrder/types';
 import { PublicKey } from '@solana/web3.js';
 
 export type CentralServerSwiftOrderOptions = {
@@ -18,22 +21,21 @@ type CsdBaseMarketOrderParams = Omit<
 export type CentralServerGetOpenPerpMarketOrderTxnParams<
 	T extends boolean = boolean
 > = T extends true
-	? Omit<
-			CsdBaseMarketOrderParams,
-			'placeAndTake' | 'additionalIsolatedPositionDeposits'
-	  > & {
+	? Omit<CsdBaseMarketOrderParams, 'placeAndTake'> & {
 			useSwift: true;
 			swiftOptions?: CentralServerSwiftOrderOptions;
-	  } & {
+			isolatedPositionDepositsOverride?: Omit<
+				IsolatedPositionDepositsOverride,
+				'additionalDeposits'
+			>;
 			userAccountPublicKey: PublicKey;
 	  }
 	: WithTxnParams<
 			CsdBaseMarketOrderParams & {
 				useSwift: false;
+				userAccountPublicKey: PublicKey;
 			}
-	  > & {
-			userAccountPublicKey: PublicKey;
-	  };
+	  >;
 
 type CsdBaseNonMarketOrderParams = Omit<
 	OpenPerpNonMarketOrderBaseParams,
@@ -42,20 +44,22 @@ type CsdBaseNonMarketOrderParams = Omit<
 
 export type CentralServerGetOpenPerpNonMarketOrderTxnParams<
 	T extends boolean = boolean
-> = T extends true
-	? Omit<CsdBaseNonMarketOrderParams, 'additionalIsolatedPositionDeposits'> & {
+> = (T extends true
+	? CsdBaseNonMarketOrderParams & {
 			useSwift: true;
 			swiftOptions?: CentralServerSwiftOrderOptions;
-	  } & {
-			userAccountPublicKey: PublicKey;
+			isolatedPositionDepositsOverride?: Omit<
+				IsolatedPositionDepositsOverride,
+				'additionalDeposits'
+			>;
 	  }
 	: WithTxnParams<
 			CsdBaseNonMarketOrderParams & {
 				useSwift: false;
 			}
-	  > & {
-			userAccountPublicKey: PublicKey;
-	  };
+	  >) & {
+	userAccountPublicKey: PublicKey;
+};
 
 /** Params for withdrawing collateral from an isolated perp position (transfer to cross). */
 export interface CentralServerGetWithdrawIsolatedPerpPositionCollateralTxnParams {
@@ -95,7 +99,7 @@ export interface CentralServerGetCloseAndWithdrawIsolatedPerpPositionTxnParams {
 export interface CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams
 	extends Omit<
 		CentralServerGetOpenPerpMarketOrderTxnParams<false>,
-		'isolatedPositionDeposit' | 'useSwift' | 'marginMode'
+		'isolatedPositionDepositsOverride' | 'useSwift' | 'marginMode'
 	> {
 	/** Amount to deposit from wallet directly into isolated (QUOTE_PRECISION, e.g. USDC). */
 	depositAmount: BN;

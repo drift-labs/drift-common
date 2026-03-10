@@ -468,6 +468,8 @@ export class DriftOperations {
 						builderParams: params.builderParams,
 						positionMaxLeverage: params.positionMaxLeverage,
 						marginMode: params.marginMode,
+						isolatedPositionDepositsOverride:
+							params.isolatedPositionDepositsOverride,
 					});
 
 					return swiftOrderResult;
@@ -486,6 +488,8 @@ export class DriftOperations {
 						useSwift: false,
 						positionMaxLeverage: params.positionMaxLeverage,
 						marginMode: params.marginMode,
+						isolatedPositionDepositsOverride:
+							params.isolatedPositionDepositsOverride,
 					});
 
 					const { txSig } = await this.driftClient.sendTransaction(result);
@@ -530,6 +534,8 @@ export class DriftOperations {
 						builderParams: params.builderParams,
 						positionMaxLeverage: params.positionMaxLeverage,
 						marginMode: params.marginMode,
+						isolatedPositionDepositsOverride:
+							params.isolatedPositionDepositsOverride,
 					});
 
 					return swiftOrderResult;
@@ -552,6 +558,8 @@ export class DriftOperations {
 						txParams: this.getTxParams(),
 						positionMaxLeverage: params.positionMaxLeverage,
 						marginMode: params.marginMode,
+						isolatedPositionDepositsOverride:
+							params.isolatedPositionDepositsOverride,
 					});
 
 					const { txSig } = await this.driftClient.sendTransaction(txn);

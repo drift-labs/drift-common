@@ -22,6 +22,17 @@ export interface AdditionalIsolatedPositionDeposit {
 	amount: BN;
 }
 
+/**
+ * Override for isolated position deposits. When provided on order params,
+ * skips auto-compute and uses these values directly.
+ */
+export interface IsolatedPositionDepositsOverride {
+	/** The main deposit amount for this market's isolated position. */
+	mainDeposit: BN;
+	/** Additional deposits for other under-collateralized isolated positions. */
+	additionalDeposits?: AdditionalIsolatedPositionDeposit[];
+}
+
 export type PlaceAndTakeParams =
 	| {
 			enable: false;

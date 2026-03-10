@@ -11,7 +11,10 @@ import {
 } from '@drift-labs/sdk';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { TRADING_UTILS } from '../../../../../common-ui-utils/trading';
-import { AdditionalIsolatedPositionDeposit } from './types';
+import {
+	AdditionalIsolatedPositionDeposit,
+	IsolatedPositionDepositsOverride,
+} from './types';
 import { getPositionMarginMode } from '../../../details/user/positionMarginMode';
 
 export const ISOLATED_POSITION_DEPOSIT_BUFFER_BPS = 15;
@@ -347,6 +350,24 @@ export function resolveIsolatedPositionDeposits(params: {
 	if (!isIsolated) return undefined;
 
 	return calculateIsolatedPositionDeposits(params);
+}
+
+/**
+ * Resolves isolated position deposits, using pre-computed overrides if provided.
+ * When `isolatedPositionDepositsOverride` is provided, skips auto-compute and uses
+ * the override values directly. Otherwise, delegates to `resolveIsolatedPositionDeposits()`.
+ */
+export function resolveIsolatedPositionDepositsWithOverride(
+	override: IsolatedPositionDepositsOverride | undefined,
+	computeParams: Parameters<typeof resolveIsolatedPositionDeposits>[0]
+): ReturnType<typeof resolveIsolatedPositionDeposits> {
+	if (override !== undefined) {
+		return {
+			mainDeposit: override.mainDeposit,
+			additionalIsolatedPositionDeposits: override.additionalDeposits,
+		};
+	}
+	return resolveIsolatedPositionDeposits(computeParams);
 }
 
 export async function getIsolatedPositionDepositIxIfNeeded(

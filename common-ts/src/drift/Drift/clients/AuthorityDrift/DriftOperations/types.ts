@@ -7,6 +7,7 @@ import {
 } from '@drift-labs/sdk';
 import { OptionalAuctionParamsRequestInputs } from '../../../../base/actions/trade/openPerpOrder/dlobServer';
 import { SwiftOrderOptions } from '../../../../base/actions/trade/openPerpOrder/openSwiftOrder';
+import { IsolatedPositionDepositsOverride } from '../../../../base/actions/trade/openPerpOrder/types';
 
 /**
  * Interface for deposit operation parameters.
@@ -61,6 +62,7 @@ export type PerpOrderParams = {
 	size: BigNum;
 	positionMaxLeverage: number;
 	marginMode?: 'isolated' | 'cross';
+	isolatedPositionDepositsOverride?: IsolatedPositionDepositsOverride;
 	reduceOnly?: boolean;
 	postOnly?: PostOnlyParams;
 	isMaxLeverage?: boolean;

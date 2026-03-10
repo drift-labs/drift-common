@@ -33,14 +33,14 @@ import {
 	ORDER_COMMON_UTILS,
 } from '../../../../../../common-ui-utils/order';
 import { WithTxnParams } from '../../../../types';
-import { TxnOrSwiftResult } from '../types';
+import { TxnOrSwiftResult, IsolatedPositionDepositsOverride } from '../types';
 import { NoTopMakersError } from '../../../../../Drift/constants/errors';
 import { PlaceAndTakeParams, OptionalTriggerOrderParams } from '../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
 import { AuctionParamsFetchedCallback } from '../../../../../utils/auctionParamsResponseMapper';
 import {
 	getIsolatedPositionDepositIxIfNeeded,
-	resolveIsolatedPositionDeposits,
+	resolveIsolatedPositionDepositsWithOverride,
 } from '../isolatedPositionDeposit';
 
 export interface OpenPerpMarketOrderBaseParams {
@@ -75,6 +75,11 @@ export interface OpenPerpMarketOrderBaseParams {
 	 * and if that does not exist, it will default to 'cross'.
 	 */
 	marginMode?: 'isolated' | 'cross';
+	/**
+	 * Pre-computed isolated position deposits override. When provided,
+	 * skips auto-compute and uses these values directly.
+	 */
+	isolatedPositionDepositsOverride?: IsolatedPositionDepositsOverride;
 	/**
 	 * If provided, will override the main signer for the order. Otherwise, the main signer will be the user's authority.
 	 * This is only applicable for non-SWIFT orders.
@@ -214,17 +219,21 @@ export async function createSwiftMarketOrder(
 		builderParams,
 	} = params;
 
-	const isolatedPositionDeposits = resolveIsolatedPositionDeposits({
-		driftClient,
-		user,
-		marketIndex,
-		baseAssetAmount: amount,
-		direction,
-		positionMaxLeverage,
-		marginMode,
-		replenishUnderwaterPositions: false, // Swift doesn't support additional deposits. Will throw error if other isolated position shortfalls exists.
-		numOfOpenHighLeverageSpots: highLeverageOptions?.numOfOpenHighLeverageSpots,
-	});
+	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
+		params.isolatedPositionDepositsOverride,
+		{
+			driftClient,
+			user,
+			marketIndex,
+			baseAssetAmount: amount,
+			direction,
+			positionMaxLeverage,
+			marginMode,
+			replenishUnderwaterPositions: false, // Swift doesn't support additional deposits. Will throw error if other isolated position shortfalls exists.
+			numOfOpenHighLeverageSpots:
+				highLeverageOptions?.numOfOpenHighLeverageSpots,
+		}
+	);
 
 	const { userAccount, orderParams } = await prepSwiftMarketOrderData(params);
 
@@ -240,7 +249,7 @@ export async function createSwiftMarketOrder(
 			takeProfit: bracketOrders?.takeProfit,
 			stopLoss: bracketOrders?.stopLoss,
 			positionMaxLeverage,
-			isolatedPositionDeposit: isolatedPositionDeposits?.mainDeposit,
+			isolatedPositionDeposit: resolvedDeposits?.mainDeposit,
 		},
 		builderParams,
 	});
@@ -278,17 +287,21 @@ export async function createSwiftMarketOrderMessage(
 		userSigningSlotBuffer,
 	} = params;
 
-	const isolatedPositionDeposits = resolveIsolatedPositionDeposits({
-		driftClient,
-		user,
-		marketIndex,
-		baseAssetAmount: amount,
-		direction,
-		positionMaxLeverage,
-		marginMode,
-		replenishUnderwaterPositions: false, // Swift doesn't support additional deposits. Will throw error if other isolated position shortfalls exists.
-		numOfOpenHighLeverageSpots: highLeverageOptions?.numOfOpenHighLeverageSpots,
-	});
+	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
+		params.isolatedPositionDepositsOverride,
+		{
+			driftClient,
+			user,
+			marketIndex,
+			baseAssetAmount: amount,
+			direction,
+			positionMaxLeverage,
+			marginMode,
+			replenishUnderwaterPositions: false, // Swift doesn't support additional deposits. Will throw error if other isolated position shortfalls exists.
+			numOfOpenHighLeverageSpots:
+				highLeverageOptions?.numOfOpenHighLeverageSpots,
+		}
+	);
 
 	const { userAccount, orderParams } = await prepSwiftMarketOrderData(params);
 
@@ -304,7 +317,7 @@ export async function createSwiftMarketOrderMessage(
 			takeProfit: bracketOrders?.takeProfit,
 			stopLoss: bracketOrders?.stopLoss,
 			positionMaxLeverage,
-			isolatedPositionDeposit: isolatedPositionDeposits?.mainDeposit,
+			isolatedPositionDeposit: resolvedDeposits?.mainDeposit,
 		},
 		builderParams,
 	});
@@ -453,27 +466,32 @@ export const createOpenPerpMarketOrderIxs = async ({
 	mainSignerOverride,
 	highLeverageOptions,
 	marginMode,
+	isolatedPositionDepositsOverride,
 	callbacks,
 }: OpenPerpMarketOrderBaseParams): Promise<TransactionInstruction[]> => {
 	if (!amount || amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
 	}
 
-	const isolatedPositionDeposits = resolveIsolatedPositionDeposits({
-		driftClient,
-		user,
-		marketIndex,
-		baseAssetAmount: amount,
-		direction,
-		positionMaxLeverage,
-		marginMode,
-		replenishUnderwaterPositions: true,
-		numOfOpenHighLeverageSpots: highLeverageOptions?.numOfOpenHighLeverageSpots,
-	});
+	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
+		isolatedPositionDepositsOverride,
+		{
+			driftClient,
+			user,
+			marketIndex,
+			baseAssetAmount: amount,
+			direction,
+			positionMaxLeverage,
+			marginMode,
+			replenishUnderwaterPositions: true,
+			numOfOpenHighLeverageSpots:
+				highLeverageOptions?.numOfOpenHighLeverageSpots,
+		}
+	);
 
-	const mainIsolatedDeposit = isolatedPositionDeposits?.mainDeposit;
-	const additionalIsolatedPositionDeposits =
-		isolatedPositionDeposits?.additionalIsolatedPositionDeposits;
+	const mainIsolatedDeposit = resolvedDeposits?.mainDeposit;
+	const resolvedAdditionalDeposits =
+		resolvedDeposits?.additionalIsolatedPositionDeposits;
 
 	const allOrders: OptionalOrderParams[] = [];
 	const allIxs: TransactionInstruction[] = [];
@@ -488,9 +506,9 @@ export const createOpenPerpMarketOrderIxs = async ({
 				positionMaxLeverage,
 				mainSignerOverride
 			),
-			additionalIsolatedPositionDeposits?.length
+			resolvedAdditionalDeposits?.length
 				? Promise.all(
-						additionalIsolatedPositionDeposits.map((deposit) =>
+						resolvedAdditionalDeposits.map((deposit) =>
 							getIsolatedPositionDepositIxIfNeeded(
 								driftClient,
 								user,
