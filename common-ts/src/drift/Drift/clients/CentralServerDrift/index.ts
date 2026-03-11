@@ -907,7 +907,6 @@ export class CentralServerDrift {
 					driftClient: this._driftClient,
 					user,
 					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
-					isolatedPositionDeposit: undefined,
 					mainSignerOverride: signingAuthority,
 				});
 
