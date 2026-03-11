@@ -346,7 +346,10 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	highLeverageOptions,
 	positionMaxLeverage,
 	callbacks,
-}: Omit<OpenPerpMarketOrderBaseParams, 'marginMode'> & {
+}: Omit<
+	OpenPerpMarketOrderBaseParams,
+	'marginMode' | 'isolatedPositionDepositsOverride'
+> & {
 	orderType?: OrderType;
 	price?: BN;
 	direction: PositionDirection;
