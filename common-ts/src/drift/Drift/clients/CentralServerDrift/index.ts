@@ -323,12 +323,11 @@ export class CentralServerDrift {
 			await user.subscribe();
 
 			const authority = user.getUserAccount().authority;
+			const subAccountId = user.getUserAccount().subAccountId;
 			this._driftClient.authority = authority;
 
-			const success = await this._driftClient.addUser(
-				user.getUserAccount().subAccountId,
-				authority
-			);
+			const success = await this._driftClient.addUser(subAccountId, authority);
+			await this._driftClient.switchActiveUser(subAccountId, authority);
 
 			if (!success) {
 				throw new Error('Failed to add user to DriftClient');
