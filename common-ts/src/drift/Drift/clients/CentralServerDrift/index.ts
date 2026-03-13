@@ -528,18 +528,32 @@ export class CentralServerDrift {
 	}
 
 	public async getDeleteUserTxn(
-		userAccountPublicKey: PublicKey,
+		user: User,
 		options?: {
 			txParams?: TxParams;
 		}
 	): Promise<VersionedTransaction | Transaction> {
-		return this.driftClientContextWrapper(userAccountPublicKey, async () => {
-			return deleteUserTxn({
-				driftClient: this._driftClient,
-				userPublicKey: userAccountPublicKey,
-				txParams: options?.txParams ?? this.getTxParams(),
-			});
-		});
+		return this.driftClientContextWrapper(
+			user.userAccountPublicKey,
+			async () => {
+				const userStatsAccount = await fetchUserStatsAccount(
+					this._driftClient.connection,
+					this._driftClient.program,
+					user.getUserAccount().authority
+				);
+
+				if (!userStatsAccount) {
+					throw new Error('User stats account not found');
+				}
+
+				return deleteUserTxn({
+					driftClient: this._driftClient,
+					user,
+					userStatsAccount,
+					txParams: options?.txParams ?? this.getTxParams(),
+				});
+			}
+		);
 	}
 
 	public async getWithdrawTxn(

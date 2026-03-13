@@ -1,38 +1,48 @@
-import { DriftClient, PublicKey, TxParams } from '@drift-labs/sdk';
+import { DriftClient, TxParams, User, UserStatsAccount } from '@drift-labs/sdk';
 
 /**
  * Parameters required for deleting a user instruction
  */
-interface DeleteUserIxParams {
+interface DeleteUserIxsParams {
 	/** The Drift protocol client instance */
 	driftClient: DriftClient;
-	/** The user account to be deleted */
-	userPublicKey: PublicKey;
+	user: User;
+	userStatsAccount: UserStatsAccount;
 }
 
 /**
- * Creates a user deletion instruction.
- *
- * @example
- * ```typescript
- * const deleteIx = await deleteUserIx({
- *   driftClient: driftClient,
- *   user: userClient
- * });
- * ```
+ * Creates user deletion instructions. If the account is a fresh non-idle account,
+ * includes an idle instruction before the deletion instruction.
  */
-export const deleteUserIx = async ({
+export const deleteUserIxs = async ({
 	driftClient,
-	userPublicKey,
-}: DeleteUserIxParams) => {
-	return driftClient.getUserDeletionIx(userPublicKey);
+	user,
+	userStatsAccount,
+}: DeleteUserIxsParams) => {
+	const { canDelete, reason } = user.canBeDeleted(userStatsAccount);
+
+	const userPublicKey = user.userAccountPublicKey;
+
+	if (canDelete) {
+		return [await driftClient.getUserDeletionIx(userPublicKey)];
+	}
+
+	if (reason === 'is-not-idle-fresh-account') {
+		const [idleIx, deleteIx] = await Promise.all([
+			driftClient.getUpdateUserIdleIx(userPublicKey, user.getUserAccount()),
+			driftClient.getUserDeletionIx(userPublicKey),
+		]);
+		return [idleIx, deleteIx];
+	}
+
+	throw new Error(reason);
 };
 
 /**
  * Parameters required for creating a user deletion transaction
  * Extends DeleteUserIxParams with optional transaction parameters
  */
-interface DeleteUserTxnParams extends DeleteUserIxParams {
+interface DeleteUserTxnParams extends DeleteUserIxsParams {
 	/** Optional transaction parameters for customizing the transaction */
 	txParams?: TxParams;
 }
@@ -54,9 +64,10 @@ interface DeleteUserTxnParams extends DeleteUserIxParams {
  */
 export const deleteUserTxn = async ({
 	driftClient,
-	userPublicKey,
+	user,
+	userStatsAccount,
 	txParams,
 }: DeleteUserTxnParams) => {
-	const deleteIx = await deleteUserIx({ driftClient, userPublicKey });
+	const deleteIx = await deleteUserIxs({ driftClient, user, userStatsAccount });
 	return driftClient.buildTransaction(deleteIx, txParams);
 };

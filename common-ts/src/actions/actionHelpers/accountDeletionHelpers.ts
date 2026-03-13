@@ -101,10 +101,9 @@ const getAccountCanBeDeletedInstantly = (
 
 	const userCanBeMarkedIdle = user.canMakeIdle(new BN(currentSlot));
 
-	const accountHasNoOpenPositionsOrOrders =
-		!accountHasOpenPositionsOrOrders(user);
+	const accountHasOpenPerpSpotOrOrders = accountHasOpenPositionsOrOrders(user);
 
-	if (!accountHasNoOpenPositionsOrOrders) {
+	if (accountHasOpenPerpSpotOrOrders) {
 		return 'no';
 	}
 
