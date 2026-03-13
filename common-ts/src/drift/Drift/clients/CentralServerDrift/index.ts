@@ -119,6 +119,12 @@ export class CentralServerDrift {
 	 */
 	private priorityFeeSubscriber!: PriorityFeeSubscriber;
 
+	/**
+	 * Mutex to serialize driftClientContextWrapper calls, preventing
+	 * concurrent mutations of shared DriftClient state.
+	 */
+	private _mutex: Promise<void> = Promise.resolve();
+
 	public readonly markets: CentralServerDriftMarkets;
 
 	/**
@@ -300,6 +306,15 @@ export class CentralServerDrift {
 		operation: (user: User) => Promise<T>,
 		externalWallet?: PublicKey
 	): Promise<T> {
+		// Acquire mutex — wait for any previous operation to finish
+		let release: () => void;
+		const acquire = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const prev = this._mutex;
+		this._mutex = acquire;
+		await prev;
+
 		const user = new User({
 			driftClient: this._driftClient,
 			userAccountPublicKey,
@@ -323,12 +338,11 @@ export class CentralServerDrift {
 			await user.subscribe();
 
 			const authority = user.getUserAccount().authority;
+			const subAccountId = user.getUserAccount().subAccountId;
 			this._driftClient.authority = authority;
 
-			const success = await this._driftClient.addUser(
-				user.getUserAccount().subAccountId,
-				authority
-			);
+			const success = await this._driftClient.addUser(subAccountId, authority);
+			await this._driftClient.switchActiveUser(subAccountId, authority);
 
 			if (!success) {
 				throw new Error('Failed to add user to DriftClient');
@@ -361,8 +375,12 @@ export class CentralServerDrift {
 		} finally {
 			// Cleanup: Always restore original state and unsubscribe
 			this._driftClient.wallet = originalWallet;
+			//@ts-ignore
+			this._driftClient.provider.wallet = originalWallet;
 			this._driftClient.txHandler.updateWallet(originalWallet);
 			this._driftClient.authority = originalAuthority;
+			// clear cached PDA so it doesn't leak between requests
+			this._driftClient.userStatsAccountPublicKey = undefined;
 
 			try {
 				await user.unsubscribe();
@@ -371,6 +389,9 @@ export class CentralServerDrift {
 				console.warn('Error during cleanup:', cleanupError);
 				// Don't throw cleanup errors, but log them
 			}
+
+			// Release mutex — let next queued operation proceed
+			release!();
 		}
 	}
 
