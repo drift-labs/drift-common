@@ -242,14 +242,20 @@ export class DriftOperations {
 			subAccountId,
 			this.driftClient.wallet.publicKey
 		);
+		const userStatsAccount = this.driftClient.userStats?.getAccount();
 
 		if (!user) {
 			throw new Error('User not found');
 		}
 
+		if (!userStatsAccount) {
+			throw new Error('User stats account not found');
+		}
+
 		const deleteTxn = await deleteUserTxn({
 			driftClient: this.driftClient,
-			userPublicKey: user.userClient.userAccountPublicKey,
+			user: user.userClient,
+			userStatsAccount,
 			txParams: this.getTxParams(),
 		});
 
