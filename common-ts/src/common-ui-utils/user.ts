@@ -42,8 +42,7 @@ const getOpenPositionData = (
 		.filter(
 			(position) =>
 				!position.baseAssetAmount.eq(ZERO) ||
-				!position.quoteAssetAmount.eq(ZERO) ||
-				!position.lpShares.eq(ZERO)
+				!position.quoteAssetAmount.eq(ZERO)
 		)
 		.map((position) => {
 			const perpMarketConfig = perpMarketLookup[position.marketIndex];
@@ -198,15 +197,6 @@ const getOpenPositionData = (
 					oraclePriceData,
 					oracleGuardRails,
 					perpMarket.amm.lastUpdateSlot?.toNumber()
-				),
-				lpShares: position.lpShares,
-				remainderBaseAmount: position.remainderBaseAssetAmount ?? 0,
-				lpDeriskPrice: user.liquidationPrice(
-					position.marketIndex,
-					undefined,
-					undefined,
-					'Initial',
-					true
 				),
 				maxMarginRatio: position.maxMarginRatio,
 			};

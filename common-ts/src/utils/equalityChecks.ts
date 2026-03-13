@@ -78,7 +78,6 @@ const areTwoOpenPositionsEqual = (
 		['costBasis', 'bn'],
 		['pnlIsClaimable', 'primitive'],
 		['realizedPnl', 'bn'],
-		['lpShares', 'bn'],
 	];
 
 	return arePropertiesEqual(openPosition1, openPosition2, propertiesToCompare);

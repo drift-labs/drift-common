@@ -30,7 +30,6 @@ const OPEN_POSITION_SOL_LONG: OpenPosition = {
 	costBasis: new BN(100),
 	pnlIsClaimable: true,
 	realizedPnl: new BN(100),
-	lpShares: new BN(100),
 	maxMarginRatio: 20,
 };
 
@@ -58,7 +57,6 @@ const OPEN_POSITION_BTC_SHORT: OpenPosition = {
 	costBasis: new BN(100),
 	realizedPnl: new BN(100),
 	pnlIsClaimable: true,
-	lpShares: new BN(100),
 	maxMarginRatio: 20,
 };
 

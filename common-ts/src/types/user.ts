@@ -29,10 +29,7 @@ export type OpenPosition = {
 	totalUnrealizedPnl: BN;
 	costBasis: BN;
 	realizedPnl: BN;
-	lpShares: BN;
 	pnlIsClaimable: boolean;
-	remainderBaseAmount?: number; // LP only
-	lpDeriskPrice?: BN; //LP only
 	maxMarginRatio: number;
 };
 
