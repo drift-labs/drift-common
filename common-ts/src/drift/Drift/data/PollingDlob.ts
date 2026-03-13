@@ -97,7 +97,7 @@ export class PollingDlob {
 	private dataSubject: Subject<MarketPollingData[]> = new Subject();
 	private errorSubject: Subject<Error> = new Subject();
 	private isStarted = false;
-	private intervalHandle: NodeJS.Timeout | null = null;
+	private intervalHandle: ReturnType<typeof setInterval> | null = null;
 	private tickCounter = 0;
 	private consecutiveEmptyResponseCount = 0;
 	private consecutiveErrorCount = 0;

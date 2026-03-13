@@ -161,8 +161,8 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 		Omit<WebSocketSubscriptionState<T>, 'wsUrl' | 'subscriptionId'>
 	>;
 	private reconnectionManager: ReconnectionManager;
-	private closeTimeout: NodeJS.Timeout | null = null;
-	private heartbeatTimeout: NodeJS.Timeout | null = null;
+	private closeTimeout: ReturnType<typeof setTimeout> | null = null;
+	private heartbeatTimeout: ReturnType<typeof setTimeout> | null = null;
 	private heartbeatMonitoringEnabled: boolean = false;
 	private heartbeatTimeoutMs: number = DEFAULT_HEARTBEAT_TIMEOUT_MS;
 
