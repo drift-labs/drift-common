@@ -1,6 +1,7 @@
 export { default as Accordion } from './components/Accordion';
 export { default as Account } from './components/Account';
 export { default as Add } from './components/Add';
+export { default as AddressBook } from './components/AddressBook';
 export { default as AlertTriangle } from './components/AlertTriangle';
 export { default as Amplify } from './components/Amplify';
 export { default as Apple } from './components/Apple';
