@@ -1,0 +1,25 @@
+{
+  "name": "@drift-labs/posthog-types",
+  "version": "0.0.1",
+  "description": "Shared PostHog event type definitions for Drift",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/drift-labs/drift-common/tree/master/posthog-types"
+  },
+  "author": "Drift Labs",
+  "scripts": {
+    "build": "yarn clean && tsc",
+    "clean": "rm -rf lib",
+    "prepublishOnly": "yarn build"
+  },
+  "files": ["lib"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "typescript": "5.4.5"
+  }
+}
