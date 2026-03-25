@@ -19,7 +19,7 @@ export type TradeEvents = {
 		debugInfo: unknown;
 	};
 	trade_order_params_requested: {
-		user_account_pubkey: string;
+		user_account_pubkey: unknown;
 		url_params: Record<string, string>;
 		oracle_price: unknown;
 		mm_oracle_price: unknown;
@@ -82,7 +82,8 @@ export type TradeEvents = {
 		message: string;
 	};
 	trade_oracle_mark_divergence: {
-		market: string;
+		orderType?: unknown;
+		market: unknown;
 		markPrice: number;
 		oraclePrice: number;
 		absPriceDiff: number;
@@ -92,7 +93,7 @@ export type TradeEvents = {
 		markPriceInMarketStateStore: number;
 		oraclePriceInMarketStateStore: number;
 		userSettings: unknown;
-		swiftEnabled: boolean;
+		swiftEnabled?: boolean;
 	};
 	trade_close_multiple_positions_batched: {
 		total_positions: number;
