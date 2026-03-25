@@ -10,7 +10,7 @@ export function abbreviateAccountName(
 		ellipsisMiddle?: boolean;
 	}
 ) {
-	if (name.length < size) return name;
+	if (name.length <= size) return name;
 
 	if (opts?.ellipsisMiddle) {
 		const length = name.length;
