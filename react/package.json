@@ -17,7 +17,7 @@
 		"lib": "lib"
 	},
 	"devDependencies": {
-		"@drift-labs/sdk": "^2.158.0-beta.0",
+		"@drift-labs/sdk": "2.159.0-beta.2",
 		"@solana/spl-token": "0.3.8",
 		"@solana/web3.js": "1.98.0",
 		"@types/react": "npm:types-react@19.0.0-rc.1",
@@ -63,6 +63,7 @@
 		"@ledgerhq/errors": "6.16.3",
 		"@solana/web3.js": "1.98.0",
 		"@solana/errors": "2.0.0-preview.4",
-		"@solana/codecs-data-structures": "2.0.0-preview.4"
+		"@solana/codecs-data-structures": "2.0.0-preview.4",
+		"@drift-labs/sdk": "2.159.0-beta.2"
 	}
 }
