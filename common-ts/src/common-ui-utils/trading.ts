@@ -368,7 +368,44 @@ export const isEntirePositionOrder = (orderAmount: BigNum): boolean => {
 		MAX_LEVERAGE_ORDER_SIZE,
 		orderAmount.precision
 	);
-	return Math.abs(maxLeverageSize.sub(orderAmount).toNum()) < 1;
+
+	const isMaxLeverage = Math.abs(maxLeverageSize.sub(orderAmount).toNum()) < 1;
+
+	// Some order paths produce a truncated u64::MAX instead of MAX_LEVERAGE_ORDER_SIZE
+	const ALTERNATIVE_MAX_ORDER_SIZE = '18446744072000000000';
+	const alternativeMaxSize = new BigNum(
+		ALTERNATIVE_MAX_ORDER_SIZE,
+		orderAmount.precision
+	);
+	const isAlternativeMax =
+		Math.abs(alternativeMaxSize.sub(orderAmount).toNum()) < 1;
+
+	return isMaxLeverage || isAlternativeMax;
+};
+
+/**
+ * Gets the MAX_LEVERAGE_ORDER_SIZE as a BigNum with the same precision as the given amount
+ * @param orderAmount - The BigNum order amount to match precision with
+ * @returns BigNum representation of MAX_LEVERAGE_ORDER_SIZE
+ */
+export const getMaxLeverageOrderSize = (orderAmount: BigNum): BigNum => {
+	return new BigNum(MAX_LEVERAGE_ORDER_SIZE, orderAmount.precision);
+};
+
+/**
+ * Formats an order size for display, showing "Entire Position" if it's a max leverage order
+ * @param orderAmount - The BigNum order amount to format
+ * @param formatFn - Optional custom format function, defaults to prettyPrint()
+ * @returns Formatted string showing either "Entire Position" or the formatted amount
+ */
+export const formatOrderSize = (
+	orderAmount: BigNum,
+	formatFn?: (amount: BigNum) => string
+): string => {
+	if (isEntirePositionOrder(orderAmount)) {
+		return 'Entire Position';
+	}
+	return formatFn ? formatFn(orderAmount) : orderAmount.prettyPrint();
 };
 
 /**
@@ -460,6 +497,8 @@ export const TRADING_UTILS = {
 	getMarketStepSize,
 	getMarketStepSizeDecimals,
 	isEntirePositionOrder,
+	getMaxLeverageOrderSize,
+	formatOrderSize,
 	getMarginUsedForPosition,
 	validateLeverageChange,
 };

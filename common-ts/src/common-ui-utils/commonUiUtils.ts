@@ -58,7 +58,9 @@ function getCachedUiString(
 	switch (pattern) {
 		case 'abbreviate': {
 			const [authString, length] = values as [string, number];
-			result = `${authString.slice(0, length)}...${authString.slice(-length)}`;
+			result = `${authString.slice(0, length)}\u2026${authString.slice(
+				-length
+			)}`;
 			break;
 		}
 		case 'userKey': {
@@ -87,7 +89,7 @@ function getCachedUiString(
 const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
 const ACCOUNT_INITIALIZATION_RETRY_ATTEMPTS = 5;
 
-const abbreviateAddress = (address: string | PublicKey, length = 4) => {
+export const abbreviateAddress = (address: string | PublicKey, length = 4) => {
 	if (!address) return '';
 	const authString = address.toString();
 	return getCachedUiString('abbreviate', authString, length);
