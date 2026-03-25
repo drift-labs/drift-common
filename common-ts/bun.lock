@@ -4,7 +4,7 @@
     "": {
       "name": "@drift-labs/common",
       "dependencies": {
-        "@drift-labs/sdk": "^2.159.0-beta.2",
+        "@drift-labs/sdk": "^2.161.0-beta.4",
         "@solana/spl-token": "^0.4.14",
         "@solana/web3.js": "1.98.0",
         "bcryptjs-react": "2.4.6",
@@ -41,7 +41,7 @@
         "vm-browserify": "^1.1.2",
       },
       "peerDependencies": {
-        "@drift-labs/sdk": "^2.158.0-beta.3",
+        "@drift-labs/sdk": "^2.161.0-beta.4",
         "@solana/web3.js": "1.98.0",
       },
     },
