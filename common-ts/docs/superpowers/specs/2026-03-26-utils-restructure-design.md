@@ -41,17 +41,19 @@ src/
 
     math/
       index.ts
-      numbers.ts          # calculateMean, calculateMedian, calculateStdDev, calculateZScore
+      numbers.ts          # calculateMean, calculateMedian, calculateStandardDeviation,
+                          # calculateZScore, getPctCompletion, roundToDecimal, aprFromApy
       bn.ts               # bnMin, bnMax, bnMean, bnMedian, sortBnAsc, sortBnDesc
       bignum.ts           # roundBigNumToDecimalPlace, getBigNumRoundedToStepSize
-      precision.ts        # roundToStepSize, truncateInputToPrecision, valueIsBelowStepSize,
+      precision.ts        # roundToStepSize, roundToStepSizeIfLargeEnough,
+                          # truncateInputToPrecision, valueIsBelowStepSize,
                           # numbersFitEvenly, dividesExactly, TRADE_PRECISION
       spread.ts           # calculateSpread, calculateSpreadBidAskMark, calculateMarkPrice,
-                          # calculateBidAskAndmarkPrice
+                          # calculateBidAskAndmarkPrice (+ private helpers:
+                          # calculateSpreadQuote, calculateSpreadPct)
       price.ts            # getPriceForBaseAndQuoteAmount, getPriceForOrderRecord,
-                          # getPriceForUIOrderRecord, calculateAverageEntryPrice, aprFromApy,
-                          # getPctCompletion
-      sort.ts             # getTieredSortScore, sortRecordsByTs, roundToDecimal
+                          # getPriceForUIOrderRecord, calculateAverageEntryPrice
+      sort.ts             # getTieredSortScore, sortRecordsByTs
 
     strings/
       index.ts
@@ -88,10 +90,12 @@ src/
       index.ts
       auction.ts          # getMarketAuctionParams, getLimitAuctionParams,
                           # deriveMarketOrderParams, getPriceObject
-      pnl.ts              # calculatePnlPctFromPosition, calculatePotentialProfit
+      pnl.ts              # calculatePnlPctFromPosition, calculatePotentialProfit,
+                          # POTENTIAL_PROFIT_DEFAULT_STATE
       liquidation.ts      # calculateLiquidationPriceAfterPerpTrade
       leverage.ts         # convertLeverageToMarginRatio, convertMarginRatioToLeverage,
                           # validateLeverageChange, getMarginUsedForPosition
+      lp.ts               # getLpSharesAmountForQuote, getQuoteValueForLpShares
       price.ts            # getMarketOrderLimitPrice, checkIsMarketOrderType
       size.ts             # getMarketTickSize, getMarketTickSizeDecimals,
                           # getMarketStepSize, getMarketStepSizeDecimals,
@@ -120,7 +124,8 @@ src/
                           # getLatestOfTwoUIOrderRecords, getLatestOfTwoOrderRecords,
                           # getUIOrderRecordsLaterThanTarget
       oracle.ts           # getLimitPriceFromOracleOffset, isAuctionEmpty
-      flags.ts            # getPerpOrderParamsBitFlags, getPerpAuctionDuration
+      flags.ts            # getPerpOrderParamsBitFlags, getPerpAuctionDuration,
+                          # HighLeverageOptions (type)
       misc.ts             # orderIsNull, getTradeInfoFromActionRecord, getAnchorEnumString
 
     positions/
@@ -131,8 +136,13 @@ src/
     accounts/
       index.ts
       init.ts             # initializeAndSubscribeToNewUserAccount,
-                          # awaitAccountInitializationChainState
+                          # awaitAccountInitializationChainState, updateUserAccount (private),
+                          # ACCOUNT_INITIALIZATION_RETRY_DELAY_MS,
+                          # ACCOUNT_INITIALIZATION_RETRY_ATTEMPTS
       keys.ts             # getUserKey, getIdAndAuthorityFromKey, getMarketKey
+                          # (includes uiStringCache + getCachedUiString private helpers,
+                          # shared with abbreviateAddress in strings/format.ts via
+                          # a shared cache utility in core/)
       subaccounts.ts      # fetchCurrentSubaccounts, fetchUserClientsAndAccounts, userExists
       wallet.ts           # createPlaceholderIWallet, WalletConnectionState (class + enums)
       signature.ts        # verifySignature, hashSignature, compareSignatures,
@@ -147,13 +157,15 @@ src/
       data-structures.ts  # Ref, Counter, MultiSwitch
       equality.ts         # arePropertiesEqual, areTwoOpenPositionsEqual,
                           # areOpenPositionListsEqual, EQUALITY_CHECKS
+      cache.ts            # uiStringCache, getCachedUiString (shared by strings/format.ts
+                          # and accounts/keys.ts)
       fetch.ts            # encodeQueryParams
       serialization.ts    # encodeStringifiableObject, decodeStringifiableObject
 
     # ─── Non-domain files (stay at utils/ level, not in a domain module) ───
     logger.ts             # unchanged (Node/winston)
     logger.browser.ts     # unchanged (browser stub)
-    feature-flags.ts      # FEATURE_FLAGS
+    featureFlags.ts       # FEATURE_FLAGS (note: camelCase filename, not hyphenated)
     geoblock/             # checkGeoBlock
     settings/             # VersionedSettingsHandler (moved from common-ui-utils/settings)
     priority-fees/        # PriorityFeeCalculator, strategies
@@ -188,6 +200,12 @@ src/
     utils.ts              # Reconstructs COMMON_UTILS by importing from new locations
     common-ui-utils.ts    # Reconstructs COMMON_UI_UTILS (+ TRADING_UTILS, MARKET_UTILS,
                           # ORDER_COMMON_UTILS, USER_UTILS spread in)
+    common-math.ts        # Reconstructs COMMON_MATH namespace
+    equality-checks.ts    # Reconstructs EQUALITY_CHECKS namespace
+    trading-utils.ts      # Reconstructs TRADING_UTILS namespace
+    market-utils.ts       # Reconstructs MARKET_UTILS namespace
+    order-utils.ts        # Reconstructs ORDER_COMMON_UTILS namespace
+    user-utils.ts         # Reconstructs USER_UTILS namespace
 
   # ─── Unchanged ───
   clients/
@@ -273,29 +291,97 @@ Types that were previously exported alongside deprecated utils (e.g., `PartialOr
 
 ### Exports field
 
+Each subpath entry includes both `types` and `default` conditions for proper TypeScript
+resolution with `moduleResolution: "node16"` or `"nodenext"`:
+
 ```json
 {
   "exports": {
-    ".": "./lib/index.js",
-    "./clients": "./lib/clients/index.js",
-    "./utils/math": "./lib/utils/math/index.js",
-    "./utils/strings": "./lib/utils/strings/index.js",
-    "./utils/enum": "./lib/utils/enum/index.js",
-    "./utils/validation": "./lib/utils/validation/index.js",
-    "./utils/token": "./lib/utils/token/index.js",
-    "./utils/trading": "./lib/utils/trading/index.js",
-    "./utils/markets": "./lib/utils/markets/index.js",
-    "./utils/orders": "./lib/utils/orders/index.js",
-    "./utils/positions": "./lib/utils/positions/index.js",
-    "./utils/accounts": "./lib/utils/accounts/index.js",
-    "./utils/core": "./lib/utils/core/index.js"
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./clients": {
+      "types": "./lib/clients/index.d.ts",
+      "default": "./lib/clients/index.js"
+    },
+    "./utils/math": {
+      "types": "./lib/utils/math/index.d.ts",
+      "default": "./lib/utils/math/index.js"
+    },
+    "./utils/strings": {
+      "types": "./lib/utils/strings/index.d.ts",
+      "default": "./lib/utils/strings/index.js"
+    },
+    "./utils/enum": {
+      "types": "./lib/utils/enum/index.d.ts",
+      "default": "./lib/utils/enum/index.js"
+    },
+    "./utils/validation": {
+      "types": "./lib/utils/validation/index.d.ts",
+      "default": "./lib/utils/validation/index.js"
+    },
+    "./utils/token": {
+      "types": "./lib/utils/token/index.d.ts",
+      "default": "./lib/utils/token/index.js"
+    },
+    "./utils/trading": {
+      "types": "./lib/utils/trading/index.d.ts",
+      "default": "./lib/utils/trading/index.js"
+    },
+    "./utils/markets": {
+      "types": "./lib/utils/markets/index.d.ts",
+      "default": "./lib/utils/markets/index.js"
+    },
+    "./utils/orders": {
+      "types": "./lib/utils/orders/index.d.ts",
+      "default": "./lib/utils/orders/index.js"
+    },
+    "./utils/positions": {
+      "types": "./lib/utils/positions/index.d.ts",
+      "default": "./lib/utils/positions/index.js"
+    },
+    "./utils/accounts": {
+      "types": "./lib/utils/accounts/index.d.ts",
+      "default": "./lib/utils/accounts/index.js"
+    },
+    "./utils/core": {
+      "types": "./lib/utils/core/index.d.ts",
+      "default": "./lib/utils/core/index.js"
+    }
+  }
+}
+```
+
+### typesVersions (fallback for `moduleResolution: "node"`)
+
+Consumers using the legacy `moduleResolution: "node"` in their `tsconfig.json` will not
+resolve subpath exports. The `typesVersions` field provides a fallback for TypeScript type
+resolution in that mode:
+
+```json
+{
+  "typesVersions": {
+    "*": {
+      "utils/math": ["lib/utils/math/index.d.ts"],
+      "utils/strings": ["lib/utils/strings/index.d.ts"],
+      "utils/enum": ["lib/utils/enum/index.d.ts"],
+      "utils/validation": ["lib/utils/validation/index.d.ts"],
+      "utils/token": ["lib/utils/token/index.d.ts"],
+      "utils/trading": ["lib/utils/trading/index.d.ts"],
+      "utils/markets": ["lib/utils/markets/index.d.ts"],
+      "utils/orders": ["lib/utils/orders/index.d.ts"],
+      "utils/positions": ["lib/utils/positions/index.d.ts"],
+      "utils/accounts": ["lib/utils/accounts/index.d.ts"],
+      "utils/core": ["lib/utils/core/index.d.ts"]
+    }
   }
 }
 ```
 
 ### Browser field
 
-Updated to point to new logger location (same file, same path — `utils/logger.ts` stays in place):
+Unchanged — `utils/logger.ts` stays in place:
 
 ```json
 {
@@ -325,7 +411,7 @@ export * from './utils/core';
 
 // Non-domain utils (unchanged paths)
 export * from './utils/logger';
-export * from './utils/feature-flags';
+export * from './utils/featureFlags';
 export * from './utils/candles/Candle';
 export * from './utils/rpcLatency';
 export * from './utils/SharedInterval';
@@ -337,29 +423,29 @@ export * from './utils/dlob-server/DlobServerWebsocketUtils';
 export * from './utils/orderbook';
 export * from './utils/pollingSequenceGuard';
 export * from './utils/driftEvents';
-export * from './utils/MultiplexWebSocket';
 export * from './utils/SlotBasedResultValidator';
 export * from './utils/CircularBuffers';
 export * from './utils/rxjs';
 export * from './utils/priorityFees';
 export * from './utils/NumLib';
-export * from './utils/markets/precisions';
 export * from './utils/s3Buckets';
-export * from './utils/WalletConnectionState';  // re-exported from accounts/ too
 export { default as millify } from './utils/millify';
 export { getSwiftConfirmationTimeoutMs } from './utils/signedMsgs';
 export { ResultSlotIncrementer } from './utils/ResultSlotIncrementer';
 export { MultiplexWebSocket } from './utils/MultiplexWebSocket';
+
+// Settings
+export * from './utils/settings/settings';
 
 // Deprecation facades (backwards compat)
 export { COMMON_UTILS } from './_deprecated/utils';
 export { COMMON_UI_UTILS } from './_deprecated/common-ui-utils';
 export { COMMON_MATH } from './_deprecated/common-math';
 export { EQUALITY_CHECKS } from './_deprecated/equality-checks';
-// TRADING_UTILS, MARKET_UTILS, ORDER_COMMON_UTILS, USER_UTILS also re-exported
-
-// Settings
-export * from './utils/settings/settings';
+export { TRADING_UTILS } from './_deprecated/trading-utils';
+export { MARKET_UTILS } from './_deprecated/market-utils';
+export { ORDER_COMMON_UTILS } from './_deprecated/order-utils';
+export { USER_UTILS } from './_deprecated/user-utils';
 
 // Other unchanged exports
 export * from './Config';
@@ -406,6 +492,7 @@ export { DriftErrors };
 ## Risks
 
 - **Circular dependencies**: Moving code between modules may introduce cycles. `madge --circular` must pass.
-- **Re-export conflicts**: Two domain modules exporting the same name. The audit found no naming conflicts, but must verify during implementation.
+- **Re-export conflicts**: Two domain modules exporting the same name. The audit found no naming conflicts, but must verify during implementation. Specifically watch for `WalletConnectionState` (must be exported from `accounts/` only, not duplicated at `utils/` level).
 - **Browser field**: Logger path must be kept in sync with package.json browser field.
 - **Consumers using deep imports**: Any external user importing `@drift-labs/common/lib/utils/index` directly (bypassing the exports field) will break. This is acceptable — deep `lib/` imports are not part of the public API.
+- **TypeScript `moduleResolution: "node"` compatibility**: Consumers using the legacy `moduleResolution: "node"` will not resolve subpath exports. The `typesVersions` field in `package.json` provides a fallback for type resolution, but runtime resolution requires Node.js 12.7+ (not a concern given `engines: "^24.x.x"`).
