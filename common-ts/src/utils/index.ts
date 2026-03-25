@@ -29,27 +29,8 @@ import {
 import { getIfStakingVaultApr, getIfVaultBalance } from './insuranceFund';
 import { AccountInfo, Connection } from '@solana/web3.js';
 
-export const matchEnum = (enum1: any, enum2) => {
-	return JSON.stringify(enum1) === JSON.stringify(enum2);
-};
-
-function enumToObj(enumStr: string) {
-	if (!enumStr) return undefined;
-
-	return {
-		[enumStr ?? '']: {},
-	};
-}
-
-function enumToStr(enumStr: Record<string, any>) {
-	return Object.keys(enumStr ?? {})?.[0];
-}
-
-export const ENUM_UTILS = {
-	match: matchEnum,
-	toObj: enumToObj,
-	toStr: enumToStr,
-};
+import { matchEnum, ENUM_UTILS } from './enum';
+export { matchEnum, ENUM_UTILS };
 
 export async function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));

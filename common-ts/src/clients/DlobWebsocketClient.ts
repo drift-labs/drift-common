@@ -1,12 +1,12 @@
 'use client';
 
+import { MarketId } from '../types/MarketId';
+import { deserializeL2Response } from '../utils/orderbook';
 import {
-	MarketId,
-	deserializeL2Response,
 	OrderbookGrouping,
 	DLOB_SERVER_WEBSOCKET_UTILS,
 	DlobServerChannel,
-} from '..';
+} from '../utils/dlob-server/DlobServerWebsocketUtils';
 import { Observable, Subject, BehaviorSubject, EMPTY } from 'rxjs';
 import {
 	map,
