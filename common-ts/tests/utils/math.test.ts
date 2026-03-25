@@ -1,5 +1,13 @@
 import { BN, L2OrderBook } from '@drift-labs/sdk';
-import { COMMON_MATH } from '../../src/utils/math';
+import {
+	COMMON_MATH,
+	numbersFitEvenly,
+	roundToStepSizeIfLargeEnough,
+	sortBnAsc,
+	sortBnDesc,
+	truncateInputToPrecision,
+	valueIsBelowStepSize,
+} from '../../src/utils/math';
 import { expect } from 'chai';
 
 // Mock data setup
@@ -59,5 +67,42 @@ describe('COMMON_MATH Tests', () => {
 			expect(result_2.spreadQuote).to.be.undefined;
 			expect(result_2.spreadPct).to.be.undefined;
 		});
+	});
+});
+
+describe('numbersFitEvenly', () => {
+	it('detects evenly divisible cases with floats', () => {
+		expect(numbersFitEvenly(5.1, 0.1)).to.equal(true);
+		expect(numbersFitEvenly(5, 2)).to.equal(false);
+		expect(numbersFitEvenly(0, 7)).to.equal(true);
+	});
+});
+
+describe('BN sorting', () => {
+	it('sortBnAsc and sortBnDesc compare big numbers correctly', () => {
+		const a = new BN(5);
+		const b = new BN(10);
+		expect(sortBnAsc(a, b)).to.equal(-1);
+		expect(sortBnAsc(b, a)).to.equal(1);
+		expect(sortBnAsc(a, a)).to.equal(0);
+		expect(sortBnDesc(a, b)).to.equal(1);
+		expect(sortBnDesc(b, a)).to.equal(-1);
+	});
+});
+
+describe('step/truncation utilities', () => {
+	it('roundToStepSizeIfLargeEnough truncates to step decimals without rounding', () => {
+		expect(roundToStepSizeIfLargeEnough('1.23456', 0.01)).to.equal('1.23');
+		expect(roundToStepSizeIfLargeEnough('0.0000001', 0.01)).to.equal('0.00');
+	});
+
+	it('truncateInputToPrecision slices extra decimals', () => {
+		expect(truncateInputToPrecision('123.4567', new BN(2))).to.equal('123.45');
+		expect(truncateInputToPrecision('123', new BN(2))).to.equal('123');
+	});
+
+	it('valueIsBelowStepSize compares numeric values', () => {
+		expect(valueIsBelowStepSize('0.009', 0.01)).to.equal(true);
+		expect(valueIsBelowStepSize('0.01', 0.01)).to.equal(false);
 	});
 });

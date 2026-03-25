@@ -1,4 +1,11 @@
-import { BN, L2OrderBook, PERCENTAGE_PRECISION, ZERO } from '@drift-labs/sdk';
+import {
+	BigNum,
+	BN,
+	L2OrderBook,
+	PERCENTAGE_PRECISION,
+	SpotMarketConfig,
+	ZERO,
+} from '@drift-labs/sdk';
 
 const calculateMarkPrice = (
 	bestBidPrice?: BN,
@@ -101,6 +108,125 @@ const calculateSpreadBidAskMark = (
 		spreadPct,
 		spreadQuote,
 	};
+};
+
+export const TRADE_PRECISION = 6;
+
+export const getPctCompletion = (
+	start: number,
+	end: number,
+	current: number
+) => {
+	const totalProgressSize = end - start;
+	const currentProgressSize = current - start;
+
+	return (currentProgressSize / totalProgressSize) * 100;
+};
+
+export const sortBnAsc = (bnA: BN, bnB: BN) => {
+	if (bnA.gt(bnB)) return 1;
+	if (bnA.eq(bnB)) return 0;
+	if (bnA.lt(bnB)) return -1;
+
+	return 0;
+};
+
+export const sortBnDesc = (bnA: BN, bnB: BN) => sortBnAsc(bnB, bnA);
+
+export const getBigNumRoundedToStepSize = (baseSize: BigNum, stepSize: BN) => {
+	const baseSizeRounded = baseSize.div(stepSize).mul(stepSize);
+	return baseSizeRounded;
+};
+
+export const truncateInputToPrecision = (
+	input: string,
+	marketPrecisionExp: SpotMarketConfig['precisionExp']
+) => {
+	const decimalPlaces = input.split('.')[1]?.length ?? 0;
+	const maxDecimals = marketPrecisionExp.toNumber();
+
+	if (decimalPlaces > maxDecimals) {
+		return input.slice(0, input.length - (decimalPlaces - maxDecimals));
+	}
+
+	return input;
+};
+
+export const roundToStepSize = (value: string, stepSize?: number) => {
+	const stepSizeExp = stepSize?.toString().split('.')[1]?.length ?? 0;
+	const truncatedValue = truncateInputToPrecision(value, new BN(stepSizeExp));
+
+	if (truncatedValue.charAt(truncatedValue.length - 1) === '.') {
+		return truncatedValue.slice(0, -1);
+	}
+
+	return truncatedValue;
+};
+
+export const roundToStepSizeIfLargeEnough = (
+	value: string,
+	stepSize?: number
+) => {
+	const parsedValue = parseFloat(value);
+	if (isNaN(parsedValue) || stepSize === 0 || !value || parsedValue === 0) {
+		return value;
+	}
+
+	return roundToStepSize(value, stepSize);
+};
+
+export const valueIsBelowStepSize = (value: string, stepSize: number) => {
+	const parsedValue = parseFloat(value);
+
+	if (isNaN(parsedValue)) return false;
+
+	return parsedValue < stepSize;
+};
+
+/**
+ * NOTE: Do not use modulo alone to check if numbers fit evenly.
+ * Due to floating point precision issues this can return incorrect results.
+ * i.e. 5.1 % 0.1 = 0.09999999999999959 (should be 0)
+ * tells me 5.1 / 0.1 = 50.99999999999999
+ */
+export const numbersFitEvenly = (
+	numberOne: number,
+	numberTwo: number
+): boolean => {
+	if (isNaN(numberOne) || isNaN(numberTwo)) return false;
+	if (numberOne === 0 || numberTwo === 0) return true;
+
+	return (
+		Number.isInteger(Number((numberOne / numberTwo).toFixed(9))) ||
+		numberOne % numberTwo === 0
+	);
+};
+
+export function roundToDecimal(
+	value: number,
+	decimals: number | undefined | null
+) {
+	return decimals ? Math.round(value * 10 ** decimals) / 10 ** decimals : value;
+}
+
+export const roundBigNumToDecimalPlace = (
+	bignum: BigNum,
+	decimalPlaces: number
+): BigNum => {
+	const factor = Math.pow(10, decimalPlaces);
+	const newNum = Math.round(bignum.toNum() * factor) / factor;
+	return BigNum.fromPrint(newNum.toString(), bignum.precision);
+};
+
+export const sortRecordsByTs = <T extends { ts: BN }[]>(
+	records: T | undefined,
+	direction: 'asc' | 'desc' = 'desc'
+) => {
+	if (!records || !records?.length) return [];
+
+	return direction === 'desc'
+		? [...records].sort((a, b) => b.ts.toNumber() - a.ts.toNumber())
+		: [...records].sort((a, b) => a.ts.toNumber() - b.ts.toNumber());
 };
 
 export const COMMON_MATH = {
