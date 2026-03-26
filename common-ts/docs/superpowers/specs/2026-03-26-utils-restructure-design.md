@@ -164,7 +164,6 @@ src/
 
     # ─── Non-domain files (stay at utils/ level, not in a domain module) ───
     logger.ts             # unchanged (Node/winston)
-    logger.browser.ts     # unchanged (browser stub)
     featureFlags.ts       # FEATURE_FLAGS (note: camelCase filename, not hyphenated)
     geoblock/             # checkGeoBlock
     settings/             # VersionedSettingsHandler (moved from common-ui-utils/settings)
@@ -381,15 +380,7 @@ resolution in that mode:
 
 ### Browser field
 
-Unchanged — `utils/logger.ts` stays in place:
-
-```json
-{
-  "browser": {
-    "./lib/utils/logger.js": "./lib/utils/logger.browser.js"
-  }
-}
-```
+Logger browser stub has been removed — no `browser` field needed.
 
 ## `src/index.ts` (Main Barrel)
 
