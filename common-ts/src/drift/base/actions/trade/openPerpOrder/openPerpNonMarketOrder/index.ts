@@ -26,10 +26,8 @@ import {
 	resolveBaseAssetAmount,
 } from '../../../../../utils/orderParams';
 import { ENUM_UTILS } from '../../../../../../utils';
-import {
-	HighLeverageOptions,
-	ORDER_COMMON_UTILS,
-} from '../../../../../../common-ui-utils';
+import { ORDER_COMMON_UTILS } from '../../../../../../_deprecated/order-utils';
+import { HighLeverageOptions } from '../../../../../../utils/orders';
 import { createPlaceAndTakePerpMarketOrderIx } from '../openPerpMarketOrder';
 import {
 	TxnOrSwiftResult,

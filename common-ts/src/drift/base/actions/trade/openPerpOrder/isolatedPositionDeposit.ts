@@ -10,7 +10,7 @@ import {
 	ZERO,
 } from '@drift-labs/sdk';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { TRADING_UTILS } from '../../../../../common-ui-utils/trading';
+import { TRADING_UTILS } from '../../../../../_deprecated/trading-utils';
 import {
 	AdditionalIsolatedPositionDeposit,
 	IsolatedPositionDepositsOverride,

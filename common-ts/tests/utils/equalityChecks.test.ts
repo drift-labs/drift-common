@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import {
 	EQUALITY_CHECKS,
 	PropertyAndType,
-} from '../../src/utils/equalityChecks';
+} from '../../src/utils/core/equality';
 import { BN, BigNum } from '@drift-labs/sdk';
 import { OpenPosition } from '../../src/types';
 

@@ -19,7 +19,7 @@ import {
 	MappedAuctionParams,
 	AuctionParamsFetchedCallback,
 } from '../../../../../utils/auctionParamsResponseMapper';
-import { encodeQueryParams } from '../../../../../../utils/fetch';
+import { encodeQueryParams } from '../../../../../../utils/core/fetch';
 import { MarketId, TradeOffsetPrice } from '../../../../../../types';
 import {
 	convertToL2OrderBook,
@@ -33,7 +33,7 @@ import {
 } from '../../../../../../utils/orderbook/types';
 import { PollingSequenceGuard } from '../../../../../../utils/pollingSequenceGuard';
 import { calculatePriceImpactFromL2 } from '../../../../../../utils/priceImpact';
-import { COMMON_UI_UTILS } from '../../../../../../common-ui-utils';
+import { COMMON_UI_UTILS } from '../../../../../../_deprecated/common-ui-utils';
 import invariant from 'tiny-invariant';
 
 export interface OptionalAuctionParamsRequestInputs {

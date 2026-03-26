@@ -10,7 +10,7 @@ import { UIEnv } from '../types/UIEnv';
 import { Candle } from '../utils/candles/Candle';
 import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
 import { CandleClient } from './candleClient';
-import { MARKET_UTILS } from '../common-ui-utils/market';
+import { MARKET_UTILS } from '../_deprecated/market-utils';
 
 const DRIFT_V2_START_TS = 1668470400; // 15th November 2022 ... 2022-11-15T00:00:00.000Z
 

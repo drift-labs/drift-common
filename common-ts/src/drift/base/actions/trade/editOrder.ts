@@ -21,7 +21,7 @@ import {
 	LimitOrderParamsOrderConfig,
 } from './openPerpOrder/types';
 import { WithTxnParams } from '../../types';
-import { HighLeverageOptions } from '../../../../common-ui-utils/order';
+import { HighLeverageOptions } from '../../../../utils/orders';
 
 /**
  * Parameters for editing an existing order

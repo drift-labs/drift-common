@@ -1,6 +1,6 @@
 import { DriftClient, User } from '@drift-labs/sdk';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { TRADING_UTILS } from '../../../../../common-ui-utils/trading';
+import { TRADING_UTILS } from '../../../../../_deprecated/trading-utils';
 
 /**
  * Helper function to determine if leverage needs updating and create the instruction if needed.

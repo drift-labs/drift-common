@@ -11,8 +11,8 @@ import {
 	VersionedTransaction,
 } from '@solana/web3.js';
 import { WithTxnParams } from '../../types';
-import { TRADING_UTILS } from '../../../../common-ui-utils/trading';
-import { MARKET_UTILS } from '../../../../common-ui-utils';
+import { TRADING_UTILS } from '../../../../_deprecated/trading-utils';
+import { MARKET_UTILS } from '../../../../_deprecated/market-utils';
 
 export interface CreateUpdateMarketMaxLeverageIxsParams {
 	driftClient: DriftClient;

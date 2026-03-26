@@ -13,10 +13,8 @@ import {
 	OptionalOrderParams,
 	PublicKey,
 } from '@drift-labs/sdk';
-import {
-	ENUM_UTILS,
-	getSwiftConfirmationTimeoutMs,
-} from '../../../../../../utils';
+import { ENUM_UTILS } from '../../../../../../utils';
+import { getSwiftConfirmationTimeoutMs } from '../../../../../../utils/signedMsgs';
 import {
 	SwiftClient,
 	SwiftOrderConfirmedEvent,
@@ -28,7 +26,7 @@ import {
 import { MarketId } from '../../../../../../types';
 import { Observable, Subscription } from 'rxjs';
 import { OptionalTriggerOrderParams } from '../types';
-import { TRADING_UTILS } from '../../../../../../common-ui-utils/trading';
+import { TRADING_UTILS } from '../../../../../../_deprecated/trading-utils';
 import { Connection } from '@solana/web3.js';
 
 /**

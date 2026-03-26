@@ -59,8 +59,73 @@
 		"lib": "lib"
 	},
 	"exports": {
-		".": "./lib/index.js",
-		"./clients": "./lib/clients/index.js"
+		".": {
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
+		},
+		"./clients": {
+			"types": "./lib/clients/index.d.ts",
+			"default": "./lib/clients/index.js"
+		},
+		"./utils/math": {
+			"types": "./lib/utils/math/index.d.ts",
+			"default": "./lib/utils/math/index.js"
+		},
+		"./utils/strings": {
+			"types": "./lib/utils/strings/index.d.ts",
+			"default": "./lib/utils/strings/index.js"
+		},
+		"./utils/enum": {
+			"types": "./lib/utils/enum/index.d.ts",
+			"default": "./lib/utils/enum/index.js"
+		},
+		"./utils/validation": {
+			"types": "./lib/utils/validation/index.d.ts",
+			"default": "./lib/utils/validation/index.js"
+		},
+		"./utils/token": {
+			"types": "./lib/utils/token/index.d.ts",
+			"default": "./lib/utils/token/index.js"
+		},
+		"./utils/trading": {
+			"types": "./lib/utils/trading/index.d.ts",
+			"default": "./lib/utils/trading/index.js"
+		},
+		"./utils/markets": {
+			"types": "./lib/utils/markets/index.d.ts",
+			"default": "./lib/utils/markets/index.js"
+		},
+		"./utils/orders": {
+			"types": "./lib/utils/orders/index.d.ts",
+			"default": "./lib/utils/orders/index.js"
+		},
+		"./utils/positions": {
+			"types": "./lib/utils/positions/index.d.ts",
+			"default": "./lib/utils/positions/index.js"
+		},
+		"./utils/accounts": {
+			"types": "./lib/utils/accounts/index.d.ts",
+			"default": "./lib/utils/accounts/index.js"
+		},
+		"./utils/core": {
+			"types": "./lib/utils/core/index.d.ts",
+			"default": "./lib/utils/core/index.js"
+		}
+	},
+	"typesVersions": {
+		"*": {
+			"utils/math": ["lib/utils/math/index.d.ts"],
+			"utils/strings": ["lib/utils/strings/index.d.ts"],
+			"utils/enum": ["lib/utils/enum/index.d.ts"],
+			"utils/validation": ["lib/utils/validation/index.d.ts"],
+			"utils/token": ["lib/utils/token/index.d.ts"],
+			"utils/trading": ["lib/utils/trading/index.d.ts"],
+			"utils/markets": ["lib/utils/markets/index.d.ts"],
+			"utils/orders": ["lib/utils/orders/index.d.ts"],
+			"utils/positions": ["lib/utils/positions/index.d.ts"],
+			"utils/accounts": ["lib/utils/accounts/index.d.ts"],
+			"utils/core": ["lib/utils/core/index.d.ts"]
+		}
 	},
 	"files": [
 		"lib"

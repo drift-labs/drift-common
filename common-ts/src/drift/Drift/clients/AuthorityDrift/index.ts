@@ -20,7 +20,7 @@ import {
 	TxParams,
 } from '@drift-labs/sdk';
 import { Connection, PublicKey, TransactionSignature } from '@solana/web3.js';
-import { COMMON_UI_UTILS } from '../../../../common-ui-utils/commonUiUtils';
+import { COMMON_UI_UTILS } from '../../../../_deprecated/common-ui-utils';
 import {
 	DEFAULT_ACCOUNT_LOADER_COMMITMENT,
 	DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS,
@@ -31,7 +31,7 @@ import {
 	PollingCategory,
 } from '../../constants';
 import { MarketId } from '../../../../types';
-import { MARKET_UTILS } from '../../../../common-ui-utils/market';
+import { MARKET_UTILS } from '../../../../_deprecated/market-utils';
 import {
 	POLLING_DEPTHS,
 	POLLING_INTERVALS,

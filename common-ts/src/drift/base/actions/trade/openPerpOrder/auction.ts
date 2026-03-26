@@ -11,11 +11,9 @@ import {
 	User,
 	PositionDirection,
 } from '@drift-labs/sdk';
-import {
-	ORDER_COMMON_UTILS,
-	COMMON_UI_UTILS,
-	HighLeverageOptions,
-} from '../../../../../common-ui-utils';
+import { ORDER_COMMON_UTILS } from '../../../../../_deprecated/order-utils';
+import { COMMON_UI_UTILS } from '../../../../../_deprecated/common-ui-utils';
+import { HighLeverageOptions } from '../../../../../utils/orders';
 import { DEFAULT_LIMIT_AUCTION_DURATION } from '../../../constants/auction';
 import { ENUM_UTILS } from '../../../../../utils';
 import invariant from 'tiny-invariant';
