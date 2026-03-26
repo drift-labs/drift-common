@@ -1,6 +1,6 @@
 {
 	"name": "@drift-labs/common",
-	"version": "1.0.59",
+	"version": "1.0.60",
 	"description": "Common functions for Drift",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -114,17 +114,39 @@
 	},
 	"typesVersions": {
 		"*": {
-			"utils/math": ["lib/utils/math/index.d.ts"],
-			"utils/strings": ["lib/utils/strings/index.d.ts"],
-			"utils/enum": ["lib/utils/enum/index.d.ts"],
-			"utils/validation": ["lib/utils/validation/index.d.ts"],
-			"utils/token": ["lib/utils/token/index.d.ts"],
-			"utils/trading": ["lib/utils/trading/index.d.ts"],
-			"utils/markets": ["lib/utils/markets/index.d.ts"],
-			"utils/orders": ["lib/utils/orders/index.d.ts"],
-			"utils/positions": ["lib/utils/positions/index.d.ts"],
-			"utils/accounts": ["lib/utils/accounts/index.d.ts"],
-			"utils/core": ["lib/utils/core/index.d.ts"]
+			"utils/math": [
+				"lib/utils/math/index.d.ts"
+			],
+			"utils/strings": [
+				"lib/utils/strings/index.d.ts"
+			],
+			"utils/enum": [
+				"lib/utils/enum/index.d.ts"
+			],
+			"utils/validation": [
+				"lib/utils/validation/index.d.ts"
+			],
+			"utils/token": [
+				"lib/utils/token/index.d.ts"
+			],
+			"utils/trading": [
+				"lib/utils/trading/index.d.ts"
+			],
+			"utils/markets": [
+				"lib/utils/markets/index.d.ts"
+			],
+			"utils/orders": [
+				"lib/utils/orders/index.d.ts"
+			],
+			"utils/positions": [
+				"lib/utils/positions/index.d.ts"
+			],
+			"utils/accounts": [
+				"lib/utils/accounts/index.d.ts"
+			],
+			"utils/core": [
+				"lib/utils/core/index.d.ts"
+			]
 		}
 	},
 	"files": [
