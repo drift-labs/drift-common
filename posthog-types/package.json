@@ -1,6 +1,6 @@
 {
   "name": "@drift-labs/posthog-types",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Shared PostHog event type definitions for Drift",
   "types": "./lib/index.d.ts",
   "license": "MIT",
