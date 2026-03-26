@@ -1,13 +1,13 @@
 import { BN, L2OrderBook } from '@drift-labs/sdk';
 import {
-	COMMON_MATH,
 	numbersFitEvenly,
 	roundToStepSizeIfLargeEnough,
 	sortBnAsc,
 	sortBnDesc,
 	truncateInputToPrecision,
 	valueIsBelowStepSize,
-} from '../../src/utils/math';
+} from '../../src/utils/math/index';
+import { COMMON_MATH } from '../../src/_deprecated/common-math';
 import { expect } from 'chai';
 
 // Mock data setup

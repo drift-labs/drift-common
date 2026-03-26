@@ -18,7 +18,7 @@ import {
 	SACRED_POOL_ID,
 } from '../constants/pools';
 import { USDC_SPOT_MARKET_INDEX } from '../constants/markets';
-import { ENUM_UTILS } from '../utils/enum';
+import { ENUM_UTILS } from '../utils';
 import { Config } from '../Config';
 import { Opaque } from './utility';
 

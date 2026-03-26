@@ -1,8 +1,8 @@
+import { COMMON_UI_UTILS } from '../../src/_deprecated/common-ui-utils';
 import {
-	COMMON_UI_UTILS,
 	abbreviateAddress,
-} from '../../src/common-ui-utils/commonUiUtils';
-import { abbreviateAccountName } from '../../src/utils/strings';
+	abbreviateAccountName,
+} from '../../src/utils/strings';
 import { expect } from 'chai';
 describe('trimTrailingZeros', () => {
 	it('trims trailing zeros after decimal', () => {

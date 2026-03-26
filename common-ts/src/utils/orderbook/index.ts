@@ -9,7 +9,7 @@ import {
 	groupL2,
 } from '@drift-labs/sdk';
 import { MarketId } from '../../types';
-import { COMMON_MATH } from '../math';
+import { calculateSpreadBidAskMark } from '../math';
 import {
 	BidsAndAsks,
 	CategorisedLiquidity,
@@ -22,7 +22,7 @@ import {
 	OrderBookDisplayStateBidAsk,
 	RawL2Output,
 } from './types';
-import { COMMON_UTILS } from '..';
+import { dividesExactly } from '../math';
 import { EMPTY_ORDERBOOK_ROW } from './constants';
 
 export * from './types';
@@ -163,10 +163,7 @@ export const calculateDynamicSlippageFromL2 = ({
 		: DEFAULT_DYNAMIC_SLIPPAGE_CONFIG;
 
 	// Calculate spread information from L2 data using the oracle price
-	const spreadBidAskMark = COMMON_MATH.calculateSpreadBidAskMark(
-		l2Data,
-		oraclePrice
-	);
+	const spreadBidAskMark = calculateSpreadBidAskMark(l2Data, oraclePrice);
 
 	const bestAskNum = spreadBidAskMark.bestAskPrice?.toNumber?.() || 0;
 	const bestBidNum = spreadBidAskMark.bestBidPrice?.toNumber?.() || 0;
@@ -286,7 +283,7 @@ export const getBucketFloorForPrice = (
 
 	const _groupingSize = groupingSize as unknown as number;
 
-	if (COMMON_UTILS.dividesExactly(price, _groupingSize)) {
+	if (dividesExactly(price, _groupingSize)) {
 		return roundForOrderbook(price);
 	}
 
@@ -345,7 +342,7 @@ export const getBucketAnchorPrice = (
 	groupingSize: GroupingSizeQuoteValue
 ) => {
 	// If the grouping size matches exactly then the anchor price should be the same as the floor price regardless
-	if (COMMON_UTILS.dividesExactly(price, groupingSize as unknown as number)) {
+	if (dividesExactly(price, groupingSize as unknown as number)) {
 		return getBucketFloorForPrice(price, groupingSize);
 	}
 

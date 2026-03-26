@@ -1,49 +1,56 @@
-export * from './Config';
-export * from './chartConstants';
-export * from './types';
-export * from './EnvironmentConstants';
+// Domain modules (via utils barrel)
 export * from './utils';
-export * from './utils/index';
-export * from './utils/s3Buckets';
-export * from './serializableTypes';
-export * from './utils/candles/Candle';
-export * from './utils/featureFlags';
-export * from './utils/WalletConnectionState';
-export * from './utils/rpcLatency';
-export * from './utils/token';
-export * from './utils/math';
+
+// Non-domain utils that stay at utils/ level
 export * from './utils/logger';
-export * from './utils/equalityChecks';
-export * from './common-ui-utils';
-export * from './constants';
-export * from './actions/actionHelpers/actionHelpers';
+export * from './utils/featureFlags';
+export * from './utils/candles/Candle';
+export * from './utils/rpcLatency';
 export * from './utils/SharedInterval';
 export * from './utils/Stopwatch';
 export * from './utils/priority-fees';
 export * from './utils/superstake';
-export * from './utils/fetch';
 export * from './utils/priceImpact';
 export * from './utils/dlob-server/DlobServerWebsocketUtils';
-export * from './common-ui-utils/settings/settings';
-export * from './utils/priority-fees';
 export * from './utils/orderbook';
-export * from './clients/candleClient';
-export * from './clients/marketDataFeed';
-export * from './clients/swiftClient';
-export * from './clients/tvFeed';
-export * from './clients/DlobWebsocketClient';
 export * from './utils/pollingSequenceGuard';
 export * from './utils/driftEvents';
-export * from './utils/MultiplexWebSocket';
 export * from './utils/SlotBasedResultValidator';
 export * from './utils/CircularBuffers';
 export * from './utils/rxjs';
 export * from './utils/priorityFees';
 export * from './utils/NumLib';
-export * from './utils/strings';
-export * from './utils/validation';
+export * from './utils/s3Buckets';
+export * from './utils/insuranceFund';
+export * from './utils/settings/settings';
 export { default as millify } from './utils/millify';
-export * from './utils/markets/precisions';
+export { getSwiftConfirmationTimeoutMs } from './utils/signedMsgs';
+export { ResultSlotIncrementer } from './utils/ResultSlotIncrementer';
+export { MultiplexWebSocket } from './utils/MultiplexWebSocket';
+
+// Deprecation facades
+export { COMMON_UTILS } from './_deprecated/utils';
+export { COMMON_UI_UTILS } from './_deprecated/common-ui-utils';
+export { COMMON_MATH } from './_deprecated/common-math';
+export { EQUALITY_CHECKS } from './_deprecated/equality-checks';
+export { TRADING_UTILS } from './_deprecated/trading-utils';
+export { MARKET_UTILS } from './_deprecated/market-utils';
+export { ORDER_COMMON_UTILS } from './_deprecated/order-utils';
+export { USER_UTILS } from './_deprecated/user-utils';
+
+// Non-utils modules
+export * from './Config';
+export * from './chartConstants';
+export * from './types';
+export * from './EnvironmentConstants';
+export * from './serializableTypes';
+export * from './constants';
+export * from './actions/actionHelpers/actionHelpers';
+export * from './clients/candleClient';
+export * from './clients/marketDataFeed';
+export * from './clients/swiftClient';
+export * from './clients/tvFeed';
+export * from './clients/DlobWebsocketClient';
 export * from './drift';
 
 // External Program Errors

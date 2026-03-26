@@ -19,7 +19,7 @@ import {
 	calculatePositionPNL,
 	calculateUnsettledFundingPnl,
 } from '@drift-labs/sdk';
-import { TRADING_UTILS } from '../../../../common-ui-utils/trading';
+import { TRADING_UTILS } from '../../../../_deprecated/trading-utils';
 import { ENUM_UTILS } from '../../../../utils';
 import {
 	MAX_PREDICTION_PRICE_BIG_NUM,

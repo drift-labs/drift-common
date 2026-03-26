@@ -28,10 +28,8 @@ import {
 	fetchTopMakers,
 	OptionalAuctionParamsRequestInputs,
 } from '../dlobServer';
-import {
-	HighLeverageOptions,
-	ORDER_COMMON_UTILS,
-} from '../../../../../../common-ui-utils/order';
+import { ORDER_COMMON_UTILS } from '../../../../../../_deprecated/order-utils';
+import { HighLeverageOptions } from '../../../../../../utils/orders';
 import { WithTxnParams } from '../../../../types';
 import { TxnOrSwiftResult, IsolatedPositionDepositsOverride } from '../types';
 import { NoTopMakersError } from '../../../../../Drift/constants/errors';

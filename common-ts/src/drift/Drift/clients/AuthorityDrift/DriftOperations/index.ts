@@ -13,9 +13,9 @@ import {
 	ZERO,
 } from '@drift-labs/sdk';
 import { TransactionSignature } from '@solana/web3.js';
-import { MARKET_UTILS } from '../../../../../common-ui-utils/market';
+import { MARKET_UTILS } from '../../../../../_deprecated/market-utils';
 import { MAIN_POOL_ID } from '../../../../../constants';
-import { TRADING_UTILS } from '../../../../../common-ui-utils/trading';
+import { TRADING_UTILS } from '../../../../../_deprecated/trading-utils';
 import { UserAccountCache } from '../../../stores/UserAccountCache';
 import { createDepositTxn } from '../../../../base/actions/spot/deposit';
 import { createUserAndDepositCollateralBaseTxn } from '../../../../base/actions/user/create';

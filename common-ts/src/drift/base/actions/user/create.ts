@@ -18,7 +18,7 @@ import {
 	TransactionInstruction,
 	VersionedTransaction,
 } from '@solana/web3.js';
-import { USER_UTILS } from '../../../../common-ui-utils/user';
+import { USER_UTILS } from '../../../../_deprecated/user-utils';
 
 interface CreateUserAndDepositCollateralBaseIxsParams {
 	driftClient: DriftClient;

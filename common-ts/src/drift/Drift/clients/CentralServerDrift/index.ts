@@ -39,7 +39,7 @@ import {
 	TransactionInstruction,
 	VersionedTransaction,
 } from '@solana/web3.js';
-import { COMMON_UI_UTILS } from '../../../../common-ui-utils/commonUiUtils';
+import { COMMON_UI_UTILS } from '../../../../_deprecated/common-ui-utils';
 import {
 	DEFAULT_ACCOUNT_LOADER_COMMITMENT,
 	DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS,
