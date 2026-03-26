@@ -1,5 +1,16 @@
 import type { NoProperties } from '../eventMap';
 
+type OrderTimingProperties = {
+	tx_signature?: string;
+	order_id: number;
+	user_account_key?: string;
+	order_method: string;
+	order_params: unknown;
+	auction_version?: 1 | 2;
+	hash?: string;
+	oracle_price?: string;
+};
+
 export type TradeEvents = {
 	trade_placed: {
 		market_type: 'perps' | 'spot';
@@ -34,26 +45,10 @@ export type TradeEvents = {
 	};
 	trade_order_fill_time_recorded: {
 		time_to_fill_ms: number;
-		tx_signature?: string;
-		order_id: number;
-		user_account_key?: string;
-		order_method: string;
-		order_params: unknown;
-		auction_version?: 1 | 2;
-		hash?: string;
-		oracle_price?: string;
-	};
+	} & OrderTimingProperties;
 	trade_order_confirmation_time_recorded: {
 		time_to_confirm_ms: number;
-		tx_signature?: string;
-		order_id: number;
-		user_account_key?: string;
-		order_method: string;
-		order_params: unknown;
-		auction_version?: 1 | 2;
-		hash?: string;
-		oracle_price?: string;
-	};
+	} & OrderTimingProperties;
 	trade_perp_non_market_order_timed: {
 		ix_creation_time_ms: number | null;
 		tx_building_time_ms: number | null;
@@ -72,8 +67,6 @@ export type TradeEvents = {
 	trade_favorite_market_removed: {
 		market_symbol: string;
 	};
-	/** @deprecated No call sites found — flag for removal */
-	trade_top_maker_notification_seen: NoProperties;
 	trade_swift_error: {
 		error: unknown;
 		[key: string]: unknown;

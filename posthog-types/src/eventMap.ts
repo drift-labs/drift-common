@@ -17,16 +17,18 @@ import type { SystemEvents } from './events/system';
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type NoProperties = {};
 
-export type PostHogEventMap = CollateralEvents &
-	TradeEvents &
-	VaultEvents &
-	IfStakingEvents &
-	EarnEvents &
-	AmplifyEvents &
-	OnboardingEvents &
-	SurveyEvents &
-	PnlEvents &
-	SystemEvents;
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface PostHogEventMap
+	extends CollateralEvents,
+		TradeEvents,
+		VaultEvents,
+		IfStakingEvents,
+		EarnEvents,
+		AmplifyEvents,
+		OnboardingEvents,
+		SurveyEvents,
+		PnlEvents,
+		SystemEvents {}
 
 export type PostHogEvent = keyof PostHogEventMap;
 
@@ -34,7 +36,7 @@ export type PostHogEvent = keyof PostHogEventMap;
  * Extracts event names whose property type has no required keys (i.e., empty `{}`).
  * These events can be captured without passing a properties argument.
  */
-type EmptyEventsOf<TMap extends Record<string, object>> = {
+type EmptyEventsOf<TMap extends PostHogEventMap> = {
 	[K in keyof TMap]: keyof TMap[K] extends never ? K : never;
 }[keyof TMap];
 

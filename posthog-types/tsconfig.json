@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES2019",
     "declaration": true,
+    "emitDeclarationOnly": true,
     "module": "commonjs",
     "esModuleInterop": true,
     "strict": true,

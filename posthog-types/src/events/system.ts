@@ -10,7 +10,7 @@ export type SystemEvents = {
 		errorId?: string;
 	};
 	system_unhandled_error: {
-		error_message: string | unknown;
+		error_message: unknown;
 		source?: string;
 		lineno?: number;
 		colno?: number;

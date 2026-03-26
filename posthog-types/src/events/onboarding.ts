@@ -1,5 +1,15 @@
 import type { NoProperties } from '../eventMap';
 
+type PrivyErrorProperties = {
+	error_message: string;
+	error_stack?: string;
+	error_name?: string;
+	error_raw: string;
+	env: string;
+	wallet_address: string;
+	use_fee_payer: boolean;
+};
+
 export type OnboardingEvents = {
 	onboarding_wallet_connected: {
 		name: string;
@@ -24,23 +34,7 @@ export type OnboardingEvents = {
 	onboarding_referral_creation_error: {
 		error: unknown;
 	};
-	onboarding_privy_sign_send_error: {
-		error_message: string;
-		error_stack?: string;
-		error_name?: string;
-		error_raw: string;
-		env: string;
-		wallet_address: string;
-		use_fee_payer: boolean;
-	};
-	onboarding_privy_build_sign_error: {
-		error_message: string;
-		error_stack?: string;
-		error_name?: string;
-		error_raw: string;
-		env: string;
-		wallet_address: string;
-		use_fee_payer: boolean;
-	};
+	onboarding_privy_sign_send_error: PrivyErrorProperties;
+	onboarding_privy_build_sign_error: PrivyErrorProperties;
 	onboarding_account_deleted: NoProperties;
 };
