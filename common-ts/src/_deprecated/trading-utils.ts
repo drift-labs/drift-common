@@ -15,8 +15,6 @@ import {
 	getMarketTickSizeDecimals,
 	getMarketStepSize,
 	getMarketStepSizeDecimals,
-} from '../utils/trading/size';
-import {
 	isEntirePositionOrder,
 	getMaxLeverageOrderSize,
 	formatOrderSize,

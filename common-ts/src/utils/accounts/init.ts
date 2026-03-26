@@ -135,5 +135,4 @@ export {
 	ACCOUNT_INITIALIZATION_RETRY_ATTEMPTS,
 	awaitAccountInitializationChainState,
 	initializeAndSubscribeToNewUserAccount,
-	updateUserAccount,
 };

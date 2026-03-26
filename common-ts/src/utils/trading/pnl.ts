@@ -1,4 +1,5 @@
 import {
+	BN,
 	BigNum,
 	PRICE_PRECISION_EXP,
 	PositionDirection,
@@ -10,9 +11,9 @@ import { OpenPosition } from '../../types';
 import { convertMarginRatioToLeverage } from './leverage';
 
 const calculatePnlPctFromPosition = (
-	pnl: import('@drift-labs/sdk').BN,
+	pnl: BN,
 	position: OpenPosition,
-	marginUsed?: import('@drift-labs/sdk').BN
+	marginUsed?: BN
 ): number => {
 	if (!position?.quoteEntryAmount || position?.quoteEntryAmount.eq(ZERO))
 		return 0;
