@@ -19,6 +19,10 @@ import {
 	VersionedTransaction,
 } from '@solana/web3.js';
 import { USER_UTILS } from '../../../../_deprecated/user-utils';
+import {
+	createRevenueShareEscrowIx,
+	migrateReferrerIx,
+} from '../builder/createRevenueShareEscrow';
 
 interface CreateUserAndDepositCollateralBaseIxsParams {
 	driftClient: DriftClient;
@@ -83,6 +87,8 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 	ixs: TransactionInstruction[];
 }> => {
 	const nextSubaccountId = userStatsAccount?.numberOfSubAccountsCreated ?? 0; // userId is zero indexed
+	const shouldApplyReferralAttribution =
+		nextSubaccountId === 0 && !!referrerName;
 
 	// Get the spot market account to determine the correct token program for Token-2022 tokens
 	const spotMarketAccount = driftClient.getSpotMarketAccount(
@@ -103,7 +109,7 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 			depositSourceWallet
 		);
 	const referrerNameAccountPromise: Promise<ReferrerNameAccount | undefined> =
-		referrerName
+		shouldApplyReferralAttribution
 			? driftClient.fetchReferrerNameAccount(referrerName)
 			: Promise.resolve(undefined);
 	const subaccountExistsPromise = USER_UTILS.checkIfUserAccountExists(
@@ -154,6 +160,21 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 			externalWallet ? { externalWallet } : undefined
 		);
 	const ixs: TransactionInstruction[] = [...createAndDepositIxs];
+
+	if (referrerInfo) {
+		ixs.push(
+			await createRevenueShareEscrowIx({
+				driftClient,
+				authority,
+			})
+		);
+		ixs.push(
+			await migrateReferrerIx({
+				driftClient,
+				authority,
+			})
+		);
+	}
 
 	const nextSubAccountPublicKey = getUserAccountPublicKeySync(
 		driftClient.program.programId,

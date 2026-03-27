@@ -51,6 +51,15 @@ export interface CreateRevenueShareEscrowParams {
 	};
 }
 
+export interface MigrateReferrerParams {
+	/**
+	 * Authority to migrate from legacy UserStats referral attribution into
+	 * RevenueShareEscrow referral attribution.
+	 * Defaults to the connected wallet authority.
+	 */
+	authority?: PublicKey;
+}
+
 /**
  * Interface for perp market order parameters.
  */

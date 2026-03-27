@@ -68,6 +68,7 @@ import {
 	SettleAccountPnlParams,
 	CancelOrdersParams,
 	CreateRevenueShareEscrowParams,
+	MigrateReferrerParams,
 } from './DriftOperations/types';
 import { Initialize } from '../../../../Config';
 import { L2WithOracleAndMarketData } from '../../../../utils/orderbook/types';
@@ -780,6 +781,18 @@ export class AuthorityDrift {
 		params: CreateRevenueShareEscrowParams
 	): Promise<TransactionSignature> {
 		return this.driftOperations.createRevenueShareEscrow(params);
+	}
+
+	/**
+	 * Migrates legacy referrer attribution from UserStats to RevenueShareEscrow.
+	 *
+	 * @param params - Optional migration params. Defaults to connected wallet authority.
+	 * @returns Promise resolving to the transaction signature of the migration
+	 */
+	public async migrateReferrer(
+		params?: MigrateReferrerParams
+	): Promise<TransactionSignature> {
+		return this.driftOperations.migrateReferrer(params);
 	}
 
 	/**

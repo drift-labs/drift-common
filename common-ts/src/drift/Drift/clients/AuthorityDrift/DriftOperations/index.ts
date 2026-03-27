@@ -31,6 +31,7 @@ import {
 	SettleAccountPnlParams,
 	CancelOrdersParams,
 	CreateRevenueShareEscrowParams,
+	MigrateReferrerParams,
 } from './types';
 import { createCancelOrdersTxn } from '../../../../base/actions/trade/cancelOrder';
 import {
@@ -39,7 +40,10 @@ import {
 } from '../../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { createSwapTxn } from '../../../../base/actions/trade/swap';
 import { createOpenPerpNonMarketOrder } from '../../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
-import { createRevenueShareEscrowTxn } from '../../../../base/actions/builder/createRevenueShareEscrow';
+import {
+	createRevenueShareEscrowTxn,
+	migrateReferrerTxn,
+} from '../../../../base/actions/builder/createRevenueShareEscrow';
 
 /**
  * Handles majority of the relevant operations on the Drift program including deposits,
@@ -212,6 +216,28 @@ export class DriftOperations {
 			authority: this.driftClient.wallet.publicKey,
 			numOrders: params.numOrders ?? 16,
 			builder: params.builder,
+			txParams: this.getTxParams(),
+		});
+
+		const { txSig } = await this.driftClient.sendTransaction(txn);
+
+		return txSig;
+	}
+
+	/**
+	 * Migrates legacy referrer attribution from `UserStats.referrer` into
+	 * `RevenueShareEscrow.referrer` for an authority.
+	 *
+	 * @param params - Optional migration params. Defaults to connected wallet authority.
+	 * @returns Promise resolving to the transaction signature of the migration
+	 */
+	async migrateReferrer(
+		params: MigrateReferrerParams = {}
+	): Promise<TransactionSignature> {
+		const authority = params.authority ?? this.driftClient.wallet.publicKey;
+		const txn = await migrateReferrerTxn({
+			driftClient: this.driftClient,
+			authority,
 			txParams: this.getTxParams(),
 		});
 

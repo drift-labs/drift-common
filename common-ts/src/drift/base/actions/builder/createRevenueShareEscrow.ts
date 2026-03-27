@@ -96,6 +96,52 @@ interface CreateRevenueShareEscrowTxnParams
 	};
 }
 
+interface MigrateReferrerIxParams {
+	driftClient: DriftClient;
+	/**
+	 * The authority whose legacy referral attribution should be migrated into
+	 * their RevenueShareEscrow account.
+	 */
+	authority: PublicKey;
+}
+
+/**
+ * Creates a transaction instruction to migrate legacy referrer attribution from
+ * `UserStats.referrer` into `RevenueShareEscrow.referrer`.
+ *
+ * This is intended to be a one-time migration per authority.
+ *
+ * @param driftClient - The Drift client instance
+ * @param authority - The authority whose referral attribution should be migrated
+ *
+ * @returns Promise resolving to a TransactionInstruction that migrates referral attribution
+ */
+export const migrateReferrerIx = async ({
+	driftClient,
+	authority,
+}: MigrateReferrerIxParams): Promise<TransactionInstruction> => {
+	return driftClient.getMigrateReferrerIx(authority);
+};
+
+/**
+ * Creates a transaction to migrate legacy referrer attribution from
+ * `UserStats.referrer` into `RevenueShareEscrow.referrer`.
+ *
+ * @param driftClient - The Drift client instance
+ * @param authority - The authority whose referral attribution should be migrated
+ * @param txParams - Optional transaction parameters for customizing the transaction
+ *
+ * @returns Promise resolving to a Transaction or VersionedTransaction ready for signing
+ */
+export const migrateReferrerTxn = async (
+	params: WithTxnParams<MigrateReferrerIxParams>
+): Promise<Transaction | VersionedTransaction> => {
+	return params.driftClient.buildTransaction(
+		await migrateReferrerIx(params),
+		params.txParams
+	);
+};
+
 /**
  * Creates a transaction to initialize a RevenueShareEscrow account for a user.
  *

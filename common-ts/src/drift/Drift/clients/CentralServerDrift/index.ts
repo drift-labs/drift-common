@@ -71,7 +71,10 @@ import { createCancelOrdersTxn } from '../../../base/actions/trade/cancelOrder';
 import { createSwapTxn } from '../../../base/actions/trade/swap';
 import { createUserAndDepositCollateralBaseTxn } from '../../../base/actions/user/create';
 import { deleteUserTxn } from '../../../base/actions/user/delete';
-import { createRevenueShareEscrowTxn } from '../../../base/actions/builder/createRevenueShareEscrow';
+import {
+	createRevenueShareEscrowTxn,
+	migrateReferrerTxn,
+} from '../../../base/actions/builder/createRevenueShareEscrow';
 import { createRevenueShareAccountTxn } from '../../../base/actions/builder/createRevenueShareAccount';
 import { configureBuilderTxn } from '../../../base/actions/builder/configureBuilder';
 import { EnvironmentConstants } from '../../../../EnvironmentConstants';
@@ -1211,6 +1214,25 @@ export class CentralServerDrift {
 				authority,
 				numOrders: options?.numOrders ?? 16,
 				builder: options?.builder,
+				txParams: options?.txParams ?? this.getTxParams(),
+			})
+		);
+	}
+
+	/**
+	 * Create a transaction to migrate legacy referral attribution from UserStats
+	 * into RevenueShareEscrow for an authority.
+	 */
+	public async getMigrateReferrerTxn(
+		authority: PublicKey,
+		options?: {
+			txParams?: TxParams;
+		}
+	): Promise<VersionedTransaction | Transaction> {
+		return this.authorityContextWrapper(authority, () =>
+			migrateReferrerTxn({
+				driftClient: this._driftClient,
+				authority,
 				txParams: options?.txParams ?? this.getTxParams(),
 			})
 		);
