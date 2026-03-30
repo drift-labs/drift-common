@@ -33,6 +33,7 @@ import {
 	TxnOrSwiftResult,
 	LimitAuctionConfig,
 	LimitOrderParamsOrderConfig,
+	SwiftLimitOrderParamsOrderConfig,
 	NonMarketOrderParamsConfig,
 	IsolatedPositionDepositsOverride,
 } from '../types';
@@ -396,58 +397,89 @@ export const createOpenPerpNonMarketOrderIxs = async (
  */
 async function prepSwiftLimitOrderData(
 	params: OpenPerpNonMarketOrderBaseParams & {
-		orderConfig: LimitOrderParamsOrderConfig;
+		orderConfig: SwiftLimitOrderParamsOrderConfig;
 	}
 ) {
 	const { user, marketIndex, orderConfig } = params;
 
-	const limitPrice = orderConfig.limitPrice;
+	let orderParams: OptionalOrderParams;
 
-	if (limitPrice.isZero()) {
-		throw new Error('LIMIT orders require limitPrice');
+	if (orderConfig.orderType === 'limit') {
+		const limitPrice = orderConfig.limitPrice;
+
+		if (limitPrice.isZero()) {
+			throw new Error('LIMIT orders require limitPrice');
+		}
+
+		const finalBaseAssetAmount = resolveBaseAssetAmount({
+			amount: 'amount' in params ? params.amount : undefined,
+			assetType: 'assetType' in params ? params.assetType : undefined,
+			baseAssetAmount:
+				'baseAssetAmount' in params ? params.baseAssetAmount : undefined,
+			limitPrice,
+		});
+
+		orderParams = orderConfig.limitAuction?.enable
+			? await getLimitAuctionOrderParams({
+					...params,
+					marketType: MarketType.PERP,
+					baseAssetAmount: finalBaseAssetAmount,
+					orderConfig: orderConfig as LimitOrderParamsOrderConfig & {
+						limitAuction: LimitAuctionConfig;
+					},
+			  })
+			: buildNonMarketOrderParams({
+					marketIndex,
+					marketType: MarketType.PERP,
+					direction: params.direction,
+					baseAssetAmount: finalBaseAssetAmount,
+					orderConfig,
+					reduceOnly: params.reduceOnly,
+					postOnly: params.postOnly,
+					userOrderId: params.userOrderId,
+			  });
+	} else if (orderConfig.orderType === 'oracleLimit') {
+		if (orderConfig.oraclePriceOffset.isZero()) {
+			throw new Error('ORACLE_LIMIT orders require oraclePriceOffset');
+		}
+
+		const finalBaseAssetAmount = resolveBaseAssetAmount({
+			amount: 'amount' in params ? params.amount : undefined,
+			assetType: 'assetType' in params ? params.assetType : undefined,
+			baseAssetAmount:
+				'baseAssetAmount' in params ? params.baseAssetAmount : undefined,
+		});
+
+		orderParams = buildNonMarketOrderParams({
+			marketIndex,
+			marketType: MarketType.PERP,
+			direction: params.direction,
+			baseAssetAmount: finalBaseAssetAmount,
+			orderConfig,
+			reduceOnly: params.reduceOnly,
+			postOnly: params.postOnly,
+			userOrderId: params.userOrderId,
+		});
+	} else {
+		throw new Error(`Unsupported orderType for Swift limit order`);
 	}
 
-	const finalBaseAssetAmount = resolveBaseAssetAmount({
-		amount: 'amount' in params ? params.amount : undefined,
-		assetType: 'assetType' in params ? params.assetType : undefined,
-		baseAssetAmount:
-			'baseAssetAmount' in params ? params.baseAssetAmount : undefined,
-		limitPrice,
-	});
-
-	const orderParams = orderConfig.limitAuction?.enable
-		? await getLimitAuctionOrderParams({
-				...params,
-				marketType: MarketType.PERP,
-				baseAssetAmount: finalBaseAssetAmount,
-				orderConfig: orderConfig as LimitOrderParamsOrderConfig & {
-					limitAuction: LimitAuctionConfig;
-				},
-		  })
-		: buildNonMarketOrderParams({
-				marketIndex,
-				marketType: MarketType.PERP,
-				direction: params.direction,
-				baseAssetAmount: finalBaseAssetAmount,
-				orderConfig,
-				reduceOnly: params.reduceOnly,
-				postOnly: params.postOnly,
-				userOrderId: params.userOrderId,
-		  });
-
 	const userAccount = user.getUserAccount();
+	const bracketOrders =
+		orderConfig.orderType === 'limit' ? orderConfig.bracketOrders : undefined;
 
-	return { userAccount, orderParams };
+	return { userAccount, orderParams, bracketOrders };
 }
 
 export const createSwiftLimitOrder = async (
 	params: OpenPerpNonMarketOrderParamsWithSwift & {
-		orderConfig: LimitOrderParamsOrderConfig;
+		orderConfig: SwiftLimitOrderParamsOrderConfig;
 	}
 ): Promise<void> => {
-	const { driftClient, user, marketIndex, swiftOptions, orderConfig } = params;
+	const { driftClient, user, marketIndex, swiftOptions } = params;
 
-	const { userAccount, orderParams } = await prepSwiftLimitOrderData(params);
+	const { userAccount, orderParams, bracketOrders } =
+		await prepSwiftLimitOrderData(params);
 
 	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
 		params.isolatedPositionDepositsOverride,
@@ -474,8 +506,8 @@ export const createSwiftLimitOrder = async (
 		swiftOptions,
 		orderParams: {
 			main: orderParams,
-			takeProfit: orderConfig.bracketOrders?.takeProfit,
-			stopLoss: orderConfig.bracketOrders?.stopLoss,
+			takeProfit: bracketOrders?.takeProfit,
+			stopLoss: bracketOrders?.stopLoss,
 			positionMaxLeverage: params.positionMaxLeverage,
 			isolatedPositionDeposit: resolvedDeposits?.mainDeposit,
 		},
@@ -487,7 +519,7 @@ export type CreateSwiftLimitOrderMessageParams = Omit<
 	OpenPerpNonMarketOrderBaseParams,
 	'mainSignerOverride'
 > & {
-	orderConfig: LimitOrderParamsOrderConfig;
+	orderConfig: SwiftLimitOrderParamsOrderConfig;
 	isDelegate?: boolean;
 	userSigningSlotBuffer?: number;
 };
@@ -504,12 +536,12 @@ export const createSwiftLimitOrderMessage = async (
 		driftClient,
 		user,
 		marketIndex,
-		orderConfig,
 		isDelegate = false,
 		userSigningSlotBuffer,
 	} = params;
 
-	const { userAccount, orderParams } = await prepSwiftLimitOrderData(params);
+	const { userAccount, orderParams, bracketOrders } =
+		await prepSwiftLimitOrderData(params);
 
 	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
 		params.isolatedPositionDepositsOverride,
@@ -536,8 +568,8 @@ export const createSwiftLimitOrderMessage = async (
 		isDelegate,
 		orderParams: {
 			main: orderParams,
-			takeProfit: orderConfig.bracketOrders?.takeProfit,
-			stopLoss: orderConfig.bracketOrders?.stopLoss,
+			takeProfit: bracketOrders?.takeProfit,
+			stopLoss: bracketOrders?.stopLoss,
 			positionMaxLeverage: params.positionMaxLeverage,
 			isolatedPositionDeposit: resolvedDeposits?.mainDeposit,
 		},
@@ -567,8 +599,13 @@ export const createOpenPerpNonMarketOrder = async <T extends boolean>(
 
 	// If useSwift is true, return the Swift result directly
 	if (useSwift) {
-		if (orderConfig.orderType !== 'limit') {
-			throw new Error('Only limit orders are supported with Swift');
+		if (
+			orderConfig.orderType !== 'limit' &&
+			orderConfig.orderType !== 'oracleLimit'
+		) {
+			throw new Error(
+				'Only limit and oracle limit orders are supported with Swift'
+			);
 		}
 
 		if (!swiftOptions) {

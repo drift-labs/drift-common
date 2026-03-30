@@ -65,7 +65,7 @@ import {
 	createSwiftLimitOrderMessage,
 } from '../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
 import { SwiftOrderMessage } from '../../../base/actions/trade/openPerpOrder/openSwiftOrder';
-import { LimitOrderParamsOrderConfig } from '../../../base/actions/trade/openPerpOrder/types';
+import { SwiftLimitOrderParamsOrderConfig } from '../../../base/actions/trade/openPerpOrder/types';
 import { createEditOrderTxn } from '../../../base/actions/trade/editOrder';
 import { createCancelOrdersTxn } from '../../../base/actions/trade/cancelOrder';
 import { createSwapTxn } from '../../../base/actions/trade/swap';
@@ -728,8 +728,13 @@ export class CentralServerDrift {
 			const { swiftOptions, ...rest } =
 				genericRest as CentralServerGetOpenPerpNonMarketOrderTxnParams<true>;
 
-			if (rest.orderConfig.orderType !== 'limit') {
-				throw new Error('Only limit orders are supported with Swift');
+			if (
+				rest.orderConfig.orderType !== 'limit' &&
+				rest.orderConfig.orderType !== 'oracleLimit'
+			) {
+				throw new Error(
+					'Only limit and oracle limit orders are supported with Swift'
+				);
 			}
 
 			return this.driftClientContextWrapper(
@@ -739,7 +744,7 @@ export class CentralServerDrift {
 						...rest,
 						driftClient: this._driftClient,
 						user,
-						orderConfig: rest.orderConfig as LimitOrderParamsOrderConfig,
+						orderConfig: rest.orderConfig as SwiftLimitOrderParamsOrderConfig,
 						userSigningSlotBuffer: swiftOptions?.userSigningSlotBuffer,
 						isDelegate: swiftOptions?.isDelegate ?? !!rest.mainSignerOverride,
 					});
