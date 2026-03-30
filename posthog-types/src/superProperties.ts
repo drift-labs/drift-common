@@ -9,5 +9,6 @@ export type DynamicSuperProperties = {
 	connected: boolean;
 	account_exists: boolean | null;
 	authority: string | null;
+	user: string | null;
 	wallet_name: string | null;
 };
