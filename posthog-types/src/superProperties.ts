@@ -11,4 +11,6 @@ export type DynamicSuperProperties = {
 	authority: string | null;
 	user: string | null;
 	wallet_name: string | null;
+	is_privy_native: boolean | null;
+	is_delegated_to_embedded_wallet: boolean | null;
 };
