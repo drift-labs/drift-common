@@ -85,6 +85,15 @@ export interface LimitOrderParamsOrderConfig {
 	limitAuction?: LimitAuctionConfig;
 }
 
+export interface OracleLimitOrderParamsOrderConfig {
+	orderType: Extract<NonMarketOrderType, 'oracleLimit'>;
+	oraclePriceOffset: BN;
+}
+
+export type SwiftLimitOrderParamsOrderConfig =
+	| LimitOrderParamsOrderConfig
+	| OracleLimitOrderParamsOrderConfig;
+
 export interface NonMarketOrderParamsConfig {
 	marketIndex: number;
 	marketType: MarketType;
