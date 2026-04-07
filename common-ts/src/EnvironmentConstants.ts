@@ -24,12 +24,12 @@ export const EnvironmentConstants = {
 			},
 		] as RpcEndpoint[],
 		mainnet: [
-			{
-				label: 'Triton RPC Pool 1',
-				value: 'https://drift-drift_ma-39b5.mainnet.rpcpool.com/',
-				wsValue: 'wss://drift-drift_ma-39b5.mainnet.rpcpool.com/whirligig',
-				allowAdditionalConnection: true,
-			},
+			// {
+			// 	label: 'Triton RPC Pool 1',
+			// 	value: 'https://drift-drift_ma-39b5.mainnet.rpcpool.com/',
+			// 	wsValue: 'wss://drift-drift_ma-39b5.mainnet.rpcpool.com/whirligig',
+			// 	allowAdditionalConnection: true,
+			// },
 			{
 				label: 'Helius 1',
 				value: 'https://kora-8cwrc2-fast-mainnet.helius-rpc.com/',
