@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [master]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
@@ -16,6 +20,7 @@ defaults:
 jobs:
   changes:
     runs-on: ubicloud
+    timeout-minutes: 5
     outputs:
       common-ts: ${{ steps.filter.outputs.common-ts }}
       posthog-types: ${{ steps.filter.outputs.posthog-types }}
@@ -45,18 +50,9 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: ./.github/actions/setup-common-ts
         with:
-          node-version: '24.x.x'
-
-      - name: Setup bun
-        uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
-        with:
-          bun-version: 1.2.15
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+          working-directory: ./common-ts
 
       - name: Build
         run: bun run build
@@ -65,13 +61,17 @@ jobs:
         run: bun run test:ci
 
   ci-passed:
-    needs: [common-ts]
+    # TODO: add posthog-types to needs when its job is re-enabled below
+    needs: [changes, common-ts]
     if: always()
     runs-on: ubicloud
+    timeout-minutes: 5
     steps:
-      - name: Check all jobs passed
+      - name: Check all jobs passed or were skipped
         run: |
-          if [[ "${{ needs.common-ts.result }}" == "failure" ]]; then
+          result="${{ join(needs.*.result, ',') }}"
+          echo "Job results: $result"
+          if [[ "$result" =~ (failure|cancelled) ]]; then
             exit 1
           fi
 

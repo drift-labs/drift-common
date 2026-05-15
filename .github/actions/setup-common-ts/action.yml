@@ -1,0 +1,38 @@
+name: Setup common-ts toolchain
+description: Sets up Node + bun, restores the bun install cache, and installs dependencies.
+
+inputs:
+  registry-url:
+    description: npm registry URL (set when publishing so setup-node writes auth to .npmrc)
+    required: false
+    default: ''
+  working-directory:
+    description: Directory to run `bun install` in.
+    required: false
+    default: '.'
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      with:
+        node-version-file: .nvmrc
+        registry-url: ${{ inputs.registry-url }}
+
+    - name: Setup bun
+      uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
+      with:
+        bun-version: 1.2.15
+
+    - name: Cache bun install
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: ~/.bun/install/cache
+        key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+        restore-keys: bun-${{ runner.os }}-
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: bun install --frozen-lockfile

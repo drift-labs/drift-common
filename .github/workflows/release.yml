@@ -1,13 +1,13 @@
 name: release
+run-name: release (${{ github.event.head_commit.message }})
 
 on:
   push:
     branches: [master]
 
-permissions:
-  contents: write
-  pull-requests: write
-  id-token: write # npm Trusted Publishing OIDC
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 defaults:
   run:
@@ -16,6 +16,10 @@ defaults:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
     outputs:
       releases_created: ${{ steps.rp.outputs.releases_created }}
       common-ts--release_created: ${{ steps.rp.outputs['common-ts--release_created'] }}
@@ -44,6 +48,10 @@ jobs:
     needs: release-please
     if: ${{ needs.release-please.outputs['common-ts--release_created'] == 'true' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # npm Trusted Publishing OIDC
     defaults:
       run:
         working-directory: ./common-ts
@@ -52,28 +60,16 @@ jobs:
         with:
           ref: ${{ needs.release-please.outputs['common-ts--tag_name'] }}
 
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: ./.github/actions/setup-common-ts
         with:
-          node-version: '24.x.x'
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Setup bun
-        uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
-        with:
-          bun-version: 1.2.15
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+          working-directory: ./common-ts
 
       - name: Build
         run: bun run build
 
       - name: Run tests
         run: bun run test:ci
-
-      - name: Upgrade npm for trusted publishing
-        run: npm install -g npm@latest
 
       - name: Publish to npm
         run: npm publish --access=public --provenance
@@ -117,6 +113,8 @@ jobs:
     needs: [release-please, publish-common-ts]
     if: ${{ needs.release-please.outputs['common-ts--release_created'] == 'true' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
     strategy:
       fail-fast: false
       matrix:
@@ -146,8 +144,9 @@ jobs:
 
   notify-failure:
     needs: [release-please, publish-common-ts, dispatch-downstream]
-    if: failure()
+    if: ${{ failure() || cancelled() }}
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Notify Slack
         uses: slackapi/slack-github-action@e28cf165c92ffef168d23c5c9000cffc8a25e117 # v1.24.0
