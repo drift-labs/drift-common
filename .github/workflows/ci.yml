@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [master]
 
+permissions:
+  contents: read
+
 defaults:
   run:
     shell: bash
@@ -60,6 +63,17 @@ jobs:
 
       - name: Run tests
         run: bun run test:ci
+
+  ci-passed:
+    needs: [common-ts]
+    if: always()
+    runs-on: ubicloud
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [[ "${{ needs.common-ts.result }}" == "failure" ]]; then
+            exit 1
+          fi
 
   # posthog-types:
   #   needs: changes
