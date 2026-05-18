@@ -1,4 +1,4 @@
-import { BN, ZERO } from '@drift-labs/sdk';
+import { BN, ZERO } from '@velocity-exchange/sdk';
 import { Subject, Subscription } from 'rxjs';
 import { MarketKey } from '../../../types';
 

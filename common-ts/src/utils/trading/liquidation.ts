@@ -1,8 +1,8 @@
-import { BN, BigNum, PRICE_PRECISION_EXP, User } from '@drift-labs/sdk';
+import { BN, BigNum, PRICE_PRECISION_EXP, User } from '@velocity-exchange/sdk';
 import { UIOrderType } from '../../types';
 
 /**
- * Calculate the liquidation price of a position after a trade. Requires DriftClient to be subscribed.
+ * Calculate the liquidation price of a position after a trade. Requires VelocityClient to be subscribed.
  * If the order type is limit order, a limit price must be provided.
  */
 const calculateLiquidationPriceAfterPerpTrade = ({

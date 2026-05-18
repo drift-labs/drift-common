@@ -7,7 +7,7 @@ import {
 	SpotMarketConfig,
 	BASE_PRECISION,
 	BASE_PRECISION_EXP,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { MarketId } from './MarketId';
 import invariant from 'tiny-invariant';
 import {

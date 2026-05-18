@@ -5,7 +5,7 @@ import {
 	PositionDirection,
 	PostOnlyParams,
 	OrderTriggerCondition,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '../../utils';
 
 export interface MappedAuctionParams {

@@ -1,4 +1,4 @@
-import { BN, PublicKey } from '@drift-labs/sdk';
+import { BN, PublicKey } from '@velocity-exchange/sdk';
 
 const getStringifiableObjectEntry = (value: any): [any, string] => {
 	// If BN

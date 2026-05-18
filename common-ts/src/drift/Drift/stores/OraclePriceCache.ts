@@ -1,4 +1,4 @@
-import { BN, OraclePriceData, ZERO } from '@drift-labs/sdk';
+import { BN, OraclePriceData, ZERO } from '@velocity-exchange/sdk';
 import { Subject, Subscription } from 'rxjs';
 import { MarketKey } from '../../../types';
 

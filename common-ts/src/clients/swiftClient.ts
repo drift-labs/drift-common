@@ -1,6 +1,6 @@
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import {
-	DriftClient,
+	VelocityClient,
 	MarketType,
 	OrderType,
 	SignedMsgOrderParamsDelegateMessage,
@@ -8,7 +8,7 @@ import {
 	SignedMsgUserOrdersAccount,
 	digestSignature,
 	isVariant,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 
 // Cache for URL construction to prevent repeated string concatenation
 const swiftUrlCache = new Map<string, string>();
@@ -218,7 +218,7 @@ export class SwiftClient {
 
 	static async confirmSwiftOrderWS(
 		connection: Connection,
-		client: DriftClient,
+		client: VelocityClient,
 		signedMsgUserOrdersAccount: PublicKey,
 		signedMsgOrderUuid: Uint8Array,
 		confirmDuration: number
@@ -319,7 +319,7 @@ export class SwiftClient {
 
 	private static async confirmSwiftOrderRPCFetch(
 		connection: Connection,
-		client: DriftClient,
+		client: VelocityClient,
 		signedMsgUserOrdersAccount: PublicKey,
 		signedMsgOrderUuid: Uint8Array
 	): Promise<number | undefined> {
@@ -338,7 +338,7 @@ export class SwiftClient {
 	}
 
 	static findOrderInSignedMsgUserOrdersAccount(
-		client: DriftClient,
+		client: VelocityClient,
 		ordersAccount: AccountInfo<Buffer>,
 		signedMsgOrderUuid: Uint8Array
 	) {
@@ -479,7 +479,7 @@ export class SwiftClient {
 	static async handleSwiftOrderSubscriberWS(
 		subscriber: Subscriber<SwiftOrderEvent>,
 		connection: Connection,
-		client: DriftClient,
+		client: VelocityClient,
 		marketIndex: number,
 		marketType: MarketType,
 		message: string,
@@ -580,7 +580,7 @@ export class SwiftClient {
 
 	public static sendAndConfirmSwiftOrderWS(
 		connection: Connection,
-		client: DriftClient,
+		client: VelocityClient,
 		marketIndex: number,
 		marketType: MarketType,
 		message: string,

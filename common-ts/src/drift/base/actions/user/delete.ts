@@ -1,11 +1,16 @@
-import { DriftClient, TxParams, User, UserStatsAccount } from '@drift-labs/sdk';
+import {
+	VelocityClient,
+	TxParams,
+	User,
+	UserStatsAccount,
+} from '@velocity-exchange/sdk';
 
 /**
  * Parameters required for deleting a user instruction
  */
 interface DeleteUserIxsParams {
 	/** The Drift protocol client instance */
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	userStatsAccount: UserStatsAccount;
 }
@@ -15,7 +20,7 @@ interface DeleteUserIxsParams {
  * includes an idle instruction before the deletion instruction.
  */
 export const deleteUserIxs = async ({
-	driftClient,
+	velocityClient,
 	user,
 	userStatsAccount,
 }: DeleteUserIxsParams) => {
@@ -24,13 +29,13 @@ export const deleteUserIxs = async ({
 	const userPublicKey = user.userAccountPublicKey;
 
 	if (canDelete) {
-		return [await driftClient.getUserDeletionIx(userPublicKey)];
+		return [await velocityClient.getUserDeletionIx(userPublicKey)];
 	}
 
 	if (reason === 'is-not-idle-fresh-account') {
 		const [idleIx, deleteIx] = await Promise.all([
-			driftClient.getUpdateUserIdleIx(userPublicKey, user.getUserAccount()),
-			driftClient.getUserDeletionIx(userPublicKey),
+			velocityClient.getUpdateUserIdleIx(userPublicKey, user.getUserAccount()),
+			velocityClient.getUserDeletionIx(userPublicKey),
 		]);
 		return [idleIx, deleteIx];
 	}
@@ -53,21 +58,25 @@ interface DeleteUserTxnParams extends DeleteUserIxsParams {
  * @example
  * ```typescript
  * const deleteTxn = await deleteUserTxn({
- *   driftClient: driftClient,
+ *   velocityClient: velocityClient,
  *   user: userClient,
  *   txParams: { useSimulatedComputeUnits: true }
  * });
  *
  * // Sign and send the transaction
- * const signature = await driftClient.sendTransaction(deleteTxn);
+ * const signature = await velocityClient.sendTransaction(deleteTxn);
  * ```
  */
 export const deleteUserTxn = async ({
-	driftClient,
+	velocityClient,
 	user,
 	userStatsAccount,
 	txParams,
 }: DeleteUserTxnParams) => {
-	const deleteIx = await deleteUserIxs({ driftClient, user, userStatsAccount });
-	return driftClient.buildTransaction(deleteIx, txParams);
+	const deleteIx = await deleteUserIxs({
+		velocityClient,
+		user,
+		userStatsAccount,
+	});
+	return velocityClient.buildTransaction(deleteIx, txParams);
 };

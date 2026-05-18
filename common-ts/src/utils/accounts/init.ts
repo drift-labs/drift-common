@@ -1,4 +1,9 @@
-import { DriftClient, PublicKey, User, UserAccount } from '@drift-labs/sdk';
+import {
+	VelocityClient,
+	PublicKey,
+	User,
+	UserAccount,
+} from '@velocity-exchange/sdk';
 import { sleep } from '../core/async';
 
 // When creating an account, try 5 times over 5 seconds to wait for the new account to hit the blockchain.
@@ -6,11 +11,11 @@ const ACCOUNT_INITIALIZATION_RETRY_DELAY_MS = 1000;
 const ACCOUNT_INITIALIZATION_RETRY_ATTEMPTS = 5;
 
 const awaitAccountInitializationChainState = async (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	userId: number,
 	authority: PublicKey
 ) => {
-	const user = driftClient.getUser(userId, authority);
+	const user = velocityClient.getUser(userId, authority);
 
 	if (!user.isSubscribed) {
 		await user.subscribe();
@@ -46,7 +51,7 @@ const awaitAccountInitializationChainState = async (
  * // TODO : Need to do the subscription step
  */
 const initializeAndSubscribeToNewUserAccount = async (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	userIdToInit: number,
 	authority: PublicKey,
 	callbacks: {
@@ -61,9 +66,9 @@ const initializeAndSubscribeToNewUserAccount = async (
 	| 'failed_awaitAccountInitializationChainState'
 	| 'failed_handleSuccessStep'
 > => {
-	await driftClient.addUser(userIdToInit, authority);
+	await velocityClient.addUser(userIdToInit, authority);
 
-	const accountAlreadyExisted = await driftClient
+	const accountAlreadyExisted = await velocityClient
 		.getUser(userIdToInit)
 		?.exists();
 
@@ -71,7 +76,7 @@ const initializeAndSubscribeToNewUserAccount = async (
 	let result = await callbacks.initializationStep();
 
 	// Fetch account to make sure it's loaded
-	await updateUserAccount(driftClient.getUser(userIdToInit));
+	await updateUserAccount(velocityClient.getUser(userIdToInit));
 
 	if (!result) {
 		return 'failed_initializationStep';
@@ -88,7 +93,7 @@ const initializeAndSubscribeToNewUserAccount = async (
 
 	// Await the account initialization step to update the blockchain
 	result = await awaitAccountInitializationChainState(
-		driftClient,
+		velocityClient,
 		userIdToInit,
 		authority
 	);
@@ -97,7 +102,7 @@ const initializeAndSubscribeToNewUserAccount = async (
 		return 'failed_awaitAccountInitializationChainState';
 	}
 
-	await driftClient.switchActiveUser(userIdToInit, authority);
+	await velocityClient.switchActiveUser(userIdToInit, authority);
 
 	// Do the subscription step
 

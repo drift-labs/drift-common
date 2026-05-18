@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { DriftEnv } from '@drift-labs/sdk';
+import { VelocityEnv } from '@velocity-exchange/sdk';
 import { CentralServerDrift } from '../../../../../src/drift/Drift/clients/CentralServerDrift';
 import { CentralServerDriftMarkets } from '../../../../../src/drift/Drift/clients/CentralServerDrift/markets';
 import { EnvironmentConstants } from '../../../../../src/EnvironmentConstants';
@@ -26,7 +26,7 @@ describe('CentralServerDrift Constructor', () => {
 		it('should create instance with valid devnet configuration', () => {
 			const config = {
 				solanaRpcEndpoint: defaultDevnetRpc,
-				driftEnv: 'devnet' as DriftEnv,
+				velocityEnv: 'devnet' as VelocityEnv,
 				supportedPerpMarkets: [0, 1],
 				supportedSpotMarkets: [0, 1, 2],
 			};
@@ -42,7 +42,7 @@ describe('CentralServerDrift Constructor', () => {
 		it('should create instance with valid mainnet configuration', () => {
 			const config = {
 				solanaRpcEndpoint: defaultMainnetRpc,
-				driftEnv: 'mainnet-beta' as DriftEnv,
+				velocityEnv: 'mainnet-beta' as VelocityEnv,
 				supportedPerpMarkets: [0, 1, 2],
 				supportedSpotMarkets: [0, 1],
 			};
@@ -55,13 +55,13 @@ describe('CentralServerDrift Constructor', () => {
 			);
 		});
 
-		it('should create instance with additional DriftClient configuration', () => {
+		it('should create instance with additional VelocityClient configuration', () => {
 			const config = {
 				solanaRpcEndpoint: defaultDevnetRpc,
-				driftEnv: 'devnet' as DriftEnv,
+				velocityEnv: 'devnet' as VelocityEnv,
 				supportedPerpMarkets: [0],
 				supportedSpotMarkets: [0],
-				additionalDriftClientConfig: {
+				additionalVelocityClientConfig: {
 					enableMetricsEvents: true,
 					userStats: true,
 				},
@@ -79,7 +79,7 @@ describe('CentralServerDrift Constructor', () => {
 			const supportedSpotMarkets = [0];
 			const config = {
 				solanaRpcEndpoint: defaultDevnetRpc,
-				driftEnv: 'devnet' as DriftEnv,
+				velocityEnv: 'devnet' as VelocityEnv,
 				supportedPerpMarkets,
 				supportedSpotMarkets,
 			};
@@ -110,7 +110,7 @@ describe('CentralServerDrift Constructor', () => {
 			const supportedSpotMarkets = [0, 1, 2, 3];
 			const config = {
 				solanaRpcEndpoint: defaultDevnetRpc,
-				driftEnv: 'devnet' as DriftEnv,
+				velocityEnv: 'devnet' as VelocityEnv,
 				supportedPerpMarkets,
 				supportedSpotMarkets,
 			};
@@ -133,7 +133,7 @@ describe('CentralServerDrift Constructor', () => {
 			const supportedSpotMarkets: number[] = [];
 			const config = {
 				solanaRpcEndpoint: defaultDevnetRpc,
-				driftEnv: 'devnet' as DriftEnv,
+				velocityEnv: 'devnet' as VelocityEnv,
 				supportedPerpMarkets,
 				supportedSpotMarkets,
 			};
@@ -153,7 +153,7 @@ describe('CentralServerDrift Constructor', () => {
 			const supportedSpotMarkets = [0, 1001]; // Mix of valid and invalid
 			const config = {
 				solanaRpcEndpoint: defaultDevnetRpc,
-				driftEnv: 'devnet' as DriftEnv,
+				velocityEnv: 'devnet' as VelocityEnv,
 				supportedPerpMarkets,
 				supportedSpotMarkets,
 			};
@@ -168,7 +168,7 @@ describe('CentralServerDrift Constructor', () => {
 			const supportedSpotMarkets = [2, 0, 1]; // Test different order
 			const config = {
 				solanaRpcEndpoint: defaultDevnetRpc,
-				driftEnv: 'devnet' as DriftEnv,
+				velocityEnv: 'devnet' as VelocityEnv,
 				supportedPerpMarkets,
 				supportedSpotMarkets,
 			};
@@ -200,7 +200,7 @@ describe('CentralServerDrift Constructor', () => {
 		it('should set correct endpoints for devnet environment', () => {
 			const config = {
 				solanaRpcEndpoint: defaultDevnetRpc,
-				driftEnv: 'devnet' as DriftEnv,
+				velocityEnv: 'devnet' as VelocityEnv,
 				supportedPerpMarkets: [0],
 				supportedSpotMarkets: [0],
 			};
@@ -220,7 +220,7 @@ describe('CentralServerDrift Constructor', () => {
 		it('should set correct endpoints for mainnet environment', () => {
 			const config = {
 				solanaRpcEndpoint: defaultMainnetRpc,
-				driftEnv: 'mainnet-beta' as DriftEnv,
+				velocityEnv: 'mainnet-beta' as VelocityEnv,
 				supportedPerpMarkets: [0],
 				supportedSpotMarkets: [0],
 			};
@@ -242,7 +242,7 @@ describe('CentralServerDrift Constructor', () => {
 		it('should have markets property initialized', () => {
 			const config = {
 				solanaRpcEndpoint: defaultDevnetRpc,
-				driftEnv: 'devnet' as DriftEnv,
+				velocityEnv: 'devnet' as VelocityEnv,
 				supportedPerpMarkets: [0],
 				supportedSpotMarkets: [0],
 			};
@@ -258,7 +258,7 @@ describe('CentralServerDrift Constructor', () => {
 		it('should have subscribe method available', () => {
 			const config = {
 				solanaRpcEndpoint: defaultDevnetRpc,
-				driftEnv: 'devnet' as DriftEnv,
+				velocityEnv: 'devnet' as VelocityEnv,
 				supportedPerpMarkets: [0],
 				supportedSpotMarkets: [0],
 			};
@@ -271,7 +271,7 @@ describe('CentralServerDrift Constructor', () => {
 		it('should have all transaction methods available', () => {
 			const config = {
 				solanaRpcEndpoint: defaultDevnetRpc,
-				driftEnv: 'devnet' as DriftEnv,
+				velocityEnv: 'devnet' as VelocityEnv,
 				supportedPerpMarkets: [0],
 				supportedSpotMarkets: [0],
 			};
@@ -302,7 +302,7 @@ describe('CentralServerDrift Constructor', () => {
 		it('should handle invalid RPC endpoint gracefully', () => {
 			const config = {
 				solanaRpcEndpoint: 'invalid-url',
-				driftEnv: 'devnet' as DriftEnv,
+				velocityEnv: 'devnet' as VelocityEnv,
 				supportedPerpMarkets: [0],
 				supportedSpotMarkets: [0],
 			};
@@ -314,10 +314,10 @@ describe('CentralServerDrift Constructor', () => {
 		it('should handle missing additional config gracefully', () => {
 			const config = {
 				solanaRpcEndpoint: defaultDevnetRpc,
-				driftEnv: 'devnet' as DriftEnv,
+				velocityEnv: 'devnet' as VelocityEnv,
 				supportedPerpMarkets: [0],
 				supportedSpotMarkets: [0],
-				// additionalDriftClientConfig is optional
+				// additionalVelocityClientConfig is optional
 			};
 
 			expect(() => new CentralServerDrift(config)).to.not.throw();

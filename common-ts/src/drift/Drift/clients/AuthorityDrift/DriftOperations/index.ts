@@ -1,6 +1,6 @@
 import {
 	BigNum,
-	DriftClient,
+	VelocityClient,
 	JupiterClient,
 	MarketType,
 	MAX_LEVERAGE_ORDER_SIZE,
@@ -11,7 +11,7 @@ import {
 	User,
 	UserStatsAccount,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { TransactionSignature } from '@solana/web3.js';
 import { MARKET_UTILS } from '../../../../../_deprecated/market-utils';
 import { MAIN_POOL_ID } from '../../../../../constants';
@@ -61,12 +61,12 @@ export class DriftOperations {
 	/**
 	 * Creates a new DriftOperations instance.
 	 *
-	 * @param driftClient - The DriftClient instance for executing transactions
+	 * @param velocityClient - The VelocityClient instance for executing transactions
 	 * @param getUserAccountCache - Function to get the user account cache. We lazily load the user account cache, so that we always get the latest user account data.
 	 * @param getPriorityFee - Function to get current priority fee in micro lamports
 	 */
 	constructor(
-		private driftClient: DriftClient,
+		private velocityClient: VelocityClient,
 		private getUserAccountCache: () => UserAccountCache,
 		private dlobServerHttpUrl: string,
 		private swiftServerUrl: string,
@@ -135,7 +135,7 @@ export class DriftOperations {
 		} = params;
 
 		const spotMarketConfig = MARKET_UTILS.getMarketConfig(
-			this.driftClient.env,
+			this.velocityClient.env,
 			MarketType.SPOT,
 			depositSpotMarketIndex
 		);
@@ -147,17 +147,17 @@ export class DriftOperations {
 		let userStatsAccount: UserStatsAccount | undefined = undefined;
 
 		try {
-			userStatsAccount = this.driftClient.userStats?.getAccount();
+			userStatsAccount = this.velocityClient.userStats?.getAccount();
 		} catch (error) {
 			// ignore
 		}
 
 		const { transaction, subAccountId } =
 			await createUserAndDepositCollateralBaseTxn({
-				driftClient: this.driftClient,
+				velocityClient: this.velocityClient,
 				amount: depositAmount.val,
 				spotMarketConfig: spotMarketConfig,
-				authority: this.driftClient.wallet.publicKey,
+				authority: this.velocityClient.wallet.publicKey,
 				userStatsAccount: userStatsAccount,
 				accountName: newAccountName,
 				referrerName,
@@ -166,15 +166,15 @@ export class DriftOperations {
 				txParams: this.getTxParams(),
 			});
 
-		const { txSig } = await this.driftClient.sendTransaction(transaction);
+		const { txSig } = await this.velocityClient.sendTransaction(transaction);
 
-		await this.driftClient.addUser(
+		await this.velocityClient.addUser(
 			subAccountId,
-			this.driftClient.wallet.publicKey
+			this.velocityClient.wallet.publicKey
 		); // adds user to driftclient's user map, subscribes to user account data
-		const user = this.driftClient.getUser(
+		const user = this.velocityClient.getUser(
 			subAccountId,
-			this.driftClient.wallet.publicKey
+			this.velocityClient.wallet.publicKey
 		);
 
 		user.eventEmitter.on('update', () => {
@@ -208,14 +208,14 @@ export class DriftOperations {
 		params: CreateRevenueShareEscrowParams
 	): Promise<TransactionSignature> {
 		const txn = await createRevenueShareEscrowTxn({
-			driftClient: this.driftClient,
-			authority: this.driftClient.wallet.publicKey,
+			velocityClient: this.velocityClient,
+			authority: this.velocityClient.wallet.publicKey,
 			numOrders: params.numOrders ?? 16,
 			builder: params.builder,
 			txParams: this.getTxParams(),
 		});
 
-		const { txSig } = await this.driftClient.sendTransaction(txn);
+		const { txSig } = await this.velocityClient.sendTransaction(txn);
 
 		return txSig;
 	}
@@ -240,9 +240,9 @@ export class DriftOperations {
 	async deleteUser(subAccountId: number): Promise<TransactionSignature> {
 		const user = this.getUserAccountCache().getUser(
 			subAccountId,
-			this.driftClient.wallet.publicKey
+			this.velocityClient.wallet.publicKey
 		);
-		const userStatsAccount = this.driftClient.userStats?.getAccount();
+		const userStatsAccount = this.velocityClient.userStats?.getAccount();
 
 		if (!user) {
 			throw new Error('User not found');
@@ -253,13 +253,13 @@ export class DriftOperations {
 		}
 
 		const deleteTxn = await deleteUserTxn({
-			driftClient: this.driftClient,
+			velocityClient: this.velocityClient,
 			user: user.userClient,
 			userStatsAccount,
 			txParams: this.getTxParams(),
 		});
 
-		const { txSig } = await this.driftClient.sendTransaction(deleteTxn);
+		const { txSig } = await this.velocityClient.sendTransaction(deleteTxn);
 
 		return txSig;
 	}
@@ -289,14 +289,14 @@ export class DriftOperations {
 			params;
 
 		const spotMarketConfig = MARKET_UTILS.getMarketConfig(
-			this.driftClient.env,
+			this.velocityClient.env,
 			MarketType.SPOT,
 			spotMarketIndex
 		);
 
 		const user = this.getUserAccountCache().getUser(
 			subAccountId,
-			this.driftClient.wallet.publicKey
+			this.velocityClient.wallet.publicKey
 		);
 
 		if (!user) {
@@ -304,7 +304,7 @@ export class DriftOperations {
 		}
 
 		const depositTxn = await createDepositTxn({
-			driftClient: this.driftClient,
+			velocityClient: this.velocityClient,
 			user: user.userClient,
 			amount: amount,
 			spotMarketConfig: spotMarketConfig,
@@ -312,7 +312,7 @@ export class DriftOperations {
 			txParams: this.getTxParams(),
 		});
 
-		const { txSig } = await this.driftClient.sendTransaction(depositTxn);
+		const { txSig } = await this.velocityClient.sendTransaction(depositTxn);
 
 		return txSig;
 	}
@@ -349,14 +349,14 @@ export class DriftOperations {
 		} = params;
 
 		const spotMarketConfig = MARKET_UTILS.getMarketConfig(
-			this.driftClient.env,
+			this.velocityClient.env,
 			MarketType.SPOT,
 			spotMarketIndex
 		);
 
 		const accountData = this.getUserAccountCache().getUser(
 			subAccountId,
-			this.driftClient.wallet.publicKey
+			this.velocityClient.wallet.publicKey
 		);
 
 		if (!accountData) {
@@ -364,7 +364,7 @@ export class DriftOperations {
 		}
 
 		const withdrawTxn = await createWithdrawTxn({
-			driftClient: this.driftClient,
+			velocityClient: this.velocityClient,
 			amount,
 			spotMarketConfig,
 			user: accountData.userClient,
@@ -373,7 +373,7 @@ export class DriftOperations {
 			txParams: this.getTxParams(),
 		});
 
-		const { txSig } = await this.driftClient.sendTransaction(withdrawTxn);
+		const { txSig } = await this.velocityClient.sendTransaction(withdrawTxn);
 
 		return txSig;
 	}
@@ -403,7 +403,7 @@ export class DriftOperations {
 	): Promise<TransactionSignature | void> {
 		const accountData = this.getUserAccountCache().getUser(
 			params.subAccountId,
-			this.driftClient.wallet.publicKey
+			this.velocityClient.wallet.publicKey
 		);
 
 		if (!accountData) {
@@ -450,16 +450,16 @@ export class DriftOperations {
 				// we split the logic for SWIFT and non-SWIFT orders to achieve better type inference
 				if (useSwift) {
 					const swiftOrderResult = await createOpenPerpMarketOrder({
-						driftClient: this.driftClient,
+						velocityClient: this.velocityClient,
 						user,
 						assetType: params.assetType,
 						useSwift: true,
 						swiftOptions: {
 							wallet: {
 								// @ts-ignore TODO: we might want to add signMessage to the IWallet interface
-								signMessage: this.driftClient.wallet.signMessage,
-								takerAuthority: this.driftClient.wallet.publicKey,
-								signingAuthority: this.driftClient.wallet.publicKey,
+								signMessage: this.velocityClient.wallet.signMessage,
+								takerAuthority: this.velocityClient.wallet.publicKey,
+								signingAuthority: this.velocityClient.wallet.publicKey,
 							},
 							swiftServerUrl: this.swiftServerUrl,
 							...params.orderConfig.swiftOptions,
@@ -481,7 +481,7 @@ export class DriftOperations {
 					return swiftOrderResult;
 				} else {
 					const result = await createOpenPerpMarketOrder({
-						driftClient: this.driftClient,
+						velocityClient: this.velocityClient,
 						user,
 						assetType: params.assetType,
 						marketIndex: params.marketIndex,
@@ -498,7 +498,7 @@ export class DriftOperations {
 							params.isolatedPositionDepositsOverride,
 					});
 
-					const { txSig } = await this.driftClient.sendTransaction(result);
+					const { txSig } = await this.velocityClient.sendTransaction(result);
 
 					return txSig;
 				}
@@ -513,7 +513,7 @@ export class DriftOperations {
 				// we split the logic for SWIFT and non-SWIFT orders to achieve better type inference
 				if (useSwift) {
 					const swiftOrderResult = await createOpenPerpNonMarketOrder({
-						driftClient: this.driftClient,
+						velocityClient: this.velocityClient,
 						user,
 						direction: params.direction,
 						marketIndex: params.marketIndex,
@@ -530,9 +530,9 @@ export class DriftOperations {
 						swiftOptions: {
 							wallet: {
 								// @ts-ignore TODO: we might want to add signMessage to the IWallet interface
-								signMessage: this.driftClient.wallet.signMessage,
-								takerAuthority: this.driftClient.wallet.publicKey,
-								signingAuthority: this.driftClient.wallet.publicKey,
+								signMessage: this.velocityClient.wallet.signMessage,
+								takerAuthority: this.velocityClient.wallet.publicKey,
+								signingAuthority: this.velocityClient.wallet.publicKey,
 							},
 							swiftServerUrl: this.swiftServerUrl,
 							...params.orderConfig.swiftOptions,
@@ -547,7 +547,7 @@ export class DriftOperations {
 					return swiftOrderResult;
 				} else {
 					const txn = await createOpenPerpNonMarketOrder({
-						driftClient: this.driftClient,
+						velocityClient: this.velocityClient,
 						user,
 						direction: params.direction,
 						marketIndex: params.marketIndex,
@@ -568,7 +568,7 @@ export class DriftOperations {
 							params.isolatedPositionDepositsOverride,
 					});
 
-					const { txSig } = await this.driftClient.sendTransaction(txn);
+					const { txSig } = await this.velocityClient.sendTransaction(txn);
 
 					return txSig;
 				}
@@ -576,7 +576,7 @@ export class DriftOperations {
 			case 'takeProfit':
 			case 'stopLoss': {
 				const txn = await createOpenPerpNonMarketOrder({
-					driftClient: this.driftClient,
+					velocityClient: this.velocityClient,
 					user,
 					direction: params.direction,
 					marketIndex: params.marketIndex,
@@ -593,13 +593,13 @@ export class DriftOperations {
 					positionMaxLeverage: params.positionMaxLeverage,
 				});
 
-				const { txSig } = await this.driftClient.sendTransaction(txn);
+				const { txSig } = await this.velocityClient.sendTransaction(txn);
 
 				return txSig;
 			}
 			case 'oracleLimit': {
 				const txn = await createOpenPerpNonMarketOrder({
-					driftClient: this.driftClient,
+					velocityClient: this.velocityClient,
 					user,
 					direction: params.direction,
 					marketIndex: params.marketIndex,
@@ -615,7 +615,7 @@ export class DriftOperations {
 					positionMaxLeverage: params.positionMaxLeverage,
 				});
 
-				const { txSig } = await this.driftClient.sendTransaction(txn);
+				const { txSig } = await this.velocityClient.sendTransaction(txn);
 
 				return txSig;
 			}
@@ -634,16 +634,16 @@ export class DriftOperations {
 		}
 	): Promise<QuoteResponse> {
 		const jupiterClient = new JupiterClient({
-			connection: this.driftClient.connection,
+			connection: this.velocityClient.connection,
 		});
 
 		const inputMint = MARKET_UTILS.getMarketConfig(
-			this.driftClient.env,
+			this.velocityClient.env,
 			MarketType.SPOT,
 			params.fromMarketIndex
 		).mint;
 		const outputMint = MARKET_UTILS.getMarketConfig(
-			this.driftClient.env,
+			this.velocityClient.env,
 			MarketType.SPOT,
 			params.toMarketIndex
 		).mint;
@@ -683,7 +683,7 @@ export class DriftOperations {
 	async swap(params: SwapParams): Promise<TransactionSignature> {
 		const accountData = this.getUserAccountCache().getUser(
 			params.subAccountId,
-			this.driftClient.wallet.publicKey
+			this.velocityClient.wallet.publicKey
 		);
 
 		if (!accountData) {
@@ -700,7 +700,7 @@ export class DriftOperations {
 
 		const swapClient = new UnifiedSwapClient({
 			clientType: params.swapClientType?.type ?? 'jupiter',
-			connection: this.driftClient.connection,
+			connection: this.velocityClient.connection,
 			...auth,
 		});
 
@@ -709,7 +709,7 @@ export class DriftOperations {
 			: await this.getSwapQuote(params);
 
 		const swapTxn = await createSwapTxn({
-			driftClient: this.driftClient,
+			velocityClient: this.velocityClient,
 			swapClient,
 			user: accountData.userClient,
 			swapFromMarketIndex: params.fromMarketIndex,
@@ -719,7 +719,7 @@ export class DriftOperations {
 			txParams: this.getTxParams(),
 		});
 
-		const { txSig } = await this.driftClient.sendTransaction(swapTxn);
+		const { txSig } = await this.velocityClient.sendTransaction(swapTxn);
 
 		return txSig;
 	}
@@ -743,7 +743,7 @@ export class DriftOperations {
 
 		const accountData = this.getUserAccountCache().getUser(
 			subAccountId,
-			this.driftClient.wallet.publicKey
+			this.velocityClient.wallet.publicKey
 		);
 
 		if (!accountData) {
@@ -755,13 +755,13 @@ export class DriftOperations {
 		);
 
 		const settlePnlTxn = await createSettlePnlTxn({
-			driftClient: this.driftClient,
+			velocityClient: this.velocityClient,
 			user: accountData.userClient,
 			marketIndexes,
 			txParams: this.getTxParams(),
 		});
 
-		const { txSig } = await this.driftClient.sendTransaction(settlePnlTxn);
+		const { txSig } = await this.velocityClient.sendTransaction(settlePnlTxn);
 
 		return txSig;
 	}
@@ -773,7 +773,7 @@ export class DriftOperations {
 
 		const accountData = this.getUserAccountCache().getUser(
 			subAccountId,
-			this.driftClient.wallet.publicKey
+			this.velocityClient.wallet.publicKey
 		);
 
 		if (!accountData) {
@@ -781,13 +781,15 @@ export class DriftOperations {
 		}
 
 		const cancelOrdersTxn = await createCancelOrdersTxn({
-			driftClient: this.driftClient,
+			velocityClient: this.velocityClient,
 			user: accountData.userClient,
 			orderIds,
 			txParams: this.getTxParams(),
 		});
 
-		const { txSig } = await this.driftClient.sendTransaction(cancelOrdersTxn);
+		const { txSig } = await this.velocityClient.sendTransaction(
+			cancelOrdersTxn
+		);
 
 		return txSig;
 	}

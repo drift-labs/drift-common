@@ -1,8 +1,8 @@
 import {
-	DriftClient,
+	VelocityClient,
 	PerpMarketConfig,
 	SpotMarketConfig,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 
 export type OracleCrankFetchResult = {
 	success: boolean;
@@ -18,7 +18,7 @@ export type OracleMarketConfig = PerpMarketConfig | SpotMarketConfig;
 
 export type GetOracleCrankIxsOptions = {
 	marketConfigs: OracleMarketConfig[];
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	fetchCrankData: OracleCrankDataFetcher;
 	maxPythPullCranks?: number;
 	maxPythLazerCranks?: number;

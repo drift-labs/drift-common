@@ -1,10 +1,10 @@
 import {
 	CandleResolution,
-	DriftClient,
+	VelocityClient,
 	PerpMarketConfig,
 	PRICE_PRECISION_EXP,
 	SpotMarketConfig,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { CandleType, JsonCandle, JsonTrade, MarketId } from '../types';
 import { UIEnv } from '../types/UIEnv';
 import { Candle } from '../utils/candles/Candle';
@@ -192,7 +192,7 @@ export class DriftTvFeed {
 	private env: UIEnv;
 	private candleType: CandleType;
 	private candleClient: CandleClient;
-	private driftClient: DriftClient;
+	private velocityClient: VelocityClient;
 	private onResetCache: () => void;
 	private perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
@@ -205,7 +205,7 @@ export class DriftTvFeed {
 	constructor(
 		env: UIEnv,
 		candleType: CandleType,
-		driftClient: DriftClient,
+		velocityClient: VelocityClient,
 		perpMarketConfigs: PerpMarketConfig[],
 		spotMarketConfigs: SpotMarketConfig[],
 		positiveColor: string,
@@ -217,7 +217,7 @@ export class DriftTvFeed {
 		this.env = env;
 		this.candleType = candleType;
 		this.candleClient = new CandleClient();
-		this.driftClient = driftClient;
+		this.velocityClient = velocityClient;
 		this.perpMarketConfigs = perpMarketConfigs;
 		this.spotMarketConfigs = spotMarketConfigs;
 		this.positiveColor = positiveColor;
@@ -311,11 +311,11 @@ export class DriftTvFeed {
 				let tickSize: number;
 
 				if (targetMarket.type === 'perp') {
-					tickSize = this.driftClient
+					tickSize = this.velocityClient
 						.getPerpMarketAccount(targetMarket.config.marketIndex)
 						.amm.orderTickSize.toNumber();
 				} else {
-					tickSize = this.driftClient
+					tickSize = this.velocityClient
 						.getSpotMarketAccount(targetMarket.config.marketIndex)
 						.orderTickSize.toNumber();
 				}

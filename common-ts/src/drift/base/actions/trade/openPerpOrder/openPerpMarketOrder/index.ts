@@ -1,5 +1,5 @@
 import {
-	DriftClient,
+	VelocityClient,
 	User,
 	BN,
 	PositionDirection,
@@ -8,7 +8,7 @@ import {
 	getUserStatsAccountPublicKey,
 	ReferrerInfo,
 	OrderType,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	PublicKey,
 	Transaction,
@@ -40,7 +40,7 @@ import {
 } from '../isolatedPositionDeposit';
 
 export interface OpenPerpMarketOrderBaseParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	assetType: 'base' | 'quote';
 	marketIndex: number;
@@ -142,7 +142,7 @@ export type OpenPerpMarketOrderParams<
  */
 async function prepSwiftMarketOrderData(params: OpenPerpMarketOrderBaseParams) {
 	const {
-		driftClient,
+		velocityClient,
 		user,
 		assetType,
 		marketIndex,
@@ -160,7 +160,7 @@ async function prepSwiftMarketOrderData(params: OpenPerpMarketOrderBaseParams) {
 	}
 
 	const fetchedOrderParams = await fetchAuctionOrderParams({
-		driftClient,
+		velocityClient,
 		user,
 		assetType,
 		marketIndex,
@@ -190,7 +190,7 @@ export async function createSwiftMarketOrder(
 	params: OpenPerpMarketOrderBaseParamsWithSwift
 ): Promise<void> {
 	const {
-		driftClient,
+		velocityClient,
 		user,
 		marketIndex,
 		amount,
@@ -205,7 +205,7 @@ export async function createSwiftMarketOrder(
 	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
 		params.isolatedPositionDepositsOverride,
 		{
-			driftClient,
+			velocityClient,
 			user,
 			marketIndex,
 			baseAssetAmount: amount,
@@ -219,7 +219,7 @@ export async function createSwiftMarketOrder(
 	const { userAccount, orderParams } = await prepSwiftMarketOrderData(params);
 
 	await prepSignAndSendSwiftOrder({
-		driftClient,
+		velocityClient,
 		subAccountId: userAccount.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
@@ -254,7 +254,7 @@ export async function createSwiftMarketOrderMessage(
 	params: CreateSwiftMarketOrderMessageParams
 ): Promise<SwiftOrderMessage> {
 	const {
-		driftClient,
+		velocityClient,
 		user,
 		marketIndex,
 		amount,
@@ -270,7 +270,7 @@ export async function createSwiftMarketOrderMessage(
 	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
 		params.isolatedPositionDepositsOverride,
 		{
-			driftClient,
+			velocityClient,
 			user,
 			marketIndex,
 			baseAssetAmount: amount,
@@ -284,7 +284,7 @@ export async function createSwiftMarketOrderMessage(
 	const { userAccount, orderParams } = await prepSwiftMarketOrderData(params);
 
 	return prepSwiftOrderMessage({
-		driftClient,
+		velocityClient,
 		subAccountId: userAccount.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
@@ -310,7 +310,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	direction,
 	dlobServerHttpUrl,
 	marketIndex,
-	driftClient,
+	velocityClient,
 	user,
 	userOrderId,
 	amount,
@@ -331,7 +331,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	direction: PositionDirection;
 	dlobServerHttpUrl: string;
 	marketIndex: number;
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	referrerInfo?: ReferrerInfo;
 	auctionDurationPercentage?: number;
@@ -342,7 +342,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 
 	const [fetchedOrderParams, topMakersResult] = await Promise.all([
 		fetchAuctionOrderParams({
-			driftClient,
+			velocityClient,
 			user,
 			assetType,
 			marketIndex,
@@ -382,12 +382,12 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		maker: maker.userAccountPubKey,
 		makerUserAccount: maker.userAccount,
 		makerStats: getUserStatsAccountPublicKey(
-			driftClient.program.programId,
+			velocityClient.program.programId,
 			maker.userAccount.authority
 		),
 	}));
 
-	const placeAndTakeIx = await driftClient.getPlaceAndTakePerpOrderIx(
+	const placeAndTakeIx = await velocityClient.getPlaceAndTakePerpOrderIx(
 		fetchedOrderParams,
 		topMakersInfo,
 		referrerInfo,
@@ -406,7 +406,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
  * Creates transaction instructions for opening a perp market order.
  * If swiftOptions is provided, it will create a Swift (signed message) order instead.
  *
- * @param driftClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Drift client instance for interacting with the protocol
  * @param user - The user account that will place the order
  * @param assetType - Whether the amount is in base or quote units
  * @param marketIndex - The perp market index to trade
@@ -420,7 +420,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
  * @returns Promise resolving to an array of transaction instructions for regular orders
  */
 export const createOpenPerpMarketOrderIxs = async ({
-	driftClient,
+	velocityClient,
 	user,
 	assetType,
 	marketIndex,
@@ -445,7 +445,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
 		isolatedPositionDepositsOverride,
 		{
-			driftClient,
+			velocityClient,
 			user,
 			marketIndex,
 			baseAssetAmount: amount,
@@ -467,7 +467,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 	const [leverageIx, additionalDepositIxs, isolatedPositionDepositIx] =
 		await Promise.all([
 			getPositionMaxLeverageIxIfNeeded(
-				driftClient,
+				velocityClient,
 				user,
 				marketIndex,
 				positionMaxLeverage,
@@ -477,7 +477,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 				? Promise.all(
 						resolvedAdditionalDeposits.map((deposit) =>
 							getIsolatedPositionDepositIxIfNeeded(
-								driftClient,
+								velocityClient,
 								user,
 								deposit.marketIndex,
 								deposit.amount,
@@ -487,7 +487,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 				  )
 				: Promise.resolve([] as (TransactionInstruction | undefined)[]),
 			getIsolatedPositionDepositIxIfNeeded(
-				driftClient,
+				velocityClient,
 				user,
 				marketIndex,
 				mainIsolatedDeposit,
@@ -515,7 +515,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 				direction,
 				dlobServerHttpUrl,
 				marketIndex,
-				driftClient,
+				velocityClient,
 				user,
 				userOrderId,
 				reduceOnly,
@@ -536,7 +536,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 		}
 	} else {
 		const fetchedOrderParams = await fetchAuctionOrderParams({
-			driftClient,
+			velocityClient,
 			user,
 			assetType,
 			marketIndex,
@@ -598,7 +598,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 
 	// Regular order flow - create transaction instruction
 	if (allOrders.length > 0) {
-		const placeOrderIx = await driftClient.getPlaceOrdersIx(
+		const placeOrderIx = await velocityClient.getPlaceOrdersIx(
 			allOrders,
 			undefined,
 			{
@@ -614,7 +614,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 /**
  * Creates a complete transaction for opening a perp market order.
  *
- * @param driftClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Drift client instance for interacting with the protocol
  * @param user - The user account that will place the order
  * @param marketIndex - The perp market index to trade
  * @param direction - The direction of the trade (long/short)
@@ -629,19 +629,20 @@ export const createOpenPerpMarketOrderIxs = async ({
 export const createOpenPerpMarketOrderTxn = async (
 	params: WithTxnParams<OpenPerpMarketOrderBaseParams>
 ): Promise<Transaction | VersionedTransaction> => {
-	const { driftClient } = params;
+	const { velocityClient } = params;
 
 	// Regular order flow - create transaction instruction and build transaction
 	const placeOrderIxs = await createOpenPerpMarketOrderIxs(params);
-	const openPerpMarketOrderTxn = await driftClient.txHandler.buildTransaction({
-		instructions: placeOrderIxs,
-		txVersion: 0,
-		connection: driftClient.connection,
-		preFlightCommitment: 'confirmed',
-		fetchAllMarketLookupTableAccounts:
-			driftClient.fetchAllLookupTableAccounts.bind(driftClient),
-		txParams: params.txParams,
-	});
+	const openPerpMarketOrderTxn =
+		await velocityClient.txHandler.buildTransaction({
+			instructions: placeOrderIxs,
+			txVersion: 0,
+			connection: velocityClient.connection,
+			preFlightCommitment: 'confirmed',
+			fetchAllMarketLookupTableAccounts:
+				velocityClient.fetchAllLookupTableAccounts.bind(velocityClient),
+			txParams: params.txParams,
+		});
 
 	return openPerpMarketOrderTxn;
 };
@@ -649,7 +650,7 @@ export const createOpenPerpMarketOrderTxn = async (
 /**
  * Creates a transaction or swift order for a perp market order.
  *
- * @param driftClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Drift client instance for interacting with the protocol
  * @param user - The user account that will place the order
  * @param marketIndex - The perp market index to trade
  * @param direction - The direction of the trade (long/short)

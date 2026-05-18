@@ -1,4 +1,4 @@
-import { PublicKey } from '@drift-labs/sdk';
+import { PublicKey } from '@velocity-exchange/sdk';
 import bcrypt from 'bcryptjs-react';
 import nacl, { sign } from 'tweetnacl';
 

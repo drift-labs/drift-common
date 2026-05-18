@@ -1,9 +1,9 @@
 import {
 	SpotMarketConfig,
-	DriftEnv,
+	VelocityEnv,
 	initialize,
 	PerpMarketConfig,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 
 export const Config: {
 	initialized: boolean;
@@ -17,7 +17,7 @@ export const Config: {
 	sdkConfig: undefined,
 };
 
-export const Initialize = (env: DriftEnv) => {
+export const Initialize = (env: VelocityEnv) => {
 	const SDKConfig = initialize({ env });
 
 	const maxSpotMarketIndex = Math.max(

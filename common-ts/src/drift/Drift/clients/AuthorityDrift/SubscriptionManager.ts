@@ -1,12 +1,12 @@
 import {
 	CustomizedCadenceBulkAccountLoader,
-	DriftClient,
+	VelocityClient,
 	IWallet,
 	PerpMarketAccount,
-	PollingDriftClientAccountSubscriber,
+	PollingVelocityClientAccountSubscriber,
 	SpotMarketAccount,
 	User,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { MarketId, MarketKey } from '../../../../types';
 import { PollingDlob } from '../../data/PollingDlob';
 import {
@@ -37,7 +37,7 @@ export class SubscriptionManager {
 	/**
 	 * Creates a new SubscriptionManager instance.
 	 *
-	 * @param driftClient - The DriftClient instance for managing subscriptions
+	 * @param velocityClient - The VelocityClient instance for managing subscriptions
 	 * @param accountLoader - Handles bulk account loading and polling frequency management
 	 * @param pollingDlob - Manages DLOB server polling for market data
 	 * @param userAccountCache - Cache for user account data updates
@@ -45,7 +45,7 @@ export class SubscriptionManager {
 	 * @param selectedTradeMarket - The market that is currently being traded
 	 */
 	constructor(
-		private driftClient: DriftClient,
+		private velocityClient: VelocityClient,
 		private accountLoader: CustomizedCadenceBulkAccountLoader,
 		private pollingDlob: PollingDlob,
 		private orderbookManager: DriftL2OrderbookManager,
@@ -72,7 +72,7 @@ export class SubscriptionManager {
 	 * updates to maintain optimal polling frequencies.
 	 */
 	subscribeToAllUsersUpdates(): void {
-		const users = this.driftClient.getUsers();
+		const users = this.velocityClient.getUsers();
 
 		this.handleSubscriptionUpdatesOnUserUpdates(users);
 
@@ -137,8 +137,8 @@ export class SubscriptionManager {
 	 */
 	updateMarketAccountCadence(market: MarketId, newCadence: number): void {
 		const marketAccount = market.isPerp
-			? this.driftClient.getPerpMarketAccount(market.marketIndex)
-			: this.driftClient.getSpotMarketAccount(market.marketIndex);
+			? this.velocityClient.getPerpMarketAccount(market.marketIndex)
+			: this.velocityClient.getSpotMarketAccount(market.marketIndex);
 
 		if (!marketAccount) {
 			throw new Error(`Market account not found for market ${market.key}`);
@@ -278,14 +278,14 @@ export class SubscriptionManager {
 	): Promise<void> {
 		const perpMarketIndexesSet = new Set(
 			(
-				this.driftClient
-					.accountSubscriber as PollingDriftClientAccountSubscriber
+				this.velocityClient
+					.accountSubscriber as PollingVelocityClientAccountSubscriber
 			).perpMarketIndexes
 		);
 		const spotMarketIndexesSet = new Set(
 			(
-				this.driftClient
-					.accountSubscriber as PollingDriftClientAccountSubscriber
+				this.velocityClient
+					.accountSubscriber as PollingVelocityClientAccountSubscriber
 			).spotMarketIndexes
 		);
 
@@ -301,18 +301,22 @@ export class SubscriptionManager {
 		});
 
 		(
-			this.driftClient.accountSubscriber as PollingDriftClientAccountSubscriber
+			this.velocityClient
+				.accountSubscriber as PollingVelocityClientAccountSubscriber
 		).perpMarketIndexes = Array.from(perpMarketIndexesSet);
 		(
-			this.driftClient.accountSubscriber as PollingDriftClientAccountSubscriber
+			this.velocityClient
+				.accountSubscriber as PollingVelocityClientAccountSubscriber
 		).spotMarketIndexes = Array.from(spotMarketIndexesSet);
 
 		// TODO: see if this can be optimized - instead of unsubscribing and resubscribing, find a way to add the new markets to the existing subscription
 		await (
-			this.driftClient.accountSubscriber as PollingDriftClientAccountSubscriber
+			this.velocityClient
+				.accountSubscriber as PollingVelocityClientAccountSubscriber
 		).unsubscribe();
 		await (
-			this.driftClient.accountSubscriber as PollingDriftClientAccountSubscriber
+			this.velocityClient
+				.accountSubscriber as PollingVelocityClientAccountSubscriber
 		).subscribe();
 	}
 
@@ -417,7 +421,7 @@ export class SubscriptionManager {
 	 * 1. Checks if the wallet is actually different
 	 * 2. Unsubscribes from current user accounts
 	 * 3. Resets the user account cache
-	 * 4. Updates the DriftClient with the new wallet
+	 * 4. Updates the VelocityClient with the new wallet
 	 * 5. Resubscribes to markets based on new user positions
 	 * 6. Switches to the specified subaccount if provided
 	 * 7. Reestablishes user account subscriptions
@@ -426,14 +430,14 @@ export class SubscriptionManager {
 		wallet: IWallet,
 		activeSubAccountId?: number
 	): Promise<void> {
-		if (this.driftClient.wallet.publicKey.equals(wallet.publicKey)) {
+		if (this.velocityClient.wallet.publicKey.equals(wallet.publicKey)) {
 			return;
 		}
 
-		await Promise.all(this.driftClient.unsubscribeUsers());
+		await Promise.all(this.velocityClient.unsubscribeUsers());
 		this.userAccountCache.reset();
 
-		const updateWalletResult = await this.driftClient.updateWallet(
+		const updateWalletResult = await this.velocityClient.updateWallet(
 			wallet,
 			undefined,
 			activeSubAccountId,
@@ -442,7 +446,7 @@ export class SubscriptionManager {
 		);
 
 		await this.subscribeToNonWhitelistedButUserInvolvedMarkets(
-			this.driftClient.getUsers()
+			this.velocityClient.getUsers()
 		);
 
 		if (!updateWalletResult) {
@@ -450,7 +454,7 @@ export class SubscriptionManager {
 		}
 
 		if (activeSubAccountId) {
-			await this.driftClient.switchActiveUser(activeSubAccountId);
+			await this.velocityClient.switchActiveUser(activeSubAccountId);
 		}
 
 		this.subscribeToAllUsersUpdates();

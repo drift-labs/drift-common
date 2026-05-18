@@ -5,7 +5,7 @@ import {
 	PerpOperation,
 	SpotMarketAccount,
 	SpotOperation,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 
 const PerpOperationsMap = {
 	UPDATE_FUNDING: 'Funding',

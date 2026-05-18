@@ -1,25 +1,25 @@
 import {
 	BN,
 	calculateLongShortFundingRateAndLiveTwaps,
-	DriftClient,
-} from '@drift-labs/sdk';
+	VelocityClient,
+} from '@velocity-exchange/sdk';
 import { MarkPriceCache } from '../../../Drift';
 import { MarketId } from '../../../../types';
 import { getFundingRate } from '../../../utils/funding';
 import { API_URLS, API_ENDPOINTS } from '../../../constants/apiUrls';
 
 export const getMarketPredictedFunding = (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	marketIndex: number
 ): {
 	longFundingRate: number;
 	shortFundingRate: number;
 } => {
-	const perpMarketAccount = driftClient.getPerpMarketAccount(marketIndex);
+	const perpMarketAccount = velocityClient.getPerpMarketAccount(marketIndex);
 	const rawMmOraclePriceData =
-		driftClient.getMMOracleDataForPerpMarket(marketIndex);
+		velocityClient.getMMOracleDataForPerpMarket(marketIndex);
 	const rawOraclePriceData =
-		driftClient.getOracleDataForPerpMarket(marketIndex);
+		velocityClient.getOracleDataForPerpMarket(marketIndex);
 
 	const markPriceCache = new MarkPriceCache();
 	const marketId = MarketId.createPerpMarket(marketIndex);

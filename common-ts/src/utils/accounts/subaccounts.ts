@@ -1,16 +1,23 @@
-import { DriftClient, PublicKey, User, UserAccount } from '@drift-labs/sdk';
+import {
+	VelocityClient,
+	PublicKey,
+	User,
+	UserAccount,
+} from '@velocity-exchange/sdk';
 
-const fetchCurrentSubaccounts = (driftClient: DriftClient): UserAccount[] => {
-	return driftClient.getUsers().map((user) => user.getUserAccount());
+const fetchCurrentSubaccounts = (
+	velocityClient: VelocityClient
+): UserAccount[] => {
+	return velocityClient.getUsers().map((user) => user.getUserAccount());
 };
 
 const fetchUserClientsAndAccounts = (
-	driftClient: DriftClient
+	velocityClient: VelocityClient
 ): { user: User; userAccount: UserAccount }[] => {
-	const accounts = fetchCurrentSubaccounts(driftClient);
+	const accounts = fetchCurrentSubaccounts(velocityClient);
 	const allUsersAndUserAccounts = accounts.map((acct) => {
 		return {
-			user: driftClient.getUser(acct.subAccountId, acct.authority),
+			user: velocityClient.getUser(acct.subAccountId, acct.authority),
 			userAccount: acct,
 		};
 	});
@@ -19,14 +26,14 @@ const fetchUserClientsAndAccounts = (
 };
 
 const userExists = async (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	userId: number,
 	authority: PublicKey
 ) => {
 	let userAccountExists = false;
 
 	try {
-		const user = driftClient.getUser(userId, authority);
+		const user = velocityClient.getUser(userId, authority);
 		userAccountExists = await user.exists();
 	} catch (e) {
 		// user account does not exist so we leave userAccountExists false

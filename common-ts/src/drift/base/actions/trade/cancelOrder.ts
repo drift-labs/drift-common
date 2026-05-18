@@ -1,4 +1,4 @@
-import { DriftClient, User } from '@drift-labs/sdk';
+import { VelocityClient, User } from '@velocity-exchange/sdk';
 import {
 	Transaction,
 	TransactionInstruction,
@@ -8,7 +8,7 @@ import {
 import { WithTxnParams } from '../../types';
 
 interface CreateCancelOrdersIxParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	orderIds: number[];
 	mainSignerOverride?: PublicKey;
@@ -17,7 +17,7 @@ interface CreateCancelOrdersIxParams {
 /**
  * Creates a transaction instruction to cancel multiple orders by their order IDs.
  *
- * @param driftClient - The Drift client instance.
+ * @param velocityClient - The Drift client instance.
  * @param orderIds - Array of order IDs to cancel. Each ID corresponds to a specific order
  * @param user - The user client that owns the orders to be cancelled
  *
@@ -26,7 +26,7 @@ interface CreateCancelOrdersIxParams {
  * @example
  * ```typescript
  * const instruction = await cancelOrderIxs(
- *   driftClient,
+ *   velocityClient,
  *   [123, 456, 789], // Cancel orders with IDs 123, 456, and 789
  *   user
  * );
@@ -36,9 +36,9 @@ interface CreateCancelOrdersIxParams {
 export const createCancelOrdersIx = async (
 	params: CreateCancelOrdersIxParams
 ): Promise<TransactionInstruction> => {
-	const { driftClient, user, orderIds, mainSignerOverride } = params;
+	const { velocityClient, user, orderIds, mainSignerOverride } = params;
 
-	return driftClient.getCancelOrdersByIdsIx(orderIds, undefined, user, {
+	return velocityClient.getCancelOrdersByIdsIx(orderIds, undefined, user, {
 		authority: mainSignerOverride,
 	});
 };
@@ -46,7 +46,7 @@ export const createCancelOrdersIx = async (
 /**
  * Creates a transaction to cancel multiple orders by their IDs.
  *
- * @param driftClient - The Drift client instance.
+ * @param velocityClient - The Drift client instance.
  * @param orderIds - Array of order IDs to cancel. Each ID corresponds to a specific order
  * @param user - The user client that owns the orders to be cancelled
  * @param txParams - Optional transaction parameters for customizing the transaction
@@ -57,7 +57,7 @@ export const createCancelOrdersIx = async (
  * ```typescript
  * // Cancel multiple orders
  * const transaction = await cancelOrderTxn(
- *   driftClient,
+ *   velocityClient,
  *   [123, 456], // Cancel orders with IDs 123 and 456
  *   user,
  *   { computeUnits: 200000 } // Optional transaction parameters
@@ -70,7 +70,7 @@ export const createCancelOrdersIx = async (
 export const createCancelOrdersTxn = async (
 	params: WithTxnParams<CreateCancelOrdersIxParams>
 ): Promise<Transaction | VersionedTransaction> => {
-	return params.driftClient.buildTransaction(
+	return params.velocityClient.buildTransaction(
 		await createCancelOrdersIx(params),
 		params.txParams
 	);

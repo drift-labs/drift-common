@@ -1,4 +1,4 @@
-import { OracleSource } from '@drift-labs/sdk';
+import { OracleSource } from '@velocity-exchange/sdk';
 import { expect } from 'chai';
 import {
 	isPythPull,

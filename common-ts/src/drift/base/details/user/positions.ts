@@ -2,7 +2,7 @@ import {
 	BASE_PRECISION_EXP,
 	BN,
 	BigNum,
-	DriftClient,
+	VelocityClient,
 	PRICE_PRECISION_EXP,
 	PerpPosition,
 	PositionDirection,
@@ -14,7 +14,7 @@ import {
 	calculateFeesAndFundingPnl,
 	calculatePositionPNL,
 	calculateUnsettledFundingPnl,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { TRADING_UTILS } from '../../../../_deprecated/trading-utils';
 import { USDC_SPOT_MARKET_INDEX } from '../../../../constants';
 
@@ -41,7 +41,7 @@ export interface PriceBasedPositionInfo {
  * Derives the user-understandable position display information from a User's PerpPosition and the reference price.
  * The reference price can be the mark price or the oracle price.
  *
- * @param driftClient - The DriftClient instance.
+ * @param velocityClient - The VelocityClient instance.
  * @param user - The User instance.
  * @param perpPosition - The PerpPosition instance.
  * @param referencePrice - The reference price. This can be the mark price or the oracle price.
@@ -50,7 +50,7 @@ export interface PriceBasedPositionInfo {
  * @returns The PositionDisplayInfo object. Note that position pnl does not include funding pnl.
  */
 export const getPriceBasedPositionInfo = (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	perpPosition: PerpPosition,
 	referencePrice: BN,
 	accountLeverage?: number
@@ -148,7 +148,7 @@ export type PerpPositionInfo = {
 };
 
 export const getPositionInfo = (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	user: User,
 	perpPosition: PerpPosition,
 	oraclePrice: BN,
@@ -178,7 +178,7 @@ export const getPositionInfo = (
 	const liqPrice = user.liquidationPrice(marketIndex);
 	const liqPriceBigNum = BigNum.from(liqPrice, PRICE_PRECISION_EXP);
 
-	const perpMarket = driftClient.getPerpMarketAccount(marketIndex);
+	const perpMarket = velocityClient.getPerpMarketAccount(marketIndex);
 	const feesAndFundingPnlBigNum = BigNum.from(
 		calculateFeesAndFundingPnl(perpMarket, perpPosition),
 		QUOTE_PRECISION_EXP
@@ -186,13 +186,13 @@ export const getPositionInfo = (
 
 	const accountLeverage = user.getLeverage().toNumber();
 	const oracleBasedPositionInfo = getPriceBasedPositionInfo(
-		driftClient,
+		velocityClient,
 		perpPosition,
 		oraclePrice,
 		accountLeverage
 	);
 	const markBasedPositionInfo = getPriceBasedPositionInfo(
-		driftClient,
+		velocityClient,
 		perpPosition,
 		markPrice,
 		accountLeverage
@@ -213,7 +213,7 @@ export const getPositionInfo = (
 		}),
 		QUOTE_PRECISION_EXP
 	);
-	const usdcSpotMarketAccount = driftClient.getSpotMarketAccount(
+	const usdcSpotMarketAccount = velocityClient.getSpotMarketAccount(
 		USDC_SPOT_MARKET_INDEX
 	);
 	const totalClaimablePnlBigNum = BigNum.from(

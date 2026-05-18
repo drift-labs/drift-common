@@ -1,4 +1,4 @@
-import { BN, SpotMarketConfig } from '@drift-labs/sdk';
+import { BN, SpotMarketConfig } from '@velocity-exchange/sdk';
 
 export const TRADE_PRECISION = 6;
 

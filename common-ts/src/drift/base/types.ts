@@ -1,3 +1,3 @@
-import { TxParams } from '@drift-labs/sdk';
+import { TxParams } from '@velocity-exchange/sdk';
 
 export type WithTxnParams<T> = T & { txParams?: TxParams };

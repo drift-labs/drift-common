@@ -1,9 +1,9 @@
 import { expect } from 'chai';
-import { PublicKey } from '@drift-labs/sdk';
+import { PublicKey } from '@velocity-exchange/sdk';
 import { VersionedTransaction } from '@solana/web3.js';
 import {
 	centralServerDrift,
-	driftClient,
+	velocityClient,
 	setupTestContext,
 	teardownTestContext,
 } from './context';
@@ -45,7 +45,7 @@ describe('CentralServerDrift - Builder Management Transactions', function () {
 
 			assertComputeBudgetThenProgram(
 				txn as VersionedTransaction,
-				driftClient.program.programId,
+				velocityClient.program.programId,
 				2
 			);
 		});
@@ -66,7 +66,7 @@ describe('CentralServerDrift - Builder Management Transactions', function () {
 
 			assertComputeBudgetThenProgram(
 				txn as VersionedTransaction,
-				driftClient.program.programId,
+				velocityClient.program.programId,
 				2
 			);
 		});
@@ -114,7 +114,7 @@ describe('CentralServerDrift - Builder Management Transactions', function () {
 
 			assertComputeBudgetThenProgram(
 				txn as VersionedTransaction,
-				driftClient.program.programId,
+				velocityClient.program.programId,
 				2
 			);
 		});
@@ -140,7 +140,7 @@ describe('CentralServerDrift - Builder Management Transactions', function () {
 
 			assertComputeBudgetThenProgram(
 				txn as VersionedTransaction,
-				driftClient.program.programId,
+				velocityClient.program.programId,
 				2
 			);
 		});
@@ -164,7 +164,7 @@ describe('CentralServerDrift - Builder Management Transactions', function () {
 
 			assertComputeBudgetThenProgram(
 				txn as VersionedTransaction,
-				driftClient.program.programId,
+				velocityClient.program.programId,
 				2
 			);
 		});

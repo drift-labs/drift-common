@@ -1,5 +1,10 @@
 import { PublicKey, Connection } from '@solana/web3.js';
-import { DriftEnv, DriftClient, Wallet, WalletV2 } from '@drift-labs/sdk';
+import {
+	VelocityEnv,
+	VelocityClient,
+	Wallet,
+	WalletV2,
+} from '@velocity-exchange/sdk';
 import { CentralServerDrift } from '../../../../../src/drift/Drift/clients/CentralServerDrift';
 import { EnvironmentConstants } from '../../../../../src/EnvironmentConstants';
 import { getDevWallet, getTestWallet } from '../../../../utils/wallet';
@@ -18,7 +23,7 @@ export const invalidMockUserAccountPublicKey: PublicKey = new PublicKey(
 
 const config = {
 	solanaRpcEndpoint: defaultDevnetRpc,
-	driftEnv: 'devnet' as DriftEnv,
+	velocityEnv: 'devnet' as VelocityEnv,
 	supportedPerpMarkets: [0, 1, 2],
 	supportedSpotMarkets: [0, 1, 2],
 };
@@ -27,8 +32,8 @@ export const centralServerDrift: CentralServerDrift = new CentralServerDrift(
 	config
 );
 
-export const driftClient: DriftClient = (centralServerDrift as any)
-	.driftClient as DriftClient;
+export const velocityClient: VelocityClient = (centralServerDrift as any)
+	.velocityClient as VelocityClient;
 
 let isSubscribed = false;
 let originalConsoleWarn: typeof console.warn;

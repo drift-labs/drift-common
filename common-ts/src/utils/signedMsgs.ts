@@ -1,4 +1,4 @@
-import { SLOT_TIME_ESTIMATE_MS } from '@drift-labs/sdk';
+import { SLOT_TIME_ESTIMATE_MS } from '@velocity-exchange/sdk';
 
 export function getSwiftConfirmationTimeoutMs(
 	slotsTillAuctionEnd: number,

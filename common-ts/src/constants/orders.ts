@@ -1,4 +1,4 @@
-import { OrderType } from '@drift-labs/sdk';
+import { OrderType } from '@velocity-exchange/sdk';
 import { UIOrderTypeLookup, UIOrderTypeValue } from '../types';
 
 // Market order type

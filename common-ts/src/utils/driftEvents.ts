@@ -1,4 +1,4 @@
-import { EventType, WrappedEvent } from '@drift-labs/sdk';
+import { EventType, WrappedEvent } from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '.';
 
 // Cache for event ID string patterns to reduce repeated concatenation
@@ -96,18 +96,6 @@ export const getDriftEventKey = (event: UniqableDriftEvent) => {
 				_typedEvent.txSig
 			}_${_typedEvent.marketIndex}`;
 		}
-		case 'FuelSeasonRecord': {
-			const _typedEvent = event as WrappedEvent<'FuelSeasonRecord'>;
-			return `${_typedEvent.eventType}_${_typedEvent.authority.toString()}_${
-				_typedEvent.txSig
-			}`;
-		}
-		case 'FuelSweepRecord': {
-			const _typedEvent = event as WrappedEvent<'FuelSweepRecord'>;
-			return `${_typedEvent.eventType}_${_typedEvent.authority.toString()}_${
-				_typedEvent.txSig
-			}`;
-		}
 		case 'LiquidationRecord': {
 			const _typedEvent = event as WrappedEvent<'LiquidationRecord'>;
 			return `${_typedEvent.eventType}_${_typedEvent.user.toString()}_${
@@ -143,12 +131,6 @@ export const getDriftEventKey = (event: UniqableDriftEvent) => {
 		case 'SpotInterestRecord': {
 			const _typedEvent = event as WrappedEvent<'SpotInterestRecord'>;
 			return `${_typedEvent.eventType}_${_typedEvent.marketIndex}_${_typedEvent.txSig}`;
-		}
-		case 'LPRecord': {
-			const _typedEvent = event as WrappedEvent<'LPRecord'>;
-			return `${_typedEvent.eventType}_${
-				_typedEvent.marketIndex
-			}_${ENUM_UTILS.toStr(_typedEvent.action)}_${_typedEvent.txSig}`;
 		}
 		case 'SettlePnlRecord': {
 			const _typedEvent = event as WrappedEvent<'SettlePnlRecord'>;
@@ -216,7 +198,7 @@ export const getDriftEventKey = (event: UniqableDriftEvent) => {
 			}
 		}
 		default: {
-			const _unhandledEvent: string = _eventType;
+			const _unhandledEvent: string = _eventType; // TODO: should be never to enforce exhaustive switch
 			throw new Error(`Unhandled event type: ${_unhandledEvent}`);
 		}
 	}

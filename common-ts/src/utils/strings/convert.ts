@@ -1,4 +1,4 @@
-import { BN, BigNum } from '@drift-labs/sdk';
+import { BN, BigNum } from '@velocity-exchange/sdk';
 
 /**
  * Recursively converts various types into printable strings.

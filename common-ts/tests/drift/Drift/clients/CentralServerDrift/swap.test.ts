@@ -4,7 +4,7 @@ import { BN } from '@coral-xyz/anchor';
 import { VersionedTransaction } from '@solana/web3.js';
 import {
 	centralServerDrift,
-	driftClient,
+	velocityClient,
 	setupTestContext,
 	teardownTestContext,
 } from './context';
@@ -47,7 +47,7 @@ describe('CentralServerDrift - Swap Transactions', function () {
 				expect(txn).to.exist;
 				assertComputeBudgetThenProgram(
 					txn as VersionedTransaction,
-					driftClient.program.programId,
+					velocityClient.program.programId,
 					2
 				);
 			} catch (error: any) {
@@ -70,7 +70,7 @@ describe('CentralServerDrift - Swap Transactions', function () {
 				expect(txn).to.exist;
 				assertComputeBudgetThenProgram(
 					txn as VersionedTransaction,
-					driftClient.program.programId,
+					velocityClient.program.programId,
 					2
 				);
 			} catch (error: any) {

@@ -4,7 +4,7 @@ import {
 	PostOnlyParams,
 	PublicKey,
 	QuoteResponse,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { OptionalAuctionParamsRequestInputs } from '../../../../base/actions/trade/openPerpOrder/dlobServer';
 import { SwiftOrderOptions } from '../../../../base/actions/trade/openPerpOrder/openSwiftOrder';
 import { IsolatedPositionDepositsOverride } from '../../../../base/actions/trade/openPerpOrder/types';

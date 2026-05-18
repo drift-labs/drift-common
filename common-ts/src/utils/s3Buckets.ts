@@ -1,4 +1,4 @@
-import { DriftEnv } from '@drift-labs/sdk';
+import { VelocityEnv } from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '.';
 import { Serializer } from '../serializableTypes';
 import { PnlSnapshotOrderOption, SnapshotEpochResolution } from '../types';
@@ -168,7 +168,7 @@ export const S3_LEADERBOARD_CLIENT = {
 		return getLeaderboardFilename(orderBy, resolution);
 	},
 	getLeaderboardValue: async (
-		env: DriftEnv,
+		env: VelocityEnv,
 		leaderboardBucketName: string,
 		orderBy: PnlSnapshotOrderOption,
 		resolution: SnapshotEpochResolution

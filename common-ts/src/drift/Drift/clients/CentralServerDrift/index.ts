@@ -5,10 +5,10 @@ import {
 	DelistedMarketSetting,
 	DevnetPerpMarkets,
 	DevnetSpotMarkets,
-	DRIFT_PROGRAM_ID,
-	DriftClient,
-	DriftClientConfig,
-	DriftEnv,
+	VELOCITY_PROGRAM_ID,
+	VelocityClient,
+	VelocityClientConfig,
+	VelocityEnv,
 	fetchUserStatsAccount,
 	getMarketsAndOraclesForSubscription,
 	MainnetPerpMarkets,
@@ -32,7 +32,7 @@ import {
 	User,
 	WhileValidTxSender,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	Connection,
 	Transaction,
@@ -103,7 +103,7 @@ export type { SwiftOrderMessage } from '../../../base/actions/trade/openPerpOrde
  * This is useful for an API server that fetches user data on-demand, and return transaction messages specific to a given user
  */
 export class CentralServerDrift {
-	private _driftClient: DriftClient;
+	private _velocityClient: VelocityClient;
 	private _perpMarketConfigs: PerpMarketConfig[];
 	private _spotMarketConfigs: SpotMarketConfig[];
 	/**
@@ -120,8 +120,8 @@ export class CentralServerDrift {
 	private priorityFeeSubscriber!: PriorityFeeSubscriber;
 
 	/**
-	 * Mutex to serialize driftClientContextWrapper calls, preventing
-	 * concurrent mutations of shared DriftClient state.
+	 * Mutex to serialize velocityClientContextWrapper calls, preventing
+	 * concurrent mutations of shared VelocityClient state.
 	 */
 	private _mutex: Promise<void> = Promise.resolve();
 
@@ -129,22 +129,22 @@ export class CentralServerDrift {
 
 	/**
 	 * @param solanaRpcEndpoint - The Solana RPC endpoint to use for reading RPC data.
-	 * @param driftEnv - The drift environment to use for the drift client.
+	 * @param velocityEnv - The Velocity environment to use for the Velocity client.
 	 * @param supportedPerpMarkets - The perp markets indexes to support. See https://github.com/drift-labs/protocol-v2/blob/master/sdk/src/constants/perpMarkets.ts for all available markets. It is recommended to only include markets that will be used.
 	 * @param supportedSpotMarkets - The spot markets indexes to support. See https://github.com/drift-labs/protocol-v2/blob/master/sdk/src/constants/spotMarkets.ts for all available markets. It is recommended to only include markets that will be used.
 	 */
 	constructor(config: {
 		solanaRpcEndpoint: string;
-		driftEnv: DriftEnv;
+		velocityEnv: VelocityEnv;
 		supportedPerpMarkets: number[];
 		supportedSpotMarkets: number[];
-		additionalDriftClientConfig?: Partial<Omit<DriftClientConfig, 'env'>>;
+		additionalVelocityClientConfig?: Partial<Omit<VelocityClientConfig, 'env'>>;
 		priorityFeeSubscriberConfig?: Partial<PriorityFeeSubscriberConfig>;
 	}) {
-		const driftEnv = config.driftEnv;
+		const velocityEnv = config.velocityEnv;
 
 		const connection = new Connection(config.solanaRpcEndpoint);
-		const driftProgramID = new PublicKey(DRIFT_PROGRAM_ID);
+		const velocityProgramID = new PublicKey(VELOCITY_PROGRAM_ID);
 		const accountLoader = new CustomizedCadenceBulkAccountLoader(
 			connection,
 			DEFAULT_ACCOUNT_LOADER_COMMITMENT,
@@ -154,9 +154,9 @@ export class CentralServerDrift {
 		const wallet = COMMON_UI_UTILS.createPlaceholderIWallet(); // use random wallet to initialize a central-server instance
 
 		const allPerpMarketConfigs =
-			driftEnv === 'devnet' ? DevnetPerpMarkets : MainnetPerpMarkets;
+			velocityEnv === 'devnet' ? DevnetPerpMarkets : MainnetPerpMarkets;
 		const allSpotMarketConfigs =
-			driftEnv === 'devnet' ? DevnetSpotMarkets : MainnetSpotMarkets;
+			velocityEnv === 'devnet' ? DevnetSpotMarkets : MainnetSpotMarkets;
 		this._perpMarketConfigs = config.supportedPerpMarkets.map((marketIndex) =>
 			allPerpMarketConfigs.find((market) => market.marketIndex === marketIndex)
 		);
@@ -165,16 +165,16 @@ export class CentralServerDrift {
 		);
 
 		const oracleInfos = getMarketsAndOraclesForSubscription(
-			driftEnv,
+			velocityEnv,
 			this._perpMarketConfigs,
 			this._spotMarketConfigs
 		);
 
-		const driftClientConfig: DriftClientConfig = {
-			env: driftEnv,
+		const velocityClientConfig: VelocityClientConfig = {
+			env: velocityEnv,
 			connection,
 			wallet,
-			programID: driftProgramID,
+			programID: velocityProgramID,
 			enableMetricsEvents: false,
 			accountSubscription: {
 				type: 'polling',
@@ -191,31 +191,31 @@ export class CentralServerDrift {
 				(market) => market.marketIndex
 			),
 			oracleInfos: oracleInfos.oracleInfos,
-			...config.additionalDriftClientConfig,
+			...config.additionalVelocityClientConfig,
 		};
-		this._driftClient = new DriftClient(driftClientConfig);
-		this.markets = new CentralServerDriftMarkets(this._driftClient);
+		this._velocityClient = new VelocityClient(velocityClientConfig);
+		this.markets = new CentralServerDriftMarkets(this._velocityClient);
 
 		const txSender = new WhileValidTxSender({
 			connection,
 			wallet,
 			additionalConnections: [],
 			additionalTxSenderCallbacks: [],
-			txHandler: this._driftClient.txHandler,
+			txHandler: this._velocityClient.txHandler,
 			confirmationStrategy: DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 			retrySleep: DEFAULT_TX_SENDER_RETRY_INTERVAL,
 		});
 
-		this._driftClient.txSender = txSender;
+		this._velocityClient.txSender = txSender;
 
 		// set up Drift endpoints
 		const driftDlobServerHttpUrlToUse =
 			EnvironmentConstants.dlobServerHttpUrl[
-				config.driftEnv === 'devnet' ? 'dev' : 'mainnet'
+				config.velocityEnv === 'devnet' ? 'dev' : 'mainnet'
 			];
 		const swiftServerUrlToUse =
 			EnvironmentConstants.swiftServerUrl[
-				config.driftEnv === 'devnet' ? 'staging' : 'mainnet'
+				config.velocityEnv === 'devnet' ? 'staging' : 'mainnet'
 			];
 		this._driftEndpoints = {
 			dlobServerHttpUrl: driftDlobServerHttpUrlToUse,
@@ -223,7 +223,7 @@ export class CentralServerDrift {
 		};
 
 		const priorityFeeConfig: PriorityFeeSubscriberConfig = {
-			connection: this.driftClient.connection,
+			connection: this.velocityClient.connection,
 			priorityFeeMethod: PriorityFeeMethod.SOLANA,
 			addresses: HIGH_ACTIVITY_MARKET_ACCOUNTS,
 			...config.priorityFeeSubscriberConfig,
@@ -232,28 +232,28 @@ export class CentralServerDrift {
 		this.priorityFeeSubscriber = new PriorityFeeSubscriber(priorityFeeConfig);
 	}
 
-	public get driftClient() {
-		return this._driftClient;
+	public get velocityClient() {
+		return this._velocityClient;
 	}
 
 	public async subscribe() {
-		await this._driftClient.subscribe();
+		await this._velocityClient.subscribe();
 		await this.priorityFeeSubscriber.subscribe();
 	}
 
 	public async unsubscribe() {
-		await this._driftClient.unsubscribe();
+		await this._velocityClient.unsubscribe();
 		await this.priorityFeeSubscriber.unsubscribe();
 	}
 
 	/**
-	 * Temporarily swaps the DriftClient wallet/authority context to build transactions
+	 * Temporarily swaps the VelocityClient wallet/authority context to build transactions
 	 * for a given authority, then restores the original state.
 	 *
 	 * Use this for authority-based operations that don't require a User account subscription
 	 * (e.g. creating revenue share accounts, managing builders).
 	 *
-	 * @param authority - The authority to set on the DriftClient
+	 * @param authority - The authority to set on the VelocityClient
 	 * @param operation - The transaction creation operation to execute
 	 * @returns The result of the operation
 	 */
@@ -261,8 +261,8 @@ export class CentralServerDrift {
 		authority: PublicKey,
 		operation: () => Promise<T>
 	): Promise<T> {
-		const originalWallet = this._driftClient.wallet;
-		const originalAuthority = this._driftClient.authority;
+		const originalWallet = this._velocityClient.wallet;
+		const originalAuthority = this._velocityClient.authority;
 
 		const authorityWallet = {
 			publicKey: authority,
@@ -273,24 +273,24 @@ export class CentralServerDrift {
 		};
 
 		try {
-			this._driftClient.wallet = authorityWallet;
+			this._velocityClient.wallet = authorityWallet;
 			// @ts-ignore
-			this._driftClient.provider.wallet = authorityWallet;
-			this._driftClient.txHandler.updateWallet(authorityWallet);
-			this._driftClient.authority = authority;
+			this._velocityClient.provider.wallet = authorityWallet;
+			this._velocityClient.txHandler.updateWallet(authorityWallet);
+			this._velocityClient.authority = authority;
 
 			return await operation();
 		} finally {
-			this._driftClient.wallet = originalWallet;
-			this._driftClient.txHandler.updateWallet(originalWallet);
+			this._velocityClient.wallet = originalWallet;
+			this._velocityClient.txHandler.updateWallet(originalWallet);
 			// @ts-ignore
-			this._driftClient.provider.wallet = originalWallet;
-			this._driftClient.authority = originalAuthority;
+			this._velocityClient.provider.wallet = originalWallet;
+			this._velocityClient.authority = originalAuthority;
 		}
 	}
 
 	/**
-	 * Manages DriftClient state for transaction creation with proper setup and cleanup.
+	 * Manages VelocityClient state for transaction creation with proper setup and cleanup.
 	 * This abstraction handles:
 	 * - User creation and subscription
 	 * - Authority management
@@ -301,7 +301,7 @@ export class CentralServerDrift {
 	 * @param operation - The transaction creation operation to execute
 	 * @returns The result of the operation
 	 */
-	private async driftClientContextWrapper<T>(
+	private async velocityClientContextWrapper<T>(
 		userAccountPublicKey: PublicKey,
 		operation: (user: User) => Promise<T>,
 		externalWallet?: PublicKey
@@ -316,12 +316,12 @@ export class CentralServerDrift {
 		await prev;
 
 		const user = new User({
-			driftClient: this._driftClient,
+			driftClient: this._velocityClient,
 			userAccountPublicKey,
 			accountSubscription: {
 				type: 'custom',
 				userAccountSubscriber: new OneShotUserAccountSubscriber(
-					this._driftClient.program,
+					this._velocityClient.program,
 					userAccountPublicKey,
 					undefined,
 					undefined
@@ -330,26 +330,29 @@ export class CentralServerDrift {
 		});
 
 		// Store original state
-		const originalWallet = this._driftClient.wallet;
-		const originalAuthority = this._driftClient.authority;
+		const originalWallet = this._velocityClient.wallet;
+		const originalAuthority = this._velocityClient.authority;
 
 		try {
-			// Setup: Subscribe to user and configure DriftClient
+			// Setup: Subscribe to user and configure VelocityClient
 			await user.subscribe();
 
 			const authority = user.getUserAccount().authority;
 			const subAccountId = user.getUserAccount().subAccountId;
-			this._driftClient.authority = authority;
+			this._velocityClient.authority = authority;
 
-			const success = await this._driftClient.addUser(subAccountId, authority);
-			await this._driftClient.switchActiveUser(subAccountId, authority);
+			const success = await this._velocityClient.addUser(
+				subAccountId,
+				authority
+			);
+			await this._velocityClient.switchActiveUser(subAccountId, authority);
 
 			if (!success) {
-				throw new Error('Failed to add user to DriftClient');
+				throw new Error('Failed to add user to VelocityClient');
 			}
 
 			// Replace wallet with user's authority to ensure correct transaction signing
-			// This is necessary because DriftClient adds wallet.publicKey to instructions
+			// This is necessary because VelocityClient adds wallet.publicKey to instructions
 			const userWallet = {
 				publicKey: externalWallet ?? authority,
 				signTransaction: () =>
@@ -363,10 +366,10 @@ export class CentralServerDrift {
 			};
 
 			// Update wallet in all places that reference it
-			this._driftClient.wallet = userWallet;
+			this._velocityClient.wallet = userWallet;
 			//@ts-ignore
-			this._driftClient.provider.wallet = userWallet;
-			this._driftClient.txHandler.updateWallet(userWallet);
+			this._velocityClient.provider.wallet = userWallet;
+			this._velocityClient.txHandler.updateWallet(userWallet);
 
 			// Execute the operation
 			const result = await operation(user);
@@ -374,17 +377,17 @@ export class CentralServerDrift {
 			return result;
 		} finally {
 			// Cleanup: Always restore original state and unsubscribe
-			this._driftClient.wallet = originalWallet;
+			this._velocityClient.wallet = originalWallet;
 			//@ts-ignore
-			this._driftClient.provider.wallet = originalWallet;
-			this._driftClient.txHandler.updateWallet(originalWallet);
-			this._driftClient.authority = originalAuthority;
+			this._velocityClient.provider.wallet = originalWallet;
+			this._velocityClient.txHandler.updateWallet(originalWallet);
+			this._velocityClient.authority = originalAuthority;
 			// clear cached PDA so it doesn't leak between requests
-			this._driftClient.userStatsAccountPublicKey = undefined;
+			this._velocityClient.userStatsAccountPublicKey = undefined;
 
 			try {
 				await user.unsubscribe();
-				this._driftClient.users.clear();
+				this._velocityClient.users.clear();
 			} catch (cleanupError) {
 				console.warn('Error during cleanup:', cleanupError);
 				// Don't throw cleanup errors, but log them
@@ -404,13 +407,13 @@ export class CentralServerDrift {
 	 */
 	public async getUser(userAccountPublicKey: PublicKey): Promise<User> {
 		const oneShotUserAccountSubscriber = new OneShotUserAccountSubscriber(
-			this._driftClient.program,
+			this._velocityClient.program,
 			userAccountPublicKey,
 			undefined,
 			undefined
 		);
 		const user = new User({
-			driftClient: this._driftClient,
+			driftClient: this._velocityClient,
 			userAccountPublicKey,
 			accountSubscription: {
 				type: 'custom',
@@ -476,21 +479,21 @@ export class CentralServerDrift {
 		}
 
 		const userStatsAccount = await fetchUserStatsAccount(
-			this._driftClient.connection,
-			this._driftClient.program,
+			this._velocityClient.connection,
+			this._velocityClient.program,
 			authority
 		);
 
 		return this.authorityContextWrapper(
 			options?.externalWallet ?? authority,
 			async () => {
-				this._driftClient.authority = authority;
+				this._velocityClient.authority = authority;
 				// Clear userStatsAccountPublicKey cache so it's recalculated for the new authority
 				// @ts-ignore - accessing private property for cache invalidation
-				this._driftClient.userStatsAccountPublicKey = undefined;
+				this._velocityClient.userStatsAccountPublicKey = undefined;
 
 				return await createUserAndDepositCollateralBaseTxn({
-					driftClient: this._driftClient,
+					velocityClient: this._velocityClient,
 					amount,
 					spotMarketConfig,
 					authority,
@@ -520,7 +523,7 @@ export class CentralServerDrift {
 			externalWallet?: PublicKey;
 		}
 	): Promise<VersionedTransaction | Transaction> {
-		return this.driftClientContextWrapper(
+		return this.velocityClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
 				const spotMarketConfig = this._spotMarketConfigs.find(
@@ -534,7 +537,7 @@ export class CentralServerDrift {
 				}
 
 				const depositTxn = await createDepositTxn({
-					driftClient: this._driftClient,
+					velocityClient: this._velocityClient,
 					user,
 					amount: BigNum.from(amount, spotMarketConfig.precisionExp),
 					spotMarketConfig,
@@ -554,12 +557,12 @@ export class CentralServerDrift {
 			txParams?: TxParams;
 		}
 	): Promise<VersionedTransaction | Transaction> {
-		return this.driftClientContextWrapper(
+		return this.velocityClientContextWrapper(
 			user.userAccountPublicKey,
 			async () => {
 				const userStatsAccount = await fetchUserStatsAccount(
-					this._driftClient.connection,
-					this._driftClient.program,
+					this._velocityClient.connection,
+					this._velocityClient.program,
 					user.getUserAccount().authority
 				);
 
@@ -568,7 +571,7 @@ export class CentralServerDrift {
 				}
 
 				return deleteUserTxn({
-					driftClient: this._driftClient,
+					velocityClient: this._velocityClient,
 					user,
 					userStatsAccount,
 					txParams: options?.txParams ?? this.getTxParams(),
@@ -587,7 +590,7 @@ export class CentralServerDrift {
 			txParams?: TxParams;
 		}
 	): Promise<VersionedTransaction | Transaction> {
-		return this.driftClientContextWrapper(
+		return this.velocityClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
 				const spotMarketConfig = this._spotMarketConfigs.find(
@@ -601,7 +604,7 @@ export class CentralServerDrift {
 				}
 
 				const withdrawTxn = await createWithdrawTxn({
-					driftClient: this._driftClient,
+					velocityClient: this._velocityClient,
 					user,
 					amount: BigNum.from(amount, spotMarketConfig.precisionExp),
 					spotMarketConfig,
@@ -621,11 +624,11 @@ export class CentralServerDrift {
 			txParams?: TxParams;
 		}
 	): Promise<VersionedTransaction | Transaction> {
-		return this.driftClientContextWrapper(
+		return this.velocityClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
 				const settleFundingTxn = await createSettleFundingTxn({
-					driftClient: this._driftClient,
+					velocityClient: this._velocityClient,
 					user,
 					txParams: options?.txParams ?? this.getTxParams(),
 				});
@@ -642,11 +645,11 @@ export class CentralServerDrift {
 			txParams?: TxParams;
 		}
 	): Promise<VersionedTransaction | Transaction> {
-		return this.driftClientContextWrapper(
+		return this.velocityClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
 				const settlePnlTxn = await createSettlePnlTxn({
-					driftClient: this._driftClient,
+					velocityClient: this._velocityClient,
 					user,
 					marketIndexes,
 					txParams: options?.txParams ?? this.getTxParams(),
@@ -674,12 +677,12 @@ export class CentralServerDrift {
 		if (useSwift) {
 			const { swiftOptions, ...rest } =
 				genericRest as CentralServerGetOpenPerpMarketOrderTxnParams<true>;
-			return this.driftClientContextWrapper(
+			return this.velocityClientContextWrapper(
 				userAccountPublicKey,
 				async (user): Promise<SwiftOrderMessage> => {
 					return createSwiftMarketOrderMessage({
 						...rest,
-						driftClient: this._driftClient,
+						velocityClient: this._velocityClient,
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 						userSigningSlotBuffer: swiftOptions?.userSigningSlotBuffer,
@@ -690,13 +693,13 @@ export class CentralServerDrift {
 		} else {
 			const { txParams, ...rest } =
 				genericRest as CentralServerGetOpenPerpMarketOrderTxnParams<false>;
-			return this.driftClientContextWrapper(
+			return this.velocityClientContextWrapper(
 				userAccountPublicKey,
 				async (user): Promise<Transaction | VersionedTransaction> => {
 					const openPerpMarketOrderTxn = await createOpenPerpMarketOrder({
 						...rest,
 						useSwift: false,
-						driftClient: this._driftClient,
+						velocityClient: this._velocityClient,
 						user,
 						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 						txParams: txParams ?? this.getTxParams(),
@@ -737,12 +740,12 @@ export class CentralServerDrift {
 				);
 			}
 
-			return this.driftClientContextWrapper(
+			return this.velocityClientContextWrapper(
 				userAccountPublicKey,
 				async (user): Promise<SwiftOrderMessage> => {
 					return createSwiftLimitOrderMessage({
 						...rest,
-						driftClient: this._driftClient,
+						velocityClient: this._velocityClient,
 						user,
 						orderConfig: rest.orderConfig as SwiftLimitOrderParamsOrderConfig,
 						userSigningSlotBuffer: swiftOptions?.userSigningSlotBuffer,
@@ -753,13 +756,13 @@ export class CentralServerDrift {
 		} else {
 			const { txParams, ...rest } =
 				genericRest as CentralServerGetOpenPerpNonMarketOrderTxnParams<false>;
-			return this.driftClientContextWrapper(
+			return this.velocityClientContextWrapper(
 				userAccountPublicKey,
 				async (user): Promise<Transaction | VersionedTransaction> => {
 					const openPerpNonMarketOrderTxn = await createOpenPerpNonMarketOrder({
 						...rest,
 						useSwift: false,
-						driftClient: this._driftClient,
+						velocityClient: this._velocityClient,
 						user,
 						txParams: txParams ?? this.getTxParams(),
 					});
@@ -786,7 +789,7 @@ export class CentralServerDrift {
 				`Perp market config not found for index ${params.marketIndex}`
 			);
 		}
-		return this.driftClientContextWrapper(
+		return this.velocityClientContextWrapper(
 			params.userAccountPublicKey,
 			async (user) => {
 				const signingAuthority = params.mainSignerOverride;
@@ -795,7 +798,7 @@ export class CentralServerDrift {
 					params.settlePnlFirst ?? params.isFullWithdrawal ?? false;
 				if (shouldSettlePnl) {
 					const settleIx = await createSettlePnlIx({
-						driftClient: this._driftClient,
+						velocityClient: this._velocityClient,
 						user,
 						marketIndexes: [params.marketIndex],
 						mode: SettlePnlMode.TRY_SETTLE,
@@ -810,7 +813,7 @@ export class CentralServerDrift {
 						? MIN_I64
 						: params.amount.neg();
 				const transferIx =
-					await this._driftClient.getTransferIsolatedPerpPositionDepositIx(
+					await this._velocityClient.getTransferIsolatedPerpPositionDepositIx(
 						transferAmount,
 						params.marketIndex,
 						user.getUserAccount().subAccountId,
@@ -818,7 +821,7 @@ export class CentralServerDrift {
 						signingAuthority
 					);
 				ixs.push(transferIx);
-				return this._driftClient.buildTransaction(
+				return this._velocityClient.buildTransaction(
 					ixs,
 					params.txParams ?? this.getTxParams()
 				);
@@ -845,7 +848,7 @@ export class CentralServerDrift {
 				`Perp market config not found for index ${params.marketIndex}`
 			);
 		}
-		return this.driftClientContextWrapper(
+		return this.velocityClientContextWrapper(
 			params.userAccountPublicKey,
 			async (user) => {
 				const signingAuthority = params.mainSignerOverride;
@@ -855,7 +858,7 @@ export class CentralServerDrift {
 					params.withdrawCollateralAfterClose
 				) {
 					const settleIx = await createSettlePnlIx({
-						driftClient: this._driftClient,
+						velocityClient: this._velocityClient,
 						user,
 						marketIndexes: [params.marketIndex],
 						mode: SettlePnlMode.TRY_SETTLE,
@@ -864,7 +867,7 @@ export class CentralServerDrift {
 					ixs.push(settleIx);
 				}
 				const closeIxs = await createOpenPerpMarketOrderIxs({
-					driftClient: this._driftClient,
+					velocityClient: this._velocityClient,
 					user,
 					marketIndex: params.marketIndex,
 					direction: params.direction,
@@ -879,7 +882,7 @@ export class CentralServerDrift {
 				ixs.push(...closeIxs);
 				if (params.withdrawCollateralAfterClose) {
 					const transferIx =
-						await this._driftClient.getTransferIsolatedPerpPositionDepositIx(
+						await this._velocityClient.getTransferIsolatedPerpPositionDepositIx(
 							MIN_I64,
 							params.marketIndex,
 							user.getUserAccount().subAccountId,
@@ -888,7 +891,7 @@ export class CentralServerDrift {
 						);
 					ixs.push(transferIx);
 				}
-				return this._driftClient.buildTransaction(
+				return this._velocityClient.buildTransaction(
 					ixs,
 					params.txParams ?? this.getTxParams()
 				);
@@ -916,18 +919,18 @@ export class CentralServerDrift {
 				`Perp market config not found for index ${params.marketIndex}`
 			);
 		}
-		return this.driftClientContextWrapper(
+		return this.velocityClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
 				const signingAuthority = rest.mainSignerOverride;
 				const subAccountId = user.getUserAccount().subAccountId;
 
-				const perpMarketAccount = this._driftClient.getPerpMarketAccount(
+				const perpMarketAccount = this._velocityClient.getPerpMarketAccount(
 					params.marketIndex
 				);
 				const quoteSpotMarketIndex = perpMarketAccount.quoteSpotMarketIndex;
 				const spotMarketAccount =
-					this._driftClient.getSpotMarketAccount(quoteSpotMarketIndex);
+					this._velocityClient.getSpotMarketAccount(quoteSpotMarketIndex);
 				const depositor = signingAuthority ?? user.getUserAccount().authority;
 				const userTokenAccount = await getTokenAddressForDepositAndWithdraw(
 					spotMarketAccount,
@@ -935,7 +938,7 @@ export class CentralServerDrift {
 				);
 
 				const depositIx =
-					await this._driftClient.getDepositIntoIsolatedPerpPositionIx(
+					await this._velocityClient.getDepositIntoIsolatedPerpPositionIx(
 						depositAmount,
 						params.marketIndex,
 						userTokenAccount,
@@ -944,14 +947,14 @@ export class CentralServerDrift {
 
 				const orderIxs = await createOpenPerpMarketOrderIxs({
 					...rest,
-					driftClient: this._driftClient,
+					velocityClient: this._velocityClient,
 					user,
 					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
 					mainSignerOverride: signingAuthority,
 				});
 
 				const ixs = [depositIx, ...orderIxs];
-				return this._driftClient.buildTransaction(
+				return this._velocityClient.buildTransaction(
 					ixs,
 					params.txParams ?? this.getTxParams()
 				);
@@ -978,14 +981,14 @@ export class CentralServerDrift {
 				`Perp market config not found for index ${params.marketIndex}`
 			);
 		}
-		return this.driftClientContextWrapper(
+		return this.velocityClientContextWrapper(
 			params.userAccountPublicKey,
 			async (user) => {
 				const signingAuthority = params.mainSignerOverride;
 				const subAccountId = user.getUserAccount().subAccountId;
 
 				const closeIxs = await createOpenPerpMarketOrderIxs({
-					driftClient: this._driftClient,
+					velocityClient: this._velocityClient,
 					user,
 					marketIndex: params.marketIndex,
 					direction: params.direction,
@@ -998,12 +1001,12 @@ export class CentralServerDrift {
 					placeAndTake: params.placeAndTake,
 				});
 
-				const perpMarketAccount = this._driftClient.getPerpMarketAccount(
+				const perpMarketAccount = this._velocityClient.getPerpMarketAccount(
 					params.marketIndex
 				);
 				const quoteSpotMarketIndex = perpMarketAccount.quoteSpotMarketIndex;
 				const spotMarketAccount =
-					this._driftClient.getSpotMarketAccount(quoteSpotMarketIndex);
+					this._velocityClient.getSpotMarketAccount(quoteSpotMarketIndex);
 				const withdrawToAuthority =
 					params.mainSignerOverride ?? user.getUserAccount().authority;
 				const userTokenAccount = await getTokenAddressForDepositAndWithdraw(
@@ -1013,12 +1016,12 @@ export class CentralServerDrift {
 
 				const withdrawAmount =
 					params.estimatedWithdrawAmount ??
-					this._driftClient.getIsolatedPerpPositionTokenAmount(
+					this._velocityClient.getIsolatedPerpPositionTokenAmount(
 						params.marketIndex,
 						subAccountId
 					);
 				const withdrawIxs =
-					await this._driftClient.getWithdrawFromIsolatedPerpPositionIxsBundle(
+					await this._velocityClient.getWithdrawFromIsolatedPerpPositionIxsBundle(
 						withdrawAmount,
 						params.marketIndex,
 						subAccountId,
@@ -1026,7 +1029,7 @@ export class CentralServerDrift {
 					);
 
 				const ixs = [...closeIxs, ...withdrawIxs];
-				return this._driftClient.buildTransaction(
+				return this._velocityClient.buildTransaction(
 					ixs,
 					params.txParams ?? this.getTxParams()
 				);
@@ -1059,11 +1062,11 @@ export class CentralServerDrift {
 			positionMaxLeverage?: number;
 		}
 	): Promise<VersionedTransaction | Transaction> {
-		return this.driftClientContextWrapper(
+		return this.velocityClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
 				const editOrderTxn = await createEditOrderTxn({
-					driftClient: this._driftClient,
+					velocityClient: this._velocityClient,
 					user,
 					orderId,
 					editOrderParams,
@@ -1081,11 +1084,11 @@ export class CentralServerDrift {
 		userAccountPublicKey: PublicKey,
 		orderIds: number[]
 	): Promise<VersionedTransaction | Transaction> {
-		return this.driftClientContextWrapper(
+		return this.velocityClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
 				const cancelOrdersTxn = await createCancelOrdersTxn({
-					driftClient: this._driftClient,
+					velocityClient: this._velocityClient,
 					user,
 					orderIds,
 				});
@@ -1104,17 +1107,19 @@ export class CentralServerDrift {
 		marketIndex?: number,
 		direction?: PositionDirection
 	): Promise<VersionedTransaction | Transaction> {
-		return this.driftClientContextWrapper(
+		return this.velocityClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
-				const ix = await this._driftClient.getCancelOrdersIx(
+				const ix = await this._velocityClient.getCancelOrdersIx(
 					marketType ?? null,
 					marketIndex ?? null,
 					direction ?? null,
 					user.getUserAccount().subAccountId
 				);
 
-				const cancelAllOrdersTxn = await this._driftClient.buildTransaction(ix);
+				const cancelAllOrdersTxn = await this._velocityClient.buildTransaction(
+					ix
+				);
 
 				return cancelAllOrdersTxn;
 			}
@@ -1136,7 +1141,7 @@ export class CentralServerDrift {
 			quote?: UnifiedQuoteResponse;
 		}
 	): Promise<VersionedTransaction | Transaction> {
-		return this.driftClientContextWrapper(
+		return this.velocityClientContextWrapper(
 			userAccountPublicKey,
 			async (user) => {
 				const fromSpotMarketConfig = this._spotMarketConfigs.find(
@@ -1160,7 +1165,7 @@ export class CentralServerDrift {
 
 				const swapClient = new UnifiedSwapClient({
 					clientType: 'jupiter',
-					connection: this._driftClient.connection,
+					connection: this._velocityClient.connection,
 				});
 
 				// Get quote if not provided
@@ -1177,7 +1182,7 @@ export class CentralServerDrift {
 				}
 
 				const swapTxn = await createSwapTxn({
-					driftClient: this._driftClient,
+					velocityClient: this._velocityClient,
 					swapClient,
 					user,
 					swapFromMarketIndex: fromMarketIndex,
@@ -1212,7 +1217,7 @@ export class CentralServerDrift {
 	): Promise<VersionedTransaction | Transaction> {
 		return this.authorityContextWrapper(authority, () =>
 			createRevenueShareEscrowTxn({
-				driftClient: this._driftClient,
+				velocityClient: this._velocityClient,
 				authority,
 				numOrders: options?.numOrders ?? 16,
 				builder: options?.builder,
@@ -1233,7 +1238,7 @@ export class CentralServerDrift {
 	): Promise<VersionedTransaction | Transaction> {
 		return this.authorityContextWrapper(authority, () =>
 			createRevenueShareAccountTxn({
-				driftClient: this._driftClient,
+				velocityClient: this._velocityClient,
 				authority,
 				txParams: options?.txParams ?? this.getTxParams(),
 			})
@@ -1255,7 +1260,7 @@ export class CentralServerDrift {
 	): Promise<VersionedTransaction | Transaction> {
 		return this.authorityContextWrapper(authority, () =>
 			configureBuilderTxn({
-				driftClient: this._driftClient,
+				velocityClient: this._velocityClient,
 				authority,
 				builderAuthority,
 				maxFeeTenthBps,
@@ -1265,6 +1270,6 @@ export class CentralServerDrift {
 	}
 
 	public async sendSignedTransaction(tx: VersionedTransaction | Transaction) {
-		return this._driftClient.sendTransaction(tx, undefined, undefined, true);
+		return this._velocityClient.sendTransaction(tx, undefined, undefined, true);
 	}
 }

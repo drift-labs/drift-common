@@ -3,7 +3,7 @@ import {
 	EQUALITY_CHECKS,
 	PropertyAndType,
 } from '../../src/utils/core/equality';
-import { BN, BigNum } from '@drift-labs/sdk';
+import { BN, BigNum } from '@velocity-exchange/sdk';
 import { OpenPosition } from '../../src/types';
 
 const OPEN_POSITION_SOL_LONG: OpenPosition = {

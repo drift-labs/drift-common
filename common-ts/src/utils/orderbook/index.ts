@@ -7,7 +7,7 @@ import {
 	L2Level,
 	ZERO,
 	groupL2,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { MarketId } from '../../types';
 import { calculateSpreadBidAskMark } from '../math';
 import {
@@ -400,12 +400,6 @@ export const getCategorisedLiquidityForLevel = (
 ): CategorisedLiquidity => {
 	const dlobSize = sizeToNum(level?.sources?.dlob ?? ZERO, basePrecision);
 	const vammSize = sizeToNum(level?.sources?.vamm ?? ZERO, basePrecision);
-	const serumSize = sizeToNum(level?.sources?.serum ?? ZERO, basePrecision);
-	const phoenixSize = sizeToNum(level?.sources?.phoenix ?? ZERO, basePrecision);
-	const openbookSize = sizeToNum(
-		level?.sources?.openbook ?? ZERO,
-		basePrecision
-	);
 	const indicativeSize = sizeToNum(
 		level?.sources?.indicative ?? ZERO,
 		basePrecision
@@ -414,9 +408,6 @@ export const getCategorisedLiquidityForLevel = (
 	const categorisedLiquidity: CategorisedLiquidity = {
 		dlob: dlobSize,
 		vamm: vammSize,
-		serum: serumSize,
-		phoenix: phoenixSize,
-		openbook: openbookSize,
 		indicative: indicativeSize,
 	};
 

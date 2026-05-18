@@ -1,10 +1,10 @@
 import {
 	BigNum,
-	DriftClient,
+	VelocityClient,
 	SpotMarketConfig,
 	TxParams,
 	User,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	PublicKey,
 	Transaction,
@@ -14,7 +14,7 @@ import {
 import { getTokenAddressForDepositAndWithdraw } from '../../../../utils/token';
 
 interface CreateDepositIxParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	amount: BigNum;
 	spotMarketConfig: Pick<SpotMarketConfig, 'mint' | 'marketIndex'>;
@@ -29,7 +29,7 @@ interface CreateDepositIxParams {
 /**
  * Creates transaction instructions for depositing a spot token.
  *
- * @param driftClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Drift client instance for interacting with the protocol
  * @param user - The user account that will perform the deposit
  * @param amount - The amount to deposit (in BigNum format)
  * @param spotMarketConfig - The spot market configuration for the token being deposited
@@ -39,7 +39,7 @@ interface CreateDepositIxParams {
  * @returns Promise resolving to an array of transaction instructions for the deposit
  */
 export const createDepositIxs = async ({
-	driftClient,
+	velocityClient,
 	user,
 	amount,
 	spotMarketConfig,
@@ -47,7 +47,7 @@ export const createDepositIxs = async ({
 	externalWallet,
 }: CreateDepositIxParams): Promise<TransactionInstruction[]> => {
 	const authority = externalWallet ?? user.getUserAccount().authority;
-	const spotMarketAccount = driftClient.getSpotMarketAccount(
+	const spotMarketAccount = velocityClient.getSpotMarketAccount(
 		spotMarketConfig.marketIndex
 	);
 	const associatedDepositTokenAddress =
@@ -61,7 +61,7 @@ export const createDepositIxs = async ({
 		finalDepositAmount = finalDepositAmount.scale(2, 1);
 	}
 
-	const depositIxs = await driftClient.getDepositTxnIx(
+	const depositIxs = await velocityClient.getDepositTxnIx(
 		finalDepositAmount.val,
 		spotMarketConfig.marketIndex,
 		associatedDepositTokenAddress,
@@ -81,7 +81,7 @@ interface CreateDepositTxnParams extends CreateDepositIxParams {
 /**
  * Creates a complete transaction for depositing assets into a spot market.
  *
- * @param driftClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Drift client instance for interacting with the protocol
  * @param user - The user account that will perform the deposit
  * @param amount - The amount to deposit (in BigNum format)
  * @param spotMarketConfig - The spot market configuration for the token being deposited
@@ -93,7 +93,7 @@ interface CreateDepositTxnParams extends CreateDepositIxParams {
  * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
  */
 export const createDepositTxn = async ({
-	driftClient,
+	velocityClient,
 	user,
 	amount,
 	spotMarketConfig,
@@ -118,7 +118,7 @@ export const createDepositTxn = async ({
 	}
 
 	// we choose to not use createDepositIxs here because it doesn't have the initSwiftAccount logic
-	// const depositTxn = await driftClient.createDepositTxn(
+	// const depositTxn = await velocityClient.createDepositTxn(
 	// 	finalDepositAmount.val,
 	// 	spotMarketConfig.marketIndex,
 	// 	associatedDepositTokenAddress,
@@ -128,7 +128,7 @@ export const createDepositTxn = async ({
 	// 	initSwiftAccount
 	// );
 	const depositIxs = await createDepositIxs({
-		driftClient,
+		velocityClient,
 		user,
 		amount: finalDepositAmount,
 		spotMarketConfig,
@@ -136,9 +136,9 @@ export const createDepositTxn = async ({
 		externalWallet,
 	});
 
-	// Wrapper to filter out null lookup tables from the driftClient
+	// Wrapper to filter out null lookup tables from the velocityClient
 	const fetchFilteredLookupTables = async () => {
-		const lookupTables = await driftClient.fetchAllLookupTableAccounts();
+		const lookupTables = await velocityClient.fetchAllLookupTableAccounts();
 		// Filter out null/undefined values and return empty array if undefined
 		return (
 			lookupTables?.filter((table) => table !== null && table !== undefined) ??
@@ -146,10 +146,10 @@ export const createDepositTxn = async ({
 		);
 	};
 
-	const depositTxn = await driftClient.txHandler.buildTransaction({
+	const depositTxn = await velocityClient.txHandler.buildTransaction({
 		instructions: depositIxs,
 		txVersion: 0,
-		connection: driftClient.connection,
+		connection: velocityClient.connection,
 		preFlightCommitment: 'confirmed',
 		fetchAllMarketLookupTableAccounts: fetchFilteredLookupTables,
 		txParams,

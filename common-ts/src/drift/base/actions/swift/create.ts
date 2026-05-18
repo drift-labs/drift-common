@@ -1,9 +1,9 @@
 import {
-	DriftClient,
+	VelocityClient,
 	getSignedMsgUserAccountPublicKey,
 	PublicKey,
 	TxParams,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	Transaction,
 	TransactionInstruction,
@@ -11,7 +11,7 @@ import {
 } from '@solana/web3.js';
 
 interface CreateSwiftAccountIxParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	authority: PublicKey;
 	numOrders?: number;
 	/**
@@ -24,7 +24,7 @@ interface CreateSwiftAccountIxParams {
 /**
  * Creates a transaction instruction for initializing a Swift (signed message user orders) account.
  *
- * @param driftClient - The Drift client instance
+ * @param velocityClient - The Drift client instance
  * @param authority - The public key of the account authority
  * @param numOrders - The number of order slots to allocate (default: 8)
  * @param rentPayerOverride - Optional wallet to pay for account creation instead of the default wallet
@@ -32,7 +32,7 @@ interface CreateSwiftAccountIxParams {
  * @returns The Swift account public key and the initialization instruction
  */
 export const createSwiftAccountIx = async ({
-	driftClient,
+	velocityClient,
 	authority,
 	numOrders = 8,
 	rentPayerOverride,
@@ -41,7 +41,7 @@ export const createSwiftAccountIx = async ({
 	ix: TransactionInstruction;
 }> => {
 	const [swiftAccountPublicKey, ix] =
-		await driftClient.getInitializeSignedMsgUserOrdersAccountIx(
+		await velocityClient.getInitializeSignedMsgUserOrdersAccountIx(
 			authority,
 			numOrders,
 			{ externalWallet: rentPayerOverride }
@@ -59,7 +59,7 @@ interface CreateSwiftAccountTxnParams extends CreateSwiftAccountIxParams {
  *
  * Wraps {@link createSwiftAccountIx} and builds a transaction ready for signing and submission.
  *
- * @param driftClient - The Drift client instance
+ * @param velocityClient - The Drift client instance
  * @param authority - The public key of the account authority
  * @param numOrders - The number of order slots to allocate (default: 8)
  * @param rentPayerOverride - Optional wallet to pay for account creation instead of the default wallet
@@ -68,7 +68,7 @@ interface CreateSwiftAccountTxnParams extends CreateSwiftAccountIxParams {
  * @returns The built transaction and the Swift account public key
  */
 export const createSwiftAccountTxn = async ({
-	driftClient,
+	velocityClient,
 	authority,
 	numOrders,
 	rentPayerOverride,
@@ -78,13 +78,13 @@ export const createSwiftAccountTxn = async ({
 	swiftAccountPublicKey: PublicKey;
 }> => {
 	const { swiftAccountPublicKey, ix } = await createSwiftAccountIx({
-		driftClient,
+		velocityClient,
 		authority,
 		numOrders,
 		rentPayerOverride,
 	});
 
-	const transaction = await driftClient.buildTransaction([ix], txParams);
+	const transaction = await velocityClient.buildTransaction([ix], txParams);
 
 	return { transaction, swiftAccountPublicKey };
 };
@@ -95,7 +95,7 @@ export const createSwiftAccountTxn = async ({
  * Always returns the Swift account public key. The `ix` will be `null` if the account
  * is already initialized, indicating no transaction is needed.
  *
- * @param driftClient - The Drift client instance
+ * @param velocityClient - The Drift client instance
  * @param authority - The public key of the account authority
  * @param numOrders - The number of order slots to allocate (default: 8)
  * @param rentPayerOverride - Optional wallet to pay for account creation instead of the default wallet
@@ -103,7 +103,7 @@ export const createSwiftAccountTxn = async ({
  * @returns The Swift account public key and the initialization instruction (null if already initialized)
  */
 export const createSwiftAccountIxIfNotExists = async ({
-	driftClient,
+	velocityClient,
 	authority,
 	numOrders = 8,
 	rentPayerOverride,
@@ -112,11 +112,11 @@ export const createSwiftAccountIxIfNotExists = async ({
 	ix: TransactionInstruction | null;
 }> => {
 	const isInitialized =
-		await driftClient.isSignedMsgUserOrdersAccountInitialized(authority);
+		await velocityClient.isSignedMsgUserOrdersAccountInitialized(authority);
 
 	if (isInitialized) {
 		const swiftAccountPublicKey = getSignedMsgUserAccountPublicKey(
-			driftClient.program.programId,
+			velocityClient.program.programId,
 			authority
 		);
 
@@ -124,7 +124,7 @@ export const createSwiftAccountIxIfNotExists = async ({
 	}
 
 	return await createSwiftAccountIx({
-		driftClient,
+		velocityClient,
 		authority,
 		numOrders,
 		rentPayerOverride,

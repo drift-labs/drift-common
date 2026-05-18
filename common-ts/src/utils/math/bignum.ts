@@ -1,4 +1,4 @@
-import { BigNum, BN } from '@drift-labs/sdk';
+import { BigNum, BN } from '@velocity-exchange/sdk';
 
 export const roundBigNumToDecimalPlace = (
 	bignum: BigNum,

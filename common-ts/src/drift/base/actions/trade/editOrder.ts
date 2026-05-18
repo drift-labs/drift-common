@@ -1,12 +1,12 @@
 import {
 	BN,
-	DriftClient,
+	VelocityClient,
 	OrderTriggerCondition,
 	OrderType,
 	PositionDirection,
 	PostOnlyParams,
 	User,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	PublicKey,
 	Transaction,
@@ -59,7 +59,7 @@ interface EditOrderParams {
 }
 
 export interface CreateEditOrderIxParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	orderId: number;
 	editOrderParams: EditOrderParams;
@@ -71,7 +71,7 @@ export interface CreateEditOrderIxParams {
 
 /**
  * Creates a transaction instruction to edit an existing order
- * @param driftClient - The DriftClient instance
+ * @param velocityClient - The VelocityClient instance
  * @param userPublicKey - The public key of the user who owns the order
  * @param orderId - The ID of the order to edit
  * @param editOrderParams - Parameters containing the new order values
@@ -82,7 +82,7 @@ export const createEditOrderIx = async (
 	params: CreateEditOrderIxParams
 ): Promise<TransactionInstruction> => {
 	const {
-		driftClient,
+		velocityClient,
 		user,
 		orderId,
 		editOrderParams,
@@ -107,7 +107,7 @@ export const createEditOrderIx = async (
 		ENUM_UTILS.match(currentOrder.postOnly, PostOnlyParams.NONE)
 	) {
 		const limitAuctionOrderParams = await getLimitAuctionOrderParams({
-			driftClient,
+			velocityClient,
 			user,
 			marketIndex: currentOrder.marketIndex,
 			marketType: currentOrder.marketType,
@@ -128,7 +128,7 @@ export const createEditOrderIx = async (
 		};
 	}
 
-	return driftClient.getModifyOrderIx(
+	return velocityClient.getModifyOrderIx(
 		{
 			orderId,
 			...finalEditOrderParams,
@@ -145,7 +145,7 @@ type CreateEditOrderTxnParams = WithTxnParams<CreateEditOrderIxParams>;
 
 /**
  * Creates a complete transaction to edit an existing order
- * @param driftClient - The DriftClient instance
+ * @param velocityClient - The VelocityClient instance
  * @param userPublicKey - The public key of the user who owns the order
  * @param orderId - The ID of the order to edit
  * @param editOrderParams - Parameters containing the new order values
@@ -156,7 +156,7 @@ export const createEditOrderTxn = async ({
 	txParams,
 	...params
 }: CreateEditOrderTxnParams): Promise<Transaction | VersionedTransaction> => {
-	return params.driftClient.buildTransaction(
+	return params.velocityClient.buildTransaction(
 		await createEditOrderIx(params),
 		txParams
 	);

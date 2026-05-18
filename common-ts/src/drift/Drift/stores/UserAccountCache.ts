@@ -1,11 +1,11 @@
 import {
 	decodeName,
-	DriftClient,
+	VelocityClient,
 	OrderStatus,
 	PublicKey,
 	User,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { Subject, Subscription } from 'rxjs';
 import {
 	getSpotBalanceInfo,
@@ -52,17 +52,17 @@ export type UserAccountLookup = Record<UserAccountKey, EnhancedAccountData>; // 
 export class UserAccountCache {
 	private _store: UserAccountLookup = {};
 	private updatesSubject$ = new Subject<EnhancedAccountData>();
-	private driftClient: DriftClient;
+	private velocityClient: VelocityClient;
 	private oraclePriceStore: OraclePriceCache;
 	private markPriceStore: MarkPriceCache;
 	private subscriptions: Subscription[] = [];
 
 	constructor(
-		driftClient: DriftClient,
+		velocityClient: VelocityClient,
 		oraclePriceStore: OraclePriceCache,
 		markPriceStore: MarkPriceCache
 	) {
-		this.driftClient = driftClient;
+		this.velocityClient = velocityClient;
 		this.oraclePriceStore = oraclePriceStore;
 		this.markPriceStore = markPriceStore;
 
@@ -108,7 +108,7 @@ export class UserAccountCache {
 				const oraclePrice = this.oraclePriceStore.getOraclePrice(marketId.key);
 				const markPrice = this.markPriceStore.getMarkPrice(marketId.key);
 				return getPositionInfo(
-					this.driftClient,
+					this.velocityClient,
 					user,
 					position,
 					oraclePrice,
@@ -121,14 +121,14 @@ export class UserAccountCache {
 				const marketId = MarketId.createSpotMarket(spotPosition.marketIndex);
 				const oraclePrice = this.oraclePriceStore.getOraclePrice(marketId.key);
 				return getSpotBalanceInfo(
-					this.driftClient,
+					this.velocityClient,
 					user,
 					spotPosition.marketIndex,
 					oraclePrice
 				);
 			});
 		const marginInfo = getAccountMarginInfo(
-			this.driftClient,
+			this.velocityClient,
 			user,
 			this.oraclePriceStore.getOraclePrice.bind(this.oraclePriceStore)
 		);

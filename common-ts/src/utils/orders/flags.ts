@@ -3,7 +3,7 @@ import {
 	ContractTier,
 	isOneOfVariant,
 	PERCENTAGE_PRECISION,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 
 export function getPerpAuctionDuration(
 	priceDiff: BN,

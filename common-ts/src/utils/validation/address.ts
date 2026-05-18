@@ -1,4 +1,4 @@
-import { PublicKey } from '@drift-labs/sdk';
+import { PublicKey } from '@velocity-exchange/sdk';
 
 export { isValidBase58 } from '../strings/parse';
 

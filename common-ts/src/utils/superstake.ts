@@ -7,8 +7,8 @@ import {
 	BN,
 	ZERO,
 	calculateInterestRate,
-	DriftClient,
-	DriftEnv,
+	VelocityClient,
+	VelocityEnv,
 	SpotMarketConfig,
 	calculateSizeDiscountAssetWeight,
 	calculateSizePremiumLiabilityWeight,
@@ -23,7 +23,7 @@ import {
 	BSOL_STATS_API_RESPONSE,
 	QUOTE_PRECISION_EXP,
 	calculateScaledInitialAssetWeight,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { aprFromApy } from '../utils';
 import { LstMetrics } from '../types/Superstake';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -55,9 +55,9 @@ const getSuperstakeEstimatedApr = ({
 	initialLstDeposit,
 	lstAmount,
 	solAmount,
-	driftClient,
-	driftClientIsReady,
-	driftEnv,
+	velocityClient,
+	velocityClientIsReady,
+	velocityEnv,
 	includeBorrowRateDelta = false,
 }: {
 	lstSpotMarket: SpotMarketConfig;
@@ -65,20 +65,20 @@ const getSuperstakeEstimatedApr = ({
 	initialLstDeposit: number;
 	solAmount: number;
 	lstMetrics: LstMetrics;
-	driftClient: DriftClient;
-	driftClientIsReady?: boolean;
-	driftEnv?: DriftEnv;
+	velocityClient: VelocityClient;
+	velocityClientIsReady?: boolean;
+	velocityEnv?: VelocityEnv;
 	includeBorrowRateDelta?: boolean;
 }) => {
 	const solSpotMarket = (
-		(driftEnv && SpotMarkets[driftEnv]) ||
+		(velocityEnv && SpotMarkets[velocityEnv]) ||
 		SpotMarkets['mainnet-beta']
 	).find((market) => market.symbol === 'SOL');
 
 	if (
 		!lstMetrics.loaded ||
-		!driftClient ||
-		!driftClientIsReady ||
+		!velocityClient ||
+		!velocityClientIsReady ||
 		!lstSpotMarket ||
 		!solSpotMarket
 	)
@@ -87,10 +87,10 @@ const getSuperstakeEstimatedApr = ({
 	let lstSpotMarketAccount: SpotMarketAccount | undefined,
 		solSpotMarketAccount: SpotMarketAccount | undefined;
 	try {
-		lstSpotMarketAccount = driftClient.getSpotMarketAccount(
+		lstSpotMarketAccount = velocityClient.getSpotMarketAccount(
 			lstSpotMarket.marketIndex
 		);
-		solSpotMarketAccount = driftClient.getSpotMarketAccount(
+		solSpotMarketAccount = velocityClient.getSpotMarketAccount(
 			solSpotMarket.marketIndex
 		);
 	} catch (err) {
@@ -192,31 +192,31 @@ const SOL_PRECISION_EXP = NINE;
  * Returns current liquidation ratio at given LST / sol balances
  */
 const getSuperstakeEstimatedLiquidationRatio = ({
-	driftEnv,
-	driftClient,
-	driftClientIsReady,
+	velocityEnv,
+	velocityClient,
+	velocityClientIsReady,
 	lstAmount,
 	lstMetrics,
 	lstSpotMarket,
 	solAmount,
 }: {
-	driftEnv?: DriftEnv;
-	driftClient: DriftClient;
-	driftClientIsReady?: boolean;
+	velocityEnv?: VelocityEnv;
+	velocityClient: VelocityClient;
+	velocityClientIsReady?: boolean;
 	lstAmount: number;
 	solAmount: number;
 	lstSpotMarket: SpotMarketConfig;
 	lstMetrics: LstMetrics;
 }) => {
 	const solSpotMarket = (
-		(driftEnv && SpotMarkets[driftEnv]) ||
+		(velocityEnv && SpotMarkets[velocityEnv]) ||
 		SpotMarkets['mainnet-beta']
 	).find((market) => market.symbol === 'SOL');
 
 	if (
 		!lstMetrics.loaded ||
-		!driftClient ||
-		!driftClientIsReady ||
+		!velocityClient ||
+		!velocityClientIsReady ||
 		!lstSpotMarket ||
 		!solSpotMarket
 	)
@@ -225,10 +225,10 @@ const getSuperstakeEstimatedLiquidationRatio = ({
 	let lstSpotMarketAccount: SpotMarketAccount | undefined,
 		solSpotMarketAccount: SpotMarketAccount | undefined;
 	try {
-		lstSpotMarketAccount = driftClient.getSpotMarketAccount(
+		lstSpotMarketAccount = velocityClient.getSpotMarketAccount(
 			lstSpotMarket.marketIndex
 		);
-		solSpotMarketAccount = driftClient.getSpotMarketAccount(
+		solSpotMarketAccount = velocityClient.getSpotMarketAccount(
 			solSpotMarket.marketIndex
 		);
 	} catch (err) {
@@ -347,39 +347,39 @@ const fetchLstMetrics = async (lstSpotMarket: SpotMarketConfig) => {
  * Returns estimated max spot leverage for a particular lst
  *
  * @param lst
- * @param driftClient
- * @param driftClientIsReady
+ * @param velocityClient
+ * @param velocityClientIsReady
  * @returns
  */
 const getMaxLeverageForLst = ({
 	lstSpotMarket,
 	solSpotMarket,
-	driftClient,
-	driftClientIsReady,
+	velocityClient,
+	velocityClientIsReady,
 }: {
 	lstSpotMarket: SpotMarketConfig;
 	solSpotMarket: SpotMarketConfig;
-	driftClient: DriftClient;
-	driftClientIsReady: boolean;
+	velocityClient: VelocityClient;
+	velocityClientIsReady: boolean;
 }) => {
-	if (!driftClient || !driftClientIsReady) {
+	if (!velocityClient || !velocityClientIsReady) {
 		return {
 			maxLeverage: 1,
 			loaded: false,
 		};
 	}
 
-	const lstSpotMarketAccount = driftClient.getSpotMarketAccount(
+	const lstSpotMarketAccount = velocityClient.getSpotMarketAccount(
 		lstSpotMarket.marketIndex
 	);
-	const solSpotMarketAccount = driftClient.getSpotMarketAccount(
+	const solSpotMarketAccount = velocityClient.getSpotMarketAccount(
 		solSpotMarket.marketIndex
 	);
 
 	const spotWeightPrecisionExp =
 		SPOT_MARKET_WEIGHT_PRECISION.toString().length - 1;
 
-	const lstOraclePriceData = driftClient.getOracleDataForSpotMarket(
+	const lstOraclePriceData = velocityClient.getOracleDataForSpotMarket(
 		lstSpotMarket.marketIndex
 	);
 	const lstOraclePriceBigNum = BigNum.from(

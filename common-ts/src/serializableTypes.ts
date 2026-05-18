@@ -18,8 +18,6 @@ import {
 	LiquidateSpotRecord,
 	LiquidationRecord,
 	LiquidationType,
-	LPAction,
-	LPRecord,
 	MarketType,
 	NewUserRecord,
 	Order,
@@ -44,7 +42,7 @@ import {
 	TEN,
 	WrappedEvent,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	autoserializeAs,
 	autoserializeAsArray,
@@ -1106,6 +1104,7 @@ export type FundingRateRecordEvent = Event<FundingRateRecord>;
 export class SerializableFundingRateRecord implements FundingRateRecordEvent {
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) recordId: BN;
 	@autoserializeAs(Number) marketIndex: number;
@@ -2130,44 +2129,6 @@ export class UISerializableInsuranceFundStakeRecord extends SerializableInsuranc
 	}
 }
 
-export type LPRecordEvent = Event<LPRecord>;
-
-export class SerializableLPRecord implements LPRecordEvent {
-	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	user: PublicKey;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) action: LPAction;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) nShares: BN;
-	@autoserializeAs(Number) marketIndex: number;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	deltaBaseAssetAmount: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	deltaQuoteAssetAmount: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) pnl: BN;
-}
-
-@inheritSerialization(SerializableLPRecord)
-export class UISerializableLPRecord extends SerializableLPRecord {
-	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	nShares: BigNum;
-
-	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	deltaBaseAssetAmount: BigNum;
-
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	deltaQuoteAssetAmount: BigNum;
-
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	pnl: BigNum;
-}
-
 // Swap Record
 export type SwapRecordEvent = Event<SwapRecord>;
 
@@ -2576,8 +2537,6 @@ export const Serializer = {
 		AllTimePnlData: (cls: any) => Serialize(cls, SerializableAllTimePnlData),
 		UIAllTimePnlData: (cls: any) =>
 			Serialize(cls, UISerializableAllTimePnlData),
-		LPRecord: (cls: any) => Serialize(cls, SerializableLPRecord),
-		UILPRecord: (cls: any) => Serialize(cls, UISerializableLPRecord),
 		SwapRecord: (cls: any) => Serialize(cls, SerializableSwapRecord),
 		UISwapRecord: (cls: any) => Serialize(cls, UISerializableSwapRecord),
 	},
@@ -2695,9 +2654,6 @@ export const Serializer = {
 			Deserialize(cls, SerializableAllTimePnlData),
 		UIAllTimePnlData: (cls: JsonObject) =>
 			Deserialize(cls, UISerializableAllTimePnlData),
-		LPRecord: (cls: JsonObject) =>
-			Deserialize(cls, SerializableLPRecord) as LPRecordEvent,
-		UILPRecord: (cls: JsonObject) => Deserialize(cls, UISerializableLPRecord),
 		SwapRecord: (cls: JsonObject) =>
 			Deserialize(cls, SerializableSwapRecord) as SwapRecordEvent,
 		UISwapRecord: (cls: JsonObject) =>

@@ -4,7 +4,6 @@ import {
 	ContractType,
 	DepositDirection,
 	DepositExplanation,
-	LPAction,
 	LiquidationType,
 	MarketStatus,
 	MarketType,
@@ -20,13 +19,10 @@ import {
 	SettlePnlExplanation,
 	//SettlePnlMode,
 	SpotBalanceType,
-	SpotFulfillmentConfigStatus,
-	SpotFulfillmentStatus,
-	SpotFulfillmentType,
 	StakeAction,
 	SwapDirection,
 	SwapReduceOnly,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { expect } from 'chai';
 import { ENUM_UTILS } from '../../src/utils';
 
@@ -48,17 +44,11 @@ describe('Enum Utils', () => {
 			OrderAction,
 			OrderActionExplanation,
 			OrderTriggerCondition,
-			SpotFulfillmentType,
-			SpotFulfillmentStatus,
 			DepositExplanation,
 			SettlePnlExplanation,
-			SpotFulfillmentConfigStatus,
 			StakeAction,
-			//SettlePnlMode,
-			LPAction,
 			LiquidationType,
 			PostOnlyParams,
-			// ModifyOrderPolicy, // NOTE: this has been adjusted in the SDK to use numerical values for the enum
 			SwapReduceOnly,
 		];
 

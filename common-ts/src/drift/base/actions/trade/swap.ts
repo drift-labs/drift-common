@@ -1,11 +1,11 @@
 import {
 	BN,
-	DriftClient,
+	VelocityClient,
 	TxParams,
 	UnifiedQuoteResponse,
 	UnifiedSwapClient,
 	User,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	AddressLookupTableAccount,
 	Transaction,
@@ -18,7 +18,7 @@ import {
  */
 interface CreateSwapIxDetailsParams {
 	/** The Drift client instance for interacting with the Drift protocol */
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	/** Quote response from swap provider containing swap route information */
 	quote: UnifiedQuoteResponse;
 	/** Swap client instance for performing the swap */
@@ -36,7 +36,7 @@ interface CreateSwapIxDetailsParams {
 /**
  * Creates swap instruction details for a swap through Drift
  *
- * @param driftClient - The Drift client instance
+ * @param velocityClient - The Drift client instance
  * @param swapClient - The swap client instance for performing the swap (supports UnifiedSwapClient or JupiterClient)
  * @param quote - Quote response from swap provider with routing information
  * @param swapFromMarketIndex - Source token market index
@@ -48,7 +48,7 @@ interface CreateSwapIxDetailsParams {
  * @returns lookupTables - Address lookup table accounts for transaction compression
  */
 export const createSwapIxDetails = async ({
-	driftClient,
+	velocityClient,
 	swapClient,
 	quote,
 	swapFromMarketIndex,
@@ -61,7 +61,7 @@ export const createSwapIxDetails = async ({
 }> => {
 	const userPublicKey = user.userAccountPublicKey;
 
-	const swapIxsDetails = await driftClient.getSwapIxV2({
+	const swapIxsDetails = await velocityClient.getSwapIxV2({
 		swapClient,
 		outMarketIndex: swapToMarketIndex,
 		inMarketIndex: swapFromMarketIndex,
@@ -85,7 +85,7 @@ interface CreateSwapTxnParams extends CreateSwapIxDetailsParams {
 /**
  * Creates a complete swap transaction ready for signing and submission
  *
- * @param driftClient - The Drift client instance
+ * @param velocityClient - The Drift client instance
  * @param swapClient - The swap client instance for performing the swap (supports UnifiedSwapClient or JupiterClient)
  * @param quote - Quote response from swap provider with routing information
  * @param swapFromMarketIndex - Source token market index
@@ -96,7 +96,7 @@ interface CreateSwapTxnParams extends CreateSwapIxDetailsParams {
  * @returns Promise resolving to either a legacy Transaction or VersionedTransaction ready for signing
  */
 export const createSwapTxn = async ({
-	driftClient,
+	velocityClient,
 	swapClient,
 	quote,
 	swapFromMarketIndex,
@@ -106,7 +106,7 @@ export const createSwapTxn = async ({
 	txParams,
 }: CreateSwapTxnParams): Promise<Transaction | VersionedTransaction> => {
 	const swapIxsDetails = await createSwapIxDetails({
-		driftClient,
+		velocityClient,
 		swapClient,
 		quote,
 		swapFromMarketIndex,
@@ -115,7 +115,7 @@ export const createSwapTxn = async ({
 		user,
 	});
 
-	const tx = await driftClient.buildTransaction(
+	const tx = await velocityClient.buildTransaction(
 		swapIxsDetails.ixs,
 		txParams,
 		0,
