@@ -1,9 +1,4 @@
-import {
-	DriftClient,
-	MarketType,
-	PerpMarketAccount,
-	User,
-} from '@drift-labs/sdk';
+import { DriftClient, PerpMarketAccount, User } from '@drift-labs/sdk';
 import {
 	PublicKey,
 	Transaction,
@@ -12,7 +7,6 @@ import {
 } from '@solana/web3.js';
 import { WithTxnParams } from '../../types';
 import { TRADING_UTILS } from '../../../../_deprecated/trading-utils';
-import { MARKET_UTILS } from '../../../../_deprecated/market-utils';
 
 export interface CreateUpdateMarketMaxLeverageIxsParams {
 	driftClient: DriftClient;
@@ -37,29 +31,6 @@ export const createUpdateMarketMaxLeverageIxs = async (
 	const subAccountIdToUse = userAccount.subAccountId;
 
 	const ixs: TransactionInstruction[] = [];
-
-	// Add enable High Leverage Mode ix for user if needed
-	const { maxLeverage: marketMaxNonHLLeverage } =
-		MARKET_UTILS.getMaxLeverageForMarketAccount(
-			MarketType.PERP,
-			perpMarketAccount
-		);
-	const isUserInHighLeverageMode = user.isHighLeverageMode('Initial');
-	const enableHLMForUser =
-		!isUserInHighLeverageMode && marketMaxNonHLLeverage < leverage;
-
-	if (enableHLMForUser) {
-		ixs.push(
-			await driftClient.getEnableHighLeverageModeIx(
-				subAccountIdToUse,
-				undefined,
-				{
-					user,
-					signingAuthority: mainSignerOverride,
-				}
-			)
-		);
-	}
 
 	// Update max leverage of perp market for user
 	const marginRatio = TRADING_UTILS.convertLeverageToMarginRatio(leverage);

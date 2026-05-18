@@ -2,11 +2,7 @@ import {
 	BASE_PRECISION_EXP,
 	BN,
 	BigNum,
-	ContractType,
 	DriftClient,
-	MarketStatus,
-	ONE,
-	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
 	PerpPosition,
 	PositionDirection,
@@ -20,11 +16,7 @@ import {
 	calculateUnsettledFundingPnl,
 } from '@drift-labs/sdk';
 import { TRADING_UTILS } from '../../../../_deprecated/trading-utils';
-import { ENUM_UTILS } from '../../../../utils';
-import {
-	MAX_PREDICTION_PRICE_BIG_NUM,
-	USDC_SPOT_MARKET_INDEX,
-} from '../../../../constants';
+import { USDC_SPOT_MARKET_INDEX } from '../../../../constants';
 
 /**
  * Comprehensive position information derived from a PerpPosition at a specific reference price.
@@ -63,8 +55,6 @@ export const getPriceBasedPositionInfo = (
 	referencePrice: BN,
 	accountLeverage?: number
 ): PriceBasedPositionInfo => {
-	const { marketIndex } = perpPosition;
-	const perpMarket = driftClient.getPerpMarketAccount(marketIndex);
 	const referencePriceBigNum = BigNum.from(referencePrice, PRICE_PRECISION_EXP);
 
 	// Base Size
@@ -73,35 +63,10 @@ export const getPriceBasedPositionInfo = (
 
 	// Entry Price
 	const entryPriceBN = calculateEntryPrice(perpPosition);
-	const entryPriceBigNum = BigNum.from(entryPriceBN, PRICE_PRECISION_EXP);
 
 	const isShortPosition = baseSize.isNeg();
 
-	// Market and prediction market detection
-	const isPredictionMarket = ENUM_UTILS.match(
-		perpMarket.contractType,
-		ContractType.PREDICTION
-	);
-
 	// Price calculations
-	// Handle prediction market resolution prices
-	if (isPredictionMarket) {
-		const isResolved =
-			ENUM_UTILS.match(perpMarket?.status, MarketStatus.SETTLEMENT) ||
-			ENUM_UTILS.match(perpMarket?.status, MarketStatus.DELISTED);
-
-		if (isResolved) {
-			const resolvedToNo = perpMarket.expiryPrice.lte(
-				ZERO.add(perpMarket.amm.orderTickSize)
-			);
-
-			const price = resolvedToNo
-				? ZERO.mul(PRICE_PRECISION)
-				: ONE.mul(PRICE_PRECISION);
-
-			referencePrice = price;
-		}
-	}
 
 	// position pnl
 	const positionNotionalPnlBN = TRADING_UTILS.calculatePotentialProfit({
@@ -122,23 +87,7 @@ export const getPriceBasedPositionInfo = (
 		QUOTE_PRECISION_EXP
 	);
 
-	// Determine if this is a sell-side prediction market for price adjustment
-	const isSellPredictionMarket = isPredictionMarket && isShortPosition;
-
-	// Apply prediction market price adjustment for display
-	const markPriceToUseForPredictionMarket = isSellPredictionMarket
-		? MAX_PREDICTION_PRICE_BIG_NUM.sub(referencePriceBigNum).val
-		: referencePrice;
-
-	const positionPnlPercentage = isPredictionMarket
-		? BigNum.from(markPriceToUseForPredictionMarket, PRICE_PRECISION_EXP)
-				.sub(entryPriceBigNum)
-				.mul(PRICE_PRECISION)
-				.div(entryPriceBN)
-				.toNum() *
-		  100 *
-		  (isShortPosition ? -1 : 1)
-		: accountLeverage
+	const positionPnlPercentage = accountLeverage
 		? (() => {
 				const quoteAmount = perpPosition.quoteEntryAmount.abs();
 

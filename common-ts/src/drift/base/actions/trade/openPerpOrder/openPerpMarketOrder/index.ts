@@ -28,8 +28,6 @@ import {
 	fetchTopMakers,
 	OptionalAuctionParamsRequestInputs,
 } from '../dlobServer';
-import { ORDER_COMMON_UTILS } from '../../../../../../_deprecated/order-utils';
-import { HighLeverageOptions } from '../../../../../../utils/orders';
 import { WithTxnParams } from '../../../../types';
 import { TxnOrSwiftResult, IsolatedPositionDepositsOverride } from '../types';
 import { NoTopMakersError } from '../../../../../Drift/constants/errors';
@@ -111,7 +109,6 @@ export interface OpenPerpMarketOrderBaseParams {
 		 */
 		builderFeeTenthBps: number;
 	};
-	highLeverageOptions?: HighLeverageOptions;
 	callbacks?: {
 		onAuctionParamsFetched?: AuctionParamsFetchedCallback;
 	};
@@ -154,8 +151,6 @@ async function prepSwiftMarketOrderData(params: OpenPerpMarketOrderBaseParams) {
 		reduceOnly,
 		dlobServerHttpUrl,
 		optionalAuctionParamsInputs,
-		positionMaxLeverage,
-		highLeverageOptions,
 		userOrderId = 0,
 		callbacks,
 	} = params;
@@ -178,18 +173,9 @@ async function prepSwiftMarketOrderData(params: OpenPerpMarketOrderBaseParams) {
 		onAuctionParamsFetched: callbacks?.onAuctionParamsFetched,
 	});
 
-	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
-		marketIndex,
-		driftClient,
-		user,
-		positionMaxLeverage,
-		highLeverageOptions
-	);
-
 	const orderParams = {
 		...fetchedOrderParams,
 		userOrderId,
-		bitFlags,
 	};
 
 	const userAccount = user.getUserAccount();
@@ -213,7 +199,6 @@ export async function createSwiftMarketOrder(
 		swiftOptions,
 		positionMaxLeverage,
 		marginMode,
-		highLeverageOptions,
 		builderParams,
 	} = params;
 
@@ -228,8 +213,6 @@ export async function createSwiftMarketOrder(
 			positionMaxLeverage,
 			marginMode,
 			replenishUnderwaterPositions: false, // Swift doesn't support additional deposits. Will throw error if other isolated position shortfalls exists.
-			numOfOpenHighLeverageSpots:
-				highLeverageOptions?.numOfOpenHighLeverageSpots,
 		}
 	);
 
@@ -279,7 +262,6 @@ export async function createSwiftMarketOrderMessage(
 		bracketOrders,
 		positionMaxLeverage,
 		marginMode,
-		highLeverageOptions,
 		builderParams,
 		isDelegate = false,
 		userSigningSlotBuffer,
@@ -296,8 +278,6 @@ export async function createSwiftMarketOrderMessage(
 			positionMaxLeverage,
 			marginMode,
 			replenishUnderwaterPositions: false, // Swift doesn't support additional deposits. Will throw error if other isolated position shortfalls exists.
-			numOfOpenHighLeverageSpots:
-				highLeverageOptions?.numOfOpenHighLeverageSpots,
 		}
 	);
 
@@ -341,8 +321,6 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	auctionDurationPercentage,
 	optionalAuctionParamsInputs,
 	mainSignerOverride,
-	highLeverageOptions,
-	positionMaxLeverage,
 	callbacks,
 }: Omit<
 	OpenPerpMarketOrderBaseParams,
@@ -357,7 +335,6 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	user: User;
 	referrerInfo?: ReferrerInfo;
 	auctionDurationPercentage?: number;
-	highLeverageOptions?: HighLeverageOptions;
 }) => {
 	const counterPartySide = ENUM_UTILS.match(direction, PositionDirection.LONG)
 		? 'ask'
@@ -386,14 +363,6 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		}),
 	]);
 
-	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
-		marketIndex,
-		driftClient,
-		user,
-		positionMaxLeverage,
-		highLeverageOptions
-	);
-	fetchedOrderParams.bitFlags = bitFlags;
 	fetchedOrderParams.userOrderId = userOrderId;
 
 	if (orderType) {
@@ -465,7 +434,6 @@ export const createOpenPerpMarketOrderIxs = async ({
 	optionalAuctionParamsInputs = {},
 	positionMaxLeverage,
 	mainSignerOverride,
-	highLeverageOptions,
 	marginMode,
 	isolatedPositionDepositsOverride,
 	callbacks,
@@ -485,8 +453,6 @@ export const createOpenPerpMarketOrderIxs = async ({
 			positionMaxLeverage,
 			marginMode,
 			replenishUnderwaterPositions: true,
-			numOfOpenHighLeverageSpots:
-				highLeverageOptions?.numOfOpenHighLeverageSpots,
 		}
 	);
 
@@ -583,18 +549,9 @@ export const createOpenPerpMarketOrderIxs = async ({
 			onAuctionParamsFetched: callbacks?.onAuctionParamsFetched,
 		});
 
-		const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
-			marketIndex,
-			driftClient,
-			user,
-			positionMaxLeverage,
-			highLeverageOptions
-		);
-
 		const orderParams = {
 			...fetchedOrderParams,
 			userOrderId,
-			bitFlags,
 		};
 
 		allOrders.push(orderParams);

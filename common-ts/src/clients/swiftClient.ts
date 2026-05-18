@@ -342,9 +342,11 @@ export class SwiftClient {
 		ordersAccount: AccountInfo<Buffer>,
 		signedMsgOrderUuid: Uint8Array
 	) {
+		// TODO: cast to any to avoid "Type instantiation is excessively deep and possibly infinite." error from Anchor's generic types against the Drift IDL. Fix once SDK is stable.
+		const program = client.program as any;
 		const accountDecoder =
-			client.program.account.signedMsgUserOrders.coder.accounts.decodeUnchecked.bind(
-				client.program.account.signedMsgUserOrders.coder.accounts
+			program.account.signedMsgUserOrders.coder.accounts.decodeUnchecked.bind(
+				program.account.signedMsgUserOrders.coder.accounts
 			);
 		const decodedAccount = accountDecoder(
 			'SignedMsgUserOrders',
