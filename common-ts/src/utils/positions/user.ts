@@ -100,13 +100,7 @@ const getUserMaxLeverageForMarket = (
 	if (isPositionOpen) {
 		// user has an existing position from before PML ship (this means no max margin ratio set onchain yet)
 		// display max leverage for the leverage mode their account is in
-		const isUserInHighLeverageMode = user.isHighLeverageMode('Initial');
-		const grandfatheredMaxLev = isUserInHighLeverageMode
-			? marketLeverageDetails.hasHighLeverage
-				? marketLeverageDetails.highLeverageMaxLeverage
-				: marketLeverageDetails.regularMaxLeverage
-			: marketLeverageDetails.regularMaxLeverage;
-		return grandfatheredMaxLev;
+		return marketLeverageDetails.regularMaxLeverage;
 	}
 
 	// user has closed position with no margin ratio set, return default value

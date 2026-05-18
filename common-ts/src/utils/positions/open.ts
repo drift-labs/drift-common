@@ -159,7 +159,6 @@ const getOpenPositionData = (
 							undefined,
 							undefined,
 							undefined,
-							undefined,
 							'Isolated'
 					  )
 					: user.liquidationPrice(position.marketIndex, ZERO),

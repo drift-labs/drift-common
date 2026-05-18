@@ -16,7 +16,6 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 	limitPrice,
 	offsetCollateral,
 	precision = 2,
-	isEnteringHighLeverageMode,
 	capLiqPrice,
 	marginType,
 }: {
@@ -30,7 +29,6 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 	limitPrice?: BN;
 	offsetCollateral?: BN;
 	precision?: number;
-	isEnteringHighLeverageMode?: boolean;
 	capLiqPrice?: boolean;
 	marginType?: 'Cross' | 'Isolated';
 }) => {
@@ -75,7 +73,6 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 		undefined,
 		undefined, // we can exclude open orders since open orders will be cancelled first (which results in reducing account leverage) before actual liquidation
 		offsetCollateral,
-		isEnteringHighLeverageMode,
 		marginType === 'Isolated' ? 'Isolated' : undefined
 	);
 

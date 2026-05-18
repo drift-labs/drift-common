@@ -13,7 +13,6 @@ import {
 } from '@drift-labs/sdk';
 import { ORDER_COMMON_UTILS } from '../../../../../_deprecated/order-utils';
 import { COMMON_UI_UTILS } from '../../../../../_deprecated/common-ui-utils';
-import { HighLeverageOptions } from '../../../../../utils/orders';
 import { DEFAULT_LIMIT_AUCTION_DURATION } from '../../../constants/auction';
 import { ENUM_UTILS } from '../../../../../utils';
 import invariant from 'tiny-invariant';
@@ -28,12 +27,10 @@ export const getLimitAuctionOrderParams = async ({
 	marketType,
 	direction,
 	baseAssetAmount,
-	positionMaxLeverage,
 	userOrderId = 0,
 	reduceOnly = false,
 	postOnly = PostOnlyParams.NONE,
 	orderConfig,
-	highLeverageOptions,
 	onAuctionParamsFetched,
 }: {
 	driftClient: DriftClient;
@@ -49,7 +46,6 @@ export const getLimitAuctionOrderParams = async ({
 	orderConfig: LimitOrderParamsOrderConfig & {
 		limitAuction: LimitAuctionConfig;
 	};
-	highLeverageOptions?: HighLeverageOptions;
 	onAuctionParamsFetched?: AuctionParamsFetchedCallback;
 }): Promise<OptionalOrderParams> => {
 	const orderParams = await fetchAuctionOrderParams({
@@ -113,16 +109,5 @@ export const getLimitAuctionOrderParams = async ({
 		...limitAuctionParams,
 	});
 
-	const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
-		marketIndex,
-		driftClient,
-		user,
-		positionMaxLeverage,
-		highLeverageOptions
-	);
-
-	return {
-		...limitAuctionOrderParams,
-		bitFlags,
-	};
+	return limitAuctionOrderParams;
 };

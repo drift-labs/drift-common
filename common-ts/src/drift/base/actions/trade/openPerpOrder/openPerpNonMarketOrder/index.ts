@@ -6,7 +6,6 @@ import {
 	PostOnlyParams,
 	OptionalOrderParams,
 	PositionDirection,
-	OrderParamsBitFlag,
 	OrderType,
 } from '@drift-labs/sdk';
 import {
@@ -26,8 +25,6 @@ import {
 	resolveBaseAssetAmount,
 } from '../../../../../utils/orderParams';
 import { ENUM_UTILS } from '../../../../../../utils';
-import { ORDER_COMMON_UTILS } from '../../../../../../_deprecated/order-utils';
-import { HighLeverageOptions } from '../../../../../../utils/orders';
 import { createPlaceAndTakePerpMarketOrderIx } from '../openPerpMarketOrder';
 import {
 	TxnOrSwiftResult,
@@ -85,7 +82,6 @@ export interface OpenPerpNonMarketOrderBaseParams
 		builderIdx: number;
 		builderFeeTenthBps: number;
 	};
-	highLeverageOptions?: HighLeverageOptions;
 }
 
 export interface OpenPerpNonMarketOrderParamsWithSwift
@@ -117,7 +113,6 @@ export const createMultipleOpenPerpNonMarketOrderIx = async (params: {
 	driftClient: DriftClient;
 	user: User;
 	orderParamsConfigs: NonMarketOrderParamsConfig[];
-	enterHighLeverageMode?: boolean;
 	/**
 	 * If provided, will override the main signer for the order. Otherwise, the main signer will be the user's authority.
 	 */
@@ -126,10 +121,6 @@ export const createMultipleOpenPerpNonMarketOrderIx = async (params: {
 	const { driftClient, orderParamsConfigs, mainSignerOverride } = params;
 
 	const orderParams = orderParamsConfigs.map(buildNonMarketOrderParams);
-
-	if (params.enterHighLeverageMode && orderParams.length > 0) {
-		orderParams[0].bitFlags = OrderParamsBitFlag.UpdateHighLeverageMode;
-	}
 
 	const placeOrderIx = await driftClient.getPlaceOrdersIx(
 		orderParams,
@@ -163,7 +154,6 @@ export const createOpenPerpNonMarketOrderIxs = async (
 		positionMaxLeverage,
 		marginMode,
 		mainSignerOverride,
-		highLeverageOptions,
 		isolatedPositionDepositsOverride,
 	} = params;
 	// Support both new (amount + assetType) and legacy (baseAssetAmount) approaches
@@ -193,8 +183,6 @@ export const createOpenPerpNonMarketOrderIxs = async (
 			positionMaxLeverage,
 			marginMode,
 			replenishUnderwaterPositions: true,
-			numOfOpenHighLeverageSpots:
-				highLeverageOptions?.numOfOpenHighLeverageSpots,
 		}
 	);
 
@@ -293,7 +281,6 @@ export const createOpenPerpNonMarketOrderIxs = async (
 					auctionDurationPercentage:
 						orderConfig.limitAuction.usePlaceAndTake.auctionDurationPercentage,
 					referrerInfo: orderConfig.limitAuction.usePlaceAndTake.referrerInfo,
-					highLeverageOptions,
 				});
 				allIxs.push(placeAndTakeIx);
 				createdPlaceAndTakeIx = true;
@@ -321,15 +308,6 @@ export const createOpenPerpNonMarketOrderIxs = async (
 			postOnly,
 			userOrderId,
 		});
-
-		const bitFlags = ORDER_COMMON_UTILS.getPerpOrderParamsBitFlags(
-			marketIndex,
-			driftClient,
-			user,
-			positionMaxLeverage,
-			highLeverageOptions
-		);
-		orderParams.bitFlags = bitFlags;
 
 		allOrders.push(orderParams);
 	}
@@ -492,8 +470,6 @@ export const createSwiftLimitOrder = async (
 			positionMaxLeverage: params.positionMaxLeverage,
 			marginMode: params.marginMode,
 			replenishUnderwaterPositions: false, // Swift doesn't support additional deposits, so throw on underwater positions
-			numOfOpenHighLeverageSpots:
-				params.highLeverageOptions?.numOfOpenHighLeverageSpots,
 		}
 	);
 
@@ -554,8 +530,6 @@ export const createSwiftLimitOrderMessage = async (
 			positionMaxLeverage: params.positionMaxLeverage,
 			marginMode: params.marginMode,
 			replenishUnderwaterPositions: false, // Swift doesn't support additional deposits, so throw on underwater positions
-			numOfOpenHighLeverageSpots:
-				params.highLeverageOptions?.numOfOpenHighLeverageSpots,
 		}
 	);
 

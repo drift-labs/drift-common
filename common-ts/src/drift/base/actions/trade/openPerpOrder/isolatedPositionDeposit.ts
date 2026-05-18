@@ -168,7 +168,6 @@ export function computeIsolatedPositionDepositForTrade({
 	direction,
 	marginRatio,
 	entryPrice,
-	numOfOpenHighLeverageSpots,
 	bufferDenominator,
 	includeExistingShortfall,
 	existingShortfall: precomputedShortfall,
@@ -192,18 +191,11 @@ export function computeIsolatedPositionDepositForTrade({
 		}
 	}
 
-	const userIsInHighLeverageMode = user.isHighLeverageMode('Initial') ?? false;
-	const hasOpenHighLeverageSpots =
-		numOfOpenHighLeverageSpots !== undefined && numOfOpenHighLeverageSpots > 0;
-	const enteringHighLeverageMode =
-		userIsInHighLeverageMode || hasOpenHighLeverageSpots;
-
 	const marginRequired = calculateMarginUSDCRequiredForTrade(
 		driftClient,
 		marketIndex,
 		baseAssetAmount,
 		marginRatio,
-		enteringHighLeverageMode,
 		entryPrice
 	);
 
@@ -260,7 +252,6 @@ export function calculateIsolatedPositionDeposits(params: {
 	direction?: PositionDirection;
 	positionMaxLeverage: number;
 	replenishUnderwaterPositions?: boolean;
-	numOfOpenHighLeverageSpots?: number;
 }): {
 	mainDeposit: BN | undefined;
 	additionalIsolatedPositionDeposits:
@@ -287,7 +278,6 @@ export function calculateIsolatedPositionDeposits(params: {
 			baseAssetAmount: params.baseAssetAmount,
 			direction: params.direction,
 			marginRatio,
-			numOfOpenHighLeverageSpots: params.numOfOpenHighLeverageSpots,
 			bufferDenominator: ISOLATED_POSITION_DEPOSIT_BUFFER_BPS,
 			includeExistingShortfall: true,
 			// Use pre-computed shortfall to avoid a second getMarginCalculation call
@@ -341,7 +331,6 @@ export function resolveIsolatedPositionDeposits(params: {
 	positionMaxLeverage: number;
 	marginMode?: 'isolated' | 'cross';
 	replenishUnderwaterPositions?: boolean;
-	numOfOpenHighLeverageSpots?: number;
 }): ReturnType<typeof calculateIsolatedPositionDeposits> | undefined {
 	const isIsolated =
 		(params.marginMode ??

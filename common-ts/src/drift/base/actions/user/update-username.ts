@@ -14,7 +14,9 @@ export const updateUserNameIx = async ({
 	subAccountId,
 }: UpdateUserNameIxParams) => {
 	const nameBuffer = encodeName(newName);
-	const ix = await driftClient.program.instruction.updateUserName(
+	// TODO: cast to any to avoid "Type instantiation is excessively deep and possibly infinite." error from Anchor's generic types against the Drift IDL. Fix once SDK is stable.
+	const program = driftClient.program as any;
+	const ix = await program.instruction.updateUserName(
 		subAccountId,
 		nameBuffer,
 		{

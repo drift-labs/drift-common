@@ -6,4 +6,3 @@ export * from './superstake';
 export * from './pools';
 export * from './trade';
 export * from './markets';
-export * from './predictionMarket';
