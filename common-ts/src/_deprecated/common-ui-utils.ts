@@ -29,10 +29,6 @@ import {
 	getUserKey,
 	getMarketKey,
 } from '../utils/accounts/keys';
-import {
-	getLpSharesAmountForQuote,
-	getQuoteValueForLpShares,
-} from '../utils/trading/lp';
 import { getMarketOrderLimitPrice } from '../utils/trading/price';
 import {
 	getMultipleAccounts,
@@ -59,14 +55,12 @@ export const COMMON_UI_UTILS = {
 	getBalanceFromTokenAccountResult,
 	getIdAndAuthorityFromKey,
 	getLimitAuctionParams,
-	getLpSharesAmountForQuote,
 	getMarketAuctionParams,
 	getMarketKey,
 	getMarketOrderLimitPrice,
 	getMultipleAccounts,
 	getMultipleAccountsCore,
 	getPriceObject,
-	getQuoteValueForLpShares,
 	getSignatureVerificationMessageForSettings,
 	getTokenAccount,
 	getTokenAddress,

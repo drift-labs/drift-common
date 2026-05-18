@@ -63,8 +63,7 @@ export const createWithdrawIx = async ({
 		spotMarketConfig.marketIndex,
 		associatedDepositTokenAddress,
 		reduceOnly,
-		user.getUserAccount().subAccountId,
-		undefined
+		user.getUserAccount().subAccountId
 	);
 
 	return withdrawIxs;
