@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/drift-labs/drift-common/compare/common-ts-v1.1.0...common-ts-v1.1.1) (2026-05-18)
+
+
+### Code Refactoring
+
+* **common-ts:** fix upstream SDK changes ([#340](https://github.com/drift-labs/drift-common/issues/340)) ([0f6502b](https://github.com/drift-labs/drift-common/commit/0f6502ba81262f5016dbccd6c13104ee115de4cc))
+
 ## [1.1.0](https://github.com/drift-labs/drift-common/compare/common-ts-v1.0.63...common-ts-v1.1.0) (2026-05-15)
 
 
