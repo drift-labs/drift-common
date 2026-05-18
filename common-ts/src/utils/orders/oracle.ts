@@ -1,4 +1,4 @@
-import { BigNum } from '@drift-labs/sdk';
+import { BigNum } from '@velocity-exchange/sdk';
 import { AuctionParams } from '../../types';
 import { EMPTY_AUCTION_PARAMS } from '../../constants/trade';
 import { UISerializableOrder } from '../../serializableTypes';

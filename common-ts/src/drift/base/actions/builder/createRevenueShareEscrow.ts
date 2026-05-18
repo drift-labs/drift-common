@@ -1,4 +1,4 @@
-import { DriftClient } from '@drift-labs/sdk';
+import { VelocityClient } from '@velocity-exchange/sdk';
 import {
 	Transaction,
 	TransactionInstruction,
@@ -9,7 +9,7 @@ import { WithTxnParams } from '../../types';
 import { configureBuilderIx } from './configureBuilder';
 
 interface CreateRevenueShareEscrowIxParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	/**
 	 * The authority (owner) of the revenue share escrow account to be created.
 	 * This is typically the user/taker's public key.
@@ -41,7 +41,7 @@ interface CreateRevenueShareEscrowIxParams {
  * When the escrow is full, new orders will succeed but builder fees won't be tracked.
  * See README_ORDER_LIMITS.md for capacity planning guidance.
  *
- * @param driftClient - The Drift client instance
+ * @param velocityClient - The Drift client instance
  * @param authority - The public key of the user who will own this escrow account
  * @param numOrders - Number of concurrent order slots (default: 16, range: 1-128)
  *   - 8: Casual traders (2-3 markets, occasional trading)
@@ -56,27 +56,31 @@ interface CreateRevenueShareEscrowIxParams {
  * ```typescript
  * // Default configuration (16 order slots)
  * const instruction = await createRevenueShareEscrowIx({
- *   driftClient,
+ *   velocityClient,
  *   authority: userPublicKey
  * });
  *
  * // Custom configuration for power user
  * const instruction = await createRevenueShareEscrowIx({
- *   driftClient,
+ *   velocityClient,
  *   authority: userPublicKey,
  *   numOrders: 32  // More concurrent capacity
  * });
  * ```
  */
 export const createRevenueShareEscrowIx = async ({
-	driftClient,
+	velocityClient,
 	authority,
 	numOrders = 16,
 	payer,
 }: CreateRevenueShareEscrowIxParams): Promise<TransactionInstruction> => {
-	return driftClient.getInitializeRevenueShareEscrowIx(authority, numOrders, {
-		payer: payer ?? authority,
-	});
+	return velocityClient.getInitializeRevenueShareEscrowIx(
+		authority,
+		numOrders,
+		{
+			payer: payer ?? authority,
+		}
+	);
 };
 
 interface CreateRevenueShareEscrowTxnParams
@@ -109,7 +113,7 @@ interface CreateRevenueShareEscrowTxnParams
  * When the escrow is full, new orders will succeed but builder fees won't be tracked.
  * See README_ORDER_LIMITS.md for capacity planning guidance.
  *
- * @param driftClient - The Drift client instance
+ * @param velocityClient - The Drift client instance
  * @param authority - The public key of the user who will own this escrow account
  * @param numOrders - Number of concurrent order slots (default: 16, range: 1-128)
  *   - 8: Casual traders (2-3 markets, occasional trading)
@@ -125,14 +129,14 @@ interface CreateRevenueShareEscrowTxnParams
  * ```typescript
  * // Default configuration (16 order slots)
  * const transaction = await createRevenueShareEscrowTxn({
- *   driftClient,
+ *   velocityClient,
  *   authority: userPublicKey,
  *   txParams: { computeUnits: 300000 }
  * });
  *
  * // Custom configuration for power user
  * const transaction = await createRevenueShareEscrowTxn({
- *   driftClient,
+ *   velocityClient,
  *   authority: userPublicKey,
  *   numOrders: 32,  // More concurrent capacity
  *   txParams: { computeUnits: 300000 }
@@ -150,7 +154,7 @@ export const createRevenueShareEscrowTxn = async (
 
 	if (params.builder) {
 		const addBuilderIx = await configureBuilderIx({
-			driftClient: params.driftClient,
+			velocityClient: params.velocityClient,
 			authority: params.authority,
 			builderAuthority: params.builder.builderAuthority,
 			maxFeeTenthBps: params.builder.maxFeeTenthBps,
@@ -160,5 +164,5 @@ export const createRevenueShareEscrowTxn = async (
 		ixs.push(addBuilderIx);
 	}
 
-	return params.driftClient.buildTransaction(ixs, params.txParams);
+	return params.velocityClient.buildTransaction(ixs, params.txParams);
 };

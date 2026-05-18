@@ -22,7 +22,7 @@ import {
 	StakeAction,
 	SwapDirection,
 	SwapReduceOnly,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { expect } from 'chai';
 import { ENUM_UTILS } from '../../src/utils';
 

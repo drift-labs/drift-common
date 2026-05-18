@@ -1,7 +1,7 @@
 import {
 	PriorityFeeStrategy,
 	SolanaPriorityFeeResponse,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 
 /**
  * Default strategy. Keeps a moving window of fee samples from the past x slots, and returns the target percentile fee from the samples.

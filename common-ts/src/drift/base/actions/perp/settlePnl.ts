@@ -1,4 +1,9 @@
-import { DriftClient, User, SettlePnlMode, TxParams } from '@drift-labs/sdk';
+import {
+	VelocityClient,
+	User,
+	SettlePnlMode,
+	TxParams,
+} from '@velocity-exchange/sdk';
 import {
 	Transaction,
 	TransactionInstruction,
@@ -7,7 +12,7 @@ import {
 } from '@solana/web3.js';
 
 interface SettlePnlParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	marketIndexes: number[];
 	mode?: typeof SettlePnlMode.TRY_SETTLE | typeof SettlePnlMode.MUST_SETTLE;
@@ -17,7 +22,7 @@ interface SettlePnlParams {
 /**
  * Creates transaction instruction for settling PnL for multiple markets.
  *
- * @param driftClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Drift client instance for interacting with the protocol
  * @param user - The user account that will settle PnL
  * @param marketIndexes - Array of perp market indexes to settle PnL for
  * @param mode - Settlement mode (defaults to TRY_SETTLE)
@@ -25,7 +30,7 @@ interface SettlePnlParams {
  * @returns Promise resolving to a transaction instructions for settling PnL
  */
 export const createSettlePnlIx = async ({
-	driftClient,
+	velocityClient,
 	user,
 	marketIndexes,
 	mode = SettlePnlMode.TRY_SETTLE,
@@ -34,7 +39,7 @@ export const createSettlePnlIx = async ({
 	const userAccountPublicKey = user.getUserAccountPublicKey();
 	const userAccount = user.getUserAccount();
 
-	const settlePnlIx = await driftClient.settleMultiplePNLsIx(
+	const settlePnlIx = await velocityClient.settleMultiplePNLsIx(
 		userAccountPublicKey,
 		userAccount,
 		marketIndexes,
@@ -54,7 +59,7 @@ interface CreateSettlePnlTxnParams extends SettlePnlParams {
 /**
  * Creates a complete transaction for settling PnL for multiple markets.
  *
- * @param driftClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Drift client instance for interacting with the protocol
  * @param user - The user account that will settle PnL
  * @param marketIndexes - Array of perp market indexes to settle PnL for
  * @param mode - Settlement mode (defaults to TRY_SETTLE)
@@ -63,7 +68,7 @@ interface CreateSettlePnlTxnParams extends SettlePnlParams {
  * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)
  */
 export const createSettlePnlTxn = async ({
-	driftClient,
+	velocityClient,
 	user,
 	marketIndexes,
 	mode = SettlePnlMode.TRY_SETTLE,
@@ -71,14 +76,14 @@ export const createSettlePnlTxn = async ({
 	mainSignerOverride,
 }: CreateSettlePnlTxnParams): Promise<Transaction | VersionedTransaction> => {
 	const settlePnlIxs = await createSettlePnlIx({
-		driftClient,
+		velocityClient,
 		user,
 		marketIndexes,
 		mode,
 		mainSignerOverride,
 	});
 
-	const settlePnlTxn = await driftClient.buildTransaction(
+	const settlePnlTxn = await velocityClient.buildTransaction(
 		settlePnlIxs,
 		txParams
 	);

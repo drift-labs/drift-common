@@ -1,4 +1,4 @@
-import { User } from '@drift-labs/sdk';
+import { User } from '@velocity-exchange/sdk';
 
 /**
  * The position's margin mode based on the position's `positionFlag`. Returns 'cross' if no position is found.

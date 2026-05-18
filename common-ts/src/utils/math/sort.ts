@@ -1,4 +1,4 @@
-import { BN } from '@drift-labs/sdk';
+import { BN } from '@velocity-exchange/sdk';
 
 /**
  * Helper utility to get a sort score for "tiered" parameters.

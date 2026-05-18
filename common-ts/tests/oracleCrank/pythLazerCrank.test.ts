@@ -1,4 +1,4 @@
-import { DriftClient, OracleSource } from '@drift-labs/sdk';
+import { VelocityClient, OracleSource } from '@velocity-exchange/sdk';
 import { TransactionInstruction } from '@solana/web3.js';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -10,11 +10,11 @@ import {
 import { DEFAULT_PRECEDING_IXS_COUNT } from '../../src/drift/base/actions/markets/oracleCrank/constants';
 
 describe('getPythLazerUpdateIxs', () => {
-	let driftClient: sinon.SinonStubbedInstance<DriftClient>;
+	let velocityClient: sinon.SinonStubbedInstance<VelocityClient>;
 	let fetcher: sinon.SinonStub;
 
 	beforeEach(() => {
-		driftClient = sinon.createStubInstance(DriftClient);
+		velocityClient = sinon.createStubInstance(VelocityClient);
 		fetcher = sinon.stub();
 	});
 
@@ -32,7 +32,7 @@ describe('getPythLazerUpdateIxs', () => {
 
 		const result = await getPythLazerUpdateIxs(
 			configs,
-			driftClient as unknown as DriftClient,
+			velocityClient as unknown as VelocityClient,
 			fetcher as OracleCrankDataFetcher
 		);
 
@@ -59,11 +59,11 @@ describe('getPythLazerUpdateIxs', () => {
 		fetcher.resolves({ success: true, data: 'hex-data' });
 
 		const mockIxs = [{} as TransactionInstruction];
-		driftClient.getPostPythLazerOracleUpdateIxs.resolves(mockIxs);
+		velocityClient.getPostPythLazerOracleUpdateIxs.resolves(mockIxs);
 
 		const result = await getPythLazerUpdateIxs(
 			configs,
-			driftClient as unknown as DriftClient,
+			velocityClient as unknown as VelocityClient,
 			fetcher as OracleCrankDataFetcher,
 			10
 		);
@@ -86,12 +86,12 @@ describe('getPythLazerUpdateIxs', () => {
 
 		const result = await getPythLazerUpdateIxs(
 			configs,
-			driftClient as unknown as DriftClient,
+			velocityClient as unknown as VelocityClient,
 			fetcher as OracleCrankDataFetcher
 		);
 
 		expect(result).to.deep.equal([]);
-		expect(driftClient.getPostPythLazerOracleUpdateIxs.called).to.be.false;
+		expect(velocityClient.getPostPythLazerOracleUpdateIxs.called).to.be.false;
 	});
 
 	it('should pass result.data directly and correct precedingIxsCount + 1', async () => {
@@ -103,20 +103,21 @@ describe('getPythLazerUpdateIxs', () => {
 		];
 
 		fetcher.resolves({ success: true, data: 'hex-data' });
-		driftClient.getPostPythLazerOracleUpdateIxs.resolves([]);
+		velocityClient.getPostPythLazerOracleUpdateIxs.resolves([]);
 
 		const precedingIxsCount = 5;
 		await getPythLazerUpdateIxs(
 			configs,
-			driftClient as unknown as DriftClient,
+			velocityClient as unknown as VelocityClient,
 			fetcher as OracleCrankDataFetcher,
 			undefined,
 			precedingIxsCount
 		);
 
-		expect(driftClient.getPostPythLazerOracleUpdateIxs.calledOnce).to.be.true;
+		expect(velocityClient.getPostPythLazerOracleUpdateIxs.calledOnce).to.be
+			.true;
 		const [ids, data, precedingIxs, overrideIndex] =
-			driftClient.getPostPythLazerOracleUpdateIxs.firstCall.args;
+			velocityClient.getPostPythLazerOracleUpdateIxs.firstCall.args;
 		expect(ids).to.deep.equal([1]);
 		expect(data).to.equal('hex-data');
 		expect(precedingIxs).to.be.undefined;
@@ -132,16 +133,16 @@ describe('getPythLazerUpdateIxs', () => {
 		];
 
 		fetcher.resolves({ success: true, data: 'hex-data' });
-		driftClient.getPostPythLazerOracleUpdateIxs.resolves([]);
+		velocityClient.getPostPythLazerOracleUpdateIxs.resolves([]);
 
 		await getPythLazerUpdateIxs(
 			configs,
-			driftClient as unknown as DriftClient,
+			velocityClient as unknown as VelocityClient,
 			fetcher as OracleCrankDataFetcher
 		);
 
 		const [, , , overrideIndex] =
-			driftClient.getPostPythLazerOracleUpdateIxs.firstCall.args;
+			velocityClient.getPostPythLazerOracleUpdateIxs.firstCall.args;
 		expect(overrideIndex).to.equal(DEFAULT_PRECEDING_IXS_COUNT + 1);
 	});
 
@@ -154,11 +155,13 @@ describe('getPythLazerUpdateIxs', () => {
 		];
 
 		fetcher.resolves({ success: true, data: 'hex-data' });
-		driftClient.getPostPythLazerOracleUpdateIxs.rejects(new Error('SDK error'));
+		velocityClient.getPostPythLazerOracleUpdateIxs.rejects(
+			new Error('SDK error')
+		);
 
 		const result = await getPythLazerUpdateIxs(
 			configs,
-			driftClient as unknown as DriftClient,
+			velocityClient as unknown as VelocityClient,
 			fetcher as OracleCrankDataFetcher
 		);
 

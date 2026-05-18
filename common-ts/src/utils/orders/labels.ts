@@ -4,7 +4,7 @@ import {
 	PositionDirection,
 	BigNum,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	LIMIT_ORDER_TYPE_CONFIG,
 	MARKET_ORDER_TYPE_CONFIG,

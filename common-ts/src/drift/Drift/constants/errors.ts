@@ -1,4 +1,4 @@
-import { OptionalOrderParams } from '@drift-labs/sdk';
+import { OptionalOrderParams } from '@velocity-exchange/sdk';
 
 /**
  * Error thrown when a method is called while the user is geo-blocked.

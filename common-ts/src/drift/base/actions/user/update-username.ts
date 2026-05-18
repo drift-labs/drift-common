@@ -1,28 +1,33 @@
-import { DriftClient, encodeName, PublicKey, TxParams } from '@drift-labs/sdk';
+import {
+	VelocityClient,
+	encodeName,
+	PublicKey,
+	TxParams,
+} from '@velocity-exchange/sdk';
 
 interface UpdateUserNameIxParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	newName: string;
 	userAccountPublicKey: PublicKey;
 	subAccountId: number;
 }
 
 export const updateUserNameIx = async ({
-	driftClient,
+	velocityClient,
 	newName,
 	userAccountPublicKey,
 	subAccountId,
 }: UpdateUserNameIxParams) => {
 	const nameBuffer = encodeName(newName);
 	// TODO: cast to any to avoid "Type instantiation is excessively deep and possibly infinite." error from Anchor's generic types against the Drift IDL. Fix once SDK is stable.
-	const program = driftClient.program as any;
+	const program = velocityClient.program as any;
 	const ix = await program.instruction.updateUserName(
 		subAccountId,
 		nameBuffer,
 		{
 			accounts: {
 				user: userAccountPublicKey,
-				authority: driftClient.wallet.publicKey,
+				authority: velocityClient.wallet.publicKey,
 			},
 		}
 	);
@@ -34,17 +39,17 @@ interface UpdateUserNameTxnParams extends UpdateUserNameIxParams {
 }
 
 export const updateUserNameTxn = async ({
-	driftClient,
+	velocityClient,
 	newName,
 	userAccountPublicKey,
 	subAccountId,
 	txParams,
 }: UpdateUserNameTxnParams) => {
 	const ix = await updateUserNameIx({
-		driftClient,
+		velocityClient,
 		newName,
 		userAccountPublicKey,
 		subAccountId,
 	});
-	return driftClient.buildTransaction(ix, txParams);
+	return velocityClient.buildTransaction(ix, txParams);
 };

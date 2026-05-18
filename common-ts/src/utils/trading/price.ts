@@ -4,7 +4,7 @@ import {
 	PositionDirection,
 	ZERO,
 	isVariant,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { UIOrderType } from '../../types';
 
 const getMarketOrderLimitPrice = ({

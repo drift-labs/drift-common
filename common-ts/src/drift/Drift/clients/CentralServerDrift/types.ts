@@ -1,4 +1,4 @@
-import { BN, PositionDirection, TxParams } from '@drift-labs/sdk';
+import { BN, PositionDirection, TxParams } from '@velocity-exchange/sdk';
 import { WithTxnParams } from '../../../base/types';
 import { OpenPerpMarketOrderBaseParams } from '../../../base/actions/trade/openPerpOrder/openPerpMarketOrder';
 import { OpenPerpNonMarketOrderBaseParams } from '../../../base/actions/trade/openPerpOrder/openPerpNonMarketOrder';
@@ -15,7 +15,7 @@ export type CentralServerSwiftOrderOptions = {
 
 type CsdBaseMarketOrderParams = Omit<
 	OpenPerpMarketOrderBaseParams,
-	'driftClient' | 'user' | 'dlobServerHttpUrl'
+	'velocityClient' | 'user' | 'dlobServerHttpUrl'
 >;
 
 export type CentralServerGetOpenPerpMarketOrderTxnParams<
@@ -39,7 +39,7 @@ export type CentralServerGetOpenPerpMarketOrderTxnParams<
 
 type CsdBaseNonMarketOrderParams = Omit<
 	OpenPerpNonMarketOrderBaseParams,
-	'driftClient' | 'user'
+	'velocityClient' | 'user'
 >;
 
 export type CentralServerGetOpenPerpNonMarketOrderTxnParams<

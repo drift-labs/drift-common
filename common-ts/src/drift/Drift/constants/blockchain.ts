@@ -1,4 +1,4 @@
-import { ConfirmationStrategy, MarketStatus } from '@drift-labs/sdk';
+import { ConfirmationStrategy, MarketStatus } from '@velocity-exchange/sdk';
 import { Commitment, PublicKey } from '@solana/web3.js';
 
 export const DEFAULT_ACCOUNT_LOADER_COMMITMENT: Commitment = 'confirmed';

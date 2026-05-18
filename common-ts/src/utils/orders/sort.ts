@@ -3,7 +3,7 @@ import {
 	OrderAction,
 	OrderActionRecord,
 	OrderRecord,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	UIMatchedOrderRecordAndAction,
 	UISerializableOrderActionRecord,

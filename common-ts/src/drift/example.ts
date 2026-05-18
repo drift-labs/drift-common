@@ -1,6 +1,6 @@
 import * as anchor from '@coral-xyz/anchor';
 import { PublicKey, VersionedTransaction } from '@solana/web3.js';
-import { BN, loadKeypair } from '@drift-labs/sdk';
+import { BN, loadKeypair } from '@velocity-exchange/sdk';
 import { CentralServerDrift } from './Drift/clients/CentralServerDrift';
 import * as path from 'path';
 
@@ -56,11 +56,11 @@ async function initializeCentralServerDrift(): Promise<void> {
 	console.log('🏗️  Initializing CentralServerDrift...');
 	centralServerDrift = new CentralServerDrift({
 		solanaRpcEndpoint: process.env.ENDPOINT as string,
-		driftEnv: 'mainnet-beta', // Change to 'devnet' for devnet testing
+		velocityEnv: 'mainnet-beta', // Change to 'devnet' for devnet testing
 		supportedPerpMarkets: [0, 1, 2], // SOL, BTC, ETH
 		supportedSpotMarkets: [0, 1], // USDC, SOL
-		additionalDriftClientConfig: {
-			// Optional: Add additional DriftClient configuration
+		additionalVelocityClientConfig: {
+			// Optional: Add additional VelocityClient configuration
 			txVersion: 0,
 			txParams: {
 				computeUnits: 200000,

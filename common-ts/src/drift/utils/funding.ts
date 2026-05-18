@@ -4,7 +4,7 @@ import {
 	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
 	FUNDING_RATE_BUFFER_PRECISION,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 
 export const getFundingRate = (rate: BN, oracleTwap: BN): number => {
 	return (

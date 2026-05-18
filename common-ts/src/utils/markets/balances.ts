@@ -1,21 +1,21 @@
 import {
 	BigNum,
-	DriftClient,
+	VelocityClient,
 	getTokenAmount,
 	PRICE_PRECISION_EXP,
 	SpotBalanceType,
 	SpotMarketConfig,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 
 export const getTotalBorrowsForMarket = (
 	market: SpotMarketConfig,
-	driftClient: DriftClient
+	velocityClient: VelocityClient
 ) => {
-	const marketAccount = driftClient.getSpotMarketAccount(market.marketIndex);
+	const marketAccount = velocityClient.getSpotMarketAccount(market.marketIndex);
 
 	const totalBorrowsTokenAmount = getTokenAmount(
 		marketAccount.borrowBalance,
-		driftClient.getSpotMarketAccount(marketAccount.marketIndex),
+		velocityClient.getSpotMarketAccount(marketAccount.marketIndex),
 		SpotBalanceType.BORROW
 	);
 
@@ -24,7 +24,7 @@ export const getTotalBorrowsForMarket = (
 		market.precisionExp
 	);
 
-	const priceData = driftClient.getOraclePriceDataAndSlot(
+	const priceData = velocityClient.getOraclePriceDataAndSlot(
 		marketAccount.oracle,
 		marketAccount.oracleSource
 	);
@@ -38,9 +38,9 @@ export const getTotalBorrowsForMarket = (
 
 export const getTotalDepositsForMarket = (
 	market: SpotMarketConfig,
-	driftClient: DriftClient
+	velocityClient: VelocityClient
 ) => {
-	const marketAccount = driftClient.getSpotMarketAccount(market.marketIndex);
+	const marketAccount = velocityClient.getSpotMarketAccount(market.marketIndex);
 
 	const totalDepositsTokenAmount = getTokenAmount(
 		marketAccount.depositBalance,
@@ -53,7 +53,7 @@ export const getTotalDepositsForMarket = (
 		market.precisionExp
 	);
 
-	const priceData = driftClient.getOraclePriceDataAndSlot(
+	const priceData = velocityClient.getOraclePriceDataAndSlot(
 		marketAccount.oracle,
 		marketAccount.oracleSource
 	);

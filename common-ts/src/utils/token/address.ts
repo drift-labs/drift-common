@@ -2,7 +2,7 @@ import {
 	SpotMarketAccount,
 	WRAPPED_SOL_MINT,
 	getTokenProgramForSpotMarket,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
 

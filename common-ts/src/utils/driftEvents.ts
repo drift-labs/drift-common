@@ -1,4 +1,4 @@
-import { EventType, WrappedEvent } from '@drift-labs/sdk';
+import { EventType, WrappedEvent } from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '.';
 
 // Cache for event ID string patterns to reduce repeated concatenation
@@ -198,7 +198,7 @@ export const getDriftEventKey = (event: UniqableDriftEvent) => {
 			}
 		}
 		default: {
-			const _unhandledEvent: string = _eventType;
+			const _unhandledEvent: string = _eventType; // TODO: should be never to enforce exhaustive switch
 			throw new Error(`Unhandled event type: ${_unhandledEvent}`);
 		}
 	}

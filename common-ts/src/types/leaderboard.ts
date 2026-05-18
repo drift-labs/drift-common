@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { BigNum, BN, SpotBalanceType } from '@drift-labs/sdk';
+import { BigNum, BN, SpotBalanceType } from '@velocity-exchange/sdk';
 import {
 	SerializableUserSnapshotRecord,
 	UISerializableUserSnapshotRecord,

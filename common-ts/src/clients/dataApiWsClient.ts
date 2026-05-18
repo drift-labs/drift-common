@@ -1,4 +1,4 @@
-import { CandleResolution } from '@drift-labs/sdk';
+import { CandleResolution } from '@velocity-exchange/sdk';
 import { EnvironmentConstants } from '../EnvironmentConstants';
 import { JsonCandle, JsonTrade, MarketSymbol, UIEnv } from '../types';
 import { Observable, Subject } from 'rxjs';

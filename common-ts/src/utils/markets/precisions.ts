@@ -5,7 +5,7 @@ import {
 	PerpMarketAccount,
 	QUOTE_PRECISION_EXP,
 	SpotMarketAccount,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 
 /**
  * Converts a size and precision exponent to the number of decimals in the size.

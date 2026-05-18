@@ -1,4 +1,4 @@
-import { DEFAULT_USER_NAME } from '@drift-labs/sdk';
+import { DEFAULT_USER_NAME } from '@velocity-exchange/sdk';
 import {
 	JLP_POOL_ID,
 	MAIN_POOL_ID,

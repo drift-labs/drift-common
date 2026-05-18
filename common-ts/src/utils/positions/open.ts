@@ -2,7 +2,7 @@ import {
 	BASE_PRECISION_EXP,
 	BN,
 	BigNum,
-	DriftClient,
+	VelocityClient,
 	MarketStatus,
 	ONE,
 	PRICE_PRECISION,
@@ -22,19 +22,19 @@ import {
 	calculateUnsettledFundingPnl,
 	isOracleValid,
 	AMM_RESERVE_PRECISION,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { OpenPosition, UIMarket } from '../../types';
 import { calculatePotentialProfit } from '../trading/pnl';
 import { ENUM_UTILS } from '../enum';
 
 const getOpenPositionData = (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	userPositions: PerpPosition[],
 	user: User,
 	perpMarketLookup: PerpMarketConfig[],
 	markPriceCallback?: (marketIndex: number) => BN
 ): OpenPosition[] => {
-	const oracleGuardRails = driftClient.getStateAccount().oracleGuardRails;
+	const oracleGuardRails = velocityClient.getStateAccount().oracleGuardRails;
 
 	const newResult: OpenPosition[] = userPositions
 		.filter(
@@ -44,13 +44,15 @@ const getOpenPositionData = (
 		)
 		.map((position) => {
 			const perpMarketConfig = perpMarketLookup[position.marketIndex];
-			const perpMarket = driftClient.getPerpMarketAccount(position.marketIndex);
+			const perpMarket = velocityClient.getPerpMarketAccount(
+				position.marketIndex
+			);
 
-			const usdcSpotMarket = driftClient.getSpotMarketAccount(
+			const usdcSpotMarket = velocityClient.getSpotMarketAccount(
 				QUOTE_SPOT_MARKET_INDEX
 			);
 
-			const oraclePriceData = driftClient.getOracleDataForPerpMarket(
+			const oraclePriceData = velocityClient.getOracleDataForPerpMarket(
 				position.marketIndex
 			);
 

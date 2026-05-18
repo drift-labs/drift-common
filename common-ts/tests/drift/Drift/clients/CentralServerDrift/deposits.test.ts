@@ -4,14 +4,14 @@ import { BN } from '@coral-xyz/anchor';
 import { VersionedTransaction } from '@solana/web3.js';
 import {
 	centralServerDrift,
-	driftClient,
+	velocityClient,
 	setupTestContext,
 	signAndSendTransaction,
 	teardownTestContext,
 } from './context';
 import { assertComputeBudgetThenProgram } from '../../../../utils/txAssertions';
 import { getDevWallet } from '../../../../utils/wallet';
-import { User, OneShotUserAccountSubscriber } from '@drift-labs/sdk';
+import { User, OneShotUserAccountSubscriber } from '@velocity-exchange/sdk';
 
 describe('CentralServerDrift - Deposit Transactions', function () {
 	this.timeout(10_000);
@@ -46,12 +46,12 @@ describe('CentralServerDrift - Deposit Transactions', function () {
 		try {
 			// Get user balance before deposit
 			const user = new User({
-				driftClient: driftClient,
+				driftClient: velocityClient,
 				userAccountPublicKey: devWalletUser0,
 				accountSubscription: {
 					type: 'custom',
 					userAccountSubscriber: new OneShotUserAccountSubscriber(
-						driftClient.program,
+						velocityClient.program,
 						devWalletUser0
 					),
 				},
@@ -78,7 +78,7 @@ describe('CentralServerDrift - Deposit Transactions', function () {
 			if (txParams) {
 				assertComputeBudgetThenProgram(
 					txn as VersionedTransaction,
-					driftClient.program.programId,
+					velocityClient.program.programId,
 					2
 				);
 			}
@@ -87,12 +87,12 @@ describe('CentralServerDrift - Deposit Transactions', function () {
 
 			// Verify the deposit was reflected in the user's balance
 			const userAfter = new User({
-				driftClient: driftClient,
+				driftClient: velocityClient,
 				userAccountPublicKey: devWalletUser0,
 				accountSubscription: {
 					type: 'custom',
 					userAccountSubscriber: new OneShotUserAccountSubscriber(
-						driftClient.program,
+						velocityClient.program,
 						devWalletUser0
 					),
 				},

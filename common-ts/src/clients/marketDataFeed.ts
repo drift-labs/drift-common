@@ -1,4 +1,4 @@
-import { CandleResolution } from '@drift-labs/sdk';
+import { CandleResolution } from '@velocity-exchange/sdk';
 import { MarketSymbol, Opaque } from '../types';
 import { Subject } from 'rxjs';
 import { DataApiWsClient } from './dataApiWsClient';

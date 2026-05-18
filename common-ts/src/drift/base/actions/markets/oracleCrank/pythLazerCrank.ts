@@ -1,4 +1,4 @@
-import { DriftClient } from '@drift-labs/sdk';
+import { VelocityClient } from '@velocity-exchange/sdk';
 import { TransactionInstruction } from '@solana/web3.js';
 import { OracleCrankDataFetcher, OracleMarketConfig } from './types';
 import { isPythLazer } from './oracleSourceHelpers';
@@ -9,7 +9,7 @@ import {
 
 export const getPythLazerUpdateIxs = async (
 	marketConfigs: OracleMarketConfig[],
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	oracleCrankDataFetcher: OracleCrankDataFetcher,
 	maxCount: number = MAX_PYTH_LAZER_CRANKS,
 	precedingIxsCount: number = DEFAULT_PRECEDING_IXS_COUNT
@@ -35,7 +35,7 @@ export const getPythLazerUpdateIxs = async (
 	}
 
 	try {
-		const crankIxs = await driftClient.getPostPythLazerOracleUpdateIxs(
+		const crankIxs = await velocityClient.getPostPythLazerOracleUpdateIxs(
 			feedIds,
 			result.data ?? '',
 			undefined,
@@ -43,7 +43,7 @@ export const getPythLazerUpdateIxs = async (
 		);
 		return crankIxs;
 	} catch (e) {
-		console.error('Error getting pyth lazer crank ix from driftClient:', e);
+		console.error('Error getting pyth lazer crank ix from velocityClient:', e);
 		return [];
 	}
 };

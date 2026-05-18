@@ -1,4 +1,8 @@
-import { DriftClient, PerpMarketAccount, User } from '@drift-labs/sdk';
+import {
+	VelocityClient,
+	PerpMarketAccount,
+	User,
+} from '@velocity-exchange/sdk';
 import {
 	PublicKey,
 	Transaction,
@@ -9,7 +13,7 @@ import { WithTxnParams } from '../../types';
 import { TRADING_UTILS } from '../../../../_deprecated/trading-utils';
 
 export interface CreateUpdateMarketMaxLeverageIxsParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	perpMarketAccount: PerpMarketAccount;
 	leverage: number;
@@ -24,8 +28,13 @@ export interface CreateUpdateMarketMaxLeverageIxsParams {
 export const createUpdateMarketMaxLeverageIxs = async (
 	params: CreateUpdateMarketMaxLeverageIxsParams
 ): Promise<TransactionInstruction[]> => {
-	const { driftClient, perpMarketAccount, leverage, mainSignerOverride, user } =
-		params;
+	const {
+		velocityClient,
+		perpMarketAccount,
+		leverage,
+		mainSignerOverride,
+		user,
+	} = params;
 
 	const userAccount = user.getUserAccount();
 	const subAccountIdToUse = userAccount.subAccountId;
@@ -36,7 +45,7 @@ export const createUpdateMarketMaxLeverageIxs = async (
 	const marginRatio = TRADING_UTILS.convertLeverageToMarginRatio(leverage);
 	const perpMarketIndex = perpMarketAccount.marketIndex;
 	const updateMaxLeverageIx =
-		await driftClient.getUpdateUserPerpPositionCustomMarginRatioIx(
+		await velocityClient.getUpdateUserPerpPositionCustomMarginRatioIx(
 			perpMarketIndex,
 			marginRatio,
 			subAccountIdToUse,
@@ -65,7 +74,7 @@ export const createUpdateMarketMaxLeverageTxn = async ({
 }: CreateUpdateMarketMaxMarginTxnParams): Promise<
 	Transaction | VersionedTransaction
 > => {
-	return params.driftClient.buildTransaction(
+	return params.velocityClient.buildTransaction(
 		await createUpdateMarketMaxLeverageIxs(params),
 		txParams
 	);

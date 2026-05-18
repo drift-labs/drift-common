@@ -4,15 +4,15 @@ import {
 	SignedMsgOrderParamsDelegateMessage,
 	SignedMsgOrderParamsMessage,
 	SLOT_TIME_ESTIMATE_MS,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	BN,
-	DriftClient,
+	VelocityClient,
 	generateSignedMsgUuid,
 	getOrderParams,
 	OptionalOrderParams,
 	PublicKey,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '../../../../../../utils';
 import { getSwiftConfirmationTimeoutMs } from '../../../../../../utils/signedMsgs';
 import {
@@ -134,7 +134,7 @@ export type SwiftOrderObservable = Observable<SwiftOrderEvent>;
 
 interface PrepSwiftOrderParams {
 	/** The Drift client instance */
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	/** The taker user account information */
 	takerUserAccount: {
 		/** Public key of the user account */
@@ -196,7 +196,7 @@ interface PrepSwiftOrderParams {
  * Prepares a swift order by encoding the order parameters into a message format
  * suitable for signing and sending to the Swift server.
  *
- * @param driftClient - The Drift client instance
+ * @param velocityClient - The Drift client instance
  * @param takerUserAccount - The taker user account information
  * @param currentSlot - Current blockchain slot number
  * @param isDelegate - Whether this is a delegate order
@@ -210,7 +210,7 @@ interface PrepSwiftOrderParams {
  *   - `signedMsgOrderUuid`: Unique identifier for the signed message order
  */
 export const prepSwiftOrder = ({
-	driftClient,
+	velocityClient,
 	takerUserAccount,
 	currentSlot,
 	isDelegate,
@@ -297,7 +297,7 @@ export const prepSwiftOrder = ({
 				subAccountId: takerUserAccount.subAccountId,
 		  };
 
-	const encodedOrderMessage = driftClient.encodeSignedMsgOrderParamsMessage(
+	const encodedOrderMessage = velocityClient.encodeSignedMsgOrderParamsMessage(
 		signedMsgOrderParamsMessage,
 		isDelegate
 	);
@@ -403,7 +403,7 @@ export const signSwiftOrderMsg = async ({
  */
 interface SendSwiftOrderParams {
 	/** The Drift client instance */
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	/** Market identifier for the order */
 	marketId: MarketId;
 	/** Hex-encoded swift order message as string */
@@ -428,7 +428,7 @@ interface SendSwiftOrderParams {
  * Sends a swift order to the Swift server and handles the response.
  * Monitors the order status and calls appropriate callback functions based on the response type.
  *
- * @param driftClient - The Drift client instance
+ * @param velocityClient - The Drift client instance
  * @param marketId - Market identifier for the order
  * @param hexEncodedSwiftOrderMessageString - Hex-encoded swift order message as string
  * @param signedMessage - The signed message from the wallet
@@ -445,7 +445,7 @@ interface SendSwiftOrderParams {
  *
  */
 export const sendSwiftOrder = ({
-	driftClient,
+	velocityClient,
 	marketId,
 	hexEncodedSwiftOrderMessageString,
 	signedMessage,
@@ -457,13 +457,13 @@ export const sendSwiftOrder = ({
 	confirmationConnection,
 }: SendSwiftOrderParams): SwiftOrderObservable => {
 	const signedMsgUserOrdersAccountPubkey = getSignedMsgUserAccountPublicKey(
-		driftClient.program.programId,
+		velocityClient.program.programId,
 		takerAuthority
 	);
 
 	const swiftOrderObservable = SwiftClient.sendAndConfirmSwiftOrderWS(
-		confirmationConnection ?? driftClient.connection,
-		driftClient,
+		confirmationConnection ?? velocityClient.connection,
+		velocityClient,
 		marketId.marketIndex,
 		marketId.marketType,
 		hexEncodedSwiftOrderMessageString,
@@ -513,7 +513,7 @@ const computeSwiftOrderTiming = (
 };
 
 type PrepSwiftOrderMessageParams = {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	subAccountId: number;
 	userAccountPubKey: PublicKey;
 	marketIndex: number;
@@ -540,7 +540,7 @@ type PrepSwiftOrderMessageParams = {
  * the server prepares the message but the client handles signing and sending.
  */
 export const prepSwiftOrderMessage = async ({
-	driftClient,
+	velocityClient,
 	subAccountId,
 	userAccountPubKey,
 	marketIndex,
@@ -549,7 +549,7 @@ export const prepSwiftOrderMessage = async ({
 	orderParams,
 	builderParams,
 }: PrepSwiftOrderMessageParams): Promise<SwiftOrderMessage> => {
-	const currentSlot = await driftClient.connection.getSlot('confirmed');
+	const currentSlot = await velocityClient.connection.getSlot('confirmed');
 
 	const {
 		hexEncodedSwiftOrderMessage,
@@ -558,7 +558,7 @@ export const prepSwiftOrderMessage = async ({
 		slotForSignedMsg,
 		resolvedUserSigningSlotBuffer,
 	} = prepSwiftOrder({
-		driftClient,
+		velocityClient,
 		takerUserAccount: {
 			pubKey: userAccountPubKey,
 			subAccountId,
@@ -587,7 +587,7 @@ export const prepSwiftOrderMessage = async ({
 };
 
 type PrepSignAndSendSwiftOrderParams = {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	subAccountId: number;
 	userAccountPubKey: PublicKey;
 	marketIndex: number;
@@ -648,7 +648,7 @@ type PrepSignAndSendSwiftOrderParams = {
  * Returns a promise that resolves when the Swift order has reached a terminal state (i.e. confirmed, expired, or errored).
  */
 export const prepSignAndSendSwiftOrder = async ({
-	driftClient,
+	velocityClient,
 	subAccountId,
 	userAccountPubKey,
 	marketIndex,
@@ -665,7 +665,7 @@ export const prepSignAndSendSwiftOrder = async ({
 		slotsTillAuctionEnd,
 		expirationTimeMs,
 	} = await prepSwiftOrderMessage({
-		driftClient,
+		velocityClient,
 		subAccountId,
 		userAccountPubKey,
 		marketIndex,
@@ -699,7 +699,7 @@ export const prepSignAndSendSwiftOrder = async ({
 
 	// Create a promise-based wrapper for the sendSwiftOrder callback-based API
 	const swiftOrderObservable = sendSwiftOrder({
-		driftClient,
+		velocityClient,
 		marketId: MarketId.createPerpMarket(marketIndex),
 		hexEncodedSwiftOrderMessageString: hexEncodedSwiftOrderMessage.string,
 		signedMessage,
@@ -711,7 +711,7 @@ export const prepSignAndSendSwiftOrder = async ({
 		slotsTillAuctionEnd,
 		confirmationMultiplier,
 		confirmationConnection: new Connection(
-			driftClient.connection.rpcEndpoint,
+			velocityClient.connection.rpcEndpoint,
 			'processed'
 		),
 	});

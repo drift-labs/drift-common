@@ -1,4 +1,4 @@
-import { DriftClient } from '@drift-labs/sdk';
+import { VelocityClient } from '@velocity-exchange/sdk';
 import {
 	Transaction,
 	TransactionInstruction,
@@ -8,7 +8,7 @@ import {
 import { WithTxnParams } from '../../types';
 
 interface CreateRevenueShareAccountIxParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	/**
 	 * The authority of the revenue share account to be created.
 	 * This is typically the builder's public key.
@@ -27,14 +27,14 @@ interface CreateRevenueShareAccountIxParams {
  * The RevenueShare account tracks cumulative builder fees earned from routing trades.
  * This must be initialized before a builder can receive builder fees.
  *
- * @param driftClient - The Drift client instance
+ * @param velocityClient - The Drift client instance
  * @param authority - The public key of the builder who will own this revenue share account
  * @param payer - The public key of the account that will pay for the revenue share account rent. If not provided, the authority provided will be the payer.
  *
  * @example
  * ```typescript
  * const instruction = await createRevenueShareAccountIx({
- *   driftClient,
+ *   velocityClient,
  *   authority: builderPublicKey
  * });
  * ```
@@ -42,9 +42,9 @@ interface CreateRevenueShareAccountIxParams {
 export const createRevenueShareAccountIx = async (
 	params: CreateRevenueShareAccountIxParams
 ): Promise<TransactionInstruction> => {
-	const { driftClient, authority } = params;
+	const { velocityClient, authority } = params;
 
-	return driftClient.getInitializeRevenueShareIx(authority, {
+	return velocityClient.getInitializeRevenueShareIx(authority, {
 		payer: params.payer ?? authority,
 	});
 };
@@ -55,7 +55,7 @@ export const createRevenueShareAccountIx = async (
  * The RevenueShare account tracks cumulative builder fees earned from routing trades.
  * This must be initialized before a builder can receive builder code fees.
  *
- * @param driftClient - The Drift client instance
+ * @param velocityClient - The Drift client instance
  * @param authority - The public key of the builder who will own this revenue share account
  * @param txParams - Optional transaction parameters for customizing the transaction
  *
@@ -65,7 +65,7 @@ export const createRevenueShareAccountIx = async (
  * ```typescript
  * // Initialize a revenue share account for a builder
  * const transaction = await createRevenueShareAccountTxn({
- *   driftClient,
+ *   velocityClient,
  *   authority: builderPublicKey,
  *   txParams: { computeUnits: 200000 }
  * });
@@ -77,7 +77,7 @@ export const createRevenueShareAccountIx = async (
 export const createRevenueShareAccountTxn = async (
 	params: WithTxnParams<CreateRevenueShareAccountIxParams>
 ): Promise<Transaction | VersionedTransaction> => {
-	return params.driftClient.buildTransaction(
+	return params.velocityClient.buildTransaction(
 		await createRevenueShareAccountIx(params),
 		params.txParams
 	);

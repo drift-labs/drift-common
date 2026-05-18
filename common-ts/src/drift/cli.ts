@@ -12,8 +12,8 @@ import {
 	PRICE_PRECISION,
 	MainnetSpotMarkets,
 	DevnetSpotMarkets,
-	DriftEnv,
-} from '@drift-labs/sdk';
+	VelocityEnv,
+} from '@velocity-exchange/sdk';
 import { sign } from 'tweetnacl';
 import { CentralServerDrift } from './Drift/clients/CentralServerDrift';
 import { ENUM_UTILS } from '../utils';
@@ -250,15 +250,15 @@ async function initializeCentralServerDrift(): Promise<void> {
 	console.log(`✅ RPC Endpoint: ${process.env.ENDPOINT}\n`);
 
 	// Initialize CentralServerDrift
-	const driftEnv = (process.env.DRIFT_ENV as DriftEnv) ?? 'devnet';
-	console.log(`🏗️  Initializing CentralServerDrift... (${driftEnv})`);
+	const velocityEnv = (process.env.DRIFT_ENV as VelocityEnv) ?? 'devnet';
+	console.log(`🏗️  Initializing CentralServerDrift... (${velocityEnv})`);
 	const rpcEndpoint = process.env.ENDPOINT as string;
 	centralServerDrift = new CentralServerDrift({
 		solanaRpcEndpoint: rpcEndpoint,
-		driftEnv,
+		velocityEnv,
 		supportedPerpMarkets: [0, 1, 2], // SOL, BTC, ETH
 		supportedSpotMarkets: [0, 1], // USDC, SOL
-		additionalDriftClientConfig: {
+		additionalVelocityClientConfig: {
 			txVersion: 0,
 			txParams: {
 				computeUnits: 200000,
@@ -325,7 +325,7 @@ async function signAndSendSwiftOrderMessage(
 	SwiftClient.init(swiftServerUrl, 'common-ts-cli');
 
 	const swiftOrderObservable = sendSwiftOrder({
-		driftClient: centralServerDrift.driftClient,
+		velocityClient: centralServerDrift.velocityClient,
 		marketId: MarketId.createPerpMarket(swiftMessage.marketIndex),
 		hexEncodedSwiftOrderMessageString:
 			swiftMessage.hexEncodedSwiftOrderMessage.string,

@@ -10,7 +10,7 @@ import {
 	deriveOracleAuctionParams,
 	getMarketOrderParams,
 	isVariant,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { AuctionParams, TradeOffsetPrice } from '../../types';
 import { EMPTY_AUCTION_PARAMS } from '../../constants/trade';
 import { getMarketOrderLimitPrice } from './price';

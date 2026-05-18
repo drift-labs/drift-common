@@ -3,7 +3,7 @@ import * as sinon from 'sinon';
 import { BN } from '@coral-xyz/anchor';
 import {
 	centralServerDrift,
-	driftClient,
+	velocityClient,
 	setupTestContext,
 	teardownTestContext,
 	defaultConnection,
@@ -20,7 +20,7 @@ import {
 	OneShotUserAccountSubscriber,
 	User,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { VersionedTransaction } from '@solana/web3.js';
 import { assertComputeBudgetThenProgram } from '../../../../utils/txAssertions';
 import { getTestWallet } from '../../../../utils/wallet';
@@ -67,16 +67,16 @@ describe('CentralServerDrift - Account Management Transactions', function () {
 				);
 
 				const userStatsAccountPublicKey = getUserStatsAccountPublicKey(
-					driftClient.program.programId,
+					velocityClient.program.programId,
 					testWalletAuthority
 				);
 				const userStats = new UserStats({
-					driftClient: driftClient,
+					driftClient: velocityClient,
 					userStatsAccountPublicKey: userStatsAccountPublicKey,
 					accountSubscription: {
 						type: 'custom',
 						userStatsAccountSubscriber: new OneShotUserStatsAccountSubscriber(
-							driftClient.program,
+							velocityClient.program,
 							userStatsAccountPublicKey,
 							undefined,
 							undefined
@@ -96,7 +96,7 @@ describe('CentralServerDrift - Account Management Transactions', function () {
 				expect(expectedSubAccountId).to.equal(subAccountId);
 
 				const derivedUserPubKey = getUserAccountPublicKeySync(
-					driftClient.program.programId,
+					velocityClient.program.programId,
 					testWalletAuthority,
 					expectedSubAccountId
 				);
@@ -108,7 +108,7 @@ describe('CentralServerDrift - Account Management Transactions', function () {
 
 				assertComputeBudgetThenProgram(
 					txn as VersionedTransaction,
-					driftClient.program.programId,
+					velocityClient.program.programId,
 					2
 				);
 
@@ -122,12 +122,12 @@ describe('CentralServerDrift - Account Management Transactions', function () {
 
 				// check that subaccount id is correct
 				const user = new User({
-					driftClient: driftClient,
+					driftClient: velocityClient,
 					userAccountPublicKey: userAccountPublicKey,
 					accountSubscription: {
 						type: 'custom',
 						userAccountSubscriber: new OneShotUserAccountSubscriber(
-							driftClient.program,
+							velocityClient.program,
 							userAccountPublicKey,
 							undefined,
 							undefined
@@ -229,7 +229,7 @@ describe('CentralServerDrift - Account Management Transactions', function () {
 				);
 				assertComputeBudgetThenProgram(
 					deleteUserTxn as VersionedTransaction,
-					driftClient.program.programId,
+					velocityClient.program.programId,
 					2
 				);
 

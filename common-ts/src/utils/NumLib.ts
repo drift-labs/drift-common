@@ -3,7 +3,7 @@ import {
 	QUOTE_PRECISION,
 	AMM_RESERVE_PRECISION,
 	BigNum,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 
 /**
  * Utilities to convert numbers and BigNumbers (BN) to different formats for the UI.

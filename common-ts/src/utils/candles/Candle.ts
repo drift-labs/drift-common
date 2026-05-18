@@ -9,7 +9,7 @@ import {
 	QUOTE_PRECISION_EXP,
 	WrappedEvent,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	SerializableCandle,
 	UISerializableCandle,

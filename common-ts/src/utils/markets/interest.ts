@@ -3,33 +3,33 @@ import {
 	BigNum,
 	calculateBorrowRate,
 	calculateDepositRate,
-	DriftClient,
+	VelocityClient,
 	MarketType,
 	PRICE_PRECISION_EXP,
 	SPOT_MARKET_RATE_PRECISION_EXP,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '../enum';
 
 /**
  * Returns the quote amount of the current open interest for a market, using the current oracle price
  * @param marketIndex
  * @param marketType
- * @param driftClient
+ * @param velocityClient
  * @returns
  */
 export const getCurrentOpenInterestForMarket = (
 	marketIndex: number,
 	marketType: MarketType,
-	driftClient: DriftClient
+	velocityClient: VelocityClient
 ) => {
 	if (ENUM_UTILS.match(marketType, MarketType.PERP)) {
-		const market = driftClient.getPerpMarketAccount(marketIndex);
+		const market = velocityClient.getPerpMarketAccount(marketIndex);
 		const OI = BigNum.from(
 			market.amm.baseAssetAmountLong.add(market.amm.baseAssetAmountShort.abs()),
 			BASE_PRECISION_EXP
 		);
 
-		const priceData = driftClient.getOraclePriceDataAndSlot(
+		const priceData = velocityClient.getOraclePriceDataAndSlot(
 			market.amm.oracle,
 			market.amm.oracleSource
 		);
@@ -48,16 +48,16 @@ export const getCurrentOpenInterestForMarket = (
  * Gets the deposit APR for a spot market, in percent
  * @param marketIndex
  * @param marketType
- * @param driftClient
+ * @param velocityClient
  * @returns
  */
 export const getDepositAprForMarket = (
 	marketIndex: number,
 	marketType: MarketType,
-	driftClient: DriftClient
+	velocityClient: VelocityClient
 ) => {
 	if (ENUM_UTILS.match(marketType, MarketType.SPOT)) {
-		const marketAccount = driftClient.getSpotMarketAccount(marketIndex);
+		const marketAccount = velocityClient.getSpotMarketAccount(marketIndex);
 
 		const depositApr = BigNum.from(
 			calculateDepositRate(marketAccount),
@@ -76,16 +76,16 @@ export const getDepositAprForMarket = (
  * Get's the borrow APR for a spot market, in percent
  * @param marketIndex
  * @param marketType
- * @param driftClient
+ * @param velocityClient
  * @returns
  */
 export const getBorrowAprForMarket = (
 	marketIndex: number,
 	marketType: MarketType,
-	driftClient: DriftClient
+	velocityClient: VelocityClient
 ) => {
 	if (ENUM_UTILS.match(marketType, MarketType.SPOT)) {
-		const marketAccount = driftClient.getSpotMarketAccount(marketIndex);
+		const marketAccount = velocityClient.getSpotMarketAccount(marketIndex);
 
 		const depositApr = BigNum.from(
 			calculateBorrowRate(marketAccount),

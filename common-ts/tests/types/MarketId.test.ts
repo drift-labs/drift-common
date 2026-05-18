@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { MarketId } from '../../src/types/MarketId';
-import { MarketType } from '@drift-labs/sdk';
+import { MarketType } from '@velocity-exchange/sdk';
 
 describe('MarketId', () => {
 	it('should create a perp market', () => {

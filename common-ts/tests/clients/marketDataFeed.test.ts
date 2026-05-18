@@ -7,7 +7,7 @@ import {
 } from '../../src/clients/marketDataFeed';
 import { DataApiWsClient } from '../../src/clients/dataApiWsClient';
 import { JsonCandle, JsonTrade, MarketSymbol, UIEnv } from '../../src/types';
-import { CandleResolution } from '@drift-labs/sdk';
+import { CandleResolution } from '@velocity-exchange/sdk';
 
 // Mock the DataApiWsClient
 class MockDataApiWsClient {

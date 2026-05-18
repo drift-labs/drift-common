@@ -2,10 +2,10 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { BN } from '@coral-xyz/anchor';
 import { VersionedTransaction } from '@solana/web3.js';
-import { PositionDirection } from '@drift-labs/sdk';
+import { PositionDirection } from '@velocity-exchange/sdk';
 import {
 	centralServerDrift,
-	driftClient,
+	velocityClient,
 	setupTestContext,
 	teardownTestContext,
 } from './context';
@@ -49,7 +49,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 			expect(txn).to.exist;
 			assertComputeBudgetThenProgram(
 				txn as VersionedTransaction,
-				driftClient.program.programId,
+				velocityClient.program.programId,
 				2
 			);
 			const vTx = txn as VersionedTransaction;
@@ -73,7 +73,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 			expect(txn).to.exist;
 			assertComputeBudgetThenProgram(
 				txn as VersionedTransaction,
-				driftClient.program.programId,
+				velocityClient.program.programId,
 				2
 			);
 		});
@@ -91,7 +91,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 			expect(txn).to.exist;
 			assertComputeBudgetThenProgram(
 				txn as VersionedTransaction,
-				driftClient.program.programId,
+				velocityClient.program.programId,
 				2
 			);
 		});
@@ -140,7 +140,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 			expect(txn).to.exist;
 			assertComputeBudgetThenProgram(
 				txn as VersionedTransaction,
-				driftClient.program.programId,
+				velocityClient.program.programId,
 				2
 			);
 		});
@@ -197,7 +197,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 			expect(txn).to.exist;
 			assertComputeBudgetThenProgram(
 				txn as VersionedTransaction,
-				driftClient.program.programId,
+				velocityClient.program.programId,
 				2
 			);
 			const vTx = txn as VersionedTransaction;

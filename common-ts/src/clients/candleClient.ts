@@ -4,7 +4,7 @@ import {
 	DevnetSpotMarkets,
 	MainnetPerpMarkets,
 	MainnetSpotMarkets,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { JsonCandle, MarketId, MarketSymbol } from '../types';
 import { Candle } from '../utils/candles/Candle';
 import { StrictEventEmitter } from '../utils/StrictEventEmitter';

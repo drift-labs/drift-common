@@ -1,4 +1,4 @@
-import { BN } from '@drift-labs/sdk';
+import { BN } from '@velocity-exchange/sdk';
 
 export const bnMin = (numbers: BN[]): BN => {
 	let min = numbers[0];

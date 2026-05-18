@@ -7,10 +7,10 @@ import {
 	PRICE_PRECISION_EXP,
 	getLimitOrderParams,
 	oraclePriceBands as getOraclePriceBands,
-	DriftClient,
+	VelocityClient,
 	User,
 	PositionDirection,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { ORDER_COMMON_UTILS } from '../../../../../_deprecated/order-utils';
 import { COMMON_UI_UTILS } from '../../../../../_deprecated/common-ui-utils';
 import { DEFAULT_LIMIT_AUCTION_DURATION } from '../../../constants/auction';
@@ -21,7 +21,7 @@ import { LimitOrderParamsOrderConfig, LimitAuctionConfig } from './types';
 import { AuctionParamsFetchedCallback } from '../../../../utils/auctionParamsResponseMapper';
 
 export const getLimitAuctionOrderParams = async ({
-	driftClient,
+	velocityClient,
 	user,
 	marketIndex,
 	marketType,
@@ -33,7 +33,7 @@ export const getLimitAuctionOrderParams = async ({
 	orderConfig,
 	onAuctionParamsFetched,
 }: {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	marketIndex: number;
 	marketType: MarketType;
@@ -49,7 +49,7 @@ export const getLimitAuctionOrderParams = async ({
 	onAuctionParamsFetched?: AuctionParamsFetchedCallback;
 }): Promise<OptionalOrderParams> => {
 	const orderParams = await fetchAuctionOrderParams({
-		driftClient,
+		velocityClient,
 		user,
 		assetType: 'base',
 		marketIndex,
@@ -72,7 +72,7 @@ export const getLimitAuctionOrderParams = async ({
 	let auctionDuration = DEFAULT_LIMIT_AUCTION_DURATION;
 
 	if (isPerp) {
-		const perpMarketAccount = driftClient.getPerpMarketAccount(marketIndex);
+		const perpMarketAccount = velocityClient.getPerpMarketAccount(marketIndex);
 		invariant(isPerp && perpMarketAccount, 'Perp market account not found');
 
 		oraclePriceBands = orderConfig.limitAuction.oraclePrice

@@ -1,14 +1,14 @@
 import {
 	BigNum,
 	BN,
-	DriftClient,
+	VelocityClient,
 	getTokenAmount,
 	SpotBalanceType,
 	SpotMarketAccount,
 	SpotMarketConfig,
 	MAX_APR_PER_REVENUE_SETTLE_TO_INSURANCE_FUND_VAULT_GOV,
 	PERCENTAGE_PRECISION,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { UIMarket } from '../types/UIMarket';
 
 /**
@@ -92,20 +92,20 @@ function calculateVaultNextApr(
 /**
  * Get the size of an insurance fund vault
  * @param spotMarketConfig
- * @param driftClient
+ * @param velocityClient
  * @returns
  */
 export const getIfVaultBalance = async (
 	spotMarketConfig: SpotMarketConfig,
-	driftClient: DriftClient
+	velocityClient: VelocityClient
 ) => {
-	const spotMarket = driftClient.getSpotMarketAccount(
+	const spotMarket = velocityClient.getSpotMarketAccount(
 		spotMarketConfig.marketIndex
 	);
 
 	const vaultBalanceBN = new BN(
 		(
-			await driftClient.provider.connection.getTokenAccountBalance(
+			await velocityClient.provider.connection.getTokenAccountBalance(
 				spotMarket.insuranceFund.vault
 			)
 		).value.amount
@@ -122,17 +122,20 @@ export const getIfVaultBalance = async (
 /**
  * Get the current staking APR for a market.
  * @param spotMarketConfig
- * @param driftClient
+ * @param velocityClient
  * @returns APR Percentage .. e.g. 100 for 100%
  */
 export const getIfStakingVaultApr = async (
 	spotMarketConfig: SpotMarketConfig,
-	driftClient: DriftClient
+	velocityClient: VelocityClient
 ) => {
-	const vaultBalance = await getIfVaultBalance(spotMarketConfig, driftClient);
+	const vaultBalance = await getIfVaultBalance(
+		spotMarketConfig,
+		velocityClient
+	);
 
 	return calculateVaultNextApr(
-		driftClient.getSpotMarketAccount(spotMarketConfig.marketIndex),
+		velocityClient.getSpotMarketAccount(spotMarketConfig.marketIndex),
 		vaultBalance
 	);
 };

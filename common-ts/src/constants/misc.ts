@@ -1,4 +1,4 @@
-import { BigNum, LAMPORTS_EXP } from '@drift-labs/sdk';
+import { BigNum, LAMPORTS_EXP } from '@velocity-exchange/sdk';
 
 /**
  * Equal to 0.0001

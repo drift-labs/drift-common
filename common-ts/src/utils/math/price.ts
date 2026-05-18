@@ -9,7 +9,7 @@ import {
 	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
 	QUOTE_PRECISION,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { UISerializableOrderActionRecord } from '../../serializableTypes';
 
 /**

@@ -42,7 +42,7 @@ import {
 	TEN,
 	WrappedEvent,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	autoserializeAs,
 	autoserializeAsArray,

@@ -4,13 +4,17 @@ import { BN } from '@coral-xyz/anchor';
 import { VersionedTransaction } from '@solana/web3.js';
 import {
 	centralServerDrift,
-	driftClient,
+	velocityClient,
 	setupTestContext,
 	teardownTestContext,
 	signAndSendTransaction,
 } from './context';
 import { assertComputeBudgetThenProgram } from '../../../../utils/txAssertions';
-import { User, OneShotUserAccountSubscriber, ZERO } from '@drift-labs/sdk';
+import {
+	User,
+	OneShotUserAccountSubscriber,
+	ZERO,
+} from '@velocity-exchange/sdk';
 import { getDevWallet } from '../../../../utils/wallet';
 
 describe('CentralServerDrift - Withdraw Transactions', function () {
@@ -60,12 +64,12 @@ describe('CentralServerDrift - Withdraw Transactions', function () {
 	) {
 		// Get user balance before withdrawal
 		const user = new User({
-			driftClient: driftClient,
+			driftClient: velocityClient,
 			userAccountPublicKey: devWalletUser0,
 			accountSubscription: {
 				type: 'custom',
 				userAccountSubscriber: new OneShotUserAccountSubscriber(
-					driftClient.program,
+					velocityClient.program,
 					devWalletUser0
 				),
 			},
@@ -92,7 +96,7 @@ describe('CentralServerDrift - Withdraw Transactions', function () {
 		if (options?.txParams && !options?.skipIxChecks) {
 			assertComputeBudgetThenProgram(
 				txn as VersionedTransaction,
-				driftClient.program.programId,
+				velocityClient.program.programId,
 				2
 			);
 		}
@@ -101,12 +105,12 @@ describe('CentralServerDrift - Withdraw Transactions', function () {
 
 		// Verify the withdrawal was reflected in the user's balance
 		const userAfter = new User({
-			driftClient: driftClient,
+			driftClient: velocityClient,
 			userAccountPublicKey: devWalletUser0,
 			accountSubscription: {
 				type: 'custom',
 				userAccountSubscriber: new OneShotUserAccountSubscriber(
-					driftClient.program,
+					velocityClient.program,
 					devWalletUser0
 				),
 			},

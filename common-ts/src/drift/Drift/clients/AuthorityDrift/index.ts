@@ -1,10 +1,10 @@
 import {
 	CustomizedCadenceBulkAccountLoader,
 	DelistedMarketSetting,
-	DRIFT_PROGRAM_ID,
-	DriftClient,
-	DriftClientConfig,
-	DriftEnv,
+	VELOCITY_PROGRAM_ID,
+	VelocityClient,
+	VelocityClientConfig,
+	VelocityEnv,
 	getMarketsAndOraclesForSubscription,
 	IWallet,
 	MarketType,
@@ -18,7 +18,7 @@ import {
 	WhileValidTxSender,
 	IWalletV2,
 	TxParams,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { Connection, PublicKey, TransactionSignature } from '@solana/web3.js';
 import { COMMON_UI_UTILS } from '../../../../_deprecated/common-ui-utils';
 import {
@@ -56,7 +56,7 @@ import {
 	PriorityFeeSubscriber,
 	PriorityFeeSubscriberConfig,
 	PriorityFeeMethod,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { SubscriptionManager } from './SubscriptionManager';
 import { DriftOperations } from './DriftOperations';
 import {
@@ -105,12 +105,12 @@ function enforceGeoBlock(
 
 export interface AuthorityDriftConfig {
 	solanaRpcEndpoint: string;
-	driftEnv: DriftEnv;
+	velocityEnv: VelocityEnv;
 	wallet?: IWalletV2;
 	driftDlobServerHttpUrl?: string;
 	tradableMarkets?: MarketId[];
 	selectedTradeMarket?: MarketId;
-	additionalDriftClientConfig?: Partial<Omit<DriftClientConfig, 'env'>>;
+	additionalVelocityClientConfig?: Partial<Omit<VelocityClientConfig, 'env'>>;
 	priorityFeeSubscriberConfig?: Partial<PriorityFeeSubscriberConfig>;
 	orderbookConfig?: {
 		dlobWebSocketUrl?: string;
@@ -128,7 +128,7 @@ export class AuthorityDrift {
 	/**
 	 * Handles all Drift program interactions e.g. trading, read account details, etc.
 	 */
-	private _driftClient!: DriftClient;
+	private _velocityClient!: VelocityClient;
 
 	/**
 	 * Handles bulk account loading from the RPC.
@@ -172,7 +172,7 @@ export class AuthorityDrift {
 	/**
 	 * Stores the fetched oracle prices for all tradable markets.
 	 * Oracle price sources includes:
-	 * - DriftClient oracle account subscriptions
+	 * - VelocityClient oracle account subscriptions
 	 * - Polling DLOB server (all non-active markets)
 	 */
 	private _oraclePriceCache!: OraclePriceCache;
@@ -227,20 +227,20 @@ export class AuthorityDrift {
 
 	/**
 	 * @param solanaRpcEndpoint - The Solana RPC endpoint to use for reading RPC data.
-	 * @param driftEnv - The drift environment to use for the drift client.
+	 * @param velocityEnv - The Velocity environment to use for the Velocity client.
 	 * @param authority - The authority (wallet) whose user accounts to subscribe to.
 	 * @param tradableMarkets - The markets that are tradable through this client.
 	 * @param selectedTradeMarket - The active trade market to use for the drift client. This is used to subscribe to the market account, oracle data and mark price more frequently compared to the other markets.
-	 * @param additionalDriftClientConfig - Additional DriftClient config to use for the DriftClient.
+	 * @param additionalVelocityClientConfig - Additional VelocityClient config to use for the VelocityClient.
 	 */
 	constructor(config: AuthorityDriftConfig) {
 		// set up tradable markets
 		this.selectedTradeMarket = config.selectedTradeMarket ?? null;
 
-		const perpTradableMarkets = PerpMarkets[config.driftEnv].map(
+		const perpTradableMarkets = PerpMarkets[config.velocityEnv].map(
 			(marketConfig) => MarketId.createPerpMarket(marketConfig.marketIndex)
 		);
-		const spotTradableMarkets = SpotMarkets[config.driftEnv].map(
+		const spotTradableMarkets = SpotMarkets[config.velocityEnv].map(
 			(marketConfig) => MarketId.createSpotMarket(marketConfig.marketIndex)
 		);
 
@@ -250,14 +250,14 @@ export class AuthorityDrift {
 		];
 		this._spotMarketConfigs = spotTradableMarkets.map((market) =>
 			MARKET_UTILS.getMarketConfig(
-				config.driftEnv,
+				config.velocityEnv,
 				MarketType.SPOT,
 				market.marketIndex
 			)
 		);
 		this._perpMarketConfigs = perpTradableMarkets.map((market) =>
 			MARKET_UTILS.getMarketConfig(
-				config.driftEnv,
+				config.velocityEnv,
 				MarketType.PERP,
 				market.marketIndex
 			)
@@ -267,16 +267,16 @@ export class AuthorityDrift {
 		const driftDlobServerHttpUrlToUse =
 			config.driftDlobServerHttpUrl ??
 			EnvironmentConstants.dlobServerHttpUrl[
-				config.driftEnv === 'devnet' ? 'dev' : 'mainnet'
+				config.velocityEnv === 'devnet' ? 'dev' : 'mainnet'
 			];
 		const swiftServerUrlToUse =
 			EnvironmentConstants.swiftServerUrl[
-				config.driftEnv === 'devnet' ? 'staging' : 'mainnet'
+				config.velocityEnv === 'devnet' ? 'staging' : 'mainnet'
 			];
 		const orderbookWebsocketUrlToUse =
 			config.orderbookConfig?.dlobWebSocketUrl ??
 			EnvironmentConstants.dlobServerWsUrl[
-				config.driftEnv === 'devnet' ? 'dev' : 'mainnet'
+				config.velocityEnv === 'devnet' ? 'dev' : 'mainnet'
 			];
 		this._driftEndpoints = {
 			dlobServerHttpUrl: driftDlobServerHttpUrlToUse,
@@ -285,12 +285,12 @@ export class AuthorityDrift {
 		};
 
 		// we set this up because SerializableTypes
-		Initialize(config.driftEnv);
+		Initialize(config.velocityEnv);
 
 		// set up clients and stores
-		const driftClient = this.setupDriftClient(config);
+		const velocityClient = this.setupVelocityClient(config);
 		this.initializePollingDlob(driftDlobServerHttpUrlToUse);
-		this.initializeStores(driftClient);
+		this.initializeStores(velocityClient);
 		this.initializeOrderbookManager(
 			orderbookWebsocketUrlToUse,
 			config.orderbookConfig?.orderbookGrouping
@@ -299,12 +299,12 @@ export class AuthorityDrift {
 		this.initializeManagers(driftDlobServerHttpUrlToUse, swiftServerUrlToUse);
 	}
 
-	public get driftClient(): DriftClient {
-		return this._driftClient;
+	public get velocityClient(): VelocityClient {
+		return this._velocityClient;
 	}
 
 	public get authority(): PublicKey {
-		return this._driftClient.wallet.publicKey;
+		return this._velocityClient.wallet.publicKey;
 	}
 
 	public get pollingDlob(): PollingDlob {
@@ -360,7 +360,7 @@ export class AuthorityDrift {
 			.filter((market) => !market.isPerp)
 			.map((market) =>
 				MARKET_UTILS.getMarketConfig(
-					this._driftClient.env,
+					this._velocityClient.env,
 					MarketType.SPOT,
 					market.marketIndex
 				)
@@ -369,7 +369,7 @@ export class AuthorityDrift {
 			.filter((market) => market.isPerp)
 			.map((market) =>
 				MARKET_UTILS.getMarketConfig(
-					this._driftClient.env,
+					this._velocityClient.env,
 					MarketType.PERP,
 					market.marketIndex
 				)
@@ -384,11 +384,11 @@ export class AuthorityDrift {
 		return this._perpMarketConfigs;
 	}
 
-	private initializeStores(driftClient: DriftClient) {
+	private initializeStores(velocityClient: VelocityClient) {
 		this._markPriceCache = new MarkPriceCache();
 		this._oraclePriceCache = new OraclePriceCache();
 		this._userAccountCache = new UserAccountCache(
-			driftClient,
+			velocityClient,
 			this._oraclePriceCache,
 			this._markPriceCache
 		);
@@ -426,7 +426,7 @@ export class AuthorityDrift {
 		}));
 
 		const priorityFeeConfig: PriorityFeeSubscriberConfig = {
-			connection: this.driftClient.connection,
+			connection: this.velocityClient.connection,
 			priorityFeeMethod: PriorityFeeMethod.SOLANA,
 			driftMarkets,
 			addresses: HIGH_ACTIVITY_MARKET_ACCOUNTS,
@@ -436,13 +436,13 @@ export class AuthorityDrift {
 		this.priorityFeeSubscriber = new PriorityFeeSubscriber(priorityFeeConfig);
 	}
 
-	private setupDriftClient(
+	private setupVelocityClient(
 		config: Omit<AuthorityDriftConfig, 'onUserAccountUpdate'>
 	) {
-		const driftEnv = config.driftEnv;
+		const velocityEnv = config.velocityEnv;
 
 		const connection = new Connection(config.solanaRpcEndpoint);
-		const driftProgramID = new PublicKey(DRIFT_PROGRAM_ID);
+		const velocityProgramID = new PublicKey(VELOCITY_PROGRAM_ID);
 		const accountLoader = new CustomizedCadenceBulkAccountLoader(
 			connection,
 			DEFAULT_ACCOUNT_LOADER_COMMITMENT,
@@ -458,29 +458,33 @@ export class AuthorityDrift {
 				?.filter((market) => market.isPerp)
 				.map((market) =>
 					MARKET_UTILS.getMarketConfig(
-						driftEnv,
+						velocityEnv,
 						MarketType.PERP,
 						market.marketIndex
 					)
-				) ?? PerpMarkets[driftEnv];
+				) ?? PerpMarkets[velocityEnv];
 		const spotMarkets =
 			config.tradableMarkets
 				?.filter((market) => !market.isPerp)
 				.map((market) =>
 					MARKET_UTILS.getMarketConfig(
-						driftEnv,
+						velocityEnv,
 						MarketType.SPOT,
 						market.marketIndex
 					)
-				) ?? SpotMarkets[driftEnv];
+				) ?? SpotMarkets[velocityEnv];
 		const { perpMarketIndexes, spotMarketIndexes, oracleInfos } =
-			getMarketsAndOraclesForSubscription(driftEnv, perpMarkets, spotMarkets);
+			getMarketsAndOraclesForSubscription(
+				velocityEnv,
+				perpMarkets,
+				spotMarkets
+			);
 
-		const driftClientConfig: DriftClientConfig = {
-			env: driftEnv,
+		const velocityClientConfig: VelocityClientConfig = {
+			env: velocityEnv,
 			connection,
 			wallet,
-			programID: driftProgramID,
+			programID: velocityProgramID,
 			enableMetricsEvents: false,
 			accountSubscription: {
 				type: 'polling',
@@ -493,23 +497,23 @@ export class AuthorityDrift {
 			perpMarketIndexes,
 			spotMarketIndexes,
 			oracleInfos,
-			...config.additionalDriftClientConfig,
+			...config.additionalVelocityClientConfig,
 		};
-		this._driftClient = new DriftClient(driftClientConfig);
+		this._velocityClient = new VelocityClient(velocityClientConfig);
 
 		const txSender = new WhileValidTxSender({
 			connection,
 			wallet,
 			additionalConnections: [],
 			additionalTxSenderCallbacks: [],
-			txHandler: this._driftClient.txHandler,
+			txHandler: this._velocityClient.txHandler,
 			confirmationStrategy: DEFAULT_TX_SENDER_CONFIRMATION_STRATEGY,
 			retrySleep: DEFAULT_TX_SENDER_RETRY_INTERVAL,
 		});
 
-		this._driftClient.txSender = txSender;
+		this._velocityClient.txSender = txSender;
 
-		return this._driftClient;
+		return this._velocityClient;
 	}
 
 	private setupOrderbookManager() {
@@ -588,7 +592,7 @@ export class AuthorityDrift {
 	) {
 		// Initialize trading operations
 		this.driftOperations = new DriftOperations(
-			this._driftClient,
+			this._velocityClient,
 			() => this._userAccountCache,
 			dlobServerHttpUrl,
 			swiftServerUrl,
@@ -597,7 +601,7 @@ export class AuthorityDrift {
 
 		// Initialize subscription manager with all subscription and market operations
 		this.subscriptionManager = new SubscriptionManager(
-			this._driftClient,
+			this._velocityClient,
 			this.accountLoader,
 			this._pollingDlob,
 			this._orderbookManager,
@@ -631,19 +635,19 @@ export class AuthorityDrift {
 			}
 		};
 
-		// async logic that doesn't require DriftClient to be subscribed
+		// async logic that doesn't require VelocityClient to be subscribed
 		const handleGeoBlockPromise = handleGeoBlock();
 		const pollingDlobStartPromise = this._pollingDlob.start();
 		const priorityFeeSubscribePromise = this.priorityFeeSubscriber.subscribe();
 		const orderbookSubscribePromise = this._orderbookManager.subscribe();
 
-		await this._driftClient.subscribe();
+		await this._velocityClient.subscribe();
 
 		// filter out markets that are delisted
 		const actualTradableMarkets = this._tradableMarkets.filter((market) => {
 			const marketAccount = market.isPerp
-				? this._driftClient.getPerpMarketAccount(market.marketIndex)
-				: this._driftClient.getSpotMarketAccount(market.marketIndex);
+				? this._velocityClient.getPerpMarketAccount(market.marketIndex)
+				: this._velocityClient.getSpotMarketAccount(market.marketIndex);
 
 			if (
 				!marketAccount ||
@@ -664,7 +668,7 @@ export class AuthorityDrift {
 
 		const subscribeToNonWhitelistedButUserInvolvedMarketsPromise =
 			this.subscriptionManager.subscribeToNonWhitelistedButUserInvolvedMarkets(
-				this._driftClient.getUsers()
+				this._velocityClient.getUsers()
 			);
 
 		await Promise.all([
@@ -687,12 +691,12 @@ export class AuthorityDrift {
 		this._markPriceCache.destroy();
 		this._orderbookManager.destroy();
 
-		const driftClientUnsubscribePromise = this._driftClient.unsubscribe();
+		const velocityClientUnsubscribePromise = this._velocityClient.unsubscribe();
 		const priorityFeeUnsubscribePromise =
 			this.priorityFeeSubscriber.unsubscribe();
 
 		await Promise.all(
-			[driftClientUnsubscribePromise, priorityFeeUnsubscribePromise].filter(
+			[velocityClientUnsubscribePromise, priorityFeeUnsubscribePromise].filter(
 				Boolean
 			)
 		);

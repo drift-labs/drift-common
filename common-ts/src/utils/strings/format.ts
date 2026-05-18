@@ -1,4 +1,4 @@
-import { PublicKey } from '@drift-labs/sdk';
+import { PublicKey } from '@velocity-exchange/sdk';
 import { getCachedUiString } from '../core/cache';
 
 export const abbreviateAddress = (address: string | PublicKey, length = 4) => {

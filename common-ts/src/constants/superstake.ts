@@ -1,4 +1,4 @@
-import { MainnetSpotMarkets, SpotMarketConfig } from '@drift-labs/sdk';
+import { MainnetSpotMarkets, SpotMarketConfig } from '@velocity-exchange/sdk';
 
 export type LST = {
 	symbol: string; // symbol is added as a config because JitoSOL's symbol in the spotMarket is jitoSOL

@@ -1,10 +1,14 @@
-import { BASE_PRECISION_EXP, BigNum, DriftClient } from '@drift-labs/sdk';
+import {
+	BASE_PRECISION_EXP,
+	BigNum,
+	VelocityClient,
+} from '@velocity-exchange/sdk';
 
 export const getMarketOpenInterest = (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	marketIndex: number
 ): { longOpenInterest: BigNum; shortOpenInterest: BigNum } => {
-	const perpMarketAccount = driftClient.getPerpMarketAccount(marketIndex);
+	const perpMarketAccount = velocityClient.getPerpMarketAccount(marketIndex);
 	const longOpenInterest = BigNum.from(
 		perpMarketAccount.amm.baseAssetAmountLong,
 		BASE_PRECISION_EXP
