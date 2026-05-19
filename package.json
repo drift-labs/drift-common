@@ -1,5 +1,5 @@
 {
-	"author": "@drift-labs",
+	"author": "@velocity-exchange",
 	"license": "MIT",
 	"devDependencies": {
 		"@commitlint/cli": "19.6.1",
