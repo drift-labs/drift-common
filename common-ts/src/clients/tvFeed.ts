@@ -12,7 +12,7 @@ import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
 import { CandleClient } from './candleClient';
 import { MARKET_UTILS } from '../_deprecated/market-utils';
 
-const DRIFT_V2_START_TS = 1668470400; // 15th November 2022 ... 2022-11-15T00:00:00.000Z
+const VELOCITY_V2_START_TS = 1668470400; // 15th November 2022 ... 2022-11-15T00:00:00.000Z
 
 type MarketDecimalConfig = Record<string, number>;
 
@@ -164,7 +164,7 @@ const PerpMarketConfigToTVMarketInfo = (
 		symbol: marketConfig.symbol,
 		full_name: marketConfig.fullName,
 		description: marketConfig.fullName,
-		exchange: 'Drift',
+		exchange: 'Velocity',
 		ticker: marketConfig.symbol,
 		type: 'crypto',
 	};
@@ -177,7 +177,7 @@ const SpotMarketConfigToTVMarketInfo = (
 		symbol: marketConfig.symbol,
 		full_name: marketConfig.symbol,
 		description: marketConfig.symbol,
-		exchange: 'Drift',
+		exchange: 'Velocity',
 		ticker: marketConfig.symbol,
 		type: 'crypto',
 	};
@@ -188,7 +188,7 @@ interface TvAppTradeDataManager {
 	getCurrentSubAccountAddress(): string | null;
 }
 
-export class DriftTvFeed {
+export class VelocityTvFeed {
 	private env: UIEnv;
 	private candleType: CandleType;
 	private candleClient: CandleClient;
@@ -261,7 +261,7 @@ export class DriftTvFeed {
 		return res.map((mkt) => {
 			return {
 				...mkt,
-				exchange: 'Drift',
+				exchange: 'Velocity',
 				type: 'crypto',
 			};
 		});
@@ -330,12 +330,12 @@ export class DriftTvFeed {
 				name: tvMarketName,
 				full_name: tvMarketName,
 				description: tvMarketName,
-				exchange: 'Drift',
+				exchange: 'Velocity',
 				ticker: targetMarket.config.symbol,
 				type: 'crypto',
 				session: '24x7',
 				timezone: 'Etc/UTC',
-				listed_exchange: 'Drift',
+				listed_exchange: 'Velocity',
 				format: 'price',
 				pricescale: priceScale,
 				minmov: 1,
@@ -505,8 +505,8 @@ export class DriftTvFeed {
 		) => void,
 		_onError
 	) {
-		// Can automatically return no data if the requested range is before the Drift V2 launch
-		if (periodParams.to < DRIFT_V2_START_TS) {
+		// Can automatically return no data if the requested range is before the Velocity V2 launch
+		if (periodParams.to < VELOCITY_V2_START_TS) {
 			onResult([], {
 				noData: true,
 			});

@@ -24,7 +24,7 @@ interface CreateSwiftAccountIxParams {
 /**
  * Creates a transaction instruction for initializing a Swift (signed message user orders) account.
  *
- * @param velocityClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param authority - The public key of the account authority
  * @param numOrders - The number of order slots to allocate (default: 8)
  * @param rentPayerOverride - Optional wallet to pay for account creation instead of the default wallet
@@ -59,7 +59,7 @@ interface CreateSwiftAccountTxnParams extends CreateSwiftAccountIxParams {
  *
  * Wraps {@link createSwiftAccountIx} and builds a transaction ready for signing and submission.
  *
- * @param velocityClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param authority - The public key of the account authority
  * @param numOrders - The number of order slots to allocate (default: 8)
  * @param rentPayerOverride - Optional wallet to pay for account creation instead of the default wallet
@@ -95,7 +95,7 @@ export const createSwiftAccountTxn = async ({
  * Always returns the Swift account public key. The `ix` will be `null` if the account
  * is already initialized, indicating no transaction is needed.
  *
- * @param velocityClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param authority - The public key of the account authority
  * @param numOrders - The number of order slots to allocate (default: 8)
  * @param rentPayerOverride - Optional wallet to pay for account creation instead of the default wallet

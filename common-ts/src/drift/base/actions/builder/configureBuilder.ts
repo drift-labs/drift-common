@@ -65,7 +65,7 @@ interface ConfigureBuilderIxParams {
  * - User must have initialized a RevenueShareEscrow account
  * - Builder must have initialized a RevenueShare account (for receiving fees)
  *
- * @param velocityClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param builderAuthority - The public key of the builder to configure
  * @param maxFeeTenthBps - Maximum fee cap in tenths of basis points
  *
@@ -148,7 +148,7 @@ export const configureBuilderIx = async (
  * - User must have initialized a RevenueShareEscrow account
  * - Builder must have initialized a RevenueShare account (for receiving fees)
  *
- * @param velocityClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param builderAuthority - The public key of the builder to configure
  * @param maxFeeTenthBps - Maximum fee cap in tenths of basis points
  * @param txParams - Optional transaction parameters for customizing the transaction

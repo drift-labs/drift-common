@@ -4,7 +4,7 @@ import { BN } from '@coral-xyz/anchor';
 import { VersionedTransaction } from '@solana/web3.js';
 import { PositionDirection } from '@velocity-exchange/sdk';
 import {
-	centralServerDrift,
+	centralServerVelocity,
 	velocityClient,
 	setupTestContext,
 	teardownTestContext,
@@ -12,7 +12,7 @@ import {
 import { assertComputeBudgetThenProgram } from '../../../../utils/txAssertions';
 import { getDevWallet } from '../../../../utils/wallet';
 
-describe('CentralServerDrift - Isolated Position Transactions', function () {
+describe('CentralServerVelocity - Isolated Position Transactions', function () {
 	this.timeout(10_000);
 	const devWalletContext = getDevWallet();
 	const devWalletUser0 = devWalletContext.devUser0;
@@ -35,7 +35,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 
 	describe('getOpenPerpMarketOrderTxn with isolatedPositionDeposit', () => {
 		it('should create open isolated position transaction with transfer before order', async () => {
-			const txn = await centralServerDrift.getOpenPerpMarketOrderTxn({
+			const txn = await centralServerVelocity.getOpenPerpMarketOrderTxn({
 				userAccountPublicKey: devWalletUser0,
 				marketIndex: 0,
 				direction: PositionDirection.LONG,
@@ -59,7 +59,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 
 	describe('getOpenPerpMarketOrderTxn with reduceOnly (close isolated position)', () => {
 		it('should create reduce-only close isolated position transaction', async () => {
-			const txn = await centralServerDrift.getOpenPerpMarketOrderTxn({
+			const txn = await centralServerVelocity.getOpenPerpMarketOrderTxn({
 				userAccountPublicKey: devWalletUser0,
 				marketIndex: 0,
 				direction: PositionDirection.SHORT,
@@ -82,12 +82,14 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 	describe('getWithdrawIsolatedPerpPositionCollateralTxn', () => {
 		it('should create withdraw collateral transaction', async () => {
 			const txn =
-				await centralServerDrift.getWithdrawIsolatedPerpPositionCollateralTxn({
-					userAccountPublicKey: devWalletUser0,
-					marketIndex: 0,
-					amount: new BN(500_000),
-					txParams: { computeUnits: 1_000_000, computeUnitsPrice: 1_000 },
-				});
+				await centralServerVelocity.getWithdrawIsolatedPerpPositionCollateralTxn(
+					{
+						userAccountPublicKey: devWalletUser0,
+						marketIndex: 0,
+						amount: new BN(500_000),
+						txParams: { computeUnits: 1_000_000, computeUnitsPrice: 1_000 },
+					}
+				);
 			expect(txn).to.exist;
 			assertComputeBudgetThenProgram(
 				txn as VersionedTransaction,
@@ -98,13 +100,15 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 
 		it('should include settle PnL ix when settlePnlFirst is true', async () => {
 			const txn =
-				await centralServerDrift.getWithdrawIsolatedPerpPositionCollateralTxn({
-					userAccountPublicKey: devWalletUser0,
-					marketIndex: 0,
-					amount: new BN(500_000),
-					settlePnlFirst: true,
-					txParams: { computeUnits: 1_000_000, computeUnitsPrice: 1_000 },
-				});
+				await centralServerVelocity.getWithdrawIsolatedPerpPositionCollateralTxn(
+					{
+						userAccountPublicKey: devWalletUser0,
+						marketIndex: 0,
+						amount: new BN(500_000),
+						settlePnlFirst: true,
+						txParams: { computeUnits: 1_000_000, computeUnitsPrice: 1_000 },
+					}
+				);
 			expect(txn).to.exist;
 			const vTx = txn as VersionedTransaction;
 			expect(vTx.message.compiledInstructions.length).to.be.greaterThan(2);
@@ -112,11 +116,13 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 
 		it('should reject invalid market index', async () => {
 			try {
-				await centralServerDrift.getWithdrawIsolatedPerpPositionCollateralTxn({
-					userAccountPublicKey: devWalletUser0,
-					marketIndex: 999,
-					amount: new BN(500_000),
-				});
+				await centralServerVelocity.getWithdrawIsolatedPerpPositionCollateralTxn(
+					{
+						userAccountPublicKey: devWalletUser0,
+						marketIndex: 999,
+						amount: new BN(500_000),
+					}
+				);
 				expect.fail('Should have thrown');
 			} catch (error: unknown) {
 				expect((error as Error).message).to.include(
@@ -129,7 +135,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 	describe('getCloseAndWithdrawIsolatedPerpPositionTxn', () => {
 		it('should create close-only transaction when withdrawCollateralAfterClose is false', async () => {
 			const txn =
-				await centralServerDrift.getCloseAndWithdrawIsolatedPerpPositionTxn({
+				await centralServerVelocity.getCloseAndWithdrawIsolatedPerpPositionTxn({
 					userAccountPublicKey: devWalletUser0,
 					marketIndex: 0,
 					baseAssetAmount: new BN(100_000_000),
@@ -147,7 +153,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 
 		it('should create close+withdraw transaction when withdrawCollateralAfterClose is true', async () => {
 			const txn =
-				await centralServerDrift.getCloseAndWithdrawIsolatedPerpPositionTxn({
+				await centralServerVelocity.getCloseAndWithdrawIsolatedPerpPositionTxn({
 					userAccountPublicKey: devWalletUser0,
 					marketIndex: 0,
 					baseAssetAmount: new BN(100_000_000),
@@ -162,7 +168,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 
 		it('should reject invalid market index', async () => {
 			try {
-				await centralServerDrift.getCloseAndWithdrawIsolatedPerpPositionTxn({
+				await centralServerVelocity.getCloseAndWithdrawIsolatedPerpPositionTxn({
 					userAccountPublicKey: devWalletUser0,
 					marketIndex: 999,
 					baseAssetAmount: new BN(100_000),
@@ -180,7 +186,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 	describe('getDepositAndOpenIsolatedPerpPositionTxn', () => {
 		it('should create deposit + open isolated position transaction', async () => {
 			const txn =
-				await centralServerDrift.getDepositAndOpenIsolatedPerpPositionTxn({
+				await centralServerVelocity.getDepositAndOpenIsolatedPerpPositionTxn({
 					userAccountPublicKey: devWalletUser0,
 					marketIndex: 0,
 					direction: PositionDirection.LONG,
@@ -206,7 +212,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 
 		it('should reject zero depositAmount', async () => {
 			try {
-				await centralServerDrift.getDepositAndOpenIsolatedPerpPositionTxn({
+				await centralServerVelocity.getDepositAndOpenIsolatedPerpPositionTxn({
 					userAccountPublicKey: devWalletUser0,
 					marketIndex: 0,
 					direction: PositionDirection.LONG,
@@ -228,7 +234,7 @@ describe('CentralServerDrift - Isolated Position Transactions', function () {
 	describe('getCloseAndWithdrawIsolatedPerpPositionToWalletTxn', () => {
 		it('should create close + withdraw to wallet transaction', async () => {
 			const txn =
-				await centralServerDrift.getCloseAndWithdrawIsolatedPerpPositionToWalletTxn(
+				await centralServerVelocity.getCloseAndWithdrawIsolatedPerpPositionToWalletTxn(
 					{
 						userAccountPublicKey: devWalletUser0,
 						marketIndex: 0,

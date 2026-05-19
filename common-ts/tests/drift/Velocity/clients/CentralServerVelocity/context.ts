@@ -5,7 +5,7 @@ import {
 	Wallet,
 	WalletV2,
 } from '@velocity-exchange/sdk';
-import { CentralServerDrift } from '../../../../../src/drift/Drift/clients/CentralServerDrift';
+import { CentralServerVelocity } from '../../../../../src/drift/Velocity/clients/CentralServerVelocity';
 import { EnvironmentConstants } from '../../../../../src/EnvironmentConstants';
 import { getDevWallet, getTestWallet } from '../../../../utils/wallet';
 import { VersionedTransaction } from '@solana/web3.js';
@@ -28,11 +28,10 @@ const config = {
 	supportedSpotMarkets: [0, 1, 2],
 };
 
-export const centralServerDrift: CentralServerDrift = new CentralServerDrift(
-	config
-);
+export const centralServerVelocity: CentralServerVelocity =
+	new CentralServerVelocity(config);
 
-export const velocityClient: VelocityClient = (centralServerDrift as any)
+export const velocityClient: VelocityClient = (centralServerVelocity as any)
 	.velocityClient as VelocityClient;
 
 let isSubscribed = false;
@@ -53,7 +52,7 @@ export async function setupTestContext(): Promise<{
 
 	originalConsoleWarn = console.warn;
 	console.warn = () => {};
-	await centralServerDrift.subscribe();
+	await centralServerVelocity.subscribe();
 	const testWallet = await getTestWallet();
 	isSubscribed = true;
 
@@ -65,7 +64,7 @@ export async function setupTestContext(): Promise<{
 
 export async function teardownTestContext(): Promise<void> {
 	if (!isSubscribed) return;
-	await centralServerDrift.unsubscribe();
+	await centralServerVelocity.unsubscribe();
 	console.warn = originalConsoleWarn;
 	isSubscribed = false;
 }

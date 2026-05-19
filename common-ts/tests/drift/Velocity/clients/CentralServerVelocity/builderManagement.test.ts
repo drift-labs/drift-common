@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { PublicKey } from '@velocity-exchange/sdk';
 import { VersionedTransaction } from '@solana/web3.js';
 import {
-	centralServerDrift,
+	centralServerVelocity,
 	velocityClient,
 	setupTestContext,
 	teardownTestContext,
@@ -10,7 +10,7 @@ import {
 import { assertComputeBudgetThenProgram } from '../../../../utils/txAssertions';
 import { getTestWallet } from '../../../../utils/wallet';
 
-describe('CentralServerDrift - Builder Management Transactions', function () {
+describe('CentralServerVelocity - Builder Management Transactions', function () {
 	this.timeout(25_000);
 
 	let testWalletAuthority: PublicKey;
@@ -31,7 +31,7 @@ describe('CentralServerDrift - Builder Management Transactions', function () {
 
 	describe('getCreateRevenueShareEscrowTxn', () => {
 		it('should create transaction to initialize revenue share escrow', async () => {
-			const txn = await centralServerDrift.getCreateRevenueShareEscrowTxn(
+			const txn = await centralServerVelocity.getCreateRevenueShareEscrowTxn(
 				testWalletAuthority,
 				{
 					txParams: {
@@ -51,7 +51,7 @@ describe('CentralServerDrift - Builder Management Transactions', function () {
 		});
 
 		it('should create transaction with custom numOrders', async () => {
-			const txn = await centralServerDrift.getCreateRevenueShareEscrowTxn(
+			const txn = await centralServerVelocity.getCreateRevenueShareEscrowTxn(
 				testWalletAuthority,
 				{
 					numOrders: 32,
@@ -74,7 +74,7 @@ describe('CentralServerDrift - Builder Management Transactions', function () {
 		it('should create transaction with bundled builder approval', async () => {
 			const mockBuilderAuthority = PublicKey.unique();
 
-			const txn = await centralServerDrift.getCreateRevenueShareEscrowTxn(
+			const txn = await centralServerVelocity.getCreateRevenueShareEscrowTxn(
 				testWalletAuthority,
 				{
 					builder: {
@@ -100,7 +100,7 @@ describe('CentralServerDrift - Builder Management Transactions', function () {
 
 	describe('getCreateRevenueShareAccountTxn', () => {
 		it('should create transaction to initialize revenue share account', async () => {
-			const txn = await centralServerDrift.getCreateRevenueShareAccountTxn(
+			const txn = await centralServerVelocity.getCreateRevenueShareAccountTxn(
 				testWalletAuthority,
 				{
 					txParams: {
@@ -124,7 +124,7 @@ describe('CentralServerDrift - Builder Management Transactions', function () {
 		it('should create transaction to approve a builder', async () => {
 			const mockBuilderAuthority = PublicKey.unique();
 
-			const txn = await centralServerDrift.getConfigureApprovedBuilderTxn(
+			const txn = await centralServerVelocity.getConfigureApprovedBuilderTxn(
 				testWalletAuthority,
 				mockBuilderAuthority,
 				50, // 5 bps
@@ -148,7 +148,7 @@ describe('CentralServerDrift - Builder Management Transactions', function () {
 		it('should create transaction to revoke a builder (maxFeeTenthBps = 0)', async () => {
 			const mockBuilderAuthority = PublicKey.unique();
 
-			const txn = await centralServerDrift.getConfigureApprovedBuilderTxn(
+			const txn = await centralServerVelocity.getConfigureApprovedBuilderTxn(
 				testWalletAuthority,
 				mockBuilderAuthority,
 				0, // revoke

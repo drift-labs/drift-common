@@ -21,7 +21,7 @@ Each of these "candles" websockets also returns the TRADES which resulted in the
 To ensure that trades and candles are in sync, we want to make sure that subscriptions for these things (which is done seperately) actually use the same websocket connection. Which is why this class is necessary.
 
 ## Explanation of terminology:
-- A "subscription" is an actual underlying websocket connection to the Drift Data API. A subscription may have multiple subscribers attached to it, where the data coming through that subscription is sufficient for the subsciption config. A Subscription can have the data for both CANDLES and TRADES subscribers.
+- A "subscription" is an actual underlying websocket connection to the Velocity Data API. A subscription may have multiple subscribers attached to it, where the data coming through that subscription is sufficient for the subsciption config. A Subscription can have the data for both CANDLES and TRADES subscribers.
 - A "subscriber" is a specific instance of an external party making a subscription. It is either a TRADE or CANDLE subscriber.
 - A "subscriber subscription" represents the subscription information that we return to an external subscriber. It contains the subscription ID they can use to unsubscriber, an an observable to listen to the data.
 
@@ -55,7 +55,7 @@ There is a minor inefficiency remaining in this implementation, where to be opti
 - **TradeSubscriber**: Internal subscriber for trade data, creates and manages a Subject<JsonTrade[]> for data distribution.
 
 ### WebSocket Connection Management:
-- **ApiSubscription**: Manages a single websocket connection to the Drift Data API. Can serve multiple subscribers (both candle and trade) if they're compatible. Handles the actual API communication and data distribution to attached subscribers.
+- **ApiSubscription**: Manages a single websocket connection to the Velocity Data API. Can serve multiple subscribers (both candle and trade) if they're compatible. Handles the actual API communication and data distribution to attached subscribers.
 
 ### Subscription Discovery and Sharing:
 - **SubscriptionLookup (abstract)**: Base class for lookup tables that help find compatible existing subscriptions for new subscribers.

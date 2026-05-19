@@ -1,11 +1,11 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { VelocityEnv } from '@velocity-exchange/sdk';
-import { CentralServerDrift } from '../../../../../src/drift/Drift/clients/CentralServerDrift';
-import { CentralServerDriftMarkets } from '../../../../../src/drift/Drift/clients/CentralServerDrift/markets';
+import { CentralServerVelocity } from '../../../../../src/drift/Velocity/clients/CentralServerVelocity';
+import { CentralServerVelocityMarkets } from '../../../../../src/drift/Velocity/clients/CentralServerVelocity/markets';
 import { EnvironmentConstants } from '../../../../../src/EnvironmentConstants';
 
-describe('CentralServerDrift Constructor', () => {
+describe('CentralServerVelocity Constructor', () => {
 	let originalConsoleWarn: typeof console.warn;
 
 	beforeEach(() => {
@@ -31,11 +31,11 @@ describe('CentralServerDrift Constructor', () => {
 				supportedSpotMarkets: [0, 1, 2],
 			};
 
-			const centralServerDrift = new CentralServerDrift(config);
+			const centralServerVelocity = new CentralServerVelocity(config);
 
-			expect(centralServerDrift).to.be.instanceOf(CentralServerDrift);
-			expect(centralServerDrift.markets).to.be.instanceOf(
-				CentralServerDriftMarkets
+			expect(centralServerVelocity).to.be.instanceOf(CentralServerVelocity);
+			expect(centralServerVelocity.markets).to.be.instanceOf(
+				CentralServerVelocityMarkets
 			);
 		});
 
@@ -47,11 +47,11 @@ describe('CentralServerDrift Constructor', () => {
 				supportedSpotMarkets: [0, 1],
 			};
 
-			const centralServerDrift = new CentralServerDrift(config);
+			const centralServerVelocity = new CentralServerVelocity(config);
 
-			expect(centralServerDrift).to.be.instanceOf(CentralServerDrift);
-			expect(centralServerDrift.markets).to.be.instanceOf(
-				CentralServerDriftMarkets
+			expect(centralServerVelocity).to.be.instanceOf(CentralServerVelocity);
+			expect(centralServerVelocity.markets).to.be.instanceOf(
+				CentralServerVelocityMarkets
 			);
 		});
 
@@ -67,9 +67,9 @@ describe('CentralServerDrift Constructor', () => {
 				},
 			};
 
-			const centralServerDrift = new CentralServerDrift(config);
+			const centralServerVelocity = new CentralServerVelocity(config);
 
-			expect(centralServerDrift).to.be.instanceOf(CentralServerDrift);
+			expect(centralServerVelocity).to.be.instanceOf(CentralServerVelocity);
 		});
 	});
 
@@ -84,11 +84,13 @@ describe('CentralServerDrift Constructor', () => {
 				supportedSpotMarkets,
 			};
 
-			const centralServerDrift = new CentralServerDrift(config);
+			const centralServerVelocity = new CentralServerVelocity(config);
 
 			// Access private property to verify configuration
-			const perpMarketConfigs = (centralServerDrift as any)._perpMarketConfigs;
-			const spotMarketConfigs = (centralServerDrift as any)._spotMarketConfigs;
+			const perpMarketConfigs = (centralServerVelocity as any)
+				._perpMarketConfigs;
+			const spotMarketConfigs = (centralServerVelocity as any)
+				._spotMarketConfigs;
 
 			// Verify perp markets are correctly configured
 			expect(perpMarketConfigs).to.have.length(supportedPerpMarkets.length);
@@ -115,10 +117,11 @@ describe('CentralServerDrift Constructor', () => {
 				supportedSpotMarkets,
 			};
 
-			const centralServerDrift = new CentralServerDrift(config);
+			const centralServerVelocity = new CentralServerVelocity(config);
 
 			// Access private property to verify configuration
-			const spotMarketConfigs = (centralServerDrift as any)._spotMarketConfigs;
+			const spotMarketConfigs = (centralServerVelocity as any)
+				._spotMarketConfigs;
 
 			// Verify spot markets are correctly configured
 			expect(spotMarketConfigs).to.have.length(supportedSpotMarkets.length);
@@ -138,11 +141,13 @@ describe('CentralServerDrift Constructor', () => {
 				supportedSpotMarkets,
 			};
 
-			const centralServerDrift = new CentralServerDrift(config);
+			const centralServerVelocity = new CentralServerVelocity(config);
 
 			// Access private properties to verify empty arrays
-			const perpMarketConfigs = (centralServerDrift as any)._perpMarketConfigs;
-			const spotMarketConfigs = (centralServerDrift as any)._spotMarketConfigs;
+			const perpMarketConfigs = (centralServerVelocity as any)
+				._perpMarketConfigs;
+			const spotMarketConfigs = (centralServerVelocity as any)
+				._spotMarketConfigs;
 
 			expect(perpMarketConfigs).to.have.length(0);
 			expect(spotMarketConfigs).to.have.length(0);
@@ -160,7 +165,7 @@ describe('CentralServerDrift Constructor', () => {
 
 			// Constructor should succeed but contain undefined entries for non-existent markets
 			// The error occurs later in getMarketsAndOraclesForSubscription
-			expect(() => new CentralServerDrift(config)).to.throw();
+			expect(() => new CentralServerVelocity(config)).to.throw();
 		});
 
 		it('should maintain exact mapping between input arrays and market configs', () => {
@@ -173,10 +178,12 @@ describe('CentralServerDrift Constructor', () => {
 				supportedSpotMarkets,
 			};
 
-			const centralServerDrift = new CentralServerDrift(config);
+			const centralServerVelocity = new CentralServerVelocity(config);
 
-			const perpMarketConfigs = (centralServerDrift as any)._perpMarketConfigs;
-			const spotMarketConfigs = (centralServerDrift as any)._spotMarketConfigs;
+			const perpMarketConfigs = (centralServerVelocity as any)
+				._perpMarketConfigs;
+			const spotMarketConfigs = (centralServerVelocity as any)
+				._spotMarketConfigs;
 
 			// Verify exact mapping: each position should match the corresponding input
 			expect(perpMarketConfigs).to.have.length(supportedPerpMarkets.length);
@@ -205,10 +212,10 @@ describe('CentralServerDrift Constructor', () => {
 				supportedSpotMarkets: [0],
 			};
 
-			const centralServerDrift = new CentralServerDrift(config);
+			const centralServerVelocity = new CentralServerVelocity(config);
 
 			// Access private property for testing
-			const endpoints = (centralServerDrift as any)._driftEndpoints;
+			const endpoints = (centralServerVelocity as any)._velocityEndpoints;
 			expect(endpoints.dlobServerHttpUrl).to.equal(
 				EnvironmentConstants.dlobServerHttpUrl.dev
 			);
@@ -225,10 +232,10 @@ describe('CentralServerDrift Constructor', () => {
 				supportedSpotMarkets: [0],
 			};
 
-			const centralServerDrift = new CentralServerDrift(config);
+			const centralServerVelocity = new CentralServerVelocity(config);
 
 			// Access private property for testing
-			const endpoints = (centralServerDrift as any)._driftEndpoints;
+			const endpoints = (centralServerVelocity as any)._velocityEndpoints;
 			expect(endpoints.dlobServerHttpUrl).to.equal(
 				EnvironmentConstants.dlobServerHttpUrl.mainnet
 			);
@@ -247,11 +254,11 @@ describe('CentralServerDrift Constructor', () => {
 				supportedSpotMarkets: [0],
 			};
 
-			const centralServerDrift = new CentralServerDrift(config);
+			const centralServerVelocity = new CentralServerVelocity(config);
 
-			expect(centralServerDrift.markets).to.exist;
-			expect(centralServerDrift.markets).to.be.instanceOf(
-				CentralServerDriftMarkets
+			expect(centralServerVelocity.markets).to.exist;
+			expect(centralServerVelocity.markets).to.be.instanceOf(
+				CentralServerVelocityMarkets
 			);
 		});
 
@@ -263,9 +270,9 @@ describe('CentralServerDrift Constructor', () => {
 				supportedSpotMarkets: [0],
 			};
 
-			const centralServerDrift = new CentralServerDrift(config);
+			const centralServerVelocity = new CentralServerVelocity(config);
 
-			expect(centralServerDrift.subscribe).to.be.a('function');
+			expect(centralServerVelocity.subscribe).to.be.a('function');
 		});
 
 		it('should have all transaction methods available', () => {
@@ -276,25 +283,27 @@ describe('CentralServerDrift Constructor', () => {
 				supportedSpotMarkets: [0],
 			};
 
-			const centralServerDrift = new CentralServerDrift(config);
+			const centralServerVelocity = new CentralServerVelocity(config);
 
 			// Check that all the transaction methods exist
-			expect(centralServerDrift.getUser).to.be.a('function');
-			expect(centralServerDrift.getCreateAndDepositTxn).to.be.a('function');
-			expect(centralServerDrift.getDepositTxn).to.be.a('function');
-			expect(centralServerDrift.getWithdrawTxn).to.be.a('function');
-			expect(centralServerDrift.getDeleteUserTxn).to.be.a('function');
-			expect(centralServerDrift.getSettleFundingTxn).to.be.a('function');
-			expect(centralServerDrift.getSettlePnlTxn).to.be.a('function');
-			expect(centralServerDrift.getOpenPerpMarketOrderTxn).to.be.a('function');
-			expect(centralServerDrift.getOpenPerpNonMarketOrderTxn).to.be.a(
+			expect(centralServerVelocity.getUser).to.be.a('function');
+			expect(centralServerVelocity.getCreateAndDepositTxn).to.be.a('function');
+			expect(centralServerVelocity.getDepositTxn).to.be.a('function');
+			expect(centralServerVelocity.getWithdrawTxn).to.be.a('function');
+			expect(centralServerVelocity.getDeleteUserTxn).to.be.a('function');
+			expect(centralServerVelocity.getSettleFundingTxn).to.be.a('function');
+			expect(centralServerVelocity.getSettlePnlTxn).to.be.a('function');
+			expect(centralServerVelocity.getOpenPerpMarketOrderTxn).to.be.a(
 				'function'
 			);
-			expect(centralServerDrift.getEditOrderTxn).to.be.a('function');
-			expect(centralServerDrift.getCancelOrdersTxn).to.be.a('function');
-			expect(centralServerDrift.getCancelAllOrdersTxn).to.be.a('function');
-			expect(centralServerDrift.getSwapTxn).to.be.a('function');
-			expect(centralServerDrift.sendSignedTransaction).to.be.a('function');
+			expect(centralServerVelocity.getOpenPerpNonMarketOrderTxn).to.be.a(
+				'function'
+			);
+			expect(centralServerVelocity.getEditOrderTxn).to.be.a('function');
+			expect(centralServerVelocity.getCancelOrdersTxn).to.be.a('function');
+			expect(centralServerVelocity.getCancelAllOrdersTxn).to.be.a('function');
+			expect(centralServerVelocity.getSwapTxn).to.be.a('function');
+			expect(centralServerVelocity.sendSignedTransaction).to.be.a('function');
 		});
 	});
 
@@ -308,7 +317,7 @@ describe('CentralServerDrift Constructor', () => {
 			};
 
 			// Should throw error with invalid RPC endpoint
-			expect(() => new CentralServerDrift(config)).to.throw();
+			expect(() => new CentralServerVelocity(config)).to.throw();
 		});
 
 		it('should handle missing additional config gracefully', () => {
@@ -320,7 +329,7 @@ describe('CentralServerDrift Constructor', () => {
 				// additionalVelocityClientConfig is optional
 			};
 
-			expect(() => new CentralServerDrift(config)).to.not.throw();
+			expect(() => new CentralServerVelocity(config)).to.not.throw();
 		});
 	});
 });

@@ -41,7 +41,7 @@ interface CreateRevenueShareEscrowIxParams {
  * When the escrow is full, new orders will succeed but builder fees won't be tracked.
  * See README_ORDER_LIMITS.md for capacity planning guidance.
  *
- * @param velocityClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param authority - The public key of the user who will own this escrow account
  * @param numOrders - Number of concurrent order slots (default: 16, range: 1-128)
  *   - 8: Casual traders (2-3 markets, occasional trading)
@@ -113,7 +113,7 @@ interface CreateRevenueShareEscrowTxnParams
  * When the escrow is full, new orders will succeed but builder fees won't be tracked.
  * See README_ORDER_LIMITS.md for capacity planning guidance.
  *
- * @param velocityClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param authority - The public key of the user who will own this escrow account
  * @param numOrders - Number of concurrent order slots (default: 16, range: 1-128)
  *   - 8: Casual traders (2-3 markets, occasional trading)

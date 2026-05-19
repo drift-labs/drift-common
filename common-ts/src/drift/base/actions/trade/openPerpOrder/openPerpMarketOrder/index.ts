@@ -30,7 +30,7 @@ import {
 } from '../dlobServer';
 import { WithTxnParams } from '../../../../types';
 import { TxnOrSwiftResult, IsolatedPositionDepositsOverride } from '../types';
-import { NoTopMakersError } from '../../../../../Drift/constants/errors';
+import { NoTopMakersError } from '../../../../../Velocity/constants/errors';
 import { PlaceAndTakeParams, OptionalTriggerOrderParams } from '../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
 import { AuctionParamsFetchedCallback } from '../../../../../utils/auctionParamsResponseMapper';
@@ -406,7 +406,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
  * Creates transaction instructions for opening a perp market order.
  * If swiftOptions is provided, it will create a Swift (signed message) order instead.
  *
- * @param velocityClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Velocity client instance for interacting with the protocol
  * @param user - The user account that will place the order
  * @param assetType - Whether the amount is in base or quote units
  * @param marketIndex - The perp market index to trade
@@ -614,7 +614,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 /**
  * Creates a complete transaction for opening a perp market order.
  *
- * @param velocityClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Velocity client instance for interacting with the protocol
  * @param user - The user account that will place the order
  * @param marketIndex - The perp market index to trade
  * @param direction - The direction of the trade (long/short)
@@ -650,7 +650,7 @@ export const createOpenPerpMarketOrderTxn = async (
 /**
  * Creates a transaction or swift order for a perp market order.
  *
- * @param velocityClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Velocity client instance for interacting with the protocol
  * @param user - The user account that will place the order
  * @param marketIndex - The perp market index to trade
  * @param direction - The direction of the trade (long/short)

@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { BN } from '@coral-xyz/anchor';
 import {
-	centralServerDrift,
+	centralServerVelocity,
 	velocityClient,
 	setupTestContext,
 	teardownTestContext,
@@ -25,7 +25,7 @@ import { VersionedTransaction } from '@solana/web3.js';
 import { assertComputeBudgetThenProgram } from '../../../../utils/txAssertions';
 import { getTestWallet } from '../../../../utils/wallet';
 
-describe('CentralServerDrift - Account Management Transactions', function () {
+describe('CentralServerVelocity - Account Management Transactions', function () {
 	this.timeout(25_000);
 
 	let testWallet: WalletV2;
@@ -59,7 +59,7 @@ describe('CentralServerDrift - Account Management Transactions', function () {
 					transaction: txn,
 					userAccountPublicKey,
 					subAccountId,
-				} = await centralServerDrift.getCreateAndDepositTxn(
+				} = await centralServerVelocity.getCreateAndDepositTxn(
 					testWalletAuthority,
 					amount,
 					spotMarketIndex,
@@ -159,7 +159,7 @@ describe('CentralServerDrift - Account Management Transactions', function () {
 			const invalidSpotMarketIndex = 999;
 
 			try {
-				await centralServerDrift.getCreateAndDepositTxn(
+				await centralServerVelocity.getCreateAndDepositTxn(
 					testWalletAuthority,
 					amount,
 					invalidSpotMarketIndex
@@ -175,7 +175,7 @@ describe('CentralServerDrift - Account Management Transactions', function () {
 			const spotMarketIndex = 0;
 
 			try {
-				await centralServerDrift.getCreateAndDepositTxn(
+				await centralServerVelocity.getCreateAndDepositTxn(
 					testWalletAuthority,
 					amount,
 					spotMarketIndex
@@ -194,7 +194,7 @@ describe('CentralServerDrift - Account Management Transactions', function () {
 				const spotMarketIndex = 0;
 
 				const { transaction: createAndDepositTxn, userAccountPublicKey } =
-					await centralServerDrift.getCreateAndDepositTxn(
+					await centralServerVelocity.getCreateAndDepositTxn(
 						testWalletAuthority,
 						amount,
 						spotMarketIndex,
@@ -207,7 +207,7 @@ describe('CentralServerDrift - Account Management Transactions', function () {
 				);
 
 				// Ensure account has no balances: withdraw max USDC first
-				const withdrawMaxTxn = await centralServerDrift.getWithdrawTxn(
+				const withdrawMaxTxn = await centralServerVelocity.getWithdrawTxn(
 					userAccountPublicKey,
 					ZERO,
 					spotMarketIndex,
@@ -223,7 +223,7 @@ describe('CentralServerDrift - Account Management Transactions', function () {
 				);
 
 				// Now build and send the delete user transaction
-				const deleteUserTxn = await centralServerDrift.getDeleteUserTxn(
+				const deleteUserTxn = await centralServerVelocity.getDeleteUserTxn(
 					userAccountPublicKey,
 					{ txParams: { computeUnits: 1000000, computeUnitsPrice: 1_000 } }
 				);
@@ -255,7 +255,7 @@ describe('CentralServerDrift - Account Management Transactions', function () {
 
 		it('should handle invalid user account public key', async () => {
 			try {
-				await centralServerDrift.getDeleteUserTxn(
+				await centralServerVelocity.getDeleteUserTxn(
 					invalidMockUserAccountPublicKey
 				);
 				expect.fail('Should have thrown error for invalid user key');

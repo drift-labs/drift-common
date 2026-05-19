@@ -19,7 +19,7 @@ export const updateUserNameIx = async ({
 	subAccountId,
 }: UpdateUserNameIxParams) => {
 	const nameBuffer = encodeName(newName);
-	// TODO: cast to any to avoid "Type instantiation is excessively deep and possibly infinite." error from Anchor's generic types against the Drift IDL. Fix once SDK is stable.
+	// TODO: cast to any to avoid "Type instantiation is excessively deep and possibly infinite." error from Anchor's generic types against the Velocity IDL. Fix once SDK is stable.
 	const program = velocityClient.program as any;
 	const ix = await program.instruction.updateUserName(
 		subAccountId,

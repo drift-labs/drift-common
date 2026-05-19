@@ -13,7 +13,7 @@ interface CreateSettleFundingIxParams {
 /**
  * Creates transaction instructions for settling funding payments.
  *
- * @param velocityClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Velocity client instance for interacting with the protocol
  * @param user - The user account that will settle funding payments
  *
  * @returns Promise resolving to an array of transaction instructions for settling funding
@@ -38,7 +38,7 @@ interface CreateSettleFundingTxnParams extends CreateSettleFundingIxParams {
 /**
  * Creates a complete transaction for settling funding payments.
  *
- * @param velocityClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Velocity client instance for interacting with the protocol
  * @param user - The user account that will settle funding payments
  *
  * @returns Promise resolving to a built transaction ready for signing (Transaction or VersionedTransaction)

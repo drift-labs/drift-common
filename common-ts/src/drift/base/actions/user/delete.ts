@@ -9,7 +9,7 @@ import {
  * Parameters required for deleting a user instruction
  */
 interface DeleteUserIxsParams {
-	/** The Drift protocol client instance */
+	/** The Velocity protocol client instance */
 	velocityClient: VelocityClient;
 	user: User;
 	userStatsAccount: UserStatsAccount;

@@ -27,7 +27,7 @@ interface CreateRevenueShareAccountIxParams {
  * The RevenueShare account tracks cumulative builder fees earned from routing trades.
  * This must be initialized before a builder can receive builder fees.
  *
- * @param velocityClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param authority - The public key of the builder who will own this revenue share account
  * @param payer - The public key of the account that will pay for the revenue share account rent. If not provided, the authority provided will be the payer.
  *
@@ -55,7 +55,7 @@ export const createRevenueShareAccountIx = async (
  * The RevenueShare account tracks cumulative builder fees earned from routing trades.
  * This must be initialized before a builder can receive builder code fees.
  *
- * @param velocityClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param authority - The public key of the builder who will own this revenue share account
  * @param txParams - Optional transaction parameters for customizing the transaction
  *

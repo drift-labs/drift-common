@@ -42,14 +42,14 @@ import { createOpenPerpNonMarketOrder } from '../../../../base/actions/trade/ope
 import { createRevenueShareEscrowTxn } from '../../../../base/actions/builder/createRevenueShareEscrow';
 
 /**
- * Handles majority of the relevant operations on the Drift program including deposits,
+ * Handles majority of the relevant operations on the Velocity program including deposits,
  * withdrawals, position management, and trading operations.
  *
  * This class encapsulates the trading logic and provides a clean API for
  * executing various trading operations while handling common patterns like
  * token address resolution and transaction preparation.
  */
-export class DriftOperations {
+export class VelocityOperations {
 	static readonly DEFAULT_TX_PARAMS: TxParams = {
 		computeUnitsPrice: 50_000,
 		useSimulatedComputeUnits: true,
@@ -59,7 +59,7 @@ export class DriftOperations {
 	static readonly MAX_COMPUTE_UNITS_PRICE = 1e15 / 10 / 1_400_000; // 1e15 = 1 SOL worth of micro lamports; 1e15 / 10 = 0.1 SOL worth of micro lamports; 1.4M = max compute units;
 
 	/**
-	 * Creates a new DriftOperations instance.
+	 * Creates a new VelocityOperations instance.
 	 *
 	 * @param velocityClient - The VelocityClient instance for executing transactions
 	 * @param getUserAccountCache - Function to get the user account cache. We lazily load the user account cache, so that we always get the latest user account data.
@@ -80,16 +80,16 @@ export class DriftOperations {
 	getTxParams(overrides?: Partial<TxParams>): TxParams {
 		const unsafePriorityFee = Math.floor(
 			this.getPriorityFee() ??
-				DriftOperations.DEFAULT_TX_PARAMS.computeUnitsPrice
+				VelocityOperations.DEFAULT_TX_PARAMS.computeUnitsPrice
 		);
 
 		const safePriorityFee = Math.min(
 			unsafePriorityFee,
-			DriftOperations.MAX_COMPUTE_UNITS_PRICE
+			VelocityOperations.MAX_COMPUTE_UNITS_PRICE
 		);
 
 		return {
-			...DriftOperations.DEFAULT_TX_PARAMS,
+			...VelocityOperations.DEFAULT_TX_PARAMS,
 			computeUnitsPrice: safePriorityFee,
 			...overrides,
 		};
@@ -171,7 +171,7 @@ export class DriftOperations {
 		await this.velocityClient.addUser(
 			subAccountId,
 			this.velocityClient.wallet.publicKey
-		); // adds user to driftclient's user map, subscribes to user account data
+		); // adds user to velocityclient's user map, subscribes to user account data
 		const user = this.velocityClient.getUser(
 			subAccountId,
 			this.velocityClient.wallet.publicKey
@@ -223,7 +223,7 @@ export class DriftOperations {
 	/**
 	 * Deletes a user account.
 	 *
-	 * This method removes a user's sub-account from the Drift.
+	 * This method removes a user's sub-account from the Velocity.
 	 *
 	 * @param subAccountId - The ID of the sub-account to delete
 	 * @returns A promise that resolves to the transaction signature of the deletion
@@ -664,7 +664,7 @@ export class DriftOperations {
 	 * Executes a swap between two spot markets (placeholder for future implementation).
 	 *
 	 * This method will handle swapping between different spot markets through
-	 * the Drift protocol's swap functionality.
+	 * the Velocity protocol's swap functionality.
 	 *
 	 * @param params - The swap parameters
 	 * @returns Promise resolving to the transaction signature

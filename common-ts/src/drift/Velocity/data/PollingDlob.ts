@@ -5,7 +5,7 @@ import { PollingCategory } from '../constants/blockchain';
 import { fetchBulkMarketsDlobL2Data } from '../../base/actions/trade/openPerpOrder/dlobServer';
 
 export interface PollingConfig {
-	driftDlobServerHttpUrl: string;
+	velocityDlobServerHttpUrl: string;
 	indicativeLiquidityEnabled?: boolean;
 	groupingSize?: number;
 }
@@ -44,8 +44,8 @@ export const POLLING_DEPTHS = {
 
 /**
  * PollingDlob - A configurable market data polling system.
- * The Drift DLOB (decentralized limit orderbook) server stores the current live state of the orderbook
- * across all Drift markets. This class is used to poll the DLOB server for the markets' current mark price,
+ * The Velocity DLOB (decentralized limit orderbook) server stores the current live state of the orderbook
+ * across all Velocity markets. This class is used to poll the DLOB server for the markets' current mark price,
  * while oracle price data is also provided alongside.
  *
  * Example usage:
@@ -384,7 +384,7 @@ export class PollingDlob {
 
 			// Make a single bulk fetch for all markets
 			const l2Data = await fetchBulkMarketsDlobL2Data(
-				this.config.driftDlobServerHttpUrl,
+				this.config.velocityDlobServerHttpUrl,
 				combinedMarketRequests.map((req) => ({
 					marketId: req.marketId,
 					depth: req.depth,

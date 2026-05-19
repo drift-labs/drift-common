@@ -4,7 +4,7 @@ import {
 	SpotMarketAccount,
 } from '@velocity-exchange/sdk';
 
-export class CentralServerDriftMarkets {
+export class CentralServerVelocityMarkets {
 	constructor(private readonly velocityClient: VelocityClient) {}
 
 	async getPerpMarketAccount(

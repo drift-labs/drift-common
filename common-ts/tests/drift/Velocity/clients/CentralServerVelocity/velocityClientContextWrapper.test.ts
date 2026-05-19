@@ -1,9 +1,9 @@
 /**
- * Test Suite: CentralServerDrift velocityClientContextWrapper
+ * Test Suite: CentralServerVelocity velocityClientContextWrapper
  *
  * PURPOSE:
  * Tests the critical private method `velocityClientContextWrapper` which manages user state
- * and context for all transaction operations in CentralServerDrift. This method is the
+ * and context for all transaction operations in CentralServerVelocity. This method is the
  * foundation for safe transaction building and user management.
  *
  * WHY THIS IS IMPORTANT:
@@ -24,7 +24,7 @@
  * - Performance under multiple rapid sequential calls
  *
  * TESTING APPROACH:
- * - Integration-style tests using real CentralServerDrift instances
+ * - Integration-style tests using real CentralServerVelocity instances
  * - Error-tolerant testing (expects failures due to non-existent user accounts)
  * - Focus on behavior verification rather than heavy mocking
  * - Resource management validation
@@ -36,16 +36,16 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 import { VelocityEnv, User } from '@velocity-exchange/sdk';
-import { CentralServerDrift } from '../../../../../src/drift/Drift/clients/CentralServerDrift';
+import { CentralServerVelocity } from '../../../../../src/drift/Velocity/clients/CentralServerVelocity';
 import { EnvironmentConstants } from '../../../../../src/EnvironmentConstants';
 import { sleep } from '../../../../../src/utils';
 import { setupTestContext, invalidMockUserAccountPublicKey } from './context';
 import { getDevWallet } from '../../../../utils/wallet';
 
-describe('CentralServerDrift velocityClientContextWrapper', function () {
+describe('CentralServerVelocity velocityClientContextWrapper', function () {
 	this.timeout(10_000);
 
-	let centralServerDrift: CentralServerDrift;
+	let centralServerVelocity: CentralServerVelocity;
 	let originalConsoleWarn: typeof console.warn;
 
 	const validMockUserAccountPublicKey = getDevWallet().devUser0;
@@ -61,7 +61,7 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 		originalConsoleWarn = console.warn;
 		console.warn = () => {};
 
-		// Create CentralServerDrift instance
+		// Create CentralServerVelocity instance
 		const config = {
 			solanaRpcEndpoint: defaultDevnetRpc,
 			velocityEnv: 'devnet' as VelocityEnv,
@@ -69,7 +69,7 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 			supportedSpotMarkets: [0, 1], // USDC, SOL
 		};
 
-		centralServerDrift = new CentralServerDrift(config);
+		centralServerVelocity = new CentralServerVelocity(config);
 
 		// Add delay to prevent RPC rate limiting between test cases
 		await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -86,7 +86,7 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 			const mockOperation = sinon.stub().rejects(operationError);
 
 			try {
-				await (centralServerDrift as any).velocityClientContextWrapper(
+				await (centralServerVelocity as any).velocityClientContextWrapper(
 					invalidMockUserAccountPublicKey,
 					mockOperation
 				);
@@ -100,11 +100,11 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 
 		it('should be a private method', () => {
 			// Verify the method exists but is not publicly accessible
-			expect((centralServerDrift as any).velocityClientContextWrapper).to.be.a(
-				'function'
-			);
-			expect((centralServerDrift as any).velocityClientContextWrapper).to.not.be
-				.undefined;
+			expect(
+				(centralServerVelocity as any).velocityClientContextWrapper
+			).to.be.a('function');
+			expect((centralServerVelocity as any).velocityClientContextWrapper).to.not
+				.be.undefined;
 		});
 
 		it('should handle invalid user account public key', async () => {
@@ -112,7 +112,7 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 			const mockOperation = sinon.stub().resolves('success');
 
 			try {
-				await (centralServerDrift as any).velocityClientContextWrapper(
+				await (centralServerVelocity as any).velocityClientContextWrapper(
 					invalidKey,
 					mockOperation
 				);
@@ -143,7 +143,7 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 				const mockOperation = sinon.stub().resolves(expectedResult);
 
 				const result = await (
-					centralServerDrift as any
+					centralServerVelocity as any
 				).velocityClientContextWrapper(
 					validMockUserAccountPublicKey,
 					mockOperation
@@ -161,7 +161,7 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 				return 'delayed result';
 			});
 
-			await (centralServerDrift as any).velocityClientContextWrapper(
+			await (centralServerVelocity as any).velocityClientContextWrapper(
 				validMockUserAccountPublicKey,
 				mockOperation
 			);
@@ -175,10 +175,11 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 			const mockOperation = sinon.stub().rejects(new Error('Operation failed'));
 
 			// Store original state to verify it doesn't get corrupted
-			const originalDriftClient = (centralServerDrift as any).velocityClient;
+			const originalVelocityClient = (centralServerVelocity as any)
+				.velocityClient;
 
 			try {
-				await (centralServerDrift as any).velocityClientContextWrapper(
+				await (centralServerVelocity as any).velocityClientContextWrapper(
 					invalidMockUserAccountPublicKey,
 					mockOperation
 				);
@@ -187,8 +188,8 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 			}
 
 			// Verify the original velocityClient reference is still intact
-			expect((centralServerDrift as any).velocityClient).to.equal(
-				originalDriftClient
+			expect((centralServerVelocity as any).velocityClient).to.equal(
+				originalVelocityClient
 			);
 		});
 
@@ -206,7 +207,7 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 			for (let i = 0; i < operations.length; i++) {
 				try {
 					const result = await (
-						centralServerDrift as any
+						centralServerVelocity as any
 					).velocityClientContextWrapper(
 						invalidMockUserAccountPublicKey,
 						operations[i]
@@ -259,7 +260,7 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 			// Execute operations sequentially with different user keys and delays
 			for (let i = 0; i < operations.length; i++) {
 				try {
-					(centralServerDrift as any)
+					(centralServerVelocity as any)
 						.velocityClientContextWrapper(userKeysExpected[i], operations[i])
 						.then((result) => {
 							// we intentionally don't await here to test the async behavior
@@ -281,7 +282,7 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 	describe('Input Validation', () => {
 		it('should handle null operation function', async () => {
 			try {
-				await (centralServerDrift as any).velocityClientContextWrapper(
+				await (centralServerVelocity as any).velocityClientContextWrapper(
 					invalidMockUserAccountPublicKey,
 					null as any
 				);
@@ -293,7 +294,7 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 
 		it('should handle undefined operation function', async () => {
 			try {
-				await (centralServerDrift as any).velocityClientContextWrapper(
+				await (centralServerVelocity as any).velocityClientContextWrapper(
 					invalidMockUserAccountPublicKey,
 					undefined as any
 				);
@@ -305,7 +306,7 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 
 		it('should handle non-function operation parameter', async () => {
 			try {
-				await (centralServerDrift as any).velocityClientContextWrapper(
+				await (centralServerVelocity as any).velocityClientContextWrapper(
 					invalidMockUserAccountPublicKey,
 					'not a function' as any
 				);
@@ -334,13 +335,14 @@ describe('CentralServerDrift velocityClientContextWrapper', function () {
 			];
 
 			publicMethods.forEach((methodName) => {
-				expect((centralServerDrift as any)[methodName]).to.be.a('function');
+				expect((centralServerVelocity as any)[methodName]).to.be.a('function');
 			});
 		});
 
 		it('should maintain consistent interface', () => {
 			// Verify the velocityClientContextWrapper maintains expected interface
-			const wrapper = (centralServerDrift as any).velocityClientContextWrapper;
+			const wrapper = (centralServerVelocity as any)
+				.velocityClientContextWrapper;
 
 			expect(wrapper).to.be.a('function');
 			expect(wrapper.constructor.name).to.equal('AsyncFunction');

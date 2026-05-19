@@ -3,7 +3,7 @@ import * as sinon from 'sinon';
 import { BN } from '@coral-xyz/anchor';
 import { VersionedTransaction } from '@solana/web3.js';
 import {
-	centralServerDrift,
+	centralServerVelocity,
 	velocityClient,
 	setupTestContext,
 	teardownTestContext,
@@ -11,7 +11,7 @@ import {
 import { assertComputeBudgetThenProgram } from '../../../../utils/txAssertions';
 import { getDevWallet } from '../../../../utils/wallet';
 
-describe('CentralServerDrift - Swap Transactions', function () {
+describe('CentralServerVelocity - Swap Transactions', function () {
 	this.timeout(10_000);
 
 	const validMockUserAccountPublicKey = getDevWallet().devUser0;
@@ -38,7 +38,7 @@ describe('CentralServerDrift - Swap Transactions', function () {
 			const toMarketIndex = 1;
 			const amount = new BN(1000000);
 			try {
-				const txn = await centralServerDrift.getSwapTxn(
+				const txn = await centralServerVelocity.getSwapTxn(
 					validMockUserAccountPublicKey,
 					fromMarketIndex,
 					toMarketIndex,
@@ -60,7 +60,7 @@ describe('CentralServerDrift - Swap Transactions', function () {
 			const toMarketIndex = 0;
 			const amount = new BN(1000000000);
 			try {
-				const txn = await centralServerDrift.getSwapTxn(
+				const txn = await centralServerVelocity.getSwapTxn(
 					validMockUserAccountPublicKey,
 					fromMarketIndex,
 					toMarketIndex,
@@ -83,7 +83,7 @@ describe('CentralServerDrift - Swap Transactions', function () {
 			const toMarketIndex = 0;
 			const amount = new BN(1000000);
 			try {
-				await centralServerDrift.getSwapTxn(
+				await centralServerVelocity.getSwapTxn(
 					validMockUserAccountPublicKey,
 					fromMarketIndex,
 					toMarketIndex,
@@ -99,7 +99,7 @@ describe('CentralServerDrift - Swap Transactions', function () {
 			const marketIndex = 0;
 			const amount = new BN(1000000);
 			try {
-				await centralServerDrift.getSwapTxn(
+				await centralServerVelocity.getSwapTxn(
 					validMockUserAccountPublicKey,
 					marketIndex,
 					marketIndex,

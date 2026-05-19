@@ -22,7 +22,7 @@ interface SettlePnlParams {
 /**
  * Creates transaction instruction for settling PnL for multiple markets.
  *
- * @param velocityClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Velocity client instance for interacting with the protocol
  * @param user - The user account that will settle PnL
  * @param marketIndexes - Array of perp market indexes to settle PnL for
  * @param mode - Settlement mode (defaults to TRY_SETTLE)
@@ -59,7 +59,7 @@ interface CreateSettlePnlTxnParams extends SettlePnlParams {
 /**
  * Creates a complete transaction for settling PnL for multiple markets.
  *
- * @param velocityClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Velocity client instance for interacting with the protocol
  * @param user - The user account that will settle PnL
  * @param marketIndexes - Array of perp market indexes to settle PnL for
  * @param mode - Settlement mode (defaults to TRY_SETTLE)

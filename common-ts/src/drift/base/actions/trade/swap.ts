@@ -17,7 +17,7 @@ import {
  * Parameters for creating swap instruction details
  */
 interface CreateSwapIxDetailsParams {
-	/** The Drift client instance for interacting with the Drift protocol */
+	/** The Velocity client instance for interacting with the Velocity protocol */
 	velocityClient: VelocityClient;
 	/** Quote response from swap provider containing swap route information */
 	quote: UnifiedQuoteResponse;
@@ -34,9 +34,9 @@ interface CreateSwapIxDetailsParams {
 }
 
 /**
- * Creates swap instruction details for a swap through Drift
+ * Creates swap instruction details for a swap through Velocity
  *
- * @param velocityClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param swapClient - The swap client instance for performing the swap (supports UnifiedSwapClient or JupiterClient)
  * @param quote - Quote response from swap provider with routing information
  * @param swapFromMarketIndex - Source token market index
@@ -85,7 +85,7 @@ interface CreateSwapTxnParams extends CreateSwapIxDetailsParams {
 /**
  * Creates a complete swap transaction ready for signing and submission
  *
- * @param velocityClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param swapClient - The swap client instance for performing the swap (supports UnifiedSwapClient or JupiterClient)
  * @param quote - Quote response from swap provider with routing information
  * @param swapFromMarketIndex - Source token market index

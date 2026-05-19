@@ -11,7 +11,7 @@ import {
 	OrderbookGrouping,
 } from '../../../../utils/dlob-server/DlobServerWebsocketUtils';
 
-interface DriftL2OrderbookSubscription {
+interface VelocityL2OrderbookSubscription {
 	marketId: MarketId;
 	channel: 'orderbook_indicative' | 'orderbook';
 	grouping: OrderbookGrouping;
@@ -23,19 +23,19 @@ interface DlobMessage {
 	error?: any;
 }
 
-export interface DriftL2OrderbookManagerConfig {
+export interface VelocityL2OrderbookManagerConfig {
 	wsUrl: string;
-	subscriptionConfig?: DriftL2OrderbookSubscription;
+	subscriptionConfig?: VelocityL2OrderbookSubscription;
 }
 
-export class DriftL2OrderbookManager {
+export class VelocityL2OrderbookManager {
 	private _orderbook: L2WithOracleAndMarketData | null = null;
 	private wsUrl: string;
-	private _subscriptionConfig?: DriftL2OrderbookSubscription;
+	private _subscriptionConfig?: VelocityL2OrderbookSubscription;
 	private updatesSubject$ = new Subject<L2WithOracleAndMarketData>();
 	private websocketSubscription: { unsubscribe: () => void } | null = null;
 
-	constructor(config: DriftL2OrderbookManagerConfig) {
+	constructor(config: VelocityL2OrderbookManagerConfig) {
 		this.wsUrl = config.wsUrl;
 		this._subscriptionConfig = config.subscriptionConfig;
 	}
@@ -126,8 +126,8 @@ export class DriftL2OrderbookManager {
 	 * Update market keys for subscription
 	 */
 	public updateSubscription(
-		orderbookSubscription: Pick<DriftL2OrderbookSubscription, 'marketId'> &
-			Partial<DriftL2OrderbookSubscription>
+		orderbookSubscription: Pick<VelocityL2OrderbookSubscription, 'marketId'> &
+			Partial<VelocityL2OrderbookSubscription>
 	): void {
 		// check if subscription config is changing
 

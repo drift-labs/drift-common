@@ -3,7 +3,7 @@ import {
 	calculateLongShortFundingRateAndLiveTwaps,
 	VelocityClient,
 } from '@velocity-exchange/sdk';
-import { MarkPriceCache } from '../../../Drift';
+import { MarkPriceCache } from '../../../Velocity';
 import { MarketId } from '../../../../types';
 import { getFundingRate } from '../../../utils/funding';
 import { API_URLS, API_ENDPOINTS } from '../../../constants/apiUrls';

@@ -1,7 +1,7 @@
 /**
- * API URL constants for Drift protocol services
+ * API URL constants for Velocity protocol services
  *
- * These constants define the URLs used within the drift directory for various Drift services.
+ * These constants define the URLs used within the velocity directory for various Velocity services.
  */
 
 export const API_URLS = {

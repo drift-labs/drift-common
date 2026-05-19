@@ -39,7 +39,7 @@ const awaitAccountInitializationChainState = async (
 };
 
 /**
- * Using your own callback to do the account initialization, this method will run the initialization step, switch to the drift user, await for the account to be available on chain, subscribe to the user account, and switch to the user account using the drift client.
+ * Using your own callback to do the account initialization, this method will run the initialization step, switch to the velocity user, await for the account to be available on chain, subscribe to the user account, and switch to the user account using the velocity client.
  *
  * It provides extra callbacks to handle steps directly after the initialiation tx, and after fully initializing+subscribing to the account.
  *
@@ -121,7 +121,7 @@ const initializeAndSubscribeToNewUserAccount = async (
 async function updateUserAccount(user: User): Promise<void> {
 	const publicKey = user.userAccountPublicKey;
 	try {
-		// TODO: cast to any to avoid "Type instantiation is excessively deep and possibly infinite." error from Anchor's generic types against the Drift IDL. Fix once SDK is stable.
+		// TODO: cast to any to avoid "Type instantiation is excessively deep and possibly infinite." error from Anchor's generic types against the Velocity IDL. Fix once SDK is stable.
 		const program = user.driftClient.program as any;
 		const dataAndContext = await program.account.user.fetchAndContext(
 			publicKey,

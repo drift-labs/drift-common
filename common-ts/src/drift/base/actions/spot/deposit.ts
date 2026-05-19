@@ -29,7 +29,7 @@ interface CreateDepositIxParams {
 /**
  * Creates transaction instructions for depositing a spot token.
  *
- * @param velocityClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Velocity client instance for interacting with the protocol
  * @param user - The user account that will perform the deposit
  * @param amount - The amount to deposit (in BigNum format)
  * @param spotMarketConfig - The spot market configuration for the token being deposited
@@ -81,7 +81,7 @@ interface CreateDepositTxnParams extends CreateDepositIxParams {
 /**
  * Creates a complete transaction for depositing assets into a spot market.
  *
- * @param velocityClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Velocity client instance for interacting with the protocol
  * @param user - The user account that will perform the deposit
  * @param amount - The amount to deposit (in BigNum format)
  * @param spotMarketConfig - The spot market configuration for the token being deposited

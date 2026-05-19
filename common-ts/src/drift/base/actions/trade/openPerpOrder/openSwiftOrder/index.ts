@@ -133,7 +133,7 @@ export interface SwiftOrderMessage {
 export type SwiftOrderObservable = Observable<SwiftOrderEvent>;
 
 interface PrepSwiftOrderParams {
-	/** The Drift client instance */
+	/** The Velocity client instance */
 	velocityClient: VelocityClient;
 	/** The taker user account information */
 	takerUserAccount: {
@@ -196,7 +196,7 @@ interface PrepSwiftOrderParams {
  * Prepares a swift order by encoding the order parameters into a message format
  * suitable for signing and sending to the Swift server.
  *
- * @param velocityClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param takerUserAccount - The taker user account information
  * @param currentSlot - Current blockchain slot number
  * @param isDelegate - Whether this is a delegate order
@@ -402,7 +402,7 @@ export const signSwiftOrderMsg = async ({
  * @interface SendSwiftOrderParams
  */
 interface SendSwiftOrderParams {
-	/** The Drift client instance */
+	/** The Velocity client instance */
 	velocityClient: VelocityClient;
 	/** Market identifier for the order */
 	marketId: MarketId;
@@ -428,7 +428,7 @@ interface SendSwiftOrderParams {
  * Sends a swift order to the Swift server and handles the response.
  * Monitors the order status and calls appropriate callback functions based on the response type.
  *
- * @param velocityClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param marketId - Market identifier for the order
  * @param hexEncodedSwiftOrderMessageString - Hex-encoded swift order message as string
  * @param signedMessage - The signed message from the wallet
@@ -536,7 +536,7 @@ type PrepSwiftOrderMessageParams = {
  * Prepares a SWIFT order message without signing or sending it.
  * Returns all data needed for the consumer to sign and send the order themselves.
  *
- * This is useful for server-side contexts (e.g., CentralServerDrift) where
+ * This is useful for server-side contexts (e.g., CentralServerVelocity) where
  * the server prepares the message but the client handles signing and sending.
  */
 export const prepSwiftOrderMessage = async ({

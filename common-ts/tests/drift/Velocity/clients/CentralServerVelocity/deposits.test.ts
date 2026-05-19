@@ -3,7 +3,7 @@ import * as sinon from 'sinon';
 import { BN } from '@coral-xyz/anchor';
 import { VersionedTransaction } from '@solana/web3.js';
 import {
-	centralServerDrift,
+	centralServerVelocity,
 	velocityClient,
 	setupTestContext,
 	signAndSendTransaction,
@@ -13,7 +13,7 @@ import { assertComputeBudgetThenProgram } from '../../../../utils/txAssertions';
 import { getDevWallet } from '../../../../utils/wallet';
 import { User, OneShotUserAccountSubscriber } from '@velocity-exchange/sdk';
 
-describe('CentralServerDrift - Deposit Transactions', function () {
+describe('CentralServerVelocity - Deposit Transactions', function () {
 	this.timeout(10_000);
 	const devWalletContext = getDevWallet();
 	const devWallet = devWalletContext.devWallet;
@@ -67,7 +67,7 @@ describe('CentralServerDrift - Deposit Transactions', function () {
 
 			await user.unsubscribe();
 
-			const txn = await centralServerDrift.getDepositTxn(
+			const txn = await centralServerVelocity.getDepositTxn(
 				devWalletUser0,
 				amount,
 				spotMarketIndex,
@@ -144,7 +144,7 @@ describe('CentralServerDrift - Deposit Transactions', function () {
 			const amount = new BN(1_000_000);
 			const invalidSpotMarketIndex = 999;
 			try {
-				await centralServerDrift.getDepositTxn(
+				await centralServerVelocity.getDepositTxn(
 					devWalletUser0,
 					amount,
 					invalidSpotMarketIndex

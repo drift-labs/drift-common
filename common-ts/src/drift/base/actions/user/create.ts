@@ -43,10 +43,10 @@ interface CreateUserAndDepositCollateralBaseIxsParams {
  * Creates transaction instructions for initializing a new user account and depositing collateral.
  *
  * This function generates the necessary transaction instructions to:
- * 1. Initialize a new user account in the Drift protocol
+ * 1. Initialize a new user account in the Velocity protocol
  * 2. Deposit collateral into the newly created account
  *
- * @param velocityClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Velocity client instance for interacting with the protocol
  * @param amount - The amount of collateral to deposit (in base units)
  * @param spotMarketConfig - The spot market config of the deposit collateral
  * @param authority - The public key of the account authority (wallet owner)
@@ -191,7 +191,7 @@ interface CreateUserAndDepositCollateralBaseTxnParams
  * 1. Generates the necessary transaction instructions
  * 2. Builds a complete transaction ready for signing and submission
  *
- * @param velocityClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Velocity client instance for interacting with the protocol
  * @param amount - The amount of collateral to deposit (in base units)
  * @param spotMarketConfig - The spot market config of the deposit collateral
  * @param authority - The public key of the account authority (wallet owner)

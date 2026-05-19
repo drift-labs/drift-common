@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { VersionedTransaction } from '@solana/web3.js';
 import {
-	centralServerDrift,
+	centralServerVelocity,
 	velocityClient,
 	setupTestContext,
 	teardownTestContext,
@@ -12,7 +12,7 @@ import {
 import { assertComputeBudgetThenProgram } from '../../../../utils/txAssertions';
 import { getDevWallet } from '../../../../utils/wallet';
 
-describe('CentralServerDrift - Settlement Transactions', function () {
+describe('CentralServerVelocity - Settlement Transactions', function () {
 	this.timeout(10_000);
 	const devWalletContext = getDevWallet();
 	const devWallet = devWalletContext.devWallet;
@@ -39,9 +39,12 @@ describe('CentralServerDrift - Settlement Transactions', function () {
 	 */
 	async function verifySettleFundingExecution(expectNoPositionError = false) {
 		try {
-			const txn = await centralServerDrift.getSettleFundingTxn(devWalletUser0, {
-				txParams: { computeUnits: 1000000, computeUnitsPrice: 1_000 },
-			});
+			const txn = await centralServerVelocity.getSettleFundingTxn(
+				devWalletUser0,
+				{
+					txParams: { computeUnits: 1000000, computeUnitsPrice: 1_000 },
+				}
+			);
 			expect(txn).to.exist;
 			assertComputeBudgetThenProgram(
 				txn as VersionedTransaction,
@@ -68,7 +71,7 @@ describe('CentralServerDrift - Settlement Transactions', function () {
 		expectNoPositionError = false
 	) {
 		try {
-			const txn = await centralServerDrift.getSettlePnlTxn(
+			const txn = await centralServerVelocity.getSettlePnlTxn(
 				devWalletUser0,
 				marketIndexes,
 				{ txParams: { computeUnits: 1000000, computeUnitsPrice: 1_000 } }
@@ -103,7 +106,7 @@ describe('CentralServerDrift - Settlement Transactions', function () {
 
 		it('should handle invalid user account', async () => {
 			try {
-				await centralServerDrift.getSettleFundingTxn(
+				await centralServerVelocity.getSettleFundingTxn(
 					invalidMockUserAccountPublicKey,
 					{ txParams: { computeUnits: 1000000, computeUnitsPrice: 1_000 } }
 				);
@@ -128,7 +131,7 @@ describe('CentralServerDrift - Settlement Transactions', function () {
 		it('should handle empty market indexes array', async () => {
 			const marketIndexes: number[] = [];
 			try {
-				const txn = await centralServerDrift.getSettlePnlTxn(
+				const txn = await centralServerVelocity.getSettlePnlTxn(
 					devWalletUser0,
 					marketIndexes
 				);

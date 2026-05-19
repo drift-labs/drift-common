@@ -83,8 +83,8 @@ import {
 	CentralServerGetDepositAndOpenIsolatedPerpPositionTxnParams,
 	CentralServerGetCloseAndWithdrawIsolatedPerpPositionToWalletTxnParams,
 } from './types';
-import { CentralServerDriftMarkets } from './markets';
-import { DriftOperations } from '../AuthorityDrift/DriftOperations';
+import { CentralServerVelocityMarkets } from './markets';
+import { VelocityOperations } from '../AuthorityVelocity/VelocityOperations';
 
 export type {
 	CentralServerGetOpenPerpMarketOrderTxnParams,
@@ -98,18 +98,18 @@ export type {
 export type { SwiftOrderMessage } from '../../../base/actions/trade/openPerpOrder/openSwiftOrder';
 
 /**
- * A Drift client that fetches user data on-demand, while market data is continuously subscribed to.
+ * A Velocity client that fetches user data on-demand, while market data is continuously subscribed to.
  *
  * This is useful for an API server that fetches user data on-demand, and return transaction messages specific to a given user
  */
-export class CentralServerDrift {
+export class CentralServerVelocity {
 	private _velocityClient: VelocityClient;
 	private _perpMarketConfigs: PerpMarketConfig[];
 	private _spotMarketConfigs: SpotMarketConfig[];
 	/**
-	 * The public endpoints that can be used to retrieve Drift data / interact with the Drift program.
+	 * The public endpoints that can be used to retrieve Velocity data / interact with the Velocity program.
 	 */
-	private _driftEndpoints: {
+	private _velocityEndpoints: {
 		dlobServerHttpUrl: string;
 		swiftServerUrl: string;
 	};
@@ -125,7 +125,7 @@ export class CentralServerDrift {
 	 */
 	private _mutex: Promise<void> = Promise.resolve();
 
-	public readonly markets: CentralServerDriftMarkets;
+	public readonly markets: CentralServerVelocityMarkets;
 
 	/**
 	 * @param solanaRpcEndpoint - The Solana RPC endpoint to use for reading RPC data.
@@ -194,7 +194,7 @@ export class CentralServerDrift {
 			...config.additionalVelocityClientConfig,
 		};
 		this._velocityClient = new VelocityClient(velocityClientConfig);
-		this.markets = new CentralServerDriftMarkets(this._velocityClient);
+		this.markets = new CentralServerVelocityMarkets(this._velocityClient);
 
 		const txSender = new WhileValidTxSender({
 			connection,
@@ -208,8 +208,8 @@ export class CentralServerDrift {
 
 		this._velocityClient.txSender = txSender;
 
-		// set up Drift endpoints
-		const driftDlobServerHttpUrlToUse =
+		// set up Velocity endpoints
+		const velocityDlobServerHttpUrlToUse =
 			EnvironmentConstants.dlobServerHttpUrl[
 				config.velocityEnv === 'devnet' ? 'dev' : 'mainnet'
 			];
@@ -217,8 +217,8 @@ export class CentralServerDrift {
 			EnvironmentConstants.swiftServerUrl[
 				config.velocityEnv === 'devnet' ? 'staging' : 'mainnet'
 			];
-		this._driftEndpoints = {
-			dlobServerHttpUrl: driftDlobServerHttpUrlToUse,
+		this._velocityEndpoints = {
+			dlobServerHttpUrl: velocityDlobServerHttpUrlToUse,
 			swiftServerUrl: swiftServerUrlToUse,
 		};
 
@@ -431,16 +431,16 @@ export class CentralServerDrift {
 	getTxParams(overrides?: Partial<TxParams>): TxParams {
 		const unsafePriorityFee = Math.floor(
 			this.priorityFeeSubscriber.getCustomStrategyResult() ??
-				DriftOperations.DEFAULT_TX_PARAMS.computeUnitsPrice
+				VelocityOperations.DEFAULT_TX_PARAMS.computeUnitsPrice
 		);
 
 		const safePriorityFee = Math.min(
 			unsafePriorityFee,
-			DriftOperations.MAX_COMPUTE_UNITS_PRICE
+			VelocityOperations.MAX_COMPUTE_UNITS_PRICE
 		);
 
 		return {
-			...DriftOperations.DEFAULT_TX_PARAMS,
+			...VelocityOperations.DEFAULT_TX_PARAMS,
 			computeUnitsPrice: safePriorityFee,
 			...overrides,
 		};
@@ -684,7 +684,7 @@ export class CentralServerDrift {
 						...rest,
 						velocityClient: this._velocityClient,
 						user,
-						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+						dlobServerHttpUrl: this._velocityEndpoints.dlobServerHttpUrl,
 						userSigningSlotBuffer: swiftOptions?.userSigningSlotBuffer,
 						isDelegate: swiftOptions?.isDelegate ?? !!rest.mainSignerOverride,
 					});
@@ -701,7 +701,7 @@ export class CentralServerDrift {
 						useSwift: false,
 						velocityClient: this._velocityClient,
 						user,
-						dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+						dlobServerHttpUrl: this._velocityEndpoints.dlobServerHttpUrl,
 						txParams: txParams ?? this.getTxParams(),
 					});
 					return openPerpMarketOrderTxn as Transaction | VersionedTransaction;
@@ -874,7 +874,7 @@ export class CentralServerDrift {
 					amount: params.baseAssetAmount,
 					assetType: params.assetType ?? 'base',
 					reduceOnly: true,
-					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+					dlobServerHttpUrl: this._velocityEndpoints.dlobServerHttpUrl,
 					positionMaxLeverage: 0,
 					mainSignerOverride: signingAuthority,
 					placeAndTake: params.placeAndTake,
@@ -949,7 +949,7 @@ export class CentralServerDrift {
 					...rest,
 					velocityClient: this._velocityClient,
 					user,
-					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+					dlobServerHttpUrl: this._velocityEndpoints.dlobServerHttpUrl,
 					mainSignerOverride: signingAuthority,
 				});
 
@@ -995,7 +995,7 @@ export class CentralServerDrift {
 					amount: params.baseAssetAmount,
 					assetType: params.assetType ?? 'base',
 					reduceOnly: true,
-					dlobServerHttpUrl: this._driftEndpoints.dlobServerHttpUrl,
+					dlobServerHttpUrl: this._velocityEndpoints.dlobServerHttpUrl,
 					positionMaxLeverage: 0,
 					mainSignerOverride: signingAuthority,
 					placeAndTake: params.placeAndTake,

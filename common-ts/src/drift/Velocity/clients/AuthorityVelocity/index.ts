@@ -43,7 +43,7 @@ import {
 	OraclePriceLookup,
 	OraclePriceCache,
 } from '../../stores/OraclePriceCache';
-import { DriftL2OrderbookManager } from './DriftL2OrderbookManager';
+import { VelocityL2OrderbookManager } from './VelocityL2OrderbookManager';
 import { Subscription } from 'rxjs';
 import {
 	EnhancedAccountData,
@@ -58,7 +58,7 @@ import {
 	PriorityFeeMethod,
 } from '@velocity-exchange/sdk';
 import { SubscriptionManager } from './SubscriptionManager';
-import { DriftOperations } from './DriftOperations';
+import { VelocityOperations } from './VelocityOperations';
 import {
 	CreateUserAndDepositParams,
 	DepositParams,
@@ -68,7 +68,7 @@ import {
 	SettleAccountPnlParams,
 	CancelOrdersParams,
 	CreateRevenueShareEscrowParams,
-} from './DriftOperations/types';
+} from './VelocityOperations/types';
 import { Initialize } from '../../../../Config';
 import { L2WithOracleAndMarketData } from '../../../../utils/orderbook/types';
 import { GeoBlockError } from '../../constants/errors';
@@ -93,7 +93,7 @@ function enforceGeoBlock(
 ): PropertyDescriptor {
 	const originalMethod = descriptor.value;
 
-	descriptor.value = function (this: AuthorityDrift, ...args: any[]) {
+	descriptor.value = function (this: AuthorityVelocity, ...args: any[]) {
 		if (this._isGeoBlocked) {
 			throw new GeoBlockError(propertyName);
 		}
@@ -103,11 +103,11 @@ function enforceGeoBlock(
 	return descriptor;
 }
 
-export interface AuthorityDriftConfig {
+export interface AuthorityVelocityConfig {
 	solanaRpcEndpoint: string;
 	velocityEnv: VelocityEnv;
 	wallet?: IWalletV2;
-	driftDlobServerHttpUrl?: string;
+	velocityDlobServerHttpUrl?: string;
 	tradableMarkets?: MarketId[];
 	selectedTradeMarket?: MarketId;
 	additionalVelocityClientConfig?: Partial<Omit<VelocityClientConfig, 'env'>>;
@@ -119,14 +119,14 @@ export interface AuthorityDriftConfig {
 }
 
 /**
- * A Drift client that is used to subscribe to all accounts for a given authority.
+ * A Velocity client that is used to subscribe to all accounts for a given authority.
  *
  * This is useful for applications that want to subscribe to all user accounts for a given authority,
- * such as a UI to trade on Drift or a wallet application that allows trading on Drift.
+ * such as a UI to trade on Velocity or a wallet application that allows trading on Velocity.
  */
-export class AuthorityDrift {
+export class AuthorityVelocity {
 	/**
-	 * Handles all Drift program interactions e.g. trading, read account details, etc.
+	 * Handles all Velocity program interactions e.g. trading, read account details, etc.
 	 */
 	private _velocityClient!: VelocityClient;
 
@@ -154,7 +154,7 @@ export class AuthorityDrift {
 	/**
 	 * Handles all trading operations including deposits, withdrawals, and position management.
 	 */
-	private driftOperations!: DriftOperations;
+	private velocityOperations!: VelocityOperations;
 
 	/**
 	 * Manages all subscription operations including user accounts, market subscriptions, and polling optimization.
@@ -185,7 +185,7 @@ export class AuthorityDrift {
 	/**
 	 * Manages real-time orderbook subscriptions via websocket.
 	 */
-	private _orderbookManager!: DriftL2OrderbookManager;
+	private _orderbookManager!: VelocityL2OrderbookManager;
 
 	/**
 	 * Handles priority fee tracking and calculation for optimized transaction costs.
@@ -199,7 +199,7 @@ export class AuthorityDrift {
 	protected _isGeoBlocked: boolean = false;
 
 	/**
-	 * The selected trade market to use for the drift client. This is used to subscribe to the market account,
+	 * The selected trade market to use for the velocity client. This is used to subscribe to the market account,
 	 * oracle data and mark price more frequently compared to the other markets.
 	 *
 	 * Example usage:
@@ -217,9 +217,9 @@ export class AuthorityDrift {
 	private _perpMarketConfigs: PerpMarketConfig[] = [];
 
 	/**
-	 * The public endpoints that can be used to retrieve Drift data / interact with the Drift program.
+	 * The public endpoints that can be used to retrieve Velocity data / interact with the Velocity program.
 	 */
-	private _driftEndpoints: {
+	private _velocityEndpoints: {
 		dlobServerHttpUrl: string;
 		swiftServerUrl: string;
 		orderbookWebsocketUrl: string;
@@ -230,10 +230,10 @@ export class AuthorityDrift {
 	 * @param velocityEnv - The Velocity environment to use for the Velocity client.
 	 * @param authority - The authority (wallet) whose user accounts to subscribe to.
 	 * @param tradableMarkets - The markets that are tradable through this client.
-	 * @param selectedTradeMarket - The active trade market to use for the drift client. This is used to subscribe to the market account, oracle data and mark price more frequently compared to the other markets.
+	 * @param selectedTradeMarket - The active trade market to use for the velocity client. This is used to subscribe to the market account, oracle data and mark price more frequently compared to the other markets.
 	 * @param additionalVelocityClientConfig - Additional VelocityClient config to use for the VelocityClient.
 	 */
-	constructor(config: AuthorityDriftConfig) {
+	constructor(config: AuthorityVelocityConfig) {
 		// set up tradable markets
 		this.selectedTradeMarket = config.selectedTradeMarket ?? null;
 
@@ -263,9 +263,9 @@ export class AuthorityDrift {
 			)
 		);
 
-		// set up Drift endpoints
-		const driftDlobServerHttpUrlToUse =
-			config.driftDlobServerHttpUrl ??
+		// set up Velocity endpoints
+		const velocityDlobServerHttpUrlToUse =
+			config.velocityDlobServerHttpUrl ??
 			EnvironmentConstants.dlobServerHttpUrl[
 				config.velocityEnv === 'devnet' ? 'dev' : 'mainnet'
 			];
@@ -278,8 +278,8 @@ export class AuthorityDrift {
 			EnvironmentConstants.dlobServerWsUrl[
 				config.velocityEnv === 'devnet' ? 'dev' : 'mainnet'
 			];
-		this._driftEndpoints = {
-			dlobServerHttpUrl: driftDlobServerHttpUrlToUse,
+		this._velocityEndpoints = {
+			dlobServerHttpUrl: velocityDlobServerHttpUrlToUse,
 			swiftServerUrl: swiftServerUrlToUse,
 			orderbookWebsocketUrl: orderbookWebsocketUrlToUse,
 		};
@@ -289,14 +289,17 @@ export class AuthorityDrift {
 
 		// set up clients and stores
 		const velocityClient = this.setupVelocityClient(config);
-		this.initializePollingDlob(driftDlobServerHttpUrlToUse);
+		this.initializePollingDlob(velocityDlobServerHttpUrlToUse);
 		this.initializeStores(velocityClient);
 		this.initializeOrderbookManager(
 			orderbookWebsocketUrlToUse,
 			config.orderbookConfig?.orderbookGrouping
 		);
 		this.initializePriorityFeeSubscriber(config.priorityFeeSubscriberConfig);
-		this.initializeManagers(driftDlobServerHttpUrlToUse, swiftServerUrlToUse);
+		this.initializeManagers(
+			velocityDlobServerHttpUrlToUse,
+			swiftServerUrlToUse
+		);
 	}
 
 	public get velocityClient(): VelocityClient {
@@ -327,7 +330,7 @@ export class AuthorityDrift {
 		return this._orderbookManager.store;
 	}
 
-	public get orderbookManager(): DriftL2OrderbookManager {
+	public get orderbookManager(): VelocityL2OrderbookManager {
 		return this._orderbookManager;
 	}
 
@@ -345,13 +348,13 @@ export class AuthorityDrift {
 	}
 
 	/**
-	 * The public endpoints that can be used to retrieve Drift data / interact with the Drift program.
+	 * The public endpoints that can be used to retrieve Velocity data / interact with the Velocity program.
 	 */
-	public get driftEndpoints(): {
+	public get velocityEndpoints(): {
 		dlobServerHttpUrl: string;
 		swiftServerUrl: string;
 	} {
-		return this._driftEndpoints;
+		return this._velocityEndpoints;
 	}
 
 	private set tradableMarkets(tradableMarkets: MarketId[]) {
@@ -398,7 +401,7 @@ export class AuthorityDrift {
 		orderbookWebsocketUrl: string,
 		orderbookGrouping: OrderbookGrouping = DEFAULT_ORDERBOOK_GROUPING
 	) {
-		this._orderbookManager = new DriftL2OrderbookManager({
+		this._orderbookManager = new VelocityL2OrderbookManager({
 			wsUrl: orderbookWebsocketUrl,
 			subscriptionConfig: this.selectedTradeMarket
 				? {
@@ -410,16 +413,16 @@ export class AuthorityDrift {
 		});
 	}
 
-	private initializePollingDlob(driftDlobServerHttpUrl: string) {
+	private initializePollingDlob(velocityDlobServerHttpUrl: string) {
 		this._pollingDlob = new PollingDlob({
-			driftDlobServerHttpUrl: driftDlobServerHttpUrl,
+			velocityDlobServerHttpUrl: velocityDlobServerHttpUrl,
 		});
 	}
 
 	private initializePriorityFeeSubscriber(
 		config?: Partial<PriorityFeeSubscriberConfig>
 	) {
-		// Convert tradable markets to DriftMarketInfo format for priority fee subscriber
+		// Convert tradable markets to VelocityMarketInfo format for priority fee subscriber
 		const driftMarkets = this._tradableMarkets.map((market) => ({
 			marketType: market.marketTypeStr,
 			marketIndex: market.marketIndex,
@@ -437,7 +440,7 @@ export class AuthorityDrift {
 	}
 
 	private setupVelocityClient(
-		config: Omit<AuthorityDriftConfig, 'onUserAccountUpdate'>
+		config: Omit<AuthorityVelocityConfig, 'onUserAccountUpdate'>
 	) {
 		const velocityEnv = config.velocityEnv;
 
@@ -543,7 +546,7 @@ export class AuthorityDrift {
 	}
 
 	private setupPollingDlob() {
-		// DriftL2OrderbookManager will handle the fetching of data for the selected trade market through websocket
+		// VelocityL2OrderbookManager will handle the fetching of data for the selected trade market through websocket
 
 		this._pollingDlob.addInterval(
 			PollingCategory.USER_INVOLVED,
@@ -591,7 +594,7 @@ export class AuthorityDrift {
 		swiftServerUrl: string
 	) {
 		// Initialize trading operations
-		this.driftOperations = new DriftOperations(
+		this.velocityOperations = new VelocityOperations(
 			this._velocityClient,
 			() => this._userAccountCache,
 			dlobServerHttpUrl,
@@ -681,7 +684,7 @@ export class AuthorityDrift {
 
 		this.subscriptionManager.subscribeToAllUsersUpdates();
 
-		// TODO: subscribe to oracle price updates from drift client?
+		// TODO: subscribe to oracle price updates from velocity client?
 	}
 
 	public async unsubscribe() {
@@ -727,7 +730,7 @@ export class AuthorityDrift {
 	}
 
 	/**
-	 * Updates the authority (wallet) for the drift client and reestablishes subscriptions.
+	 * Updates the authority (wallet) for the velocity client and reestablishes subscriptions.
 	 *
 	 * @param wallet - The new wallet to use as authority
 	 * @param activeSubAccountId - Optional subaccount ID to switch to after wallet update
@@ -771,7 +774,7 @@ export class AuthorityDrift {
 		txSig: TransactionSignature;
 		user: User;
 	}> {
-		return this.driftOperations.createUserAndDeposit(params);
+		return this.velocityOperations.createUserAndDeposit(params);
 	}
 
 	/**
@@ -783,7 +786,7 @@ export class AuthorityDrift {
 	public async createRevenueShareEscrow(
 		params: CreateRevenueShareEscrowParams
 	): Promise<TransactionSignature> {
-		return this.driftOperations.createRevenueShareEscrow(params);
+		return this.velocityOperations.createRevenueShareEscrow(params);
 	}
 
 	/**
@@ -793,7 +796,7 @@ export class AuthorityDrift {
 	 * @returns Promise resolving to the transaction signature
 	 */
 	public async deposit(params: DepositParams): Promise<TransactionSignature> {
-		return this.driftOperations.deposit(params);
+		return this.velocityOperations.deposit(params);
 	}
 
 	/**
@@ -803,7 +806,7 @@ export class AuthorityDrift {
 	 * @returns Promise resolving to the transaction signature
 	 */
 	public async withdraw(params: WithdrawParams): Promise<TransactionSignature> {
-		return this.driftOperations.withdraw(params);
+		return this.velocityOperations.withdraw(params);
 	}
 
 	/**
@@ -816,7 +819,7 @@ export class AuthorityDrift {
 	public async openPerpOrder(
 		params: PerpOrderParams
 	): Promise<TransactionSignature | void> {
-		return this.driftOperations.openPerpOrder(params);
+		return this.velocityOperations.openPerpOrder(params);
 	}
 
 	/**
@@ -826,7 +829,7 @@ export class AuthorityDrift {
 	 * @returns Promise resolving to the transaction signature
 	 */
 	public async swap(params: SwapParams): Promise<TransactionSignature> {
-		return this.driftOperations.swap(params);
+		return this.velocityOperations.swap(params);
 	}
 
 	public async getSwapQuote(
@@ -836,7 +839,7 @@ export class AuthorityDrift {
 			onlyDirectRoutes?: boolean;
 		}
 	): Promise<QuoteResponse> {
-		return this.driftOperations.getSwapQuote(params);
+		return this.velocityOperations.getSwapQuote(params);
 	}
 
 	/**
@@ -848,17 +851,17 @@ export class AuthorityDrift {
 	public async settleAccountPnl(
 		params: SettleAccountPnlParams
 	): Promise<TransactionSignature> {
-		return this.driftOperations.settleAccountPnl(params);
+		return this.velocityOperations.settleAccountPnl(params);
 	}
 
 	/**
-	 * Deletes a user account from the Drift protocol.
+	 * Deletes a user account from the Velocity protocol.
 	 *
 	 * @param subAccountId - The ID of the sub-account to delete
 	 * @returns Promise resolving to the transaction signature of the deletion
 	 */
 	public async deleteUser(subAccountId: number): Promise<TransactionSignature> {
-		return this.driftOperations.deleteUser(subAccountId);
+		return this.velocityOperations.deleteUser(subAccountId);
 	}
 
 	/**
@@ -870,10 +873,10 @@ export class AuthorityDrift {
 	public async cancelOrders(
 		params: CancelOrdersParams
 	): Promise<TransactionSignature> {
-		return this.driftOperations.cancelOrders(params);
+		return this.velocityOperations.cancelOrders(params);
 	}
 
 	public getTxParams(overrides?: Partial<TxParams>): TxParams {
-		return this.driftOperations.getTxParams(overrides);
+		return this.velocityOperations.getTxParams(overrides);
 	}
 }

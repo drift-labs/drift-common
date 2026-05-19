@@ -26,7 +26,7 @@ function createEventId(
 	return result;
 }
 
-// Pick the relevant fields from OrderActionRecord that we care about for getDriftEventKey. This enables us to use UISerializableOrderActionRecord and OrderActionRecord interchangeably.
+// Pick the relevant fields from OrderActionRecord that we care about for getVelocityEventKey. This enables us to use UISerializableOrderActionRecord and OrderActionRecord interchangeably.
 type UniqableOrderActionRecord = Pick<
 	WrappedEvent<'OrderActionRecord'>,
 	| 'eventType'
@@ -40,17 +40,17 @@ type UniqableOrderActionRecord = Pick<
 	| 'maker'
 >;
 
-// Create a generic type using typescript transforms that allows any relevant order types to be used in getDriftEventKey.
-export type UniqableDriftEvent =
+// Create a generic type using typescript transforms that allows any relevant order types to be used in getVelocityEventKey.
+export type UniqableVelocityEvent =
 	| WrappedEvent<Exclude<EventType, 'OrderActionRecord'>>
 	| UniqableOrderActionRecord;
 
 /**
- * Utility method to get a unique key for any drift event.
+ * Utility method to get a unique key for any velocity event.
  * @param event
  * @returns
  */
-export const getDriftEventKey = (event: UniqableDriftEvent) => {
+export const getVelocityEventKey = (event: UniqableVelocityEvent) => {
 	const _eventType = event.eventType;
 	switch (_eventType) {
 		case 'SwapRecord': {

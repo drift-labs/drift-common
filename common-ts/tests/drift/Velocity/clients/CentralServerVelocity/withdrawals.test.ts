@@ -3,7 +3,7 @@ import * as sinon from 'sinon';
 import { BN } from '@coral-xyz/anchor';
 import { VersionedTransaction } from '@solana/web3.js';
 import {
-	centralServerDrift,
+	centralServerVelocity,
 	velocityClient,
 	setupTestContext,
 	teardownTestContext,
@@ -17,7 +17,7 @@ import {
 } from '@velocity-exchange/sdk';
 import { getDevWallet } from '../../../../utils/wallet';
 
-describe('CentralServerDrift - Withdraw Transactions', function () {
+describe('CentralServerVelocity - Withdraw Transactions', function () {
 	this.timeout(10_000);
 	const devWalletContext = getDevWallet();
 	const devWallet = devWalletContext.devWallet;
@@ -30,7 +30,7 @@ describe('CentralServerDrift - Withdraw Transactions', function () {
 	beforeEach(async () => {
 		await new Promise((resolve) => setTimeout(resolve, 2000));
 
-		const txn = await centralServerDrift.getDepositTxn(
+		const txn = await centralServerVelocity.getDepositTxn(
 			devWalletUser0,
 			new BN(1_000_000),
 			0,
@@ -85,7 +85,7 @@ describe('CentralServerDrift - Withdraw Transactions', function () {
 
 		await user.unsubscribe();
 
-		const txn = await centralServerDrift.getWithdrawTxn(
+		const txn = await centralServerVelocity.getWithdrawTxn(
 			devWalletUser0,
 			amount,
 			spotMarketIndex,
@@ -181,7 +181,7 @@ describe('CentralServerDrift - Withdraw Transactions', function () {
 		const amount = new BN(1000000);
 		const invalidSpotMarketIndex = 999;
 		try {
-			await centralServerDrift.getWithdrawTxn(
+			await centralServerVelocity.getWithdrawTxn(
 				devWalletUser0,
 				amount,
 				invalidSpotMarketIndex

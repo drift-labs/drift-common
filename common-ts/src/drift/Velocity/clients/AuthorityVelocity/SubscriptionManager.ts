@@ -16,11 +16,11 @@ import {
 	USER_NOT_INVOLVED_MARKET_ACCOUNT_POLLING_CADENCE,
 } from '../../constants';
 import { UserAccountCache } from '../../stores/UserAccountCache';
-import { DriftL2OrderbookManager } from './DriftL2OrderbookManager';
+import { VelocityL2OrderbookManager } from './VelocityL2OrderbookManager';
 import { DEFAULT_ORDERBOOK_SUBSCRIPTION_CONFIG } from '../../constants/orderbook';
 
 /**
- * Comprehensive subscription and market operations manager for the Drift protocol.
+ * Comprehensive subscription and market operations manager for the Velocity protocol.
  *
  * This class handles all aspects of subscription management including:
  * - User account subscriptions and event listeners
@@ -48,7 +48,7 @@ export class SubscriptionManager {
 		private velocityClient: VelocityClient,
 		private accountLoader: CustomizedCadenceBulkAccountLoader,
 		private pollingDlob: PollingDlob,
-		private orderbookManager: DriftL2OrderbookManager,
+		private orderbookManager: VelocityL2OrderbookManager,
 		private userAccountCache: UserAccountCache,
 		private tradableMarkets: MarketId[],
 		private selectedTradeMarket: MarketId | null
@@ -415,7 +415,7 @@ export class SubscriptionManager {
 	}
 
 	/**
-	 * Updates the authority (wallet) for the drift client and reestablishes subscriptions.
+	 * Updates the authority (wallet) for the velocity client and reestablishes subscriptions.
 	 *
 	 * This method handles the complete process of switching to a new wallet:
 	 * 1. Checks if the wallet is actually different

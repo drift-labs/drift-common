@@ -523,9 +523,9 @@ class CandleSubscriber {
 }
 
 /**
- * This class will subscribe to candles from the Drift Data API.
+ * This class will subscribe to candles from the Velocity Data API.
  *
- * Note: If you are using TradingView you probably want to just use the DriftTvFeed class instead.
+ * Note: If you are using TradingView you probably want to just use the VelocityTvFeed class instead.
  */
 export class CandleClient {
 	private activeSubscriptions: Map<

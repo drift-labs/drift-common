@@ -17,7 +17,7 @@ interface CreateCancelOrdersIxParams {
 /**
  * Creates a transaction instruction to cancel multiple orders by their order IDs.
  *
- * @param velocityClient - The Drift client instance.
+ * @param velocityClient - The Velocity client instance.
  * @param orderIds - Array of order IDs to cancel. Each ID corresponds to a specific order
  * @param user - The user client that owns the orders to be cancelled
  *
@@ -46,7 +46,7 @@ export const createCancelOrdersIx = async (
 /**
  * Creates a transaction to cancel multiple orders by their IDs.
  *
- * @param velocityClient - The Drift client instance.
+ * @param velocityClient - The Velocity client instance.
  * @param orderIds - Array of order IDs to cancel. Each ID corresponds to a specific order
  * @param user - The user client that owns the orders to be cancelled
  * @param txParams - Optional transaction parameters for customizing the transaction
