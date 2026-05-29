@@ -12,10 +12,10 @@ import {
 	PRICE_PRECISION,
 	MainnetSpotMarkets,
 	DevnetSpotMarkets,
-	DriftEnv,
-} from '@drift-labs/sdk';
+	VelocityEnv,
+} from '@velocity-exchange/sdk';
 import { sign } from 'tweetnacl';
-import { CentralServerDrift } from './Drift/clients/CentralServerDrift';
+import { CentralServerVelocity } from './Velocity/clients/CentralServerVelocity';
 import { ENUM_UTILS } from '../utils';
 import { API_URLS } from './constants/apiUrls';
 import * as path from 'path';
@@ -37,9 +37,9 @@ const dotenv = require('dotenv');
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 /**
- * CLI Tool for CentralServerDrift client
+ * CLI Tool for CentralServerVelocity client
  *
- * This CLI tool allows you to execute various Drift protocol operations via command line
+ * This CLI tool allows you to execute various Velocity protocol operations via command line
  * with human-readable parameters that are automatically converted to the proper precision.
  *
  * Prerequisites:
@@ -67,7 +67,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
  */
 
 // Shared configuration
-let centralServerDrift: CentralServerDrift;
+let centralServerVelocity: CentralServerVelocity;
 let wallet: anchor.Wallet;
 
 interface CliArgs {
@@ -227,10 +227,10 @@ function getMarketPrecision(
 }
 
 /**
- * Initialize CentralServerDrift instance
+ * Initialize CentralServerVelocity instance
  */
-async function initializeCentralServerDrift(): Promise<void> {
-	console.log('🚀 Initializing CentralServerDrift...\n');
+async function initializeCentralServerVelocity(): Promise<void> {
+	console.log('🚀 Initializing CentralServerVelocity...\n');
 
 	// Validate required environment variables
 	if (!process.env.ANCHOR_WALLET) {
@@ -249,16 +249,16 @@ async function initializeCentralServerDrift(): Promise<void> {
 	console.log(`✅ Wallet Public Key: ${wallet.publicKey.toString()}`);
 	console.log(`✅ RPC Endpoint: ${process.env.ENDPOINT}\n`);
 
-	// Initialize CentralServerDrift
-	const driftEnv = (process.env.DRIFT_ENV as DriftEnv) ?? 'devnet';
-	console.log(`🏗️  Initializing CentralServerDrift... (${driftEnv})`);
+	// Initialize CentralServerVelocity
+	const velocityEnv = (process.env.DRIFT_ENV as VelocityEnv) ?? 'devnet';
+	console.log(`🏗️  Initializing CentralServerVelocity... (${velocityEnv})`);
 	const rpcEndpoint = process.env.ENDPOINT as string;
-	centralServerDrift = new CentralServerDrift({
+	centralServerVelocity = new CentralServerVelocity({
 		solanaRpcEndpoint: rpcEndpoint,
-		driftEnv,
+		velocityEnv,
 		supportedPerpMarkets: [0, 1, 2], // SOL, BTC, ETH
 		supportedSpotMarkets: [0, 1], // USDC, SOL
-		additionalDriftClientConfig: {
+		additionalVelocityClientConfig: {
 			txVersion: 0,
 			txParams: {
 				computeUnits: 200000,
@@ -267,11 +267,11 @@ async function initializeCentralServerDrift(): Promise<void> {
 		},
 	});
 
-	console.log('✅ CentralServerDrift instance created successfully\n');
+	console.log('✅ CentralServerVelocity instance created successfully\n');
 
 	// Subscribe to market data
 	console.log('📡 Subscribing to market data...');
-	await centralServerDrift.subscribe();
+	await centralServerVelocity.subscribe();
 	console.log('✅ Successfully subscribed to market data\n');
 }
 
@@ -289,7 +289,7 @@ async function executeTransaction(
 	console.log('✅ Transaction signed successfully');
 
 	console.log('\n🚀 Sending transaction to the network...');
-	const { txSig } = await centralServerDrift.sendSignedTransaction(txn);
+	const { txSig } = await centralServerVelocity.sendSignedTransaction(txn);
 
 	console.log('✅ Transaction sent successfully!');
 	console.log(`📋 Transaction Signature: ${txSig?.toString()}`);
@@ -297,12 +297,12 @@ async function executeTransaction(
 }
 
 /**
- * Signs and sends a SWIFT order message that was prepared by CentralServerDrift.
+ * Signs and sends a SWIFT order message that was prepared by CentralServerVelocity.
  */
 async function signAndSendSwiftOrderMessage(
 	swiftMessage: SwiftOrderMessage,
 	wallet: anchor.Wallet,
-	centralServerDrift: CentralServerDrift,
+	centralServerVelocity: CentralServerVelocity,
 	swiftServerUrl: string,
 	orderType: string
 ): Promise<void> {
@@ -325,7 +325,7 @@ async function signAndSendSwiftOrderMessage(
 	SwiftClient.init(swiftServerUrl, 'common-ts-cli');
 
 	const swiftOrderObservable = sendSwiftOrder({
-		driftClient: centralServerDrift.driftClient,
+		velocityClient: centralServerVelocity.velocityClient,
 		marketId: MarketId.createPerpMarket(swiftMessage.marketIndex),
 		hexEncodedSwiftOrderMessageString:
 			swiftMessage.hexEncodedSwiftOrderMessage.string,
@@ -399,7 +399,7 @@ async function depositCommand(args: CliArgs): Promise<void> {
 		console.log(`💼 From External Wallet: ${externalWallet.toBase58()}`);
 	}
 
-	const depositTxn = await centralServerDrift.getDepositTxn(
+	const depositTxn = await centralServerVelocity.getDepositTxn(
 		userAccountPubkey,
 		amountBN,
 		marketIndex,
@@ -525,7 +525,7 @@ async function createUserAndDepositCommand(args: CliArgs): Promise<void> {
 
 	const hasOptions = Object.keys(options).length > 0;
 	const { transaction, userAccountPublicKey, subAccountId } =
-		await centralServerDrift.getCreateAndDepositTxn(
+		await centralServerVelocity.getCreateAndDepositTxn(
 			authority,
 			amountBN,
 			marketIndex,
@@ -567,7 +567,7 @@ async function withdrawCommand(args: CliArgs): Promise<void> {
 	console.log(`💳 Is Borrow: ${isBorrow}`);
 	console.log(`📊 Is Max: ${isMax}`);
 
-	const withdrawTxn = await centralServerDrift.getWithdrawTxn(
+	const withdrawTxn = await centralServerVelocity.getWithdrawTxn(
 		userAccountPubkey,
 		amountBN,
 		marketIndex,
@@ -592,7 +592,7 @@ async function settleFundingCommand(args: CliArgs): Promise<void> {
 	console.log('--- 💰 Settle Funding Transaction ---');
 	console.log(`👤 User Account: ${userAccount}`);
 
-	const settleFundingTxn = await centralServerDrift.getSettleFundingTxn(
+	const settleFundingTxn = await centralServerVelocity.getSettleFundingTxn(
 		userAccountPubkey
 	);
 
@@ -624,7 +624,7 @@ async function settlePnlCommand(args: CliArgs): Promise<void> {
 	console.log(`👤 User Account: ${userAccount}`);
 	console.log(`📊 Market Indexes: ${marketIndexes.join(', ')}`);
 
-	const settlePnlTxn = await centralServerDrift.getSettlePnlTxn(
+	const settlePnlTxn = await centralServerVelocity.getSettlePnlTxn(
 		userAccountPubkey,
 		marketIndexes
 	);
@@ -664,7 +664,7 @@ async function openPerpMarketOrderCommand(args: CliArgs): Promise<void> {
 	console.log(`💱 Asset Type: ${assetType}`);
 	console.log(`🌐 DLOB Server: ${dlobServerHttpUrl}`);
 
-	const orderTxn = await centralServerDrift.getOpenPerpMarketOrderTxn({
+	const orderTxn = await centralServerVelocity.getOpenPerpMarketOrderTxn({
 		userAccountPublicKey: userAccountPubkey,
 		assetType: assetType as 'base' | 'quote',
 		marketIndex,
@@ -715,7 +715,7 @@ async function openPerpMarketOrderSwiftCommand(args: CliArgs): Promise<void> {
 	console.log('\n👁️  Monitoring order status...');
 
 	try {
-		const swiftMessage = await centralServerDrift.getOpenPerpMarketOrderTxn({
+		const swiftMessage = await centralServerVelocity.getOpenPerpMarketOrderTxn({
 			userAccountPublicKey: userAccountPubkey,
 			assetType: assetType as 'base' | 'quote',
 			marketIndex,
@@ -728,7 +728,7 @@ async function openPerpMarketOrderSwiftCommand(args: CliArgs): Promise<void> {
 		await signAndSendSwiftOrderMessage(
 			swiftMessage,
 			wallet,
-			centralServerDrift,
+			centralServerVelocity,
 			swiftServerUrl,
 			'Open Perp Order'
 		);
@@ -845,7 +845,7 @@ async function openPerpNonMarketOrderCommand(args: CliArgs): Promise<void> {
 	console.log(`📌 Post Only: ${postOnly} (${ENUM_UTILS.toStr(postOnlyEnum)})`);
 
 	// Just call the main method - it will handle both approaches internally
-	const orderTxn = await centralServerDrift.getOpenPerpNonMarketOrderTxn({
+	const orderTxn = await centralServerVelocity.getOpenPerpNonMarketOrderTxn({
 		userAccountPublicKey: userAccountPubkey,
 		marketIndex,
 		direction: directionEnum,
@@ -944,23 +944,24 @@ async function openPerpNonMarketOrderSwiftCommand(
 	try {
 		console.log('\n👁️  Monitoring order status...');
 
-		const swiftMessage = await centralServerDrift.getOpenPerpNonMarketOrderTxn({
-			userAccountPublicKey: userAccountPubkey,
-			marketIndex,
-			direction: directionEnum,
-			orderConfig,
-			reduceOnly,
-			postOnly: postOnlyEnum,
-			assetType: assetType as 'base' | 'quote',
-			amount: amountBN,
-			useSwift: true,
-			positionMaxLeverage: 10,
-		});
+		const swiftMessage =
+			await centralServerVelocity.getOpenPerpNonMarketOrderTxn({
+				userAccountPublicKey: userAccountPubkey,
+				marketIndex,
+				direction: directionEnum,
+				orderConfig,
+				reduceOnly,
+				postOnly: postOnlyEnum,
+				assetType: assetType as 'base' | 'quote',
+				amount: amountBN,
+				useSwift: true,
+				positionMaxLeverage: 10,
+			});
 
 		await signAndSendSwiftOrderMessage(
 			swiftMessage,
 			wallet,
-			centralServerDrift,
+			centralServerVelocity,
 			swiftServerUrl,
 			'Open Perp Non-Market Order'
 		);
@@ -976,7 +977,7 @@ async function openPerpNonMarketOrderSwiftCommand(
  * Show CLI usage information
  */
 function showUsage(): void {
-	console.log('📋 Drift CLI Usage');
+	console.log('📋 Velocity CLI Usage');
 	console.log('');
 	console.log('Available Commands:');
 	console.log('');
@@ -1184,7 +1185,7 @@ async function editOrderCommand(args: CliArgs): Promise<void> {
 	console.log(`🆔 Order ID: ${orderId}`);
 	console.log(`📝 Edit Parameters:`, editParams);
 
-	const editOrderTxn = await centralServerDrift.getEditOrderTxn(
+	const editOrderTxn = await centralServerVelocity.getEditOrderTxn(
 		userAccountPubkey,
 		orderId,
 		editParams
@@ -1211,7 +1212,7 @@ async function cancelOrderCommand(args: CliArgs): Promise<void> {
 	console.log(`👤 User Account: ${userAccount}`);
 	console.log(`🆔 Order IDs: ${orderIdArray.join(', ')}`);
 
-	const cancelOrderTxn = await centralServerDrift.getCancelOrdersTxn(
+	const cancelOrderTxn = await centralServerVelocity.getCancelOrdersTxn(
 		userAccountPubkey,
 		orderIdArray
 	);
@@ -1260,7 +1261,7 @@ async function cancelAllOrdersCommand(args: CliArgs): Promise<void> {
 	);
 	console.log(`📈 Direction Filter: ${direction || 'none'}`);
 
-	const cancelAllOrdersTxn = await centralServerDrift.getCancelAllOrdersTxn(
+	const cancelAllOrdersTxn = await centralServerVelocity.getCancelAllOrdersTxn(
 		userAccountPubkey,
 		marketTypeEnum,
 		marketIndex,
@@ -1349,7 +1350,7 @@ async function swapCommand(args: CliArgs): Promise<void> {
 
 	console.log(`📊 Slippage: ${slippage} BPS (${slippage / 100}%)`);
 
-	const swapTxn = await centralServerDrift.getSwapTxn(
+	const swapTxn = await centralServerVelocity.getSwapTxn(
 		userAccountPubkey,
 		fromMarketIndex,
 		toMarketIndex,
@@ -1383,7 +1384,7 @@ async function main(): Promise<void> {
 	const parsedArgs = parseArgs(args.slice(1));
 
 	// Initialize the client first
-	await initializeCentralServerDrift();
+	await initializeCentralServerVelocity();
 
 	// Route to appropriate command
 	switch (command) {

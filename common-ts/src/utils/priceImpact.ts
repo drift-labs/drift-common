@@ -6,7 +6,7 @@ import {
 	BASE_PRECISION,
 	calculateEstimatedEntryPriceWithL2,
 	BASE_PRECISION_EXP,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { UIMarket } from '../types/UIMarket';
 import { MarketId } from '../types/MarketId';
 import { ENUM_UTILS } from '.';

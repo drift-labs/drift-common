@@ -1,4 +1,4 @@
-import { IWalletV2, PublicKey } from '@drift-labs/sdk';
+import { IWalletV2, PublicKey } from '@velocity-exchange/sdk';
 import { Keypair } from '@solana/web3.js';
 
 export enum ConnectionStateSteps {

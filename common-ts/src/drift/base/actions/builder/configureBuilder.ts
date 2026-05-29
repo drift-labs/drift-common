@@ -1,4 +1,4 @@
-import { DriftClient } from '@drift-labs/sdk';
+import { VelocityClient } from '@velocity-exchange/sdk';
 import {
 	Transaction,
 	TransactionInstruction,
@@ -8,7 +8,7 @@ import {
 import { WithTxnParams } from '../../types';
 
 interface ConfigureBuilderIxParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	/**
 	 * The public key of the builder to configure.
 	 * This is the builder's authority address that owns their RevenueShare account.
@@ -65,7 +65,7 @@ interface ConfigureBuilderIxParams {
  * - User must have initialized a RevenueShareEscrow account
  * - Builder must have initialized a RevenueShare account (for receiving fees)
  *
- * @param driftClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param builderAuthority - The public key of the builder to configure
  * @param maxFeeTenthBps - Maximum fee cap in tenths of basis points
  *
@@ -75,7 +75,7 @@ interface ConfigureBuilderIxParams {
  * ```typescript
  * // Approve a new builder with 5 bps max fee
  * const ix = await configureBuilderIx({
- *   driftClient,
+ *   velocityClient,
  *   builderAuthority: new PublicKey('BuilderAddress...'),
  *   maxFeeTenthBps: 50  // 5 bps = 0.05%
  * });
@@ -85,7 +85,7 @@ interface ConfigureBuilderIxParams {
  * ```typescript
  * // Update existing builder to 10 bps max fee
  * const ix = await configureBuilderIx({
- *   driftClient,
+ *   velocityClient,
  *   builderAuthority: builderPubkey,
  *   maxFeeTenthBps: 100  // 10 bps = 0.1%
  * });
@@ -96,7 +96,7 @@ interface ConfigureBuilderIxParams {
  * // Revoke builder (set max fee to 0)
  * // IMPORTANT: Must settle all builder's orders first!
  * const ix = await configureBuilderIx({
- *   driftClient,
+ *   velocityClient,
  *   builderAuthority: builderPubkey,
  *   maxFeeTenthBps: 0  // Revoked
  * });
@@ -105,12 +105,12 @@ interface ConfigureBuilderIxParams {
 export const configureBuilderIx = async (
 	params: ConfigureBuilderIxParams
 ): Promise<TransactionInstruction> => {
-	const { driftClient, builderAuthority, maxFeeTenthBps, authority, payer } =
+	const { velocityClient, builderAuthority, maxFeeTenthBps, authority, payer } =
 		params;
 
 	const isRevoke = maxFeeTenthBps === 0;
 
-	return driftClient.getChangeApprovedBuilderIx(
+	return velocityClient.getChangeApprovedBuilderIx(
 		builderAuthority,
 		maxFeeTenthBps,
 		!isRevoke, // add = true (approve/update), false (revoke)
@@ -148,7 +148,7 @@ export const configureBuilderIx = async (
  * - User must have initialized a RevenueShareEscrow account
  * - Builder must have initialized a RevenueShare account (for receiving fees)
  *
- * @param driftClient - The Drift client instance
+ * @param velocityClient - The Velocity client instance
  * @param builderAuthority - The public key of the builder to configure
  * @param maxFeeTenthBps - Maximum fee cap in tenths of basis points
  * @param txParams - Optional transaction parameters for customizing the transaction
@@ -159,7 +159,7 @@ export const configureBuilderIx = async (
  * ```typescript
  * // Approve a new builder with 2 bps max fee
  * const tx = await configureBuilderTxn({
- *   driftClient,
+ *   velocityClient,
  *   builderAuthority: new PublicKey('BuilderAddress...'),
  *   maxFeeTenthBps: 20,
  *   txParams: { computeUnits: 200000 }
@@ -172,7 +172,7 @@ export const configureBuilderIx = async (
  * ```typescript
  * // Update existing builder's fee
  * await configureBuilderTxn({
- *   driftClient,
+ *   velocityClient,
  *   builderAuthority: builderPubkey,
  *   maxFeeTenthBps: 100  // Increase to 10 bps
  * });
@@ -181,7 +181,7 @@ export const configureBuilderIx = async (
 export const configureBuilderTxn = async (
 	params: WithTxnParams<ConfigureBuilderIxParams>
 ): Promise<Transaction | VersionedTransaction> => {
-	return params.driftClient.buildTransaction(
+	return params.velocityClient.buildTransaction(
 		await configureBuilderIx(params),
 		params.txParams
 	);

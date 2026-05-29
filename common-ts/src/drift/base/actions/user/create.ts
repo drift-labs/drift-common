@@ -1,6 +1,6 @@
 import {
 	BN,
-	DriftClient,
+	VelocityClient,
 	getUserAccountPublicKeySync,
 	PublicKey,
 	ReferrerInfo,
@@ -9,7 +9,7 @@ import {
 	TxParams,
 	UserStatsAccount,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { getTokenAddressForDepositAndWithdraw } from '../../../../utils/token';
 import { DEFAULT_ACCOUNT_NAMES_BY_POOL_ID } from '../../constants/accountNames';
 import { MAIN_POOL_ID } from '../../../../constants/pools';
@@ -21,7 +21,7 @@ import {
 import { USER_UTILS } from '../../../../_deprecated/user-utils';
 
 interface CreateUserAndDepositCollateralBaseIxsParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	amount: BN;
 	spotMarketConfig: SpotMarketConfig;
 	authority: PublicKey;
@@ -43,10 +43,10 @@ interface CreateUserAndDepositCollateralBaseIxsParams {
  * Creates transaction instructions for initializing a new user account and depositing collateral.
  *
  * This function generates the necessary transaction instructions to:
- * 1. Initialize a new user account in the Drift protocol
+ * 1. Initialize a new user account in the Velocity protocol
  * 2. Deposit collateral into the newly created account
  *
- * @param driftClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Velocity client instance for interacting with the protocol
  * @param amount - The amount of collateral to deposit (in base units)
  * @param spotMarketConfig - The spot market config of the deposit collateral
  * @param authority - The public key of the account authority (wallet owner)
@@ -65,7 +65,7 @@ interface CreateUserAndDepositCollateralBaseIxsParams {
  *   - ixs: Array of transaction instructions to execute
  */
 export const createUserAndDepositCollateralBaseIxs = async ({
-	driftClient,
+	velocityClient,
 	amount,
 	spotMarketConfig,
 	authority,
@@ -85,7 +85,7 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 	const nextSubaccountId = userStatsAccount?.numberOfSubAccountsCreated ?? 0; // userId is zero indexed
 
 	// Get the spot market account to determine the correct token program for Token-2022 tokens
-	const spotMarketAccount = driftClient.getSpotMarketAccount(
+	const spotMarketAccount = velocityClient.getSpotMarketAccount(
 		spotMarketConfig.marketIndex
 	);
 
@@ -104,10 +104,10 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 		);
 	const referrerNameAccountPromise: Promise<ReferrerNameAccount | undefined> =
 		referrerName
-			? driftClient.fetchReferrerNameAccount(referrerName)
+			? velocityClient.fetchReferrerNameAccount(referrerName)
 			: Promise.resolve(undefined);
 	const subaccountExistsPromise = USER_UTILS.checkIfUserAccountExists(
-		driftClient,
+		velocityClient,
 		{
 			type: 'subAccountId',
 			subAccountId: nextSubaccountId,
@@ -140,7 +140,7 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 		: undefined;
 
 	const { ixs: createAndDepositIxs, userAccountPublicKey } =
-		await driftClient.createInitializeUserAccountAndDepositCollateralIxs(
+		await velocityClient.createInitializeUserAccountAndDepositCollateralIxs(
 			amount,
 			associatedDepositTokenAddress,
 			spotMarketConfig.marketIndex,
@@ -156,12 +156,12 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 	const ixs: TransactionInstruction[] = [...createAndDepositIxs];
 
 	const nextSubAccountPublicKey = getUserAccountPublicKeySync(
-		driftClient.program.programId,
+		velocityClient.program.programId,
 		authority,
 		nextSubaccountId
 	);
 	const delegateIx = delegate
-		? await driftClient.getUpdateUserDelegateIx(delegate, {
+		? await velocityClient.getUpdateUserDelegateIx(delegate, {
 				subAccountId: nextSubaccountId,
 				userAccountPublicKey: nextSubAccountPublicKey,
 				authority,
@@ -191,7 +191,7 @@ interface CreateUserAndDepositCollateralBaseTxnParams
  * 1. Generates the necessary transaction instructions
  * 2. Builds a complete transaction ready for signing and submission
  *
- * @param driftClient - The Drift client instance for interacting with the protocol
+ * @param velocityClient - The Velocity client instance for interacting with the protocol
  * @param amount - The amount of collateral to deposit (in base units)
  * @param spotMarketConfig - The spot market config of the deposit collateral
  * @param authority - The public key of the account authority (wallet owner)
@@ -210,7 +210,7 @@ interface CreateUserAndDepositCollateralBaseTxnParams
  *   - subAccountId: The ID of the newly created sub-account
  */
 export const createUserAndDepositCollateralBaseTxn = async ({
-	driftClient,
+	velocityClient,
 	amount,
 	spotMarketConfig,
 	authority,
@@ -229,7 +229,7 @@ export const createUserAndDepositCollateralBaseTxn = async ({
 }> => {
 	const { ixs, userAccountPublicKey, subAccountId } =
 		await createUserAndDepositCollateralBaseIxs({
-			driftClient,
+			velocityClient,
 			amount,
 			spotMarketConfig,
 			authority,
@@ -242,7 +242,7 @@ export const createUserAndDepositCollateralBaseTxn = async ({
 			externalWallet,
 		});
 
-	const tx = await driftClient.buildTransaction(ixs, txParams);
+	const tx = await velocityClient.buildTransaction(ixs, txParams);
 
 	return { transaction: tx, userAccountPublicKey, subAccountId };
 };

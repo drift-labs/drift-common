@@ -1,6 +1,6 @@
 import {
 	BN,
-	DriftClient,
+	VelocityClient,
 	User,
 	calculateMarginUSDCRequiredForTrade,
 	OptionalOrderParams,
@@ -8,7 +8,7 @@ import {
 	MarketType,
 	OrderType,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { TRADING_UTILS } from '../../../../../_deprecated/trading-utils';
 import {
@@ -101,7 +101,7 @@ export function getTotalIsolatedMarginShortfall(
 }
 
 export interface ComputeIsolatedPositionDepositParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	marketIndex: number;
 	baseAssetAmount: BN;
@@ -161,7 +161,7 @@ export interface ComputeIsolatedPositionDepositParams {
  * Returns a BN in QUOTE_PRECISION (USDC).
  */
 export function computeIsolatedPositionDepositForTrade({
-	driftClient,
+	velocityClient,
 	user,
 	marketIndex,
 	baseAssetAmount,
@@ -182,7 +182,7 @@ export function computeIsolatedPositionDepositForTrade({
 			baseAssetAmount,
 		};
 		const subAccountId = user.getUserAccount().subAccountId;
-		const isIncreasing = driftClient.isOrderIncreasingPosition(
+		const isIncreasing = velocityClient.isOrderIncreasingPosition(
 			maybeOrderParams,
 			subAccountId
 		);
@@ -192,7 +192,7 @@ export function computeIsolatedPositionDepositForTrade({
 	}
 
 	const marginRequired = calculateMarginUSDCRequiredForTrade(
-		driftClient,
+		velocityClient,
 		marketIndex,
 		baseAssetAmount,
 		marginRatio,
@@ -245,7 +245,7 @@ export class UnderwaterIsolatedPositionsError extends Error {
  * Also detects underwater positions on other markets and either throws or computes additional deposits.
  */
 export function calculateIsolatedPositionDeposits(params: {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	marketIndex: number;
 	baseAssetAmount: BN;
@@ -272,7 +272,7 @@ export function calculateIsolatedPositionDeposits(params: {
 
 	if (marginRatio) {
 		mainIsolatedPositionDeposit = computeIsolatedPositionDepositForTrade({
-			driftClient: params.driftClient,
+			velocityClient: params.velocityClient,
 			user: params.user,
 			marketIndex: params.marketIndex,
 			baseAssetAmount: params.baseAssetAmount,
@@ -323,7 +323,7 @@ export function calculateIsolatedPositionDeposits(params: {
  * If marginMode is not explicitly provided, derives it from the user's existing position.
  */
 export function resolveIsolatedPositionDeposits(params: {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	marketIndex: number;
 	baseAssetAmount: BN;
@@ -360,7 +360,7 @@ export function resolveIsolatedPositionDepositsWithOverride(
 }
 
 export async function getIsolatedPositionDepositIxIfNeeded(
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	user: User,
 	marketIndex: number,
 	isolatedPositionDeposit?: BN,
@@ -373,7 +373,7 @@ export async function getIsolatedPositionDepositIxIfNeeded(
 		return undefined;
 	}
 
-	return driftClient.getTransferIsolatedPerpPositionDepositIx(
+	return velocityClient.getTransferIsolatedPerpPositionDepositIx(
 		isolatedPositionDeposit,
 		marketIndex,
 		user.getUserAccount().subAccountId,

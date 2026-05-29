@@ -1,7 +1,7 @@
 import * as anchor from '@coral-xyz/anchor';
 import { PublicKey, VersionedTransaction } from '@solana/web3.js';
-import { BN, loadKeypair } from '@drift-labs/sdk';
-import { CentralServerDrift } from './Drift/clients/CentralServerDrift';
+import { BN, loadKeypair } from '@velocity-exchange/sdk';
+import { CentralServerVelocity } from './Velocity/clients/CentralServerVelocity';
 import * as path from 'path';
 
 // Load environment variables from .env file
@@ -9,11 +9,11 @@ const dotenv = require('dotenv');
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 /**
- * Example usage of CentralServerDrift client
+ * Example usage of CentralServerVelocity client
  *
  * This file contains multiple examples demonstrating how to:
  * 1. Set up an Anchor wallet with a private key
- * 2. Initialize a CentralServerDrift instance
+ * 2. Initialize a CentralServerVelocity instance
  * 3. Create and execute various transaction types
  *
  * Prerequisites:
@@ -28,12 +28,12 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
  */
 
 // Shared configuration and setup
-let centralServerDrift: CentralServerDrift;
+let centralServerVelocity: CentralServerVelocity;
 let wallet: anchor.Wallet;
-const userAccountPublicKey = new PublicKey('11111111111111111111111111111111'); // enter the publickey for the drift account here
+const userAccountPublicKey = new PublicKey('11111111111111111111111111111111'); // enter the publickey for the velocity account here
 
-async function initializeCentralServerDrift(): Promise<void> {
-	console.log('🚀 Initializing CentralServerDrift...\n');
+async function initializeCentralServerVelocity(): Promise<void> {
+	console.log('🚀 Initializing CentralServerVelocity...\n');
 
 	// Validate required environment variables
 	if (!process.env.ANCHOR_WALLET) {
@@ -52,15 +52,15 @@ async function initializeCentralServerDrift(): Promise<void> {
 	console.log(`✅ Wallet Public Key: ${wallet.publicKey.toString()}`);
 	console.log(`✅ RPC Endpoint: ${process.env.ENDPOINT}\n`);
 
-	// Initialize CentralServerDrift
-	console.log('🏗️  Initializing CentralServerDrift...');
-	centralServerDrift = new CentralServerDrift({
+	// Initialize CentralServerVelocity
+	console.log('🏗️  Initializing CentralServerVelocity...');
+	centralServerVelocity = new CentralServerVelocity({
 		solanaRpcEndpoint: process.env.ENDPOINT as string,
-		driftEnv: 'mainnet-beta', // Change to 'devnet' for devnet testing
+		velocityEnv: 'mainnet-beta', // Change to 'devnet' for devnet testing
 		supportedPerpMarkets: [0, 1, 2], // SOL, BTC, ETH
 		supportedSpotMarkets: [0, 1], // USDC, SOL
-		additionalDriftClientConfig: {
-			// Optional: Add additional DriftClient configuration
+		additionalVelocityClientConfig: {
+			// Optional: Add additional VelocityClient configuration
 			txVersion: 0,
 			txParams: {
 				computeUnits: 200000,
@@ -69,11 +69,11 @@ async function initializeCentralServerDrift(): Promise<void> {
 		},
 	});
 
-	console.log('✅ CentralServerDrift instance created successfully\n');
+	console.log('✅ CentralServerVelocity instance created successfully\n');
 
 	// Subscribe to market data
 	console.log('📡 Subscribing to market data...');
-	await centralServerDrift.subscribe();
+	await centralServerVelocity.subscribe();
 	console.log('✅ Successfully subscribed to market data\n');
 }
 
@@ -100,7 +100,7 @@ async function executeVersionedTransaction(
 
 	console.log('\n🚀 Sending transaction to the network...');
 
-	const txSig = await centralServerDrift.sendSignedTransaction(txn);
+	const txSig = await centralServerVelocity.sendSignedTransaction(txn);
 
 	console.log('✅ Transaction sent successfully!');
 	console.log(`📋 Transaction Signature: ${txSig}`);
@@ -124,7 +124,7 @@ async function depositWithdrawExample() {
 		console.log(`💰 Deposit Amount: ${amount.toString()} raw units`);
 		console.log(`🏪 Spot Market Index: ${spotMarketIndex}`);
 
-		const depositTxn = await centralServerDrift.getDepositTxn(
+		const depositTxn = await centralServerVelocity.getDepositTxn(
 			userAccountPublicKey,
 			amount,
 			spotMarketIndex
@@ -145,7 +145,7 @@ async function depositWithdrawExample() {
 		console.log(`💰 Withdraw Amount: ${amount.toString()} raw units`);
 		console.log(`🏪 Spot Market Index: ${spotMarketIndex}`);
 
-		const withdrawTxn = await centralServerDrift.getWithdrawTxn(
+		const withdrawTxn = await centralServerVelocity.getWithdrawTxn(
 			userAccountPublicKey,
 			amount,
 			spotMarketIndex,
@@ -176,7 +176,7 @@ async function settleFundingExample() {
 		console.log(`👤 User Account: ${userAccountPublicKey.toString()}`);
 		console.log('📋 Settling funding payments for all perp positions...');
 
-		const settleFundingTxn = await centralServerDrift.getSettleFundingTxn(
+		const settleFundingTxn = await centralServerVelocity.getSettleFundingTxn(
 			userAccountPublicKey
 		);
 
@@ -204,7 +204,7 @@ async function settlePnlExample() {
 		console.log(`👤 User Account: ${userAccountPublicKey.toString()}`);
 		console.log(`📊 Market Indexes: ${marketIndexes.join(', ')}`);
 
-		const settlePnlTxn = await centralServerDrift.getSettlePnlTxn(
+		const settlePnlTxn = await centralServerVelocity.getSettlePnlTxn(
 			userAccountPublicKey,
 			marketIndexes
 		);
@@ -222,9 +222,9 @@ async function settlePnlExample() {
  * Run all examples in sequence
  */
 async function runAllExamples() {
-	console.log('🚀 Running All CentralServerDrift Examples...\n');
+	console.log('🚀 Running All CentralServerVelocity Examples...\n');
 
-	await initializeCentralServerDrift();
+	await initializeCentralServerVelocity();
 
 	console.log('='.repeat(50));
 	await depositWithdrawExample();
@@ -238,7 +238,7 @@ async function runAllExamples() {
 
 // Export example functions for use in other files
 export {
-	initializeCentralServerDrift,
+	initializeCentralServerVelocity,
 	depositWithdrawExample,
 	settleFundingExample,
 	settlePnlExample,
@@ -246,7 +246,7 @@ export {
 };
 
 // Legacy export for backward compatibility
-export const runCentralServerDriftExample = runAllExamples;
+export const runCentralServerVelocityExample = runAllExamples;
 
 // Helper functions for command line handling
 function showUsage() {
@@ -276,11 +276,11 @@ function showUsage() {
 async function runCliExample(exampleName: string) {
 	const availableExamples = {
 		depositWithdraw: () =>
-			initializeCentralServerDrift().then(() => depositWithdrawExample()),
+			initializeCentralServerVelocity().then(() => depositWithdrawExample()),
 		settleFunding: () =>
-			initializeCentralServerDrift().then(() => settleFundingExample()),
+			initializeCentralServerVelocity().then(() => settleFundingExample()),
 		settlePnl: () =>
-			initializeCentralServerDrift().then(() => settlePnlExample()),
+			initializeCentralServerVelocity().then(() => settlePnlExample()),
 		all: runAllExamples,
 	};
 

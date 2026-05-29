@@ -8,7 +8,7 @@ import {
 	MMOraclePriceData,
 	L2Level,
 	BigNum,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 
 export interface L2WithOracle extends L2OrderBook {
 	oracleData: OraclePriceData;

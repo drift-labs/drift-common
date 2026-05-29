@@ -11,7 +11,7 @@ export const getOracleCrankIxs = async (
 ): Promise<TransactionInstruction[]> => {
 	const {
 		marketConfigs,
-		driftClient,
+		velocityClient,
 		fetchCrankData,
 		maxPythLazerCranks = MAX_PYTH_LAZER_CRANKS,
 		precedingIxsCount = DEFAULT_PRECEDING_IXS_COUNT,
@@ -24,7 +24,7 @@ export const getOracleCrankIxs = async (
 	const [pythLazerIxs] = await Promise.all([
 		getPythLazerUpdateIxs(
 			marketConfigs,
-			driftClient,
+			velocityClient,
 			fetchCrankData,
 			maxPythLazerCranks,
 			precedingIxsCount

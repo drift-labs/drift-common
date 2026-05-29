@@ -1,9 +1,9 @@
 import {
-	DriftClient,
+	VelocityClient,
 	MarketType,
 	PerpMarketAccount,
 	SpotMarketAccount,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '../enum';
 import { DEFAULT_MAX_MARKET_LEVERAGE } from '../../constants/markets';
 
@@ -54,13 +54,13 @@ const getMaxLeverageForMarketAccount = (
 const getMaxLeverageForMarket = (
 	marketType: MarketType,
 	marketIndex: number,
-	driftClient: DriftClient
+	velocityClient: VelocityClient
 ): {
 	maxLeverage: number;
 } => {
 	const marketAccount = ENUM_UTILS.match(marketType, MarketType.PERP)
-		? driftClient.getPerpMarketAccount(marketIndex)
-		: driftClient.getSpotMarketAccount(marketIndex);
+		? velocityClient.getPerpMarketAccount(marketIndex)
+		: velocityClient.getSpotMarketAccount(marketIndex);
 
 	return getMaxLeverageForMarketAccount(marketType, marketAccount);
 };

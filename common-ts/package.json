@@ -17,9 +17,9 @@
 	],
 	"author": "Drift Labs",
 	"dependencies": {
-		"@drift-labs/sdk": "2.163.0-beta.13",
 		"@solana/spl-token": "0.4.14",
 		"@solana/web3.js": "1.98.0",
+		"@velocity-exchange/sdk": "0.0.1",
 		"bcryptjs-react": "2.4.6",
 		"cerializr": "3.1.4",
 		"dotenv": "17.4.2",
@@ -32,7 +32,6 @@
 		"tweetnacl": "1.0.3"
 	},
 	"peerDependencies": {
-		"@drift-labs/sdk": "^2.161.0-beta.4",
 		"@solana/web3.js": "1.98.0"
 	},
 	"scripts": {
@@ -45,7 +44,7 @@
 		"test:ci": "mocha -r ts-node/register 'tests/**/*.ts' --ignore 'tests/drift/**/*.ts' --silent",
 		"test:debug": "node --inspect-brk --inspect=2234 node_modules/.bin/jest --runInBand",
 		"update-jup-errors": "node src/scripts/update-jup-error-codes.js",
-		"update-drift-errors": "node src/scripts/update-drift-error-codes.js",
+		"update-velocity-errors": "node src/scripts/update-velocity-error-codes.js",
 		"circular-deps": "bunx madge --circular --circular --extensions ts,tsx src",
 		"build-and-pack": "bun run build && npm pack",
 		"update-sdk": "node scripts/update-sdk.js"

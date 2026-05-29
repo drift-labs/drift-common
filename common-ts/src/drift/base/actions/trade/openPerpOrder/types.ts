@@ -4,7 +4,7 @@ import {
 	PositionDirection,
 	PostOnlyParams,
 	ReferrerInfo,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { Transaction, VersionedTransaction } from '@solana/web3.js';
 import { OptionalAuctionParamsRequestInputs } from './dlobServer';
 import { AuctionParamsFetchedCallback } from '../../../../utils/auctionParamsResponseMapper';

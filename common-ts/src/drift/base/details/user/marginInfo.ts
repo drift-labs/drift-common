@@ -6,9 +6,9 @@ import {
 	ZERO,
 	FOUR,
 	TWO,
-	DriftClient,
+	VelocityClient,
 	calculateClaimablePnl,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { USDC_SPOT_MARKET_INDEX } from '../../../../constants';
 import { MarketId, MarketKey } from '../../../../types';
 
@@ -40,7 +40,7 @@ export type AccountMarginInfo = {
 };
 
 export const getAccountMarginInfo = (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	user: User,
 	getOraclePrice: (marketKey: MarketKey) => BN
 ): AccountMarginInfo => {
@@ -60,13 +60,15 @@ export const getAccountMarginInfo = (
 	if (userMarginRatio.eq(new BN(Number.MAX_SAFE_INTEGER)))
 		userMarginRatio = ZERO;
 
-	const usdcSpotMarketAccount = driftClient.getSpotMarketAccount(
+	const usdcSpotMarketAccount = velocityClient.getSpotMarketAccount(
 		USDC_SPOT_MARKET_INDEX
 	);
 	const totalClaimablePnl = user
 		.getActivePerpPositions()
 		.reduce((acc, position) => {
-			const perpMarket = driftClient.getPerpMarketAccount(position.marketIndex);
+			const perpMarket = velocityClient.getPerpMarketAccount(
+				position.marketIndex
+			);
 			const oraclePrice = getOraclePrice(
 				MarketId.createPerpMarket(position.marketIndex).key
 			);

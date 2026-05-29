@@ -1,4 +1,4 @@
-import { PerpMarketConfig, SpotMarketConfig } from '@drift-labs/sdk';
+import { PerpMarketConfig, SpotMarketConfig } from '@velocity-exchange/sdk';
 
 export interface IPredictionMarketConfig {
 	title: string;

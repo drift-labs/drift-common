@@ -29,7 +29,7 @@ type SubscriptionId = string;
 const DEFAULT_MAX_RECONNECT_ATTEMPTS = 5;
 const DEFAULT_MAX_RECONNECT_WINDOW_MS = 60 * 1000;
 const DEFAULT_CONNECTION_CLOSE_DELAY_MS = 2 * 1000; // 2 seconds delay before closing connection
-const DEFAULT_HEARTBEAT_TIMEOUT_MS = 11 * 1000; // Consider connection dead if no heartbeat within 11 seconds (a little more than twice of 5 seconds, the interval Drift servers use)
+const DEFAULT_HEARTBEAT_TIMEOUT_MS = 11 * 1000; // Consider connection dead if no heartbeat within 11 seconds (a little more than twice of 5 seconds, the interval Velocity servers use)
 
 /**
  * Manages reconnection logic for WebSocket connections with exponential backoff and rate limiting.

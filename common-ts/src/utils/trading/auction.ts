@@ -10,7 +10,7 @@ import {
 	deriveOracleAuctionParams,
 	getMarketOrderParams,
 	isVariant,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { AuctionParams, TradeOffsetPrice } from '../../types';
 import { EMPTY_AUCTION_PARAMS } from '../../constants/trade';
 import { getMarketOrderLimitPrice } from './price';
@@ -33,7 +33,7 @@ const getMarketAuctionParams = ({
 	startPriceFromSettings: BN;
 	endPriceFromSettings: BN;
 	/**
-	 * Limit price is the oracle limit price - market orders use the oracle order type under the hood on Drift UI
+	 * Limit price is the oracle limit price - market orders use the oracle order type under the hood on Velocity UI
 	 * So oracle limit price is the oracle price + oracle offset
 	 */
 	limitPrice: BN;

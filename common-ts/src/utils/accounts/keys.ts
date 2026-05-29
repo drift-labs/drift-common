@@ -1,4 +1,4 @@
-import { MarketType, PublicKey } from '@drift-labs/sdk';
+import { MarketType, PublicKey } from '@velocity-exchange/sdk';
 import { getCachedUiString } from '../core/cache';
 import { ENUM_UTILS } from '../enum';
 

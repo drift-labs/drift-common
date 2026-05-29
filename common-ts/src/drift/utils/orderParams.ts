@@ -8,7 +8,7 @@ import {
 	getTriggerLimitOrderParams,
 	OrderTriggerCondition,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '../../utils';
 import { NonMarketOrderParamsConfig } from '../base/actions/trade/openPerpOrder/types';
 

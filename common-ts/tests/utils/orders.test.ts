@@ -7,7 +7,7 @@ import {
 	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
 	PositionDirection,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { COMMON_UI_UTILS } from '../../src/_deprecated/common-ui-utils';
 import { ENUM_UTILS } from '../../src';
 import { expect } from 'chai';

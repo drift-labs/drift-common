@@ -1,4 +1,4 @@
-import { OracleSource } from '@drift-labs/sdk';
+import { OracleSource } from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '../../../../../utils';
 
 export const isPythPull = (oracleSource: OracleSource): boolean =>

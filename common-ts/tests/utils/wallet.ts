@@ -1,12 +1,12 @@
 import {
 	BN,
 	DevnetSpotMarkets,
-	DRIFT_PROGRAM_ID,
+	VELOCITY_PROGRAM_ID,
 	getUserAccountPublicKeySync,
 	QUOTE_PRECISION,
 	TokenFaucet,
 	WalletV2,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	Connection,
 	Keypair,
@@ -34,12 +34,12 @@ export const getDevWallet = () => {
 	return {
 		devWallet,
 		devUser0: getUserAccountPublicKeySync(
-			new PublicKey(DRIFT_PROGRAM_ID),
+			new PublicKey(VELOCITY_PROGRAM_ID),
 			devWallet.publicKey,
 			0
 		),
 		devUser1: getUserAccountPublicKeySync(
-			new PublicKey(DRIFT_PROGRAM_ID),
+			new PublicKey(VELOCITY_PROGRAM_ID),
 			devWallet.publicKey,
 			1
 		),

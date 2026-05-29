@@ -1,4 +1,4 @@
-import { SpotMarketConfig } from '@drift-labs/sdk';
+import { SpotMarketConfig } from '@velocity-exchange/sdk';
 
 const formatTokenInputCurried =
 	(setAmount: (amount: string) => void, spotMarketConfig: SpotMarketConfig) =>

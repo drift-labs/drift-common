@@ -1,4 +1,4 @@
-import { PublicKey } from '@drift-labs/sdk';
+import { PublicKey } from '@velocity-exchange/sdk';
 import { AccountInfo, Connection } from '@solana/web3.js';
 import { chunks } from '../core/arrays';
 

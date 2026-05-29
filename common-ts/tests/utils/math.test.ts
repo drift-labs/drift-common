@@ -1,4 +1,4 @@
-import { BN, L2OrderBook } from '@drift-labs/sdk';
+import { BN, L2OrderBook } from '@velocity-exchange/sdk';
 import {
 	numbersFitEvenly,
 	roundToStepSizeIfLargeEnough,

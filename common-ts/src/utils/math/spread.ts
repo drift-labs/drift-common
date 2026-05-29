@@ -1,4 +1,9 @@
-import { BN, L2OrderBook, PERCENTAGE_PRECISION, ZERO } from '@drift-labs/sdk';
+import {
+	BN,
+	L2OrderBook,
+	PERCENTAGE_PRECISION,
+	ZERO,
+} from '@velocity-exchange/sdk';
 
 const calculateMarkPrice = (
 	bestBidPrice?: BN,

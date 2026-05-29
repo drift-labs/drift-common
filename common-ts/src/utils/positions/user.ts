@@ -1,13 +1,13 @@
 import {
-	DriftClient,
+	VelocityClient,
 	PublicKey,
 	User,
 	ZERO,
 	getUserAccountPublicKeySync,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 
 const checkIfUserAccountExists = async (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	config:
 		| {
 				type: 'userPubKey';
@@ -25,13 +25,15 @@ const checkIfUserAccountExists = async (
 		userPubKey = config.userPubKey;
 	} else {
 		userPubKey = getUserAccountPublicKeySync(
-			driftClient.program.programId,
+			velocityClient.program.programId,
 			config.authority,
 			config.subAccountId
 		);
 	}
 
-	const accountInfo = await driftClient.connection.getAccountInfo(userPubKey);
+	const accountInfo = await velocityClient.connection.getAccountInfo(
+		userPubKey
+	);
 
 	return accountInfo !== null;
 };

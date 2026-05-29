@@ -1,4 +1,4 @@
-import { CandleResolution } from '@drift-labs/sdk';
+import { CandleResolution } from '@velocity-exchange/sdk';
 
 export const CandleResolutions: CandleResolution[] = [
 	'1',

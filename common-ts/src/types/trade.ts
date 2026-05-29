@@ -1,4 +1,4 @@
-import { BN, OrderType } from '@drift-labs/sdk';
+import { BN, OrderType } from '@velocity-exchange/sdk';
 
 export type TradeOffsetPrice =
 	| 'worst'

@@ -1,4 +1,4 @@
-import { BN, PublicKey, SpotPosition } from '@drift-labs/sdk';
+import { BN, PublicKey, SpotPosition } from '@velocity-exchange/sdk';
 
 export type OpenPosition = {
 	marketIndex: number;

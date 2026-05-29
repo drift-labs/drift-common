@@ -1,5 +1,5 @@
 import {
-	DriftClient,
+	VelocityClient,
 	User,
 	BN,
 	MarketType,
@@ -7,7 +7,7 @@ import {
 	OptionalOrderParams,
 	PositionDirection,
 	OrderType,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	PublicKey,
 	Transaction,
@@ -44,7 +44,7 @@ import {
 
 export interface OpenPerpNonMarketOrderBaseParams
 	extends Omit<NonMarketOrderParamsConfig, 'marketType' | 'baseAssetAmount'> {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	// Either new approach
 	amount?: BN;
@@ -110,7 +110,7 @@ export type OpenPerpNonMarketOrderParams<
  * Creates a transaction instruction to open multiple non-market orders.
  */
 export const createMultipleOpenPerpNonMarketOrderIx = async (params: {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	orderParamsConfigs: NonMarketOrderParamsConfig[];
 	/**
@@ -118,11 +118,11 @@ export const createMultipleOpenPerpNonMarketOrderIx = async (params: {
 	 */
 	mainSignerOverride?: PublicKey;
 }): Promise<TransactionInstruction> => {
-	const { driftClient, orderParamsConfigs, mainSignerOverride } = params;
+	const { velocityClient, orderParamsConfigs, mainSignerOverride } = params;
 
 	const orderParams = orderParamsConfigs.map(buildNonMarketOrderParams);
 
-	const placeOrderIx = await driftClient.getPlaceOrdersIx(
+	const placeOrderIx = await velocityClient.getPlaceOrdersIx(
 		orderParams,
 		undefined,
 		{
@@ -143,7 +143,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 	params: OpenPerpNonMarketOrderBaseParams
 ): Promise<TransactionInstruction[]> => {
 	const {
-		driftClient,
+		velocityClient,
 		user,
 		marketIndex,
 		direction,
@@ -175,7 +175,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
 		isolatedPositionDepositsOverride,
 		{
-			driftClient,
+			velocityClient,
 			user,
 			marketIndex,
 			baseAssetAmount: finalBaseAssetAmount,
@@ -197,7 +197,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 	const [leverageIx, additionalDepositIxs, isolatedPositionDepositIx] =
 		await Promise.all([
 			getPositionMaxLeverageIxIfNeeded(
-				driftClient,
+				velocityClient,
 				user,
 				marketIndex,
 				positionMaxLeverage,
@@ -207,7 +207,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 				? Promise.all(
 						resolvedAdditionalDeposits.map((deposit) =>
 							getIsolatedPositionDepositIxIfNeeded(
-								driftClient,
+								velocityClient,
 								user,
 								deposit.marketIndex,
 								deposit.amount,
@@ -217,7 +217,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 				  )
 				: Promise.resolve([] as (TransactionInstruction | undefined)[]),
 			getIsolatedPositionDepositIxIfNeeded(
-				driftClient,
+				velocityClient,
 				user,
 				marketIndex,
 				mainIsolatedPositionDeposit,
@@ -271,7 +271,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 					direction,
 					dlobServerHttpUrl: orderConfig.limitAuction.dlobServerHttpUrl,
 					marketIndex,
-					driftClient,
+					velocityClient,
 					user,
 					userOrderId,
 					reduceOnly,
@@ -356,7 +356,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 	}
 
 	if (allOrders.length > 0) {
-		const placeOrderIx = await driftClient.getPlaceOrdersIx(
+		const placeOrderIx = await velocityClient.getPlaceOrdersIx(
 			allOrders,
 			undefined,
 			{
@@ -454,7 +454,7 @@ export const createSwiftLimitOrder = async (
 		orderConfig: SwiftLimitOrderParamsOrderConfig;
 	}
 ): Promise<void> => {
-	const { driftClient, user, marketIndex, swiftOptions } = params;
+	const { velocityClient, user, marketIndex, swiftOptions } = params;
 
 	const { userAccount, orderParams, bracketOrders } =
 		await prepSwiftLimitOrderData(params);
@@ -462,7 +462,7 @@ export const createSwiftLimitOrder = async (
 	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
 		params.isolatedPositionDepositsOverride,
 		{
-			driftClient,
+			velocityClient,
 			user,
 			marketIndex,
 			baseAssetAmount: orderParams.baseAssetAmount,
@@ -474,7 +474,7 @@ export const createSwiftLimitOrder = async (
 	);
 
 	await prepSignAndSendSwiftOrder({
-		driftClient,
+		velocityClient,
 		subAccountId: userAccount.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
@@ -509,7 +509,7 @@ export const createSwiftLimitOrderMessage = async (
 	params: CreateSwiftLimitOrderMessageParams
 ): Promise<SwiftOrderMessage> => {
 	const {
-		driftClient,
+		velocityClient,
 		user,
 		marketIndex,
 		isDelegate = false,
@@ -522,7 +522,7 @@ export const createSwiftLimitOrderMessage = async (
 	const resolvedDeposits = resolveIsolatedPositionDepositsWithOverride(
 		params.isolatedPositionDepositsOverride,
 		{
-			driftClient,
+			velocityClient,
 			user,
 			marketIndex,
 			baseAssetAmount: orderParams.baseAssetAmount,
@@ -534,7 +534,7 @@ export const createSwiftLimitOrderMessage = async (
 	);
 
 	return prepSwiftOrderMessage({
-		driftClient,
+		velocityClient,
 		subAccountId: userAccount.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
@@ -554,11 +554,11 @@ export const createSwiftLimitOrderMessage = async (
 export const createOpenPerpNonMarketOrderTxn = async (
 	params: WithTxnParams<OpenPerpNonMarketOrderBaseParams>
 ): Promise<Transaction | VersionedTransaction> => {
-	const { driftClient } = params;
+	const { velocityClient } = params;
 
 	const instructions = await createOpenPerpNonMarketOrderIxs(params);
 
-	const openPerpNonMarketOrderTxn = await driftClient.buildTransaction(
+	const openPerpNonMarketOrderTxn = await velocityClient.buildTransaction(
 		instructions,
 		params.txParams
 	);

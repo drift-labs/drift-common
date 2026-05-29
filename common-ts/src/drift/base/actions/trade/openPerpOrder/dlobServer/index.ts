@@ -1,5 +1,5 @@
 import {
-	DriftClient,
+	VelocityClient,
 	User,
 	BN,
 	PositionDirection,
@@ -11,7 +11,7 @@ import {
 	DefaultOrderParams,
 	BASE_PRECISION,
 	TEN,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '../../../../../../utils';
 import {
 	mapAuctionParamsResponse,
@@ -52,7 +52,7 @@ export interface OptionalAuctionParamsRequestInputs {
 }
 
 interface RegularOrderParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	assetType: 'base' | 'quote';
 	marketType: MarketType;
@@ -177,7 +177,7 @@ export async function fetchAuctionOrderParams(params: RegularOrderParams) {
 }
 
 const calcBaseFromQuote = (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	marketType: MarketType,
 	marketIndex: number,
 	amount: BN
@@ -185,13 +185,13 @@ const calcBaseFromQuote = (
 	const isPerp = ENUM_UTILS.match(marketType, MarketType.PERP);
 
 	const oraclePrice = isPerp
-		? driftClient.getOracleDataForPerpMarket(marketIndex).price
-		: driftClient.getOracleDataForSpotMarket(marketIndex).price;
+		? velocityClient.getOracleDataForPerpMarket(marketIndex).price
+		: velocityClient.getOracleDataForSpotMarket(marketIndex).price;
 
 	if (isPerp) {
 		return amount.mul(BASE_PRECISION).div(oraclePrice);
 	} else {
-		const spotMarketAccount = driftClient.getSpotMarketAccount(marketIndex);
+		const spotMarketAccount = velocityClient.getSpotMarketAccount(marketIndex);
 		invariant(spotMarketAccount, 'Spot market account not found');
 		const precision = TEN.pow(new BN(spotMarketAccount.decimals));
 		return amount.mul(precision).div(oraclePrice);
@@ -208,14 +208,14 @@ export async function fetchAuctionOrderParamsFromDlob({
 	amount,
 	dlobServerHttpUrl,
 	assetType,
-	driftClient,
+	velocityClient,
 	reduceOnly,
 	optionalAuctionParamsInputs = {},
 }: RegularOrderParams): Promise<OptionalOrderParams> {
 	const baseAmount =
 		assetType === 'base'
 			? amount
-			: calcBaseFromQuote(driftClient, marketType, marketIndex, amount);
+			: calcBaseFromQuote(velocityClient, marketType, marketIndex, amount);
 
 	// Build URL parameters for server request
 	const urlParamsObject: Record<string, string> = {
@@ -289,14 +289,14 @@ export async function fetchAuctionOrderParamsFromL2({
 	amount,
 	reduceOnly,
 	optionalAuctionParamsInputs,
-	driftClient,
+	velocityClient,
 	dynamicSlippageConfig,
 }: RegularOrderParams): Promise<OptionalOrderParams> {
 	const marketId = new MarketId(marketIndex, marketType);
 	const baseAmount =
 		assetType === 'base'
 			? amount
-			: calcBaseFromQuote(driftClient, marketType, marketIndex, amount);
+			: calcBaseFromQuote(velocityClient, marketType, marketIndex, amount);
 
 	const l2DataResponse = await fetchBulkMarketsDlobL2Data(dlobServerHttpUrl, [
 		{

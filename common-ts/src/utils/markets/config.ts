@@ -1,11 +1,11 @@
 import {
-	DriftEnv,
+	VelocityEnv,
 	MarketType,
 	PerpMarketConfig,
 	PerpMarkets,
 	SpotMarketConfig,
 	SpotMarkets,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '../enum';
 
 const getBaseAssetSymbol = (marketName: string, removePrefix = false) => {
@@ -19,26 +19,26 @@ const getBaseAssetSymbol = (marketName: string, removePrefix = false) => {
 };
 
 function getMarketConfig(
-	driftEnv: DriftEnv,
+	velocityEnv: VelocityEnv,
 	marketType: typeof MarketType.PERP,
 	marketIndex: number
 ): PerpMarketConfig;
 function getMarketConfig(
-	driftEnv: DriftEnv,
+	velocityEnv: VelocityEnv,
 	marketType: typeof MarketType.SPOT,
 	marketIndex: number
 ): SpotMarketConfig;
 function getMarketConfig(
-	driftEnv: DriftEnv,
+	velocityEnv: VelocityEnv,
 	marketType: MarketType,
 	marketIndex: number
 ): PerpMarketConfig | SpotMarketConfig {
 	const isPerp = ENUM_UTILS.match(marketType, MarketType.PERP);
 
 	if (isPerp) {
-		return PerpMarkets[driftEnv][marketIndex];
+		return PerpMarkets[velocityEnv][marketIndex];
 	} else {
-		return SpotMarkets[driftEnv][marketIndex];
+		return SpotMarkets[velocityEnv][marketIndex];
 	}
 }
 

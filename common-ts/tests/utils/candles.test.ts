@@ -7,7 +7,7 @@ import {
 	PRICE_PRECISION_EXP,
 	PublicKey,
 	QUOTE_PRECISION_EXP,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { expect } from 'chai';
 import { PartialUISerializableOrderActionRecord } from '../../src/utils';
 import { Serializer, UISerializableCandle } from '../../src/serializableTypes';

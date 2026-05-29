@@ -1,4 +1,4 @@
-import { MarketType } from '@drift-labs/sdk';
+import { MarketType } from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '../utils/enum';
 import { Opaque } from './utility';
 

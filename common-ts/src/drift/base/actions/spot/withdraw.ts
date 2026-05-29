@@ -1,10 +1,10 @@
 import {
 	BigNum,
-	DriftClient,
+	VelocityClient,
 	SpotMarketConfig,
 	TxParams,
 	User,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	Transaction,
 	TransactionInstruction,
@@ -13,7 +13,7 @@ import {
 import { getTokenAddressForDepositAndWithdraw } from '../../../../utils/token';
 
 interface CreateWithdrawIxParams {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	user: User;
 	amount: BigNum;
 	spotMarketConfig: SpotMarketConfig;
@@ -22,7 +22,7 @@ interface CreateWithdrawIxParams {
 }
 
 export const createWithdrawIx = async ({
-	driftClient,
+	velocityClient,
 	amount,
 	spotMarketConfig,
 	user,
@@ -54,17 +54,16 @@ export const createWithdrawIx = async ({
 	const authority = user.getUserAccount().authority;
 	const associatedDepositTokenAddress =
 		await getTokenAddressForDepositAndWithdraw(
-			driftClient.getSpotMarketAccount(spotMarketConfig.marketIndex),
+			velocityClient.getSpotMarketAccount(spotMarketConfig.marketIndex),
 			authority
 		);
 
-	const withdrawIxs = await driftClient.getWithdrawalIxs(
+	const withdrawIxs = await velocityClient.getWithdrawalIxs(
 		finalWithdrawAmount.val,
 		spotMarketConfig.marketIndex,
 		associatedDepositTokenAddress,
 		reduceOnly,
-		user.getUserAccount().subAccountId,
-		undefined
+		user.getUserAccount().subAccountId
 	);
 
 	return withdrawIxs;
@@ -75,7 +74,7 @@ interface CreateWithdrawTxnParams extends CreateWithdrawIxParams {
 }
 
 export const createWithdrawTxn = async ({
-	driftClient,
+	velocityClient,
 	amount,
 	spotMarketConfig,
 	user,
@@ -84,7 +83,7 @@ export const createWithdrawTxn = async ({
 	txParams,
 }: CreateWithdrawTxnParams): Promise<Transaction | VersionedTransaction> => {
 	const withdrawIxs = await createWithdrawIx({
-		driftClient,
+		velocityClient,
 		amount,
 		spotMarketConfig,
 		user,
@@ -92,13 +91,13 @@ export const createWithdrawTxn = async ({
 		isMax,
 	});
 
-	const withdrawTxn = await driftClient.txHandler.buildTransaction({
+	const withdrawTxn = await velocityClient.txHandler.buildTransaction({
 		instructions: withdrawIxs,
 		txVersion: 0,
-		connection: driftClient.connection,
+		connection: velocityClient.connection,
 		preFlightCommitment: 'confirmed',
 		fetchAllMarketLookupTableAccounts:
-			driftClient.fetchAllLookupTableAccounts.bind(driftClient),
+			velocityClient.fetchAllLookupTableAccounts.bind(velocityClient),
 		txParams,
 	});
 

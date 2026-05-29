@@ -1,7 +1,7 @@
 import {
 	ACCOUNT_AGE_DELETION_CUTOFF_SECONDS,
 	BN,
-	DriftClient,
+	VelocityClient,
 	IDLE_TIME_SLOTS,
 	SLOT_TIME_ESTIMATE_MS,
 	User,
@@ -10,7 +10,7 @@ import {
 	ZERO,
 	isVariant,
 	positionIsAvailable,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { TransactionInstruction } from '@solana/web3.js';
 
 type AccountDeletionStep =
@@ -170,14 +170,14 @@ const getAccountDeletionStepsToTake = (
 
 /**
  * Builds the necessary transaction to delete a user account. This method will throw an error if the account cannot be deleted instantly.
- * @param driftClient
+ * @param velocityClient
  * @param user
  * @param userStatsAccount
  * @param latestSlot
  * @returns
  */
 const tryDeleteUserAccount = async (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	user: User,
 	userStatsAccount: UserStatsAccount,
 	latestSlot: number
@@ -197,7 +197,7 @@ const tryDeleteUserAccount = async (
 	if (canBeDeleted === 'yes-after-making-idle') {
 		// Create the make idle instruction
 		Ixs.push(
-			await driftClient.getUpdateUserIdleIx(
+			await velocityClient.getUpdateUserIdleIx(
 				user.userAccountPublicKey,
 				user.getUserAccount()
 			)
@@ -205,19 +205,19 @@ const tryDeleteUserAccount = async (
 	}
 
 	// Create the delete account instruction
-	Ixs.push(await driftClient.getUserDeletionIx(user.userAccountPublicKey));
+	Ixs.push(await velocityClient.getUserDeletionIx(user.userAccountPublicKey));
 
 	// Create a transaction from the instructions
-	const tx = await driftClient.buildTransaction(Ixs);
+	const tx = await velocityClient.buildTransaction(Ixs);
 
-	const { txSig } = await driftClient.sendTransaction(tx);
+	const { txSig } = await velocityClient.sendTransaction(tx);
 
-	const userMapKey = driftClient.getUserMapKey(
+	const userMapKey = velocityClient.getUserMapKey(
 		user.getUserAccount().subAccountId,
-		driftClient.wallet.publicKey
+		velocityClient.wallet.publicKey
 	);
-	await driftClient.users.get(userMapKey)?.unsubscribe();
-	driftClient.users.delete(userMapKey);
+	await velocityClient.users.get(userMapKey)?.unsubscribe();
+	velocityClient.users.delete(userMapKey);
 
 	return txSig;
 };

@@ -1,4 +1,4 @@
-import { BN, MARGIN_PRECISION, User } from '@drift-labs/sdk';
+import { BN, MARGIN_PRECISION, User } from '@velocity-exchange/sdk';
 
 const convertLeverageToMarginRatio = (leverage: number): number | undefined => {
 	if (!leverage) return undefined;

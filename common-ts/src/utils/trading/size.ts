@@ -2,23 +2,23 @@ import {
 	AMM_RESERVE_PRECISION,
 	BN,
 	BigNum,
-	DriftClient,
+	VelocityClient,
 	MAX_LEVERAGE_ORDER_SIZE,
 	ONE,
 	PRICE_PRECISION,
 	PerpMarketAccount,
 	SpotMarketAccount,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { MarketId } from '../../types';
 
 const getMarketTickSize = (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	marketId: MarketId
 ): BN => {
 	const marketAccount = marketId.isPerp
-		? driftClient.getPerpMarketAccount(marketId.marketIndex)
-		: driftClient.getSpotMarketAccount(marketId.marketIndex);
+		? velocityClient.getPerpMarketAccount(marketId.marketIndex)
+		: velocityClient.getSpotMarketAccount(marketId.marketIndex);
 	if (!marketAccount) return ZERO;
 
 	if (marketId.isPerp) {
@@ -29,10 +29,10 @@ const getMarketTickSize = (
 };
 
 const getMarketTickSizeDecimals = (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	marketId: MarketId
 ) => {
-	const tickSize = getMarketTickSize(driftClient, marketId);
+	const tickSize = getMarketTickSize(velocityClient, marketId);
 
 	const decimalPlaces = Math.max(
 		0,
@@ -46,10 +46,13 @@ const getMarketTickSizeDecimals = (
 	return decimalPlaces;
 };
 
-const getMarketStepSize = (driftClient: DriftClient, marketId: MarketId) => {
+const getMarketStepSize = (
+	velocityClient: VelocityClient,
+	marketId: MarketId
+) => {
 	const marketAccount = marketId.isPerp
-		? driftClient.getPerpMarketAccount(marketId.marketIndex)
-		: driftClient.getSpotMarketAccount(marketId.marketIndex);
+		? velocityClient.getPerpMarketAccount(marketId.marketIndex)
+		: velocityClient.getSpotMarketAccount(marketId.marketIndex);
 	if (!marketAccount) return ZERO;
 
 	if (marketId.isPerp) {
@@ -60,10 +63,10 @@ const getMarketStepSize = (driftClient: DriftClient, marketId: MarketId) => {
 };
 
 const getMarketStepSizeDecimals = (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	marketId: MarketId
 ) => {
-	const stepSize = getMarketStepSize(driftClient, marketId);
+	const stepSize = getMarketStepSize(velocityClient, marketId);
 
 	const decimalPlaces = Math.max(
 		0,

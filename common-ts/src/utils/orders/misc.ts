@@ -1,4 +1,4 @@
-import { Event, OrderActionRecord } from '@drift-labs/sdk';
+import { Event, OrderActionRecord } from '@velocity-exchange/sdk';
 import { UISerializableOrderActionRecord } from '../../serializableTypes';
 import { PartialUISerializableOrderActionRecord } from './sort';
 

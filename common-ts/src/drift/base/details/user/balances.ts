@@ -1,12 +1,12 @@
 import {
 	BigNum,
 	BN,
-	DriftClient,
+	VelocityClient,
 	MarketType,
 	PRICE_PRECISION_EXP,
 	QUOTE_PRECISION_EXP,
 	User,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { MARKET_UTILS } from '../../../../_deprecated/market-utils';
 
 /**
@@ -43,7 +43,7 @@ export interface SpotBalanceInfo {
  * - Determines liquidation price for the specific market
  * - Handles edge cases like zero balances and invalid liquidation prices
  *
- * @param driftClient - The DriftClient instance.
+ * @param velocityClient - The VelocityClient instance.
  * @param user - The User instance.
  * @param marketIndex - The market index for the spot market.
  * @param oraclePrice - The oracle price for the spot market.
@@ -51,13 +51,13 @@ export interface SpotBalanceInfo {
  * @returns SpotBalanceInfo object containing the three essential balance metrics
  */
 export const getSpotBalanceInfo = (
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	user: User,
 	marketIndex: number,
 	oraclePrice: BN
 ): SpotBalanceInfo => {
 	const spotMarketConfig = MARKET_UTILS.getMarketConfig(
-		driftClient.env,
+		velocityClient.env,
 		MarketType.SPOT,
 		marketIndex
 	);

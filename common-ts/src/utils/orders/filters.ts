@@ -5,7 +5,7 @@ import {
 	OrderTriggerCondition,
 	OrderType,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	UISerializableOrder,
 	UISerializableOrderActionRecord,

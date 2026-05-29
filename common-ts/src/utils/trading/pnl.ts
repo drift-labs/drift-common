@@ -6,7 +6,7 @@ import {
 	QUOTE_PRECISION_EXP,
 	ZERO,
 	isVariant,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { OpenPosition } from '../../types';
 import { convertMarginRatioToLeverage } from './leverage';
 

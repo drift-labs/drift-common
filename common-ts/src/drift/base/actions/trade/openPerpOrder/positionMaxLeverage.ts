@@ -1,4 +1,4 @@
-import { DriftClient, User } from '@drift-labs/sdk';
+import { VelocityClient, User } from '@velocity-exchange/sdk';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { TRADING_UTILS } from '../../../../../_deprecated/trading-utils';
 
@@ -7,7 +7,7 @@ import { TRADING_UTILS } from '../../../../../_deprecated/trading-utils';
  * Returns the instruction to update position max leverage, or undefined if no update is needed.
  */
 export async function getPositionMaxLeverageIxIfNeeded(
-	driftClient: DriftClient,
+	velocityClient: VelocityClient,
 	user: User,
 	marketIndex: number,
 	positionMaxLeverage?: number,
@@ -34,7 +34,7 @@ export async function getPositionMaxLeverageIxIfNeeded(
 	// 1. We have a target leverage to set, AND
 	// 2. Either there's no position yet (currentMarginRatio === 0) OR the margin ratios differ
 	if (targetMarginRatio && targetMarginRatio !== currentMarginRatio) {
-		return await driftClient.getUpdateUserPerpPositionCustomMarginRatioIx(
+		return await velocityClient.getUpdateUserPerpPositionCustomMarginRatioIx(
 			marketIndex,
 			targetMarginRatio,
 			userAccount.subAccountId,
