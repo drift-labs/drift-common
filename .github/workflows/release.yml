@@ -15,7 +15,7 @@ defaults:
 
 jobs:
   release-please:
-    runs-on: ubuntu-latest
+    runs-on: ubicloud
     timeout-minutes: 5
     permissions:
       contents: write
@@ -112,7 +112,7 @@ jobs:
   dispatch-downstream:
     needs: [release-please, publish-common-ts]
     if: ${{ needs.release-please.outputs['common-ts--release_created'] == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubicloud
     timeout-minutes: 5
     permissions: {}
     strategy:
@@ -145,7 +145,7 @@ jobs:
   notify-failure:
     needs: [release-please, publish-common-ts, dispatch-downstream]
     if: ${{ failure() || cancelled() }}
-    runs-on: ubuntu-latest
+    runs-on: ubicloud
     permissions: {}
     steps:
       - name: Notify Slack
