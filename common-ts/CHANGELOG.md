@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/drift-labs/drift-common/compare/common-ts-v1.1.1...common-ts-v1.1.2) (2026-05-29)
+
+
+### Code Refactoring
+
+* **common-ts:** integrate renamed SDK ([#342](https://github.com/drift-labs/drift-common/issues/342)) ([74f0431](https://github.com/drift-labs/drift-common/commit/74f0431451e4a534af9d38e8b407b23d9fc6f912))
+
 ## [1.1.1](https://github.com/drift-labs/drift-common/compare/common-ts-v1.1.0...common-ts-v1.1.1) (2026-05-18)
 
 
