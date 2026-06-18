@@ -4,7 +4,6 @@ import {
 	BN,
 	loadKeypair,
 	PositionDirection,
-	OrderType,
 	PostOnlyParams,
 	SwapMode,
 	BASE_PRECISION,
@@ -136,31 +135,6 @@ function parseDirection(direction: string): PositionDirection {
 		throw new Error(
 			`Invalid direction: ${direction}. Use 'long', 'short', 'buy', or 'sell'`
 		);
-	}
-}
-
-/**
- * Parse order type string to OrderType
- */
-function _parseOrderType(orderType: string): OrderType {
-	const normalized = orderType.toLowerCase();
-	switch (normalized) {
-		case 'limit':
-			return OrderType.LIMIT;
-		case 'market':
-			return OrderType.MARKET;
-		case 'oracle':
-			return OrderType.ORACLE;
-		case 'trigger_market':
-		case 'stopmarket':
-			return OrderType.TRIGGER_MARKET;
-		case 'trigger_limit':
-		case 'stoplimit':
-			return OrderType.TRIGGER_LIMIT;
-		default:
-			throw new Error(
-				`Invalid order type: ${orderType}. Use 'limit', 'market', 'oracle', 'trigger_market', or 'trigger_limit'`
-			);
 	}
 }
 
@@ -844,7 +818,6 @@ async function openPerpNonMarketOrderCommand(args: CliArgs): Promise<void> {
 	console.log(`🔄 Reduce Only: ${reduceOnly}`);
 	console.log(`📌 Post Only: ${postOnly} (${ENUM_UTILS.toStr(postOnlyEnum)})`);
 
-	// Just call the main method - it will handle both approaches internally
 	const orderTxn = await centralServerVelocity.getOpenPerpNonMarketOrderTxn({
 		userAccountPublicKey: userAccountPubkey,
 		marketIndex,
@@ -1325,8 +1298,7 @@ async function swapCommand(args: CliArgs): Promise<void> {
 		swapModeEnum === 'ExactIn' ? fromMarketIndex : toMarketIndex;
 
 	// Get the appropriate precision for the amount based on the market
-	const isMainnet = true; // Default to mainnet, could be made configurable
-	const precision = getMarketPrecision(precisionMarketIndex, isMainnet);
+	const precision = getMarketPrecision(precisionMarketIndex, true);
 	const amountBN = parseAmount(amount, precision);
 
 	console.log('--- 🔄 Swap Transaction ---');
