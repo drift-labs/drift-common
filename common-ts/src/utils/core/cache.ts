@@ -1,8 +1,6 @@
-// Cache for common UI string patterns to reduce memory allocation
 const uiStringCache = new Map<string, string>();
 const MAX_UI_STRING_CACHE_SIZE = 2000;
 
-// Helper function to cache common string patterns
 export function getCachedUiString(
 	pattern: string,
 	...values: (string | number)[]
@@ -36,7 +34,6 @@ export function getCachedUiString(
 			result = values.join('_');
 	}
 
-	// Cache if not too large
 	if (uiStringCache.size < MAX_UI_STRING_CACHE_SIZE) {
 		uiStringCache.set(cacheKey, result);
 	}

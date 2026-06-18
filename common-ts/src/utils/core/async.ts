@@ -1,8 +1,8 @@
-export async function sleep(ms) {
+export async function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export const timedPromise = async <T>(promise: T) => {
+export const timedPromise = async <T>(promise: Promise<T>) => {
 	const start = Date.now();
 	const promiseResult = await promise;
 

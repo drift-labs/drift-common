@@ -43,12 +43,10 @@ export class MultiSwitch {
 	constructor(private baseState: 'on' | 'off' = 'off') {}
 
 	private getSwitchKey(key: string) {
-		// If first time using switch, add to list of switches
-		if (!this.switches.includes(key)) {
-			this.switches.push(key);
+		let switchIndex = this.switches.indexOf(key);
+		if (switchIndex === -1) {
+			switchIndex = this.switches.push(key) - 1;
 		}
-
-		const switchIndex = this.switches.indexOf(key);
 
 		return 2 ** switchIndex;
 	}
@@ -82,13 +80,10 @@ export class MultiSwitch {
 	}
 
 	public get isOn() {
-		// When the base state is on, then if any switch is on the multi-switch is off
 		if (this.baseState === 'on') {
 			return this.switchValue === 0;
 		}
 
-		if (this.baseState === 'off') {
-			return this.switchValue > 0;
-		}
+		return this.switchValue > 0;
 	}
 }

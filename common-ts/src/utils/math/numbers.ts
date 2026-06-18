@@ -12,7 +12,7 @@ export const calculateMean = (numbers: number[]): number => {
 };
 
 export const calculateMedian = (numbers: number[]): number => {
-	const sortedNumbers = numbers.sort();
+	const sortedNumbers = [...numbers].sort((a, b) => a - b);
 	const middleIndex = Math.floor(sortedNumbers.length / 2);
 	if (sortedNumbers.length % 2 === 0) {
 		return (sortedNumbers[middleIndex - 1] + sortedNumbers[middleIndex]) / 2;
@@ -36,9 +36,6 @@ export const calculateStandardDeviation = (
 
 /**
  * Returns the number of standard deviations between a target value and the history of values to compare it to.
- * @param target
- * @param previousValues
- * @returns
  */
 export const calculateZScore = (
 	target: number,
@@ -69,5 +66,7 @@ export function roundToDecimal(
 	value: number,
 	decimals: number | undefined | null
 ) {
-	return decimals ? Math.round(value * 10 ** decimals) / 10 ** decimals : value;
+	return decimals != null
+		? Math.round(value * 10 ** decimals) / 10 ** decimals
+		: value;
 }

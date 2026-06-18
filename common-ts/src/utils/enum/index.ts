@@ -6,7 +6,7 @@ function enumToObj(enumStr: string) {
 	if (!enumStr) return undefined;
 
 	return {
-		[enumStr ?? '']: {},
+		[enumStr]: {},
 	};
 }
 
