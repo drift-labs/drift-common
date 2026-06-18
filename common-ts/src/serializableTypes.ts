@@ -211,39 +211,13 @@ const PriceBigNumSerializeAndDeserializeFns = {
 	Deserialize: PriceBigNumDeserializationFn,
 };
 
-const FundingRateBigNumSerializationFn = (target: BigNum | BN) =>
-	target
-		? target instanceof BigNum
-			? target.print()
-			: target.toString()
-		: undefined;
-const FundingRateBigNumDeserializationFn = (val: string | number) =>
-	val !== undefined
-		? typeof val === 'string'
-			? BigNum.from(val.replace('.', ''), PRICE_PRECISION_EXP)
-			: BigNum.fromPrint(val.toString(), PRICE_PRECISION_EXP)
-		: undefined;
-const FundingRateBigNumSerializeAndDeserializeFns = {
-	Serialize: FundingRateBigNumSerializationFn,
-	Deserialize: FundingRateBigNumDeserializationFn,
-};
+// Funding rate and bank cumulative interest serialize identically to price
+// (same PRICE_PRECISION_EXP); alias rather than duplicate the functions.
+const FundingRateBigNumSerializeAndDeserializeFns =
+	PriceBigNumSerializeAndDeserializeFns;
 
-const BankCumulativeInterestBigNumSerializationFn = (target: BigNum | BN) =>
-	target
-		? target instanceof BigNum
-			? target.print()
-			: target.toString()
-		: undefined;
-const BankCumulativeInterestBigNumDeserializationFn = (val: string | number) =>
-	val !== undefined
-		? typeof val === 'string'
-			? BigNum.from(val.replace('.', ''), PRICE_PRECISION_EXP)
-			: BigNum.fromPrint(val.toString(), PRICE_PRECISION_EXP)
-		: undefined;
-const BankCumulativeInterestBigNumSerializeAndDeserializeFns = {
-	Serialize: BankCumulativeInterestBigNumSerializationFn,
-	Deserialize: BankCumulativeInterestBigNumDeserializationFn,
-};
+const BankCumulativeInterestBigNumSerializeAndDeserializeFns =
+	PriceBigNumSerializeAndDeserializeFns;
 
 const ReferralVolumeBigNumSerializationFn = (target: BigNum | BN) =>
 	target
@@ -338,7 +312,7 @@ function validateEventTypeOnDeserialize<
 		);
 
 		// If it's just undefined then we're happy to set it for them
-		instance.eventType = expectedEventType as string; // added 'as string' to accommodate older typescript version errors
+		instance.eventType = expectedEventType as string;
 	}
 }
 
@@ -363,7 +337,7 @@ function validateEventTypeOnSerialize<
 		);
 
 		// If it's just undefined then we're happy to set it for them
-		json.eventType = expectedEventType as string; // added 'as string' to accommodate older typescript version errors
+		json.eventType = expectedEventType as string;
 	}
 }
 
@@ -2051,7 +2025,7 @@ export class UISerializableInsuranceFundRecord extends SerializableInsuranceFund
 			instance.insuranceVaultAmountBefore.precision = precisionToUse;
 			instance.amount.precision = precisionToUse;
 		} catch (e) {
-			//console.error('Error in insurance fund serializer', e);
+			// ignore: fall back to default precision if market lookup fails
 		}
 	}
 }
