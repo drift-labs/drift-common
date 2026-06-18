@@ -18,7 +18,7 @@ import {
 	TransactionInstruction,
 	VersionedTransaction,
 } from '@solana/web3.js';
-import { USER_UTILS } from '../../../../_deprecated/user-utils';
+import { checkIfUserAccountExists } from '../../../../utils/positions/user';
 
 interface CreateUserAndDepositCollateralBaseIxsParams {
 	velocityClient: VelocityClient;
@@ -106,14 +106,11 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 		referrerName
 			? velocityClient.fetchReferrerNameAccount(referrerName)
 			: Promise.resolve(undefined);
-	const subaccountExistsPromise = USER_UTILS.checkIfUserAccountExists(
-		velocityClient,
-		{
-			type: 'subAccountId',
-			subAccountId: nextSubaccountId,
-			authority,
-		}
-	);
+	const subaccountExistsPromise = checkIfUserAccountExists(velocityClient, {
+		type: 'subAccountId',
+		subAccountId: nextSubaccountId,
+		authority,
+	});
 
 	const [associatedDepositTokenAddress, referrerNameAccount, subaccountExists] =
 		await Promise.all([

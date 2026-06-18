@@ -13,9 +13,9 @@ import {
 	ZERO,
 } from '@velocity-exchange/sdk';
 import { TransactionSignature } from '@solana/web3.js';
-import { MARKET_UTILS } from '../../../../../_deprecated/market-utils';
+import { getMarketConfig } from '../../../../../utils/markets/config';
 import { MAIN_POOL_ID } from '../../../../../constants';
-import { TRADING_UTILS } from '../../../../../_deprecated/trading-utils';
+import { convertLeverageToMarginRatio } from '../../../../../utils/trading/leverage';
 import { UserAccountCache } from '../../../stores/UserAccountCache';
 import { createDepositTxn } from '../../../../base/actions/spot/deposit';
 import { createUserAndDepositCollateralBaseTxn } from '../../../../base/actions/user/create';
@@ -134,15 +134,13 @@ export class VelocityOperations {
 			referrerName,
 		} = params;
 
-		const spotMarketConfig = MARKET_UTILS.getMarketConfig(
+		const spotMarketConfig = getMarketConfig(
 			this.velocityClient.env,
 			MarketType.SPOT,
 			depositSpotMarketIndex
 		);
 
-		const customMaxMarginRatio = TRADING_UTILS.convertLeverageToMarginRatio(
-			maxLeverage ?? 0
-		);
+		const customMaxMarginRatio = convertLeverageToMarginRatio(maxLeverage ?? 0);
 
 		let userStatsAccount: UserStatsAccount | undefined = undefined;
 
@@ -288,7 +286,7 @@ export class VelocityOperations {
 		const { subAccountId, amount, spotMarketIndex, isMaxBorrowRepayment } =
 			params;
 
-		const spotMarketConfig = MARKET_UTILS.getMarketConfig(
+		const spotMarketConfig = getMarketConfig(
 			this.velocityClient.env,
 			MarketType.SPOT,
 			spotMarketIndex
@@ -348,7 +346,7 @@ export class VelocityOperations {
 			isMax = false,
 		} = params;
 
-		const spotMarketConfig = MARKET_UTILS.getMarketConfig(
+		const spotMarketConfig = getMarketConfig(
 			this.velocityClient.env,
 			MarketType.SPOT,
 			spotMarketIndex
@@ -637,12 +635,12 @@ export class VelocityOperations {
 			connection: this.velocityClient.connection,
 		});
 
-		const inputMint = MARKET_UTILS.getMarketConfig(
+		const inputMint = getMarketConfig(
 			this.velocityClient.env,
 			MarketType.SPOT,
 			params.fromMarketIndex
 		).mint;
-		const outputMint = MARKET_UTILS.getMarketConfig(
+		const outputMint = getMarketConfig(
 			this.velocityClient.env,
 			MarketType.SPOT,
 			params.toMarketIndex

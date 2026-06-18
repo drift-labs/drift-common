@@ -26,7 +26,7 @@ import {
 import { MarketId } from '../../../../../../types';
 import { Observable, Subscription } from 'rxjs';
 import { OptionalTriggerOrderParams } from '../types';
-import { TRADING_UTILS } from '../../../../../../_deprecated/trading-utils';
+import { convertLeverageToMarginRatio } from '../../../../../../utils/trading/leverage';
 import { Connection } from '@solana/web3.js';
 
 /**
@@ -275,9 +275,7 @@ export const prepSwiftOrder = ({
 			  }
 			: null,
 		maxMarginRatio: orderParams.positionMaxLeverage
-			? TRADING_UTILS.convertLeverageToMarginRatio(
-					orderParams.positionMaxLeverage
-			  )
+			? convertLeverageToMarginRatio(orderParams.positionMaxLeverage)
 			: null,
 		isolatedPositionDeposit: orderParams.isolatedPositionDeposit ?? null,
 		// Include builder params if provided

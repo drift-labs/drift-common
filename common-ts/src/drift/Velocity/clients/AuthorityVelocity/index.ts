@@ -20,7 +20,7 @@ import {
 	TxParams,
 } from '@velocity-exchange/sdk';
 import { Connection, PublicKey, TransactionSignature } from '@solana/web3.js';
-import { COMMON_UI_UTILS } from '../../../../_deprecated/common-ui-utils';
+import { createPlaceholderIWallet } from '../../../../utils/accounts/wallet';
 import {
 	DEFAULT_ACCOUNT_LOADER_COMMITMENT,
 	DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS,
@@ -31,7 +31,7 @@ import {
 	PollingCategory,
 } from '../../constants';
 import { MarketId } from '../../../../types';
-import { MARKET_UTILS } from '../../../../_deprecated/market-utils';
+import { getMarketConfig } from '../../../../utils/markets/config';
 import {
 	POLLING_DEPTHS,
 	POLLING_INTERVALS,
@@ -249,18 +249,10 @@ export class AuthorityVelocity {
 			...spotTradableMarkets,
 		];
 		this._spotMarketConfigs = spotTradableMarkets.map((market) =>
-			MARKET_UTILS.getMarketConfig(
-				config.velocityEnv,
-				MarketType.SPOT,
-				market.marketIndex
-			)
+			getMarketConfig(config.velocityEnv, MarketType.SPOT, market.marketIndex)
 		);
 		this._perpMarketConfigs = perpTradableMarkets.map((market) =>
-			MARKET_UTILS.getMarketConfig(
-				config.velocityEnv,
-				MarketType.PERP,
-				market.marketIndex
-			)
+			getMarketConfig(config.velocityEnv, MarketType.PERP, market.marketIndex)
 		);
 
 		// set up Velocity endpoints
@@ -362,7 +354,7 @@ export class AuthorityVelocity {
 		this._spotMarketConfigs = tradableMarkets
 			.filter((market) => !market.isPerp)
 			.map((market) =>
-				MARKET_UTILS.getMarketConfig(
+				getMarketConfig(
 					this._velocityClient.env,
 					MarketType.SPOT,
 					market.marketIndex
@@ -371,7 +363,7 @@ export class AuthorityVelocity {
 		this._perpMarketConfigs = tradableMarkets
 			.filter((market) => market.isPerp)
 			.map((market) =>
-				MARKET_UTILS.getMarketConfig(
+				getMarketConfig(
 					this._velocityClient.env,
 					MarketType.PERP,
 					market.marketIndex
@@ -453,28 +445,20 @@ export class AuthorityVelocity {
 		);
 		this.accountLoader = accountLoader;
 
-		const wallet = config.wallet ?? COMMON_UI_UTILS.createPlaceholderIWallet();
+		const wallet = config.wallet ?? createPlaceholderIWallet();
 		const skipInitialUsersLoad = !config.wallet;
 
 		const perpMarkets =
 			config.tradableMarkets
 				?.filter((market) => market.isPerp)
 				.map((market) =>
-					MARKET_UTILS.getMarketConfig(
-						velocityEnv,
-						MarketType.PERP,
-						market.marketIndex
-					)
+					getMarketConfig(velocityEnv, MarketType.PERP, market.marketIndex)
 				) ?? PerpMarkets[velocityEnv];
 		const spotMarkets =
 			config.tradableMarkets
 				?.filter((market) => !market.isPerp)
 				.map((market) =>
-					MARKET_UTILS.getMarketConfig(
-						velocityEnv,
-						MarketType.SPOT,
-						market.marketIndex
-					)
+					getMarketConfig(velocityEnv, MarketType.SPOT, market.marketIndex)
 				) ?? SpotMarkets[velocityEnv];
 		const { perpMarketIndexes, spotMarketIndexes, oracleInfos } =
 			getMarketsAndOraclesForSubscription(

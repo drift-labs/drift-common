@@ -10,7 +10,7 @@ import {
 	VersionedTransaction,
 } from '@solana/web3.js';
 import { WithTxnParams } from '../../types';
-import { TRADING_UTILS } from '../../../../_deprecated/trading-utils';
+import { convertLeverageToMarginRatio } from '../../../../utils/trading/leverage';
 
 export interface CreateUpdateMarketMaxLeverageIxsParams {
 	velocityClient: VelocityClient;
@@ -42,7 +42,7 @@ export const createUpdateMarketMaxLeverageIxs = async (
 	const ixs: TransactionInstruction[] = [];
 
 	// Update max leverage of perp market for user
-	const marginRatio = TRADING_UTILS.convertLeverageToMarginRatio(leverage);
+	const marginRatio = convertLeverageToMarginRatio(leverage);
 	const perpMarketIndex = perpMarketAccount.marketIndex;
 	const updateMaxLeverageIx =
 		await velocityClient.getUpdateUserPerpPositionCustomMarginRatioIx(

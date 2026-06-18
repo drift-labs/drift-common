@@ -1,6 +1,6 @@
 import { VelocityClient, User } from '@velocity-exchange/sdk';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { TRADING_UTILS } from '../../../../../_deprecated/trading-utils';
+import { convertLeverageToMarginRatio } from '../../../../../utils/trading/leverage';
 
 /**
  * Helper function to determine if leverage needs updating and create the instruction if needed.
@@ -24,8 +24,7 @@ export async function getPositionMaxLeverageIxIfNeeded(
 	);
 
 	// Convert leverage to margin ratio
-	const targetMarginRatio =
-		TRADING_UTILS.convertLeverageToMarginRatio(positionMaxLeverage);
+	const targetMarginRatio = convertLeverageToMarginRatio(positionMaxLeverage);
 
 	// Check if leverage needs updating
 	const currentMarginRatio = currentPosition?.maxMarginRatio || 0;

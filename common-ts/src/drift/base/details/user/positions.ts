@@ -15,7 +15,7 @@ import {
 	calculatePositionPNL,
 	calculateUnsettledFundingPnl,
 } from '@velocity-exchange/sdk';
-import { TRADING_UTILS } from '../../../../_deprecated/trading-utils';
+import { calculatePotentialProfit } from '../../../../utils/trading/pnl';
 import { USDC_SPOT_MARKET_INDEX } from '../../../../constants';
 
 /**
@@ -69,7 +69,7 @@ export const getPriceBasedPositionInfo = (
 	// Price calculations
 
 	// position pnl
-	const positionNotionalPnlBN = TRADING_UTILS.calculatePotentialProfit({
+	const positionNotionalPnlBN = calculatePotentialProfit({
 		currentPositionSize: baseSizeBigNum,
 		currentPositionDirection: isShortPosition
 			? PositionDirection.SHORT

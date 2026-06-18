@@ -11,8 +11,8 @@ import {
 	User,
 	PositionDirection,
 } from '@velocity-exchange/sdk';
-import { ORDER_COMMON_UTILS } from '../../../../../_deprecated/order-utils';
-import { COMMON_UI_UTILS } from '../../../../../_deprecated/common-ui-utils';
+import { getPerpAuctionDuration } from '../../../../../utils/orders/flags';
+import { getLimitAuctionParams } from '../../../../../utils/trading/auction';
 import { DEFAULT_LIMIT_AUCTION_DURATION } from '../../../constants/auction';
 import { ENUM_UTILS } from '../../../../../utils';
 import invariant from 'tiny-invariant';
@@ -81,14 +81,14 @@ export const getLimitAuctionOrderParams = async ({
 			  })
 			: undefined;
 
-		auctionDuration = ORDER_COMMON_UTILS.getPerpAuctionDuration(
+		auctionDuration = getPerpAuctionDuration(
 			orderConfig.limitPrice.sub(orderParams.auctionStartPrice).abs(),
 			orderConfig.limitAuction.oraclePrice,
 			perpMarketAccount.contractTier
 		);
 	}
 
-	const limitAuctionParams = COMMON_UI_UTILS.getLimitAuctionParams({
+	const limitAuctionParams = getLimitAuctionParams({
 		direction,
 		inputPrice: BigNum.from(orderConfig.limitPrice, PRICE_PRECISION_EXP),
 		startPriceFromSettings: orderParams.auctionStartPrice,

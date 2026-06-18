@@ -10,7 +10,7 @@ import {
 	ZERO,
 } from '@velocity-exchange/sdk';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { TRADING_UTILS } from '../../../../../_deprecated/trading-utils';
+import { convertLeverageToMarginRatio } from '../../../../../utils/trading/leverage';
 import {
 	AdditionalIsolatedPositionDeposit,
 	IsolatedPositionDepositsOverride,
@@ -266,9 +266,7 @@ export function calculateIsolatedPositionDeposits(params: {
 	const currentMarketShortfall = allShortfalls.get(params.marketIndex) ?? ZERO;
 
 	let mainIsolatedPositionDeposit: BN | undefined;
-	const marginRatio = TRADING_UTILS.convertLeverageToMarginRatio(
-		params.positionMaxLeverage
-	);
+	const marginRatio = convertLeverageToMarginRatio(params.positionMaxLeverage);
 
 	if (marginRatio) {
 		mainIsolatedPositionDeposit = computeIsolatedPositionDepositForTrade({

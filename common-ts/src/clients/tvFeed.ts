@@ -10,7 +10,7 @@ import { UIEnv } from '../types/UIEnv';
 import { Candle } from '../utils/candles/Candle';
 import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
 import { CandleClient } from './candleClient';
-import { MARKET_UTILS } from '../_deprecated/market-utils';
+import { getBaseAssetSymbol } from '../utils/markets/config';
 
 const VELOCITY_V2_START_TS = 1668470400; // 15th November 2022 ... 2022-11-15T00:00:00.000Z
 
@@ -298,7 +298,7 @@ export class VelocityTvFeed {
 			const tvMarketName = targetMarket.config.symbol;
 
 			// Use market-specific decimal precision from configuration
-			const baseAssetSymbol = MARKET_UTILS.getBaseAssetSymbol(symbolName);
+			const baseAssetSymbol = getBaseAssetSymbol(symbolName);
 			const marketDecimals = this.marketDecimalConfig?.[baseAssetSymbol];
 
 			let priceScale: number;

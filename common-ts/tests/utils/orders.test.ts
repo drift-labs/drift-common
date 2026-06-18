@@ -8,14 +8,19 @@ import {
 	PRICE_PRECISION_EXP,
 	PositionDirection,
 } from '@velocity-exchange/sdk';
-import { COMMON_UI_UTILS } from '../../src/_deprecated/common-ui-utils';
+import {
+	deriveMarketOrderParams,
+	getLimitAuctionParams,
+	getMarketAuctionParams,
+	getMarketOrderLimitPrice,
+} from '../../src/utils/trading';
 import { ENUM_UTILS } from '../../src';
 import { expect } from 'chai';
 
 describe('COMMON_UI_UTILS OrderParams Tests', () => {
 	describe('getMarketAuctionParams', () => {
 		it('should correctly generate params for long', () => {
-			const result = COMMON_UI_UTILS.getMarketAuctionParams({
+			const result = getMarketAuctionParams({
 				direction: PositionDirection.LONG,
 				startPriceFromSettings: new BN(100).mul(PRICE_PRECISION),
 				endPriceFromSettings: new BN(105).mul(PRICE_PRECISION),
@@ -30,7 +35,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should correctly generate params for short', () => {
-			const result = COMMON_UI_UTILS.getMarketAuctionParams({
+			const result = getMarketAuctionParams({
 				direction: PositionDirection.SHORT,
 				startPriceFromSettings: new BN(100).mul(PRICE_PRECISION),
 				endPriceFromSettings: new BN(95).mul(PRICE_PRECISION),
@@ -47,7 +52,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 
 	describe('getLimitAuctionParams', () => {
 		it('should correctly generate params for long', () => {
-			const result = COMMON_UI_UTILS.getLimitAuctionParams({
+			const result = getLimitAuctionParams({
 				direction: PositionDirection.LONG,
 				inputPrice: BigNum.from(
 					new BN(108).mul(PRICE_PRECISION),
@@ -63,7 +68,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should correctly generate params for short', () => {
-			const result = COMMON_UI_UTILS.getLimitAuctionParams({
+			const result = getLimitAuctionParams({
 				direction: PositionDirection.SHORT,
 				inputPrice: BigNum.from(
 					new BN(92).mul(PRICE_PRECISION),
@@ -79,7 +84,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should not generate any auction params for long if limit price is lower than startPriceForSettings', () => {
-			const result = COMMON_UI_UTILS.getLimitAuctionParams({
+			const result = getLimitAuctionParams({
 				direction: PositionDirection.LONG,
 				inputPrice: BigNum.from(
 					new BN(92).mul(PRICE_PRECISION),
@@ -96,7 +101,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should not generate any auction params for short if limit price is higher than startPriceFromSettings', () => {
-			const result = COMMON_UI_UTILS.getLimitAuctionParams({
+			const result = getLimitAuctionParams({
 				direction: PositionDirection.SHORT,
 				inputPrice: BigNum.from(
 					new BN(108).mul(PRICE_PRECISION),
@@ -115,7 +120,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 
 	describe('deriveMarketOrderParams', () => {
 		it('should correctly generate params for LONG oracle order when oracle > est entry', () => {
-			const result = COMMON_UI_UTILS.deriveMarketOrderParams({
+			const result = deriveMarketOrderParams({
 				marketType: MarketType.PERP,
 				marketIndex: 0,
 				direction: PositionDirection.LONG,
@@ -148,7 +153,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should correctly generate params for LONG non-oracle market order when oracle > est entry', () => {
-			const result = COMMON_UI_UTILS.deriveMarketOrderParams({
+			const result = deriveMarketOrderParams({
 				marketType: MarketType.PERP,
 				marketIndex: 0,
 				direction: PositionDirection.LONG,
@@ -181,7 +186,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should correctly generate params for LONG oracle order when oracle < est entry', () => {
-			const result = COMMON_UI_UTILS.deriveMarketOrderParams({
+			const result = deriveMarketOrderParams({
 				marketType: MarketType.PERP,
 				marketIndex: 0,
 				direction: PositionDirection.LONG,
@@ -214,7 +219,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should correctly generate params for SHORT oracle order when oracle < est entry', () => {
-			const result = COMMON_UI_UTILS.deriveMarketOrderParams({
+			const result = deriveMarketOrderParams({
 				marketType: MarketType.PERP,
 				marketIndex: 0,
 				direction: PositionDirection.SHORT,
@@ -247,7 +252,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should correctly generate params for SHORT oracle order when oracle > est entry', () => {
-			const result = COMMON_UI_UTILS.deriveMarketOrderParams({
+			const result = deriveMarketOrderParams({
 				marketType: MarketType.PERP,
 				marketIndex: 0,
 				direction: PositionDirection.SHORT,
@@ -280,7 +285,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should correctly generate params for SHORT non-oracle market order when oracle > est entry', () => {
-			const result = COMMON_UI_UTILS.deriveMarketOrderParams({
+			const result = deriveMarketOrderParams({
 				marketType: MarketType.PERP,
 				marketIndex: 0,
 				direction: PositionDirection.SHORT,
@@ -313,7 +318,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should correctly generate params for LONG non-oracle market order with auction end price capped by slippage', () => {
-			const result = COMMON_UI_UTILS.deriveMarketOrderParams({
+			const result = deriveMarketOrderParams({
 				marketType: MarketType.PERP,
 				marketIndex: 0,
 				direction: PositionDirection.LONG,
@@ -346,7 +351,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should correctly generate params for LONG non-oracle market order with auction end price NOT capped by slippage', () => {
-			const result = COMMON_UI_UTILS.deriveMarketOrderParams({
+			const result = deriveMarketOrderParams({
 				marketType: MarketType.PERP,
 				marketIndex: 0,
 				direction: PositionDirection.LONG,
@@ -379,7 +384,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should correctly generate params for LONG non-oracle market order with auction end price NOT capped by slippage AND an additional offset', () => {
-			const result = COMMON_UI_UTILS.deriveMarketOrderParams({
+			const result = deriveMarketOrderParams({
 				marketType: MarketType.PERP,
 				marketIndex: 0,
 				direction: PositionDirection.LONG,
@@ -414,7 +419,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 	});
 	describe('getMarketOrderLimitPrice', () => {
 		it('should use the correct price for a LONG with 5% max slippage', () => {
-			const result = COMMON_UI_UTILS.getMarketOrderLimitPrice({
+			const result = getMarketOrderLimitPrice({
 				direction: PositionDirection.LONG,
 				baselinePrice: new BN(100).mul(PRICE_PRECISION),
 				slippageTolerance: 5,
@@ -424,7 +429,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should use the correct price for a SHORT with 5% max slippage ', () => {
-			const result = COMMON_UI_UTILS.getMarketOrderLimitPrice({
+			const result = getMarketOrderLimitPrice({
 				direction: PositionDirection.SHORT,
 				baselinePrice: new BN(100).mul(PRICE_PRECISION),
 				slippageTolerance: 5,
@@ -433,7 +438,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 			expect(result.toString()).to.equal('95000000');
 		});
 		it('should use the correct price for a LONG with 0.5% max slippage', () => {
-			const result = COMMON_UI_UTILS.getMarketOrderLimitPrice({
+			const result = getMarketOrderLimitPrice({
 				direction: PositionDirection.LONG,
 				baselinePrice: new BN(100).mul(PRICE_PRECISION),
 				slippageTolerance: 0.5,
@@ -443,7 +448,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should use the correct price for a SHORT with 0.5% max slippage ', () => {
-			const result = COMMON_UI_UTILS.getMarketOrderLimitPrice({
+			const result = getMarketOrderLimitPrice({
 				direction: PositionDirection.SHORT,
 				baselinePrice: new BN(100).mul(PRICE_PRECISION),
 				slippageTolerance: 0.5,
@@ -452,7 +457,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 			expect(result.toString()).to.equal('99500000');
 		});
 		it('should use the correct price for a LONG with 0.05% max slippage', () => {
-			const result = COMMON_UI_UTILS.getMarketOrderLimitPrice({
+			const result = getMarketOrderLimitPrice({
 				direction: PositionDirection.LONG,
 				baselinePrice: new BN(100).mul(PRICE_PRECISION),
 				slippageTolerance: 0.05,
@@ -462,7 +467,7 @@ describe('COMMON_UI_UTILS OrderParams Tests', () => {
 		});
 
 		it('should use the correct price for a SHORT with 0.05% max slippage ', () => {
-			const result = COMMON_UI_UTILS.getMarketOrderLimitPrice({
+			const result = getMarketOrderLimitPrice({
 				direction: PositionDirection.SHORT,
 				baselinePrice: new BN(100).mul(PRICE_PRECISION),
 				slippageTolerance: 0.05,

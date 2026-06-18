@@ -1,4 +1,5 @@
-import { sleep, COMMON_UTILS } from '..';
+import { sleep } from '..';
+import { chunks } from '../utils/core/arrays';
 import Redis, { Cluster, RedisOptions } from 'ioredis';
 
 const BULK_WRITE_CHUNK_SIZE = 500;
@@ -323,7 +324,7 @@ export class RedisClient {
 
 		if (values.length === 0) return;
 
-		const chunkedValues = COMMON_UTILS.chunks(values, BULK_WRITE_CHUNK_SIZE);
+		const chunkedValues = chunks(values, BULK_WRITE_CHUNK_SIZE);
 
 		for (const valuesChunk of chunkedValues) {
 			for (const [key, val] of valuesChunk) {
@@ -354,7 +355,7 @@ export class RedisClient {
 
 		this.assertConnected();
 
-		const chunkedValues = COMMON_UTILS.chunks(values, BULK_WRITE_CHUNK_SIZE);
+		const chunkedValues = chunks(values, BULK_WRITE_CHUNK_SIZE);
 
 		for (const valuesChunk of chunkedValues) {
 			for (const [key, val] of valuesChunk) {
@@ -405,7 +406,7 @@ export class RedisClient {
 
 		if (keys.length === 0) return [];
 
-		const chunkedValues = COMMON_UTILS.chunks(keys, BULK_READ_CHUNK_SIZE);
+		const chunkedValues = chunks(keys, BULK_READ_CHUNK_SIZE);
 		const rawValues = [];
 
 		const chunkPromises = chunkedValues.map(async (valuesChunk, index) => {
@@ -584,7 +585,7 @@ export class RedisClient {
 	async delete(...keys: string[]) {
 		this.assertConnected();
 
-		const chunkedValues = COMMON_UTILS.chunks(keys, BULK_WRITE_CHUNK_SIZE);
+		const chunkedValues = chunks(keys, BULK_WRITE_CHUNK_SIZE);
 
 		let count = 0;
 		for (const valuesChunk of chunkedValues) {

@@ -39,7 +39,7 @@ import {
 	TransactionInstruction,
 	VersionedTransaction,
 } from '@solana/web3.js';
-import { COMMON_UI_UTILS } from '../../../../_deprecated/common-ui-utils';
+import { createPlaceholderIWallet } from '../../../../utils/accounts/wallet';
 import {
 	DEFAULT_ACCOUNT_LOADER_COMMITMENT,
 	DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS,
@@ -151,7 +151,7 @@ export class CentralServerVelocity {
 			DEFAULT_ACCOUNT_LOADER_POLLING_FREQUENCY_MS
 		);
 
-		const wallet = COMMON_UI_UTILS.createPlaceholderIWallet(); // use random wallet to initialize a central-server instance
+		const wallet = createPlaceholderIWallet(); // use random wallet to initialize a central-server instance
 
 		const allPerpMarketConfigs =
 			velocityEnv === 'devnet' ? DevnetPerpMarkets : MainnetPerpMarkets;

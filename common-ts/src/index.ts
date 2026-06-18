@@ -27,16 +27,6 @@ export { getSwiftConfirmationTimeoutMs } from './utils/signedMsgs';
 export { ResultSlotIncrementer } from './utils/ResultSlotIncrementer';
 export { MultiplexWebSocket } from './utils/MultiplexWebSocket';
 
-// Deprecation facades
-export { COMMON_UTILS } from './_deprecated/utils';
-export { COMMON_UI_UTILS } from './_deprecated/common-ui-utils';
-export { COMMON_MATH } from './_deprecated/common-math';
-export { EQUALITY_CHECKS } from './_deprecated/equality-checks';
-export { TRADING_UTILS } from './_deprecated/trading-utils';
-export { MARKET_UTILS } from './_deprecated/market-utils';
-export { ORDER_COMMON_UTILS } from './_deprecated/order-utils';
-export { USER_UTILS } from './_deprecated/user-utils';
-
 // Non-utils modules
 export * from './Config';
 export * from './chartConstants';

@@ -7,7 +7,7 @@ import {
 	QUOTE_PRECISION_EXP,
 	User,
 } from '@velocity-exchange/sdk';
-import { MARKET_UTILS } from '../../../../_deprecated/market-utils';
+import { getMarketConfig } from '../../../../utils/markets/config';
 
 /**
  * Essential balance information for a spot market position.
@@ -56,7 +56,7 @@ export const getSpotBalanceInfo = (
 	marketIndex: number,
 	oraclePrice: BN
 ): SpotBalanceInfo => {
-	const spotMarketConfig = MARKET_UTILS.getMarketConfig(
+	const spotMarketConfig = getMarketConfig(
 		velocityClient.env,
 		MarketType.SPOT,
 		marketIndex

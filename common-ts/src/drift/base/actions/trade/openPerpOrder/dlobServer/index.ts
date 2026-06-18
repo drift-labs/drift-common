@@ -33,7 +33,10 @@ import {
 } from '../../../../../../utils/orderbook/types';
 import { PollingSequenceGuard } from '../../../../../../utils/pollingSequenceGuard';
 import { calculatePriceImpactFromL2 } from '../../../../../../utils/priceImpact';
-import { COMMON_UI_UTILS } from '../../../../../../_deprecated/common-ui-utils';
+import {
+	getPriceObject,
+	deriveMarketOrderParams,
+} from '../../../../../../utils/trading/auction';
 import invariant from 'tiny-invariant';
 
 export interface OptionalAuctionParamsRequestInputs {
@@ -317,7 +320,7 @@ export async function fetchAuctionOrderParamsFromL2({
 		oraclePriceBn
 	);
 
-	const startPrices = COMMON_UI_UTILS.getPriceObject({
+	const startPrices = getPriceObject({
 		oraclePrice: oraclePriceBn,
 		bestOffer: priceImpactData.bestPrice,
 		entryPrice: priceImpactData.entryPrice,
@@ -343,7 +346,7 @@ export async function fetchAuctionOrderParamsFromL2({
 			? slippageToleranceInput
 			: 0.005;
 
-	const auctionOrderParams = COMMON_UI_UTILS.deriveMarketOrderParams({
+	const auctionOrderParams = deriveMarketOrderParams({
 		marketType: marketType,
 		marketIndex: marketIndex,
 		direction: direction,
