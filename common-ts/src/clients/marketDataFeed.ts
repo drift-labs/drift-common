@@ -720,9 +720,6 @@ class SubscriptionManager {
 export class MarketDataFeed {
 	private static subscriptionManager = new SubscriptionManager();
 
-	constructor() {}
-
-	// Function overload, ensures the correct type is returned based on the config type
 	public static subscribe(
 		config: CandleSubscriptionConfig
 	): CandleSubscriberSubscription;
