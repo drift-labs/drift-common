@@ -13,8 +13,6 @@ import { UIMarket } from '../types/UIMarket';
 
 /**
  * Calculates the next APR for insurance fund staking
- * This function extracts the APR calculation logic from the insurance fund staking implementation
- * Reference: https://github.com/drift-labs/protocol-v2-mono/blob/ebbe7b8df7e81de59bd510a37d16f55d5c985ef5/ui/src/utils/insuranceFund.ts#L105
  *
  * @param spotMarket - Spot market account
  * @param vaultBalanceBigNum - Current vault balance as BigNum

@@ -65,7 +65,7 @@ export class VersionedSettingsHandler<T extends VersionedSettings> {
 	 * @param settings
 	 */
 	apply(settings: T) {
-		const sortedRules = this.rules.sort(
+		const sortedRules = [...this.rules].sort(
 			(a, b) => a.minVersionDiscriminator - b.minVersionDiscriminator
 		);
 
@@ -73,7 +73,7 @@ export class VersionedSettingsHandler<T extends VersionedSettings> {
 			if (!settings[rule.setting] || !settings.version) {
 				return true;
 			}
-			return rule.minVersionDiscriminator > settings?.version;
+			return rule.minVersionDiscriminator > settings.version;
 		});
 
 		const maxVersion = Math.max(
