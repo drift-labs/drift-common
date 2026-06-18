@@ -91,7 +91,6 @@ export class Candle {
 
 		if (props.fillHigh.lt(props.fillClose)) {
 			logBadCandleProp();
-			logBadCandleProp();
 			safeProps.fillHigh = safeProps.fillClose;
 		}
 
@@ -242,43 +241,37 @@ export class Candle {
 		const handleBadCandle =
 			props.handleBadCandle ?? FLAGS.DEFAULT_HANDLE_BAD_CANDLES;
 
-		// eslint-disable-next-line no-useless-catch
-		try {
-			if (handleBadCandle) {
-				const safeProps = Candle.getSafeProps(props);
+		if (handleBadCandle) {
+			const safeProps = Candle.getSafeProps(props);
 
-				this.start = safeProps.start;
-				this.fillOpen = safeProps.fillOpen;
-				this.fillHigh = safeProps.fillHigh;
-				this.fillClose = safeProps.fillClose;
-				this.fillLow = safeProps.fillLow;
-				this.oracleOpen = safeProps.oracleOpen;
-				this.oracleHigh = safeProps.oracleHigh;
-				this.oracleClose = safeProps.oracleClose;
-				this.oracleLow = safeProps.oracleLow;
-				this.quoteVolume = safeProps.quoteVolume;
-				this.baseVolume = safeProps.baseVolume;
-				this.resolution = safeProps.resolution;
+			this.start = safeProps.start;
+			this.fillOpen = safeProps.fillOpen;
+			this.fillHigh = safeProps.fillHigh;
+			this.fillClose = safeProps.fillClose;
+			this.fillLow = safeProps.fillLow;
+			this.oracleOpen = safeProps.oracleOpen;
+			this.oracleHigh = safeProps.oracleHigh;
+			this.oracleClose = safeProps.oracleClose;
+			this.oracleLow = safeProps.oracleLow;
+			this.quoteVolume = safeProps.quoteVolume;
+			this.baseVolume = safeProps.baseVolume;
+			this.resolution = safeProps.resolution;
 
-				return;
-			} else {
-				Candle.sanityCheckProps(props);
-				this.start = props.start;
-				this.fillOpen = props.fillOpen;
-				this.fillHigh = props.fillHigh;
-				this.fillClose = props.fillClose;
-				this.fillLow = props.fillLow;
-				this.oracleOpen = props.oracleOpen;
-				this.oracleHigh = props.oracleHigh;
-				this.oracleClose = props.oracleClose;
-				this.oracleLow = props.oracleLow;
-				this.quoteVolume = props.quoteVolume;
-				this.baseVolume = props.baseVolume;
-				this.resolution = props.resolution;
-			}
-		} catch (e) {
-			// Just doing this syntax for an easy breakpoint to catch bad props
-			throw e;
+			return;
+		} else {
+			Candle.sanityCheckProps(props);
+			this.start = props.start;
+			this.fillOpen = props.fillOpen;
+			this.fillHigh = props.fillHigh;
+			this.fillClose = props.fillClose;
+			this.fillLow = props.fillLow;
+			this.oracleOpen = props.oracleOpen;
+			this.oracleHigh = props.oracleHigh;
+			this.oracleClose = props.oracleClose;
+			this.oracleLow = props.oracleLow;
+			this.quoteVolume = props.quoteVolume;
+			this.baseVolume = props.baseVolume;
+			this.resolution = props.resolution;
 		}
 	}
 

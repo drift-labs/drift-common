@@ -147,9 +147,7 @@ const getMarketAuctionParams = ({
 };
 
 /**
- * Helper function which derived market order params from the CORE data that is used to create them.
- * @param param0
- * @returns
+ * Helper function which derives market order params from the CORE data that is used to create them.
  */
 const deriveMarketOrderParams = ({
 	marketType,
@@ -366,7 +364,6 @@ const getPriceObject = ({
 	);
 
 	if (nonZeroOptions.length === 0) {
-		// console.error('Unable to create valid auction params');
 		return {
 			oracle: ZERO,
 			bestOffer: ZERO,

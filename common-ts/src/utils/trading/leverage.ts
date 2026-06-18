@@ -55,27 +55,22 @@ const validateLeverageChange = ({
 	newLeverage: number;
 }): boolean => {
 	try {
-		// Convert leverage to margin ratio
 		const newMarginRatio = convertLeverageToMarginRatio(newLeverage);
 		if (!newMarginRatio) return true;
 
-		// Get the perp position from the user
 		const perpPosition = user.getPerpPosition(marketIndex);
 		if (!perpPosition) return true;
 
-		// Get current position weighted value
 		const currentPositionWeightedValue = user.getPerpPositionHealth({
 			marginCategory: 'Initial',
 			perpPosition,
 		}).weightedValue;
 
-		// Create a modified version of the position with new maxMarginRatio
 		const modifiedPosition = {
 			...perpPosition,
 			maxMarginRatio: newMarginRatio,
 		};
 
-		// Calculate new weighted value with the modified position
 		const newPositionWeightedValue = user.getPerpPositionHealth({
 			marginCategory: 'Initial',
 			perpPosition: modifiedPosition,
@@ -87,7 +82,6 @@ const validateLeverageChange = ({
 
 		const freeCollateral = user.getFreeCollateral();
 
-		// Check if weighted value delta exceeds free collateral
 		return perpPositionWeightedValueDelta.lte(freeCollateral);
 	} catch (error) {
 		console.warn('Error validating leverage change:', error);

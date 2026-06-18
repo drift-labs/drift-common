@@ -111,7 +111,7 @@ export const sortUIMatchedOrderRecordAndAction = (
 	records: UIMatchedOrderRecordAndAction[],
 	direction: 'asc' | 'desc' = 'desc'
 ) => {
-	const ascSortedRecords = records.sort((a, b) =>
+	const ascSortedRecords = [...records].sort((a, b) =>
 		getSortScoreForOrderActionRecords(a.actionRecord, b.actionRecord)
 	);
 
@@ -122,7 +122,7 @@ export const sortUIOrderActionRecords = (
 	records: PartialUISerializableOrderActionRecord[],
 	direction: 'asc' | 'desc' = 'desc'
 ) => {
-	const ascSortedRecords = records.sort(getSortScoreForOrderActionRecords);
+	const ascSortedRecords = [...records].sort(getSortScoreForOrderActionRecords);
 
 	return direction === 'desc' ? ascSortedRecords.reverse() : ascSortedRecords;
 };
@@ -131,7 +131,7 @@ export const sortUIOrderRecords = <T extends { slot: number }>(
 	records: T[],
 	direction: 'asc' | 'desc' = 'desc'
 ) => {
-	const ascSortedRecords = records.sort(getSortScoreForOrderRecords);
+	const ascSortedRecords = [...records].sort(getSortScoreForOrderRecords);
 
 	return direction === 'desc' ? ascSortedRecords.reverse() : ascSortedRecords;
 };
@@ -140,7 +140,7 @@ export const sortOrderRecords = (
 	records: Event<OrderRecord>[],
 	direction: 'asc' | 'desc' = 'desc'
 ) => {
-	const ascSortedRecords = records.sort(getSortScoreForOrderRecords);
+	const ascSortedRecords = [...records].sort(getSortScoreForOrderRecords);
 
 	return direction === 'desc' ? ascSortedRecords.reverse() : ascSortedRecords;
 };

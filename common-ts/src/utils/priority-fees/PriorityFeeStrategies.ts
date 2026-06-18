@@ -54,9 +54,11 @@ const movingWindowTargetPercentileStrategy = (
 				  2
 				: allRecentSamplesAscendingSorted[targetPercentileIndex];
 
-			LAST_SEEN_SLOT_IN_SAMPLES = Math.max(
-				...filteredSamples.map((sample) => sample.slot)
-			);
+			if (filteredSamples.length > 0) {
+				LAST_SEEN_SLOT_IN_SAMPLES = Math.max(
+					...filteredSamples.map((sample) => sample.slot)
+				);
+			}
 
 			return pFee;
 		},
