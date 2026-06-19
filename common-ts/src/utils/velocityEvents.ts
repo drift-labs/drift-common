@@ -74,11 +74,9 @@ export const getVelocityEventKey = (event: UniqableVelocityEvent) => {
 				_typedEvent.order.orderId
 			);
 		}
-		case 'CurveRecord': {
-			const _typedEvent = event as WrappedEvent<'CurveRecord'>;
-			return `${_typedEvent.eventType}_${
-				_typedEvent.marketIndex
-			}_${_typedEvent.recordId.toString()}`;
+		case 'AmmCurveChanged': {
+			const _typedEvent = event as WrappedEvent<'AmmCurveChanged'>;
+			return `${_typedEvent.eventType}_${_typedEvent.marketIndex}_${_typedEvent.txSig}_${_typedEvent.txSigIndex}`;
 		}
 		case 'DeleteUserRecord': {
 			const _typedEvent = event as WrappedEvent<'DeleteUserRecord'>;

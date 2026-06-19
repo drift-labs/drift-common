@@ -6,8 +6,6 @@ import {
 	SpotBalanceType,
 	SpotMarketAccount,
 	SpotMarketConfig,
-	MAX_APR_PER_REVENUE_SETTLE_TO_INSURANCE_FUND_VAULT_GOV,
-	PERCENTAGE_PRECISION,
 } from '@velocity-exchange/sdk';
 import { UIMarket } from '../types/UIMarket';
 
@@ -23,12 +21,6 @@ function calculateVaultNextApr(
 	vaultBalanceBigNum: BigNum
 ): number {
 	const MAX_APR = 1000;
-	// Convert SDK constant from percentage precision to percentage
-	const GOV_MAX_APR =
-		(MAX_APR_PER_REVENUE_SETTLE_TO_INSURANCE_FUND_VAULT_GOV.toNumber() /
-			PERCENTAGE_PRECISION.toNumber()) *
-		100;
-	const DRIFT_MARKET_INDEX = 15;
 
 	const { precisionExp } = UIMarket.spotMarkets[spotMarket.marketIndex];
 
@@ -46,12 +38,11 @@ function calculateVaultNextApr(
 
 		// APR calculation constants and factors
 		const payoutRatio = 0.1;
-		const ratioForStakers =
-			spotMarket.insuranceFund.totalFactor > 0 &&
-			spotMarket.insuranceFund.userFactor > 0
-				? spotMarket.insuranceFund.userFactor /
-				  spotMarket.insuranceFund.totalFactor
-				: 0;
+		// the insurance fund is 100% staker-owned: every settled token accrues to
+		// stakers as share-price appreciation (no protocol split)
+		const ratioForStakers = spotMarket.insuranceFund.revenueSettlePeriod.gtn(0)
+			? 1
+			: 0;
 
 		// Settle periods from on-chain data
 		const revSettlePeriod =
@@ -72,10 +63,7 @@ function calculateVaultNextApr(
 		const uncappedApr =
 			vaultBalance === 0 ? 0 : (projectedAnnualRev / vaultBalance) * 100;
 
-		// Apply APR cap: DRIFT token (governance) capped at 20%, others at 1000%
-		const maxApr =
-			spotMarket.marketIndex === DRIFT_MARKET_INDEX ? GOV_MAX_APR : MAX_APR;
-		const cappedApr = Math.min(uncappedApr, maxApr);
+		const cappedApr = Math.min(uncappedApr, MAX_APR);
 
 		// Calculate final APR for stakers
 		const nextApr = cappedApr * ratioForStakers;

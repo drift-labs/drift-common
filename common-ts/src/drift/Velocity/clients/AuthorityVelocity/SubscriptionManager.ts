@@ -156,7 +156,7 @@ export class SubscriptionManager {
 		}
 
 		const oracleAccountPubKey = market.isPerp
-			? (marketAccount as PerpMarketAccount).amm.oracle
+			? (marketAccount as PerpMarketAccount).oracle
 			: (marketAccount as SpotMarketAccount).oracle;
 
 		const currentOracleCadence =

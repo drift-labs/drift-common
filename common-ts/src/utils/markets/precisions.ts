@@ -20,8 +20,8 @@ export const getDecimalsFromSize = (size: BN, precisionExp: BN) => {
 };
 
 export const getPerpMarketSizes = (perpMarketAccount: PerpMarketAccount) => {
-	const stepSize = perpMarketAccount.amm.orderStepSize;
-	const tickSize = perpMarketAccount.amm.orderTickSize;
+	const stepSize = perpMarketAccount.orderStepSize;
+	const tickSize = perpMarketAccount.orderTickSize;
 
 	return {
 		stepSizeDecimals: getDecimalsFromSize(stepSize, BASE_PRECISION_EXP),

@@ -22,7 +22,7 @@ const getMarketTickSize = (
 	if (!marketAccount) return ZERO;
 
 	if (marketId.isPerp) {
-		return (marketAccount as PerpMarketAccount).amm.orderTickSize;
+		return (marketAccount as PerpMarketAccount).orderTickSize;
 	} else {
 		return (marketAccount as SpotMarketAccount).orderTickSize;
 	}
@@ -56,7 +56,7 @@ const getMarketStepSize = (
 	if (!marketAccount) return ZERO;
 
 	if (marketId.isPerp) {
-		return (marketAccount as PerpMarketAccount).amm.orderStepSize;
+		return (marketAccount as PerpMarketAccount).orderStepSize;
 	} else {
 		return (marketAccount as SpotMarketAccount).orderStepSize;
 	}

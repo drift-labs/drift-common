@@ -10,11 +10,11 @@ export const getMarketOpenInterest = (
 ): { longOpenInterest: BigNum; shortOpenInterest: BigNum } => {
 	const perpMarketAccount = velocityClient.getPerpMarketAccount(marketIndex);
 	const longOpenInterest = BigNum.from(
-		perpMarketAccount.amm.baseAssetAmountLong,
+		perpMarketAccount.baseAssetAmountLong,
 		BASE_PRECISION_EXP
 	);
 	const shortOpenInterest = BigNum.from(
-		perpMarketAccount.amm.baseAssetAmountShort,
+		perpMarketAccount.baseAssetAmountShort,
 		BASE_PRECISION_EXP
 	);
 	return { longOpenInterest, shortOpenInterest };
