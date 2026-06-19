@@ -26,6 +26,11 @@
 			"package-name": "@drift-labs/posthog-types",
 			"component": "posthog-types",
 			"changelog-path": "CHANGELOG.md"
+		},
+		"icons": {
+			"package-name": "@velocity-exchange/icons",
+			"component": "icons",
+			"changelog-path": "CHANGELOG.md"
 		}
 	}
 }
