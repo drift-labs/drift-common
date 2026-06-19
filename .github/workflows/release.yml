@@ -28,6 +28,9 @@ jobs:
       posthog-types--release_created: ${{ steps.rp.outputs['posthog-types--release_created'] }}
       posthog-types--version: ${{ steps.rp.outputs['posthog-types--version'] }}
       posthog-types--tag_name: ${{ steps.rp.outputs['posthog-types--tag_name'] }}
+      icons--release_created: ${{ steps.rp.outputs['icons--release_created'] }}
+      icons--version: ${{ steps.rp.outputs['icons--version'] }}
+      icons--tag_name: ${{ steps.rp.outputs['icons--tag_name'] }}
     steps:
       - name: Mint App token
         id: app-token
@@ -70,6 +73,33 @@ jobs:
 
       - name: Run tests
         run: bun run test:ci
+
+      - name: Publish to npm
+        run: npm publish --access=public --provenance
+
+  publish-icons:
+    needs: release-please
+    if: ${{ needs.release-please.outputs['icons--release_created'] == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # npm Trusted Publishing OIDC
+    defaults:
+      run:
+        working-directory: ./icons
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ needs.release-please.outputs['icons--tag_name'] }}
+
+      - uses: ./.github/actions/setup-common-ts
+        with:
+          registry-url: 'https://registry.npmjs.org'
+          working-directory: ./icons
+
+      - name: Build
+        run: bun run build
 
       - name: Publish to npm
         run: npm publish --access=public --provenance
@@ -143,7 +173,7 @@ jobs:
             -d "{\"event_type\":\"drift-common-update\",\"client_payload\":{\"version\":\"${VERSION}\"}}"
 
   notify-failure:
-    needs: [release-please, publish-common-ts, dispatch-downstream]
+    needs: [release-please, publish-common-ts, publish-icons, dispatch-downstream]
     if: ${{ failure() || cancelled() }}
     runs-on: ubicloud
     permissions: {}
