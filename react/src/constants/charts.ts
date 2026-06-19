@@ -1,4 +1,4 @@
-import { BigNum } from '@drift-labs/sdk';
+import { BigNum } from '@velocity-exchange/sdk';
 
 export type HistoricalPrice = {
 	ms: number;

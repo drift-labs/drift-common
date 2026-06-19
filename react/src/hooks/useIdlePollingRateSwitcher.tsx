@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useIdle } from 'react-use';
 import { useDriftClientIsReady } from './useDriftClientIsReady';
-import { PollingDriftClientAccountSubscriber } from '@drift-labs/sdk';
+import { PollingVelocityClientAccountSubscriber } from '@velocity-exchange/sdk';
 import { useCommonDriftStore } from '../stores';
 
 const IDLE_1_MIN_POLLING_RATE = 10000;
@@ -27,7 +27,7 @@ const useIdlePollingRateSwitcher = () => {
 
 		if (
 			driftClient.accountSubscriber instanceof
-			PollingDriftClientAccountSubscriber
+			PollingVelocityClientAccountSubscriber
 		) {
 			if (idle10Minutes) {
 				wasIdle.current = true;

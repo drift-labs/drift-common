@@ -5,7 +5,7 @@ import {
 	PRICE_PRECISION_EXP,
 	PublicKey,
 	getOracleClient,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	OraclePriceStore,
 	useCommonDriftStore,

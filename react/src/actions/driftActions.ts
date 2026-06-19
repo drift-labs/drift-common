@@ -1,17 +1,17 @@
 import { CommonDriftStore } from '../stores/useCommonDriftStore';
 import {
 	BulkAccountLoader,
-	DriftClient,
-	DriftClientConfig,
-	DriftEnv,
+	VelocityClient,
+	VelocityClientConfig,
+	VelocityEnv,
 	IWallet,
-	PollingDriftClientAccountSubscriber,
+	PollingVelocityClientAccountSubscriber,
 	PublicKey,
 	Wallet,
 	WhileValidTxSender,
 	getMarketsAndOraclesForSubscription,
 	initialize,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { EnvironmentConstants, RpcEndpoint } from '@drift/common';
 import { Commitment, Connection, Keypair } from '@solana/web3.js';
 import { StoreApi } from 'zustand';
@@ -76,8 +76,8 @@ const createDriftActions = (
 		additionalDriftClientConfig = {},
 	}: {
 		newRpc: RpcEndpoint;
-		newDriftEnv?: DriftEnv;
-		additionalDriftClientConfig?: Partial<DriftClientConfig>;
+		newDriftEnv?: VelocityEnv;
+		additionalDriftClientConfig?: Partial<VelocityClientConfig>;
 		subscribeToAccounts?: boolean;
 	}) => {
 		const storeState = get();
@@ -116,7 +116,7 @@ const createDriftActions = (
 			if (currentDriftClient.userAccountSubscriptionConfig.type === 'polling') {
 				// reuse the previous account loader object
 				accountLoader = (
-					currentDriftClient.accountSubscriber as PollingDriftClientAccountSubscriber
+					currentDriftClient.accountSubscriber as PollingVelocityClientAccountSubscriber
 				).accountLoader;
 				accountLoader.connection = newConnection;
 			}
@@ -134,10 +134,10 @@ const createDriftActions = (
 		const { oracleInfos, perpMarketIndexes, spotMarketIndexes } =
 			getMarketsAndOraclesForSubscription(driftEnvToUse);
 
-		const driftClientConfig: DriftClientConfig = {
+		const driftClientConfig: VelocityClientConfig = {
 			connection: newConnection,
 			wallet: walletToUse,
-			programID: new PublicKey(sdkConfig.DRIFT_PROGRAM_ID),
+			programID: new PublicKey(sdkConfig.VELOCITY_PROGRAM_ID),
 			accountSubscription: {
 				type: 'polling',
 				accountLoader: accountLoader,
@@ -154,7 +154,7 @@ const createDriftActions = (
 			...additionalDriftClientConfig,
 		};
 
-		const newDriftClient = new DriftClient(driftClientConfig);
+		const newDriftClient = new VelocityClient(driftClientConfig);
 
 		const rpcs =
 			EnvironmentConstants.rpcs[driftEnvToUse === 'devnet' ? 'dev' : 'mainnet'];
@@ -192,7 +192,7 @@ const createDriftActions = (
 	 * Fetches user accounts and users for authority and subscribes to them
 	 */
 	const fetchAndSubscribeToUsersAndSubaccounts = async (
-		driftClient: DriftClient,
+		driftClient: VelocityClient,
 		authority: PublicKey
 	) => {
 		// This method seems pretty slow, is there a better way?

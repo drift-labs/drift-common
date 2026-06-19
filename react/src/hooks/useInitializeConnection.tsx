@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import { useCommonDriftStore } from '../stores/useCommonDriftStore';
 import { useCommonDriftActions } from './useCommonDriftActions';
 import { useCurrentRpc } from './useCurrentRpc';
-import { DriftClientConfig } from '@drift-labs/sdk';
+import { VelocityClientConfig } from '@velocity-exchange/sdk';
 
 const useInitializeConnection = (
 	enable: boolean,
-	additionalDriftClientConfig: Partial<DriftClientConfig> = {}
+	additionalDriftClientConfig: Partial<VelocityClientConfig> = {}
 ) => {
 	const Env = useCommonDriftStore((s) => s.env);
 	const actions = useCommonDriftActions();
