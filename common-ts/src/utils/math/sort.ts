@@ -26,7 +26,7 @@ export const sortRecordsByTs = <T extends { ts: BN }[]>(
 	records: T | undefined,
 	direction: 'asc' | 'desc' = 'desc'
 ) => {
-	if (!records || !records?.length) return [];
+	if (!records || !records.length) return [];
 
 	return direction === 'desc'
 		? [...records].sort((a, b) => b.ts.toNumber() - a.ts.toNumber())

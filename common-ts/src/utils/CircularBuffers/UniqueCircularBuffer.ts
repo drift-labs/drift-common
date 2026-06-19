@@ -36,16 +36,12 @@ export class UniqueCircularBuffer<T> extends CircularBuffer<T> {
 		const newNode = new Node(value);
 
 		if (this.size === 0) {
-			// If the buffer is empty, set the head and tail to the new node
 			this.tail = newNode;
 			this.head = this.tail;
 			newNode.next = newNode;
 		} else {
-			// Point the new node to the head
 			newNode.next = this.head;
-			// Point the current tail to the new node
 			this.tail.next = newNode;
-			// Update the tail to the new node
 			this.tail = newNode;
 		}
 
@@ -53,11 +49,8 @@ export class UniqueCircularBuffer<T> extends CircularBuffer<T> {
 		this.uniqueKeys.add(key);
 
 		if (this.size > this.capacity) {
-			// If the buffer is full, remove the head
 			const nodeToRemove = this.head;
-			// Update the head to the element after the head
 			this.head = this.head.next;
-			// Point the tail to the new head
 			this.tail.next = this.head;
 			this.size--;
 
@@ -66,17 +59,5 @@ export class UniqueCircularBuffer<T> extends CircularBuffer<T> {
 		}
 
 		return true;
-	}
-
-	toArray(): T[] {
-		if (!this.head) return [];
-		const result: T[] = [];
-		let current = this.head;
-		do {
-			result.push(current.value);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			current = current.next!;
-		} while (current !== this.head);
-		return result;
 	}
 }

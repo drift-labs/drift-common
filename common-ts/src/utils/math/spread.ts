@@ -43,9 +43,9 @@ const calculateBidAskAndmarkPrice = (l2: L2OrderBook, oraclePrice?: BN) => {
 		return BN.max(currentBid.price, previousMax);
 	}, undefined as BN);
 
-	const bestAskPrice = l2.asks.reduce((previousMin, currentBid) => {
-		if (!previousMin) return currentBid.price;
-		return BN.min(currentBid.price, previousMin);
+	const bestAskPrice = l2.asks.reduce((previousMin, currentAsk) => {
+		if (!previousMin) return currentAsk.price;
+		return BN.min(currentAsk.price, previousMin);
 	}, undefined as BN);
 
 	const markPrice = calculateMarkPrice(bestBidPrice, bestAskPrice, oraclePrice);

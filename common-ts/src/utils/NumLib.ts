@@ -149,11 +149,7 @@ export class NumLib {
 		 * @returns
 		 */
 		toBase: (baseAmount: number, assetPrice?: number): number => {
-			if (
-				assetPrice === 0 ||
-				assetPrice === undefined ||
-				Number(assetPrice) === undefined
-			) {
+			if (assetPrice === 0 || assetPrice === undefined) {
 				return parseFloat(baseAmount.toFixed(6));
 			}
 
@@ -191,8 +187,6 @@ export class NumLib {
 			if (assetPrice === undefined) return 0;
 			if (assetPrice === 0) return parseFloat(assetPrice.toFixed(2));
 
-			// const numFractionDigits = 6 - Math.floor(Math.log10(assetPrice));
-
 			return parseFloat(assetPrice.toFixed(6));
 		},
 		/**
@@ -216,7 +210,9 @@ export class NumLib {
 					const mantissaSize = Math.log10(precision.toNumber());
 					const decimalValue = parseFloat((num % 1).toFixed(mantissaSize));
 
-					numericalAsBn.add(new BN(decimalValue * 10 ** mantissaSize));
+					numericalAsBn = numericalAsBn.add(
+						new BN(decimalValue * 10 ** mantissaSize)
+					);
 				} else {
 					numericalAsBn = new BN(Number.MAX_SAFE_INTEGER).mul(precision);
 				}
@@ -282,7 +278,7 @@ export class NumLib {
 				displayString: '0',
 			};
 
-		const valueLog10 = Math.log10(value === 0 ? 1 : value);
+		const valueLog10 = Math.log10(value);
 
 		const metricAmount = Math.floor(valueLog10 / 3);
 
@@ -340,7 +336,7 @@ export class NumLib {
 	 * @returns
 	 */
 	static getDisplayPrecision = (assetPrice: BigNum) => {
-		if (assetPrice.eqZero() || !assetPrice) {
+		if (!assetPrice || assetPrice.eqZero()) {
 			return 6;
 		}
 

@@ -1,14 +1,12 @@
 import { BN, PublicKey } from '@velocity-exchange/sdk';
 
 const getStringifiableObjectEntry = (value: any): [any, string] => {
-	// If BN
-	// if (value instanceof BN) { /* This method would be much safer but don't think it's possible to ensure that instances of classes match when they're in different npm packages */
+	// Detect BN/PublicKey by key shape rather than instanceof: class identity is
+	// not guaranteed to match across npm package boundaries.
 	if (Object.keys(value).sort().join(',') === 'length,negative,red,words') {
 		return [value.toString(), '_bgnm_'];
 	}
 
-	// If PublicKey
-	// if (value instanceof PublicKey) { { /* This method would be much safer but don't think it's possible to ensure that instances of classes match when they're in different npm packages */
 	if (Object.keys(value).sort().join(',') === '_bn') {
 		return [value.toString(), '_pbky_'];
 	}
@@ -76,26 +74,24 @@ export const decodeStringifiableObject = (value: any) => {
 
 	const buildJsonObject = {};
 
-	Object.entries(value)
-		.filter((val) => val != undefined && val != null)
-		.forEach(([key, val]) => {
-			if (key.match(/^_pbky_/)) {
-				buildJsonObject[key.replace('_pbky_', '')] = new PublicKey(val);
-				return;
-			}
+	Object.entries(value).forEach(([key, val]) => {
+		if (key.match(/^_pbky_/)) {
+			buildJsonObject[key.replace('_pbky_', '')] = new PublicKey(val);
+			return;
+		}
 
-			if (key.match(/^_bgnm_/)) {
-				buildJsonObject[key.replace('_bgnm_', '')] = new BN(val as string);
-				return;
-			}
+		if (key.match(/^_bgnm_/)) {
+			buildJsonObject[key.replace('_bgnm_', '')] = new BN(val as string);
+			return;
+		}
 
-			if (typeof val === 'object' && val != undefined && val != null) {
-				buildJsonObject[key] = decodeStringifiableObject(val);
-				return;
-			}
+		if (typeof val === 'object' && val !== null) {
+			buildJsonObject[key] = decodeStringifiableObject(val);
+			return;
+		}
 
-			buildJsonObject[key] = val;
-		});
+		buildJsonObject[key] = val;
+	});
 
 	return buildJsonObject;
 };

@@ -21,7 +21,7 @@ export const bnMax = (numbers: BN[]): BN => {
 };
 
 export const bnMedian = (numbers: BN[]): BN => {
-	const sortedNumbers = numbers.sort((a, b) => a.cmp(b));
+	const sortedNumbers = [...numbers].sort((a, b) => a.cmp(b));
 	const middleIndex = Math.floor(sortedNumbers.length / 2);
 	if (sortedNumbers.length % 2 === 0) {
 		return sortedNumbers[middleIndex - 1]
@@ -42,9 +42,7 @@ export const bnMean = (numbers: BN[]): BN => {
 
 export const sortBnAsc = (bnA: BN, bnB: BN) => {
 	if (bnA.gt(bnB)) return 1;
-	if (bnA.eq(bnB)) return 0;
 	if (bnA.lt(bnB)) return -1;
-
 	return 0;
 };
 
