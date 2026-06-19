@@ -15,8 +15,6 @@ export class MarkPriceCache {
 	private _store: MarkPriceLookup = {};
 	private updatesSubject$ = new Subject<MarkPriceLookup>();
 
-	constructor() {}
-
 	get store() {
 		return { ...this._store };
 	}

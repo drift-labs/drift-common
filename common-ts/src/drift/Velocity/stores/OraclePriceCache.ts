@@ -8,8 +8,6 @@ export class OraclePriceCache {
 	private _store: OraclePriceLookup = {};
 	private updatesSubject$ = new Subject<OraclePriceLookup>();
 
-	constructor() {}
-
 	get store() {
 		return { ...this._store };
 	}

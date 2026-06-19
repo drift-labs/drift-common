@@ -667,8 +667,6 @@ export class AuthorityVelocity {
 		]);
 
 		this.subscriptionManager.subscribeToAllUsersUpdates();
-
-		// TODO: subscribe to oracle price updates from velocity client?
 	}
 
 	public async unsubscribe() {

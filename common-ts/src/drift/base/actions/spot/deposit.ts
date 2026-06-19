@@ -102,13 +102,6 @@ export const createDepositTxn = async ({
 	initSwiftAccount: _initSwiftAccount,
 	externalWallet,
 }: CreateDepositTxnParams): Promise<Transaction | VersionedTransaction> => {
-	// const authority = user.getUserAccount().authority;
-	// const associatedDepositTokenAddress =
-	// 	await getTokenAddressForDepositAndWithdraw(
-	// 		spotMarketConfig.mint,
-	// 		authority
-	// 	);
-
 	let finalDepositAmount = amount;
 
 	if (isMaxBorrowRepayment) {

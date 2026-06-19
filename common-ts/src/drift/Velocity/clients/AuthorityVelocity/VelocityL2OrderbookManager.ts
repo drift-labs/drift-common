@@ -162,8 +162,6 @@ export class VelocityL2OrderbookManager {
 		try {
 			const parsedData = this.tryParse(data) as RawL2Output;
 
-			// TODO: result slot incrementer
-
 			const deserializedOrderbook = deserializeL2Response(parsedData);
 			this._orderbook = deserializedOrderbook;
 			this.updatesSubject$.next(deserializedOrderbook);
@@ -176,7 +174,7 @@ export class VelocityL2OrderbookManager {
 	 * Get orderbook data for a specific market
 	 */
 	public getOrderbookData(): L2WithOracleAndMarketData | null {
-		return this._orderbook || null;
+		return this._orderbook;
 	}
 
 	/**

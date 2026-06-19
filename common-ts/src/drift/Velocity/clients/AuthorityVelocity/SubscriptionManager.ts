@@ -262,7 +262,6 @@ export class SubscriptionManager {
 		this.updatePollingDlobIntervals(
 			filteredUserInvolvedMarkets.map((market) => market.key),
 			filteredUserNotInvolvedMarkets.map((market) => market.key)
-			// this.selectedTradeMarket
 		);
 	}
 

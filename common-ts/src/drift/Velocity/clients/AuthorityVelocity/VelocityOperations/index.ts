@@ -792,16 +792,3 @@ export class VelocityOperations {
 		return txSig;
 	}
 }
-
-/**
- * TODO:
- * - transfer between subaccounts
- * - close position?
- * - close multiple positions
- * - edit open order
- * - create user only
- *
- * - open spot order
- * - rename subaccount
- * - withdraw dust positions
- */
