@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.5](https://github.com/drift-labs/drift-common/compare/common-ts-v0.0.4...common-ts-v0.0.5) (2026-06-19)
+
+
+### Code Refactoring
+
+* **common-ts:** clean up UIMarket ([e028688](https://github.com/drift-labs/drift-common/commit/e028688f2e2eac19515c3d54796d78863d3d835e))
+* fix sdk renames ([#359](https://github.com/drift-labs/drift-common/issues/359)) ([4ddb38a](https://github.com/drift-labs/drift-common/commit/4ddb38a207df762ac525bea07a5254a774f2a920))
+
 ## [0.0.4](https://github.com/drift-labs/drift-common/compare/common-ts-v0.0.3...common-ts-v0.0.4) (2026-06-19)
 
 
