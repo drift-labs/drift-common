@@ -3,14 +3,14 @@ import { produce } from 'immer';
 import {
 	BigNum,
 	BulkAccountLoader,
-	DriftClient,
-	DriftEnv,
+	VelocityClient,
+	VelocityEnv,
 	QUOTE_PRECISION_EXP,
 	SpotPosition,
 	User,
 	UserAccount,
 	initialize,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { Connection, PublicKey } from '@solana/web3.js';
 
 // @ts-ignore
@@ -49,7 +49,7 @@ export interface CommonDriftStore {
 	};
 	connection: Connection | undefined;
 	env: {
-		driftEnv: DriftEnv;
+		driftEnv: VelocityEnv;
 		basePollingRateMs: number;
 		priorityFeePollingMultiplier: number;
 		rpcOverride: string | undefined;
@@ -60,7 +60,7 @@ export interface CommonDriftStore {
 	};
 	sdkConfig: ReturnType<typeof initialize> | undefined;
 	driftClient: {
-		client?: DriftClient;
+		client?: VelocityClient;
 		updateSignaler: any;
 		isSubscribed: boolean;
 	};
@@ -105,7 +105,7 @@ const initializeDriftStore = (Env: CommonDriftStore['env']) => {
 	if (!useCommonDriftStore) {
 		useCommonDriftStore = create<CommonDriftStore>()((set, get) => {
 			const setProducerFn = (fn: (s: CommonDriftStore) => void) =>
-				set(produce(fn));
+				set(produce(fn) as (s: CommonDriftStore) => CommonDriftStore);
 
 			const actions = createDriftActions(get, setProducerFn);
 

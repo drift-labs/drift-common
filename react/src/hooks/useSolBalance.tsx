@@ -1,5 +1,5 @@
-import { PublicKey } from '@drift-labs/sdk';
-import { BigNum, LAMPORTS_EXP } from '@drift-labs/sdk';
+import { PublicKey } from '@velocity-exchange/sdk';
+import { BigNum, LAMPORTS_EXP } from '@velocity-exchange/sdk';
 import { Connection } from '@solana/web3.js';
 import { useEffect, useRef } from 'react';
 import { useCommonDriftStore } from '../stores';

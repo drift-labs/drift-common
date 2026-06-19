@@ -1,7 +1,7 @@
 import { produce } from 'immer';
 import { create } from 'zustand';
 import { MarketId, UIMarket } from '@drift/common';
-import { OraclePriceData } from '@drift-labs/sdk';
+import { OraclePriceData } from '@velocity-exchange/sdk';
 
 export type FormattedOraclePriceData = {
 	price: number;

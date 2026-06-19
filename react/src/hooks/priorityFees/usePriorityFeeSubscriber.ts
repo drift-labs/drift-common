@@ -3,7 +3,10 @@ import {
 	PRIORITY_FEE_SUBSCRIPTION_ADDRESSES,
 } from '../../constants/priorityFees';
 import { useCommonDriftStore } from '../../stores/useCommonDriftStore';
-import { PriorityFeeStrategy, PriorityFeeSubscriber } from '@drift-labs/sdk';
+import {
+	PriorityFeeStrategy,
+	PriorityFeeSubscriber,
+} from '@velocity-exchange/sdk';
 import React, { useEffect, useRef } from 'react';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { usePriorityFeesPollingRate } from './usePriorityFeesPollingRate';

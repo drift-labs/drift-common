@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BASE_PRECISION_EXP, BigNum } from '@drift-labs/sdk';
+import { BASE_PRECISION_EXP, BigNum } from '@velocity-exchange/sdk';
 import { useCommonDriftStore } from '../stores';
 import { useCommonDriftActions } from './useCommonDriftActions';
 import { useWalletContext } from './useWalletContext';

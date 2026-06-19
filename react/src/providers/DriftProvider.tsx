@@ -6,7 +6,7 @@ import { useEmulation } from '../hooks/useEmulation';
 import { useGeoBlocking } from '../hooks/useGeoBlocking';
 import { useCommonDriftStore } from '../stores';
 import DriftWalletProvider from './DriftWalletProvider';
-import { DriftClientConfig } from '@drift-labs/sdk';
+import { VelocityClientConfig } from '@velocity-exchange/sdk';
 import { Breakpoints, useSyncScreenSize } from '../stores/useScreenSizeStore';
 import { WalletAdapter } from '@solana/wallet-adapter-base';
 
@@ -33,7 +33,7 @@ type DriftAppHooksProps = {
 	// although they can still import DEFAULT_BREAKPOINTS. this ensures that the user is aware of
 	// the breakpoints they are using
 	breakpoints: Breakpoints;
-	additionalDriftClientConfig?: Partial<DriftClientConfig>;
+	additionalDriftClientConfig?: Partial<VelocityClientConfig>;
 };
 
 export type DriftProviderProps = {

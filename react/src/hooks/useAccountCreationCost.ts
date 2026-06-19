@@ -2,7 +2,7 @@ import {
 	BASE_PRECISION_EXP,
 	BigNum,
 	calculateInitUserFee,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { useEffect, useState } from 'react';
 import { singletonHook } from 'react-singleton-hook';
 import { useCommonDriftStore } from '../stores';
