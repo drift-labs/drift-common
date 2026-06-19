@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.4](https://github.com/drift-labs/drift-common/compare/common-ts-v0.0.3...common-ts-v0.0.4) (2026-06-19)
+
+
+### Code Refactoring
+
+* **common-ts:** remove dead code & cruft from drift cluster ([#357](https://github.com/drift-labs/drift-common/issues/357)) ([72af2a3](https://github.com/drift-labs/drift-common/commit/72af2a33bd1e0a11381658968787d62cfbc47637))
+* **common-ts:** simplify clients (safe subset) ([#355](https://github.com/drift-labs/drift-common/issues/355)) ([d23e6fc](https://github.com/drift-labs/drift-common/commit/d23e6fc0b459e0f300dd7dd7f1c83735ccac90e6))
+* **common-ts:** simplify domain utils cluster + fix latent bugs ([#353](https://github.com/drift-labs/drift-common/issues/353)) ([da5e583](https://github.com/drift-labs/drift-common/commit/da5e58374b5fc8c15b3a34cd8567a757c523ac14))
+* **common-ts:** simplify pure utils cluster + fix latent bugs ([#352](https://github.com/drift-labs/drift-common/issues/352)) ([ad5d6c3](https://github.com/drift-labs/drift-common/commit/ad5d6c32ac9187e0917eb35d80cfebba2f4d8832))
+* **common-ts:** simplify types & serializableTypes (safe subset) ([#356](https://github.com/drift-labs/drift-common/issues/356)) ([09de9ed](https://github.com/drift-labs/drift-common/commit/09de9ede85ecce1e2b2bed25c029019fbb0f55f5))
+* **common-ts:** tidy infra utils (safe subset) ([#354](https://github.com/drift-labs/drift-common/issues/354)) ([27754d7](https://github.com/drift-labs/drift-common/commit/27754d7620c55b2dcbcb94750b60eb8b0743ee4c))
+
 ## [0.0.3](https://github.com/drift-labs/drift-common/compare/common-ts-v0.0.2...common-ts-v0.0.3) (2026-06-01)
 
 
