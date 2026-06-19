@@ -1,10 +1,10 @@
 {
-	"name": "@drift-labs/react",
+	"name": "@velocity-exchange/react",
 	"version": "1.0.0",
-	"description": "Common building blocks for connecting to the Drift program from React",
+	"description": "Common building blocks for connecting to the Velocity Exchange program from React",
 	"main": "lib/index.js",
 	"repository": "https://github.com/drift-labs/drift-common",
-	"author": "Drift Labs",
+	"author": "Velocity Exchange",
 	"license": "MIT",
 	"scripts": {
 		"lint": "eslint './**/*.{ts,tsx}' --quiet",
