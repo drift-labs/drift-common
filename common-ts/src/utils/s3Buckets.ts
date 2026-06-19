@@ -110,7 +110,7 @@ export const getDateRangeFromSelection = (
 			to = dateToS3DateString(now);
 			break;
 		case 'custom':
-			if (!customOpts || customOpts?.year == undefined) {
+			if (!customOpts || customOpts.year == undefined) {
 				console.error(
 					'Requested custom date range without providing customOpts'
 				);

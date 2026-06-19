@@ -68,6 +68,10 @@ export const getHeliusPriorityFeeEstimate = async (
 			headers: { 'Content-Type': 'application/json' },
 		});
 
+		if (!response.ok) {
+			return undefined;
+		}
+
 		const result = (await response.json()) as {
 			min: number;
 			low: number;
@@ -76,10 +80,6 @@ export const getHeliusPriorityFeeEstimate = async (
 			veryHigh: number;
 			unsafeMax: number;
 		}[];
-
-		if (!response.ok) {
-			return undefined;
-		}
 
 		const feeLevelValues = result.map((result) => result?.[priorityFeeLevel]);
 
