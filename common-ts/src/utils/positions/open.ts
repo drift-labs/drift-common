@@ -78,7 +78,7 @@ const getOpenPositionData = (
 
 				if (isResolved) {
 					const resolvedToNo = perpMarket.expiryPrice.lte(
-						perpMarket.amm.orderTickSize
+						perpMarket.orderTickSize
 					);
 
 					const price = resolvedToNo ? ZERO : PRICE_PRECISION;

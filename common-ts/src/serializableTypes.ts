@@ -3,7 +3,7 @@ import {
 	BigNum,
 	BN,
 	CandleResolution,
-	CurveRecord,
+	AmmCurveChanged,
 	DepositExplanation,
 	DepositRecord,
 	Event,
@@ -998,14 +998,13 @@ export class SerializableSpotInterestRecord implements SpotInterestRecordEvent {
 }
 
 // Curve record event
-export type CurveRecordEvent = Event<CurveRecord>;
-export class SerializableCurveRecord implements CurveRecordEvent {
+export type AmmCurveChangedEvent = Event<AmmCurveChanged>;
+export class SerializableAmmCurveChanged implements AmmCurveChangedEvent {
 	@autoserializeAs(Number) id: number;
 	@autoserializeAs(String) txSig: string;
 	@autoserializeAs(Number) txSigIndex: number;
 	@autoserializeAs(Number) slot: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) recordId: BN;
 	@autoserializeAs(Number) marketIndex: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) pegMultiplierBefore: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetReserveBefore: BN;
@@ -1015,16 +1014,10 @@ export class SerializableCurveRecord implements CurveRecordEvent {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetReserveAfter: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetReserveAfter: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) sqrtKAfter: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmountLong: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmountShort: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmountWithAmm: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) totalFee: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns)
-	totalFeeMinusDistributions: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) adjustmentCost: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) numberOfUsers: BN;
+	@autoserializeUsing(BNSerializeAndDeserializeFns)
+	totalFeeMinusDistributionsAfter: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) oraclePrice: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) fillRecord: BN;
 }
 
 // Settle Pnl Records
@@ -2227,7 +2220,6 @@ export function transformDataApiOrderRecordToSerializableOrderRecord(
 			price: deserializedV2Record.price.val,
 			baseAssetAmount: deserializedV2Record.baseAssetAmount.val,
 			baseAssetAmountFilled: deserializedV2Record.baseAssetAmountFilled.val,
-			quoteAssetAmount: deserializedV2Record.quoteAssetAmount.val,
 			quoteAssetAmountFilled: deserializedV2Record.quoteAssetAmountFilled.val,
 			triggerPrice: deserializedV2Record.triggerPrice.val,
 			oraclePriceOffset: deserializedV2Record.oraclePriceOffset.toNum(),
@@ -2475,7 +2467,7 @@ export const Serializer = {
 			Serialize(cls, UISerializableOrderActionRecordV2),
 		SpotInterestRecord: (cls: any) =>
 			Serialize(cls, SerializableSpotInterestRecord),
-		CurveRecord: (cls: any) => Serialize(cls, SerializableCurveRecord),
+		AmmCurveChanged: (cls: any) => Serialize(cls, SerializableAmmCurveChanged),
 		Candle: (cls: any) => Serialize(cls, SerializableCandle),
 		UICandle: (cls: any) => Serialize(cls, UISerializableCandle),
 		UIOrderActionRecord: (cls: any) =>
@@ -2578,8 +2570,11 @@ export const Serializer = {
 				cls,
 				SerializableSpotInterestRecord
 			) as SpotInterestRecordEvent,
-		CurveRecord: (cls: JsonObject) =>
-			Deserialize(cls, SerializableCurveRecord) as SerializableCurveRecord,
+		AmmCurveChanged: (cls: JsonObject) =>
+			Deserialize(
+				cls,
+				SerializableAmmCurveChanged
+			) as SerializableAmmCurveChanged,
 		UISettlePnl: (cls: JsonObject) =>
 			Deserialize(cls, UISerializableSettlePnlRecord),
 		Candle: (cls: JsonObject) => Deserialize(cls, SerializableCandle),

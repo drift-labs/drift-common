@@ -6,7 +6,6 @@ import {
 	OptionalOrderParams,
 	MarketType,
 	getUserStatsAccountPublicKey,
-	ReferrerInfo,
 	OrderType,
 } from '@velocity-exchange/sdk';
 import {
@@ -317,7 +316,6 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	orderType,
 	price,
 	reduceOnly,
-	referrerInfo,
 	auctionDurationPercentage,
 	optionalAuctionParamsInputs,
 	mainSignerOverride,
@@ -333,7 +331,6 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	marketIndex: number;
 	velocityClient: VelocityClient;
 	user: User;
-	referrerInfo?: ReferrerInfo;
 	auctionDurationPercentage?: number;
 }) => {
 	const counterPartySide = ENUM_UTILS.match(direction, PositionDirection.LONG)
@@ -390,7 +387,6 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	const placeAndTakeIx = await velocityClient.getPlaceAndTakePerpOrderIx(
 		fetchedOrderParams,
 		topMakersInfo,
-		referrerInfo,
 		undefined,
 		auctionDurationPercentage,
 		user.getUserAccount().subAccountId,
@@ -519,7 +515,6 @@ export const createOpenPerpMarketOrderIxs = async ({
 				user,
 				userOrderId,
 				reduceOnly,
-				referrerInfo: placeAndTake.referrerInfo,
 				auctionDurationPercentage: placeAndTake.auctionDurationPercentage,
 				optionalAuctionParamsInputs,
 				mainSignerOverride,

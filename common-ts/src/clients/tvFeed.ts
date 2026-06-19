@@ -313,7 +313,7 @@ export class VelocityTvFeed {
 				if (targetMarket.type === 'perp') {
 					tickSize = this.velocityClient
 						.getPerpMarketAccount(targetMarket.config.marketIndex)
-						.amm.orderTickSize.toNumber();
+						.orderTickSize.toNumber();
 				} else {
 					tickSize = this.velocityClient
 						.getSpotMarketAccount(targetMarket.config.marketIndex)

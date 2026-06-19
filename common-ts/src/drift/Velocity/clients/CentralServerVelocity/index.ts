@@ -316,7 +316,7 @@ export class CentralServerVelocity {
 		await prev;
 
 		const user = new User({
-			driftClient: this._velocityClient,
+			velocityClient: this._velocityClient,
 			userAccountPublicKey,
 			accountSubscription: {
 				type: 'custom',
@@ -413,7 +413,7 @@ export class CentralServerVelocity {
 			undefined
 		);
 		const user = new User({
-			driftClient: this._velocityClient,
+			velocityClient: this._velocityClient,
 			userAccountPublicKey,
 			accountSubscription: {
 				type: 'custom',

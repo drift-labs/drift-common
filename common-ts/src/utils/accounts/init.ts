@@ -122,7 +122,7 @@ async function updateUserAccount(user: User): Promise<void> {
 	const publicKey = user.userAccountPublicKey;
 	try {
 		// TODO: cast to any to avoid "Type instantiation is excessively deep and possibly infinite." error from Anchor's generic types against the Velocity IDL. Fix once SDK is stable.
-		const program = user.driftClient.program as any;
+		const program = user.velocityClient.program as any;
 		const dataAndContext = await program.account.user.fetchAndContext(
 			publicKey,
 			'processed'

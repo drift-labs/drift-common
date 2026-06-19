@@ -415,7 +415,7 @@ export class AuthorityVelocity {
 		config?: Partial<PriorityFeeSubscriberConfig>
 	) {
 		// Convert tradable markets to VelocityMarketInfo format for priority fee subscriber
-		const driftMarkets = this._tradableMarkets.map((market) => ({
+		const velocityMarkets = this._tradableMarkets.map((market) => ({
 			marketType: market.marketTypeStr,
 			marketIndex: market.marketIndex,
 		}));
@@ -423,7 +423,7 @@ export class AuthorityVelocity {
 		const priorityFeeConfig: PriorityFeeSubscriberConfig = {
 			connection: this.velocityClient.connection,
 			priorityFeeMethod: PriorityFeeMethod.SOLANA,
-			driftMarkets,
+			velocityMarkets,
 			addresses: HIGH_ACTIVITY_MARKET_ACCOUNTS,
 			...config,
 		};

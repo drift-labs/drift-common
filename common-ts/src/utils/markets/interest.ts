@@ -25,13 +25,13 @@ export const getCurrentOpenInterestForMarket = (
 	if (ENUM_UTILS.match(marketType, MarketType.PERP)) {
 		const market = velocityClient.getPerpMarketAccount(marketIndex);
 		const OI = BigNum.from(
-			market.amm.baseAssetAmountLong.add(market.amm.baseAssetAmountShort.abs()),
+			market.baseAssetAmountLong.add(market.baseAssetAmountShort.abs()),
 			BASE_PRECISION_EXP
 		);
 
 		const priceData = velocityClient.getOraclePriceDataAndSlot(
-			market.amm.oracle,
-			market.amm.oracleSource
+			market.oracle,
+			market.oracleSource
 		);
 
 		const price = BigNum.from(priceData.data.price, PRICE_PRECISION_EXP);

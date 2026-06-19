@@ -85,9 +85,9 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 	// If so, force capLiqPrice to be false to avoid incorrect price capping
 	// Technically in this case, liq price could be lower for a short or higher for a long
 	const perpMarketOracle =
-		userClient.driftClient.getPerpMarketAccount(perpMarketIndex)?.amm?.oracle;
+		userClient.velocityClient.getPerpMarketAccount(perpMarketIndex)?.oracle;
 
-	const spotMarketWithSameOracle = userClient.driftClient
+	const spotMarketWithSameOracle = userClient.velocityClient
 		.getSpotMarketAccounts()
 		.find((market) => market.oracle.equals(perpMarketOracle));
 
