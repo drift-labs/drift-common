@@ -176,16 +176,6 @@ export class UIMarket {
 		return this.marketId.key;
 	}
 
-	// @deprecated : Use uiSymbols.marketDisplaySymbol instead
-	get marketName() {
-		return `${this.market.symbol}${this.isSpot ? '/USDC' : ''}`;
-	}
-
-	// @deprecated : Use uiSymbols.marketSymbol instead
-	get symbol() {
-		return this.market.symbol;
-	}
-
 	get isUsdcMarket() {
 		return this.isSpot && this.marketIndex === USDC_SPOT_MARKET_INDEX;
 	}
@@ -222,19 +212,6 @@ export class UIMarket {
 
 	equals(other: UIMarket) {
 		return this.marketId.equals(other.marketId);
-	}
-
-	// @deprecated : Use uiSymbols.baseAssetSymbol instead
-	baseAssetSymbol(removePrefix = false) {
-		let baseAssetSymbol = this.isPerp
-			? (this.market as PerpMarketConfig).baseAssetSymbol
-			: this.market.symbol;
-
-		if (removePrefix) {
-			baseAssetSymbol = baseAssetSymbol.replace('1K', '').replace('1M', '');
-		}
-
-		return baseAssetSymbol;
 	}
 
 	protected setUiSymbols() {
