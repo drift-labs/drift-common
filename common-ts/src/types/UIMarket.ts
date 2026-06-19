@@ -111,7 +111,6 @@ export class UIMarket {
 		//@ts-ignore
 		const market = markets.find((m) => m.marketIndex === marketIndex);
 
-		// TODO: should we purposely throw an error here? Or construct a default market?
 		invariant(
 			market,
 			`Market not found for type: ${marketId.marketTypeStr}, market index: ${marketIndex}`
@@ -154,14 +153,11 @@ export class UIMarket {
 	}
 
 	static checkIsPredictionMarket(marketConfig: PerpMarketConfig) {
-		if (!(marketConfig as PerpMarketConfig).category) {
+		if (!marketConfig.category) {
 			return false;
 		}
 
-		return (
-			(marketConfig as PerpMarketConfig).category?.includes('Prediction') ??
-			false
-		);
+		return marketConfig.category.includes('Prediction');
 	}
 
 	get isSpot() {
@@ -258,11 +254,7 @@ export class UIMarket {
 	}
 
 	private getMarketSymbol(): MarketSymbol {
-		if (this.marketId.isPerp) {
-			return this.market.symbol as MarketSymbol;
-		} else {
-			return this.market.symbol as MarketSymbol;
-		}
+		return this.market.symbol as MarketSymbol;
 	}
 
 	private getMarketDisplaySymbol(): MarketDisplaySymbol {
@@ -274,9 +266,8 @@ export class UIMarket {
 				case MAIN_POOL_ID:
 					return marketConfig.symbol as MarketDisplaySymbol;
 				case JLP_POOL_ID:
-					return `${marketConfig.symbol.split('-')[0]}` as MarketDisplaySymbol;
 				case LST_POOL_ID:
-					return `${marketConfig.symbol.split('-')[0]}` as MarketDisplaySymbol;
+					return marketConfig.symbol.split('-')[0] as MarketDisplaySymbol;
 				case EXPONENT_POOL_ID: {
 					/*
 					Example market symbol conversions:
@@ -295,7 +286,7 @@ export class UIMarket {
 					) as MarketDisplaySymbol;
 				}
 				case SACRED_POOL_ID:
-					return `${marketConfig.symbol.split('-')[0]}` as MarketDisplaySymbol;
+					return marketConfig.symbol.split('-')[0] as MarketDisplaySymbol;
 				default:
 					return marketConfig.symbol as MarketDisplaySymbol;
 			}
