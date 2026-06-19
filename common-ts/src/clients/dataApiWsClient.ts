@@ -72,13 +72,11 @@ export class DataApiWsClient {
 	private handleWsMessage = (
 		message: WsSubscriptionMessage<WsSubscriptionMessageType>
 	) => {
-		const parsedMessage = message;
-
-		switch (parsedMessage.type) {
+		switch (message.type) {
 			case 'update':
 				{
-					const candle = (parsedMessage as WsUpdateMessage).candle;
-					const trades = (parsedMessage as WsUpdateMessage).trades;
+					const candle = (message as WsUpdateMessage).candle;
+					const trades = (message as WsUpdateMessage).trades;
 					if (candle) this.candleSubject.next(candle);
 					if (trades) this.tradesSubject.next(trades);
 				}

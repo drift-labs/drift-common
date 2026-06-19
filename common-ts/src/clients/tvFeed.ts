@@ -360,8 +360,6 @@ export class VelocityTvFeed {
 		timestamp: number,
 		resolution: CandleResolution
 	) => {
-		const ROUND_UP = true;
-
 		const timestampMs = timestamp * 1000;
 		const candleLengthMs = Candle.resolutionStringToCandleLengthMs(resolution);
 
@@ -373,9 +371,7 @@ export class VelocityTvFeed {
 
 		const roundedDownTimestampMs = timestampMs - remainderMs;
 
-		const roundedTimestampMs = ROUND_UP
-			? roundedDownTimestampMs + candleLengthMs
-			: roundedDownTimestampMs;
+		const roundedTimestampMs = roundedDownTimestampMs + candleLengthMs;
 
 		return roundedTimestampMs / 1000;
 	};
@@ -561,7 +557,7 @@ export class VelocityTvFeed {
 		);
 
 		onResult(bars, {
-			noData: candlesResult.length === 0,
+			noData: false,
 		});
 
 		return;

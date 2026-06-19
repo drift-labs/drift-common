@@ -100,10 +100,6 @@ const getBaseDataApiUrl = (env: UIEnv) => {
 	return dataApiUrl.replace('https://', '');
 };
 
-// Cache for URL construction to prevent repeated string concatenation
-const urlCache = new Map<string, string>();
-const MAX_URL_CACHE_SIZE = 500;
-
 const getCandleFetchUrl = ({
 	env,
 	marketId,
@@ -113,29 +109,13 @@ const getCandleFetchUrl = ({
 }: CandleFetchUrlConfig) => {
 	const baseDataApiUrl = getBaseDataApiUrl(env);
 
-	// Cache key for this URL configuration
-	const cacheKey = `${marketId.key}-${resolution}-${countToFetch}-${env.key}-${
-		startTs ?? 'none'
-	}`;
-
-	if (urlCache.has(cacheKey)) {
-		return urlCache.get(cacheKey)!;
-	}
-
-	// Base URL without startTs parameter
 	let fetchUrl = `https://${baseDataApiUrl}/market/${getMarketSymbolForMarketId(
 		marketId,
 		env
 	)}/candles/${resolution}?limit=${Math.min(countToFetch, CANDLE_FETCH_LIMIT)}`;
 
-	// Only add startTs parameter if it's provided
 	if (startTs !== undefined) {
 		fetchUrl += `&startTs=${startTs}`;
-	}
-
-	// Cache the result if cache isn't too large
-	if (urlCache.size < MAX_URL_CACHE_SIZE) {
-		urlCache.set(cacheKey, fetchUrl);
 	}
 
 	return fetchUrl;
@@ -145,12 +125,7 @@ type CandleSubscriberEvents = {
 	'candle-update': JsonCandle;
 };
 
-// Separate event bus for candle events
-class CandleEventBus extends StrictEventEmitter<CandleSubscriberEvents> {
-	constructor() {
-		super();
-	}
-}
+class CandleEventBus extends StrictEventEmitter<CandleSubscriberEvents> {}
 
 // This class is reponsible for fetching candles from the data API's GET endpoint
 class CandleFetcher {
@@ -535,8 +510,6 @@ export class CandleClient {
 			eventBus: CandleEventBus;
 		}
 	> = new Map();
-
-	constructor() {}
 
 	public subscribe = async (
 		config: CandleSubscriptionConfig,

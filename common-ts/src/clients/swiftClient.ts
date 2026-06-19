@@ -10,25 +10,6 @@ import {
 	isVariant,
 } from '@velocity-exchange/sdk';
 
-// Cache for URL construction to prevent repeated string concatenation
-const swiftUrlCache = new Map<string, string>();
-const MAX_SWIFT_URL_CACHE_SIZE = 200;
-
-function getCachedUrl(baseUrl: string, endpoint: string): string {
-	const cacheKey = `${baseUrl}:${endpoint}`;
-
-	if (swiftUrlCache.has(cacheKey)) {
-		return swiftUrlCache.get(cacheKey)!;
-	}
-
-	const result = `${baseUrl}${endpoint}`;
-
-	if (swiftUrlCache.size < MAX_SWIFT_URL_CACHE_SIZE) {
-		swiftUrlCache.set(cacheKey, result);
-	}
-
-	return result;
-}
 import { Observable, Subscriber } from 'rxjs';
 import { allEnvDlog } from '../utils/logger';
 export type SwiftServerOrderProcessResponse = {
@@ -96,7 +77,7 @@ export class SwiftClient {
 					...this.getSwiftHeaders(),
 				});
 
-				fetch(getCachedUrl(this.baseUrl, url), {
+				fetch(`${this.baseUrl}${url}`, {
 					headers,
 				})
 					.then(async (response) => {
@@ -137,10 +118,7 @@ export class SwiftClient {
 			body: SwiftServerOrderProcessResponse;
 			status: number;
 		}>((res) => {
-			const postRequest = new Request(
-				getCachedUrl(this.baseUrl, url),
-				requestOptions
-			);
+			const postRequest = new Request(`${this.baseUrl}${url}`, requestOptions);
 
 			fetch(postRequest)
 				.then(async (response) => {
