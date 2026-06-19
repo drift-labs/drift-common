@@ -16,22 +16,18 @@ import { matchEnum, ENUM_UTILS } from '../enum';
 export const orderActionRecordIsTrade = (orderRecord: OrderActionRecord) =>
 	orderRecord.baseAssetAmountFilled.gt(ZERO) &&
 	// @ts-ignore
-	matchEnum(orderRecord.action, OrderAction.FILL) &&
-	true;
+	matchEnum(orderRecord.action, OrderAction.FILL);
 
 export const uiOrderActionRecordIsTrade = (
 	orderRecord: UISerializableOrderActionRecord
 ) =>
 	orderRecord.baseAssetAmountFilled.gtZero() &&
-	matchEnum(orderRecord.action, OrderAction.FILL) &&
-	true;
+	matchEnum(orderRecord.action, OrderAction.FILL);
 
-// Trade records are order records which have been filled
 export const filterTradeRecordsFromOrderActionRecords = (
 	orderRecords: OrderActionRecord[]
 ): OrderActionRecord[] => orderRecords.filter(orderActionRecordIsTrade);
 
-// Trade records are order records which have been filled
 export const filterTradeRecordsFromUIOrderRecords = (
 	orderRecords: UISerializableOrderActionRecord[]
 ): UISerializableOrderActionRecord[] =>

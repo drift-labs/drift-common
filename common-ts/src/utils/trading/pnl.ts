@@ -102,9 +102,7 @@ const calculatePotentialProfit = (props: {
 		return POTENTIAL_PROFIT_DEFAULT_STATE;
 	}
 
-	const baseSizeBeingClosed = props.exitBaseSize.lte(props.currentPositionSize)
-		? props.exitBaseSize
-		: props.currentPositionSize;
+	const baseSizeBeingClosed = props.exitBaseSize;
 
 	// Notional size of amount being closed at entry and exit
 	notionalSizeAtEntry = baseSizeBeingClosed.mul(

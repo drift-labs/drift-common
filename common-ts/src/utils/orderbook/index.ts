@@ -312,8 +312,7 @@ export const getUserLiquidityForPrice = ({
 	let isCurrentUserLiquidity = false;
 	let currentUserLiquiditySize = 0;
 
-	const priceToUse = price;
-	const priceBucket = getBucketFloorForPrice(priceToUse, groupingSizeValue);
+	const priceBucket = getBucketFloorForPrice(price, groupingSizeValue);
 
 	const lookupBucket =
 		side === 'bid' ? userBidPriceBucketLookup : userAskPriceBucketLookup;

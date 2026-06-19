@@ -4,7 +4,6 @@ import {
 	BigNum,
 	VelocityClient,
 	MarketStatus,
-	ONE,
 	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
 	PerpMarketConfig,
@@ -79,12 +78,10 @@ const getOpenPositionData = (
 
 				if (isResolved) {
 					const resolvedToNo = perpMarket.expiryPrice.lte(
-						ZERO.add(perpMarket.amm.orderTickSize)
+						perpMarket.amm.orderTickSize
 					);
 
-					const price = resolvedToNo
-						? ZERO.mul(PRICE_PRECISION)
-						: ONE.mul(PRICE_PRECISION);
+					const price = resolvedToNo ? ZERO : PRICE_PRECISION;
 
 					estExitPrice = price;
 					markPrice = price;

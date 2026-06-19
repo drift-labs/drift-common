@@ -15,7 +15,7 @@ export const getTotalBorrowsForMarket = (
 
 	const totalBorrowsTokenAmount = getTokenAmount(
 		marketAccount.borrowBalance,
-		velocityClient.getSpotMarketAccount(marketAccount.marketIndex),
+		marketAccount,
 		SpotBalanceType.BORROW
 	);
 
