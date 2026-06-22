@@ -86,7 +86,6 @@ export type AccountSnapshot = Pick<
 	};
 
 export type UserPerpPositionSnapshot = {
-	lpShares: BN;
 	quoteAssetAmount: BN;
 	baseAssetAmount: BN;
 	marketIndex: number;

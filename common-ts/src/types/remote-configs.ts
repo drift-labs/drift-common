@@ -2,23 +2,13 @@ import { PerpMarketConfig, SpotMarketConfig } from '@velocity-exchange/sdk';
 
 export type SerializedSpotMarketConfig = Omit<
 	SpotMarketConfig,
-	| 'oracle'
-	| 'mint'
-	| 'oracleSource'
-	| 'precision'
-	| 'precisionExp'
-	| 'serumMarket'
-	| 'phoenixMarket'
-	| 'openbookMarket'
+	'oracle' | 'mint' | 'oracleSource' | 'precision' | 'precisionExp'
 > & {
 	oracle: string;
 	mint: string;
 	oracleSource: string;
 	precision: number;
 	precisionExp: number;
-	serumMarket?: string;
-	phoenixMarket?: string;
-	openbookMarket?: string;
 	production?: boolean;
 };
 

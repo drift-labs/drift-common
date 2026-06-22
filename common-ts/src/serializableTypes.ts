@@ -356,7 +356,6 @@ export class SerializableOrder implements Order {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) price: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmount: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmountFilled: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetAmount: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetAmountFilled: BN;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
 	direction: PositionDirection;
@@ -366,7 +365,7 @@ export class SerializableOrder implements Order {
 	triggerCondition: OrderTriggerCondition;
 	@autoserializeAs(Boolean) postOnly: boolean;
 	@autoserializeAs(Boolean) immediateOrCancel: boolean;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) oraclePriceOffset: number; // actually a number but serializes correctly as a BN
+	@autoserializeUsing(BNSerializeAndDeserializeFns) oraclePriceOffset: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) auctionStartPrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) auctionEndPrice: BN;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
@@ -389,9 +388,6 @@ export class UISerializableOrder extends SerializableOrder {
 	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	baseAssetAmountFilled: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	//@ts-ignore
-	quoteAssetAmount: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	quoteAssetAmountFilled: BigNum;
@@ -1184,7 +1180,6 @@ export class SerializableLiquidatePerpRecord implements LiquidatePerpRecord {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) userOrderId: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) liquidatorOrderId: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fillRecordId: BN;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) lpShares: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) liquidatorFee: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ifFee: BN;
 }
@@ -1209,8 +1204,6 @@ export class UISerializableLiquidatePerpRecord extends SerializableLiquidatePerp
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	canceledOrdersFee: BigNum;
-	//@ts-ignore
-	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns) lpShares: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
 	liquidatorFee: BigNum;
@@ -1463,8 +1456,6 @@ export class UISerializableLiquidationRecordV2 {
 	liquidatePerp_baseAssetAmount: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	liquidatePerp_quoteAssetAmount: BigNum;
-	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
-	liquidatePerp_lpShares: BigNum;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	liquidatePerp_fillRecordId: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
@@ -1620,7 +1611,6 @@ export class UISerializableLiquidationRecordV2 {
 }
 
 class SerializableUserPerpPositionSnapshot implements UserPerpPositionSnapshot {
-	@autoserializeUsing(BNSerializeAndDeserializeFns) lpShares: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetAmount: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmount: BN;
 	@autoserializeAs(Number) marketIndex: number;
@@ -2169,7 +2159,6 @@ export function transformDataApiOrderRecordToUISerializableOrderRecord(
 			price: deserializedV2Record.price,
 			baseAssetAmount: deserializedV2Record.baseAssetAmount,
 			baseAssetAmountFilled: deserializedV2Record.baseAssetAmountFilled,
-			quoteAssetAmount: deserializedV2Record.quoteAssetAmount,
 			quoteAssetAmountFilled: deserializedV2Record.quoteAssetAmountFilled,
 			triggerPrice: deserializedV2Record.triggerPrice,
 			oraclePriceOffset: deserializedV2Record.oraclePriceOffset,
@@ -2370,7 +2359,6 @@ export function transformDataApiLiquidationRecordToUISerializableLiquidationReco
 			oraclePrice: deserializedV2Record.liquidatePerp_oraclePrice,
 			baseAssetAmount: deserializedV2Record.liquidatePerp_baseAssetAmount,
 			quoteAssetAmount: deserializedV2Record.liquidatePerp_quoteAssetAmount,
-			lpShares: deserializedV2Record.liquidatePerp_lpShares,
 			fillRecordId: deserializedV2Record.liquidatePerp_fillRecordId,
 			userOrderId: deserializedV2Record.liquidatePerp_userOrderId,
 			liquidatorOrderId: deserializedV2Record.liquidatePerp_liquidatorOrderId,

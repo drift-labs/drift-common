@@ -3,7 +3,6 @@ import { expect } from 'chai';
 import {
 	isPythPull,
 	isPythLazer,
-	isSwitchboard,
 	isPythOracle,
 	isPullOracle,
 } from '../../src/drift/base/actions/markets/oracleCrank/oracleSourceHelpers';
@@ -37,18 +36,6 @@ describe('Oracle Source Helpers', () => {
 			expect(isPythLazer(OracleSource.PYTH_PULL)).to.be.false;
 			expect(isPythLazer(OracleSource.SWITCHBOARD_ON_DEMAND)).to.be.false;
 			expect(isPythLazer(OracleSource.PYTH)).to.be.false;
-		});
-	});
-
-	describe('isSwitchboard', () => {
-		it('should return true for SWITCHBOARD_ON_DEMAND', () => {
-			expect(isSwitchboard(OracleSource.SWITCHBOARD_ON_DEMAND)).to.be.true;
-		});
-
-		it('should return false for non-switchboard sources', () => {
-			expect(isSwitchboard(OracleSource.PYTH_PULL)).to.be.false;
-			expect(isSwitchboard(OracleSource.PYTH_LAZER)).to.be.false;
-			expect(isSwitchboard(OracleSource.SWITCHBOARD)).to.be.false;
 		});
 	});
 

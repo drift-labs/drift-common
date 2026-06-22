@@ -13,9 +13,6 @@ export const isPythLazer = (oracleSource: OracleSource): boolean =>
 	ENUM_UTILS.match(OracleSource.PYTH_LAZER_1M, oracleSource) ||
 	ENUM_UTILS.match(OracleSource.PYTH_LAZER_STABLE_COIN, oracleSource);
 
-export const isSwitchboard = (oracleSource: OracleSource): boolean =>
-	ENUM_UTILS.match(OracleSource.SWITCHBOARD_ON_DEMAND, oracleSource);
-
 export const isPythOracle = (oracleSource: OracleSource): boolean =>
 	ENUM_UTILS.toStr(oracleSource)?.toLowerCase()?.includes('pyth') ?? false;
 
