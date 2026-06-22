@@ -57,22 +57,16 @@ const checkIfUserAccountExists = async (
  *
  * 4. In cases where the user has a position before the market max leverage feature was shipped, the
  * position is not expected to have a max margin ratio set, and the UI should display the regular max
- * leverage for the market, unless the user is already in High Leverage Mode, in which case the UI should
- * display the high leverage max leverage for the market (if any).
+ * leverage for the market.
  */
 const getUserMaxLeverageForMarket = (
 	user: User | undefined,
 	marketIndex: number,
-	marketLeverageDetails: {
-		regularMaxLeverage: number;
-		highLeverageMaxLeverage: number;
-		hasHighLeverage: boolean;
-	},
+	marketMaxLeverage: number,
 	uiSavedMaxLeverage?: number
 ) => {
 	// if no saved max leverage is provided, return the regular max leverage for the market
-	const DEFAULT_MAX_LEVERAGE =
-		uiSavedMaxLeverage ?? marketLeverageDetails.regularMaxLeverage;
+	const DEFAULT_MAX_LEVERAGE = uiSavedMaxLeverage ?? marketMaxLeverage;
 
 	if (!user) {
 		return DEFAULT_MAX_LEVERAGE;
@@ -101,8 +95,7 @@ const getUserMaxLeverageForMarket = (
 
 	if (isPositionOpen) {
 		// user has an existing position from before PML ship (this means no max margin ratio set onchain yet)
-		// display max leverage for the leverage mode their account is in
-		return marketLeverageDetails.regularMaxLeverage;
+		return marketMaxLeverage;
 	}
 
 	// user has closed position with no margin ratio set, return default value

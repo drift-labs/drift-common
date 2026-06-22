@@ -68,7 +68,6 @@ export interface OpenPerpNonMarketOrderBaseParams
 	 * skips auto-compute and uses these values directly.
 	 */
 	isolatedPositionDepositsOverride?: IsolatedPositionDepositsOverride;
-	autoEnterHighLeverageModeBufferPct?: number;
 	/**
 	 * If provided, will override the main signer for the order. Otherwise, the main signer will be the user's authority.
 	 * This is only applicable for non-SWIFT orders.

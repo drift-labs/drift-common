@@ -120,11 +120,6 @@ export interface ComputeIsolatedPositionDepositParams {
 	 */
 	entryPrice?: BN;
 	/**
-	 * Number of open high leverage spots available to the user (if any).
-	 * If greater than 0, we will consider the trade as entering high leverage mode.
-	 */
-	numOfOpenHighLeverageSpots?: number;
-	/**
 	 * Optional buffer denominator for the isolated position deposit.
 	 *
 	 * Smaller numbers mean a bigger buffer.
