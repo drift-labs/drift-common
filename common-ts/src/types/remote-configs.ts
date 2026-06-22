@@ -1,28 +1,5 @@
 import { PerpMarketConfig, SpotMarketConfig } from '@velocity-exchange/sdk';
 
-export interface IPredictionMarketConfig {
-	title: string;
-	shortTitle: string;
-	category?: string;
-	symbol: string;
-	imgSrc: string;
-	previewImgSrc?: string;
-	devnetMarketIndex?: number;
-	mainnetMarketIndex?: number;
-	production?: boolean;
-	endingSoonThresholdDays?: number;
-	resolutionDateUnknown?: boolean;
-	resolutionDate: Date;
-	newUntilTs?: number;
-}
-
-export type SerializedPredictionMarketConfig = Omit<
-	IPredictionMarketConfig,
-	'resolutionDate'
-> & {
-	resolutionDateUnix: number;
-};
-
 export type SerializedSpotMarketConfig = Omit<
 	SpotMarketConfig,
 	| 'oracle'
@@ -65,7 +42,6 @@ export type SerializedRemoteConfigs = {
 			perp: SerializedPerpMarketConfig[];
 		};
 	};
-	predictionMarkets: SerializedPredictionMarketConfig[];
 };
 
 export type RemoteConfigs = {
@@ -79,5 +55,4 @@ export type RemoteConfigs = {
 			perp: PerpMarketConfig[];
 		};
 	};
-	predictionMarkets: IPredictionMarketConfig[];
 };

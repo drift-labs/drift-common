@@ -152,14 +152,6 @@ export class UIMarket {
 		return UIMarket.getOrCreate(marketId.marketIndex, marketId.marketType);
 	}
 
-	static checkIsPredictionMarket(marketConfig: PerpMarketConfig) {
-		if (!marketConfig.category) {
-			return false;
-		}
-
-		return marketConfig.category.includes('Prediction');
-	}
-
 	get isSpot() {
 		return this.marketId.isSpot;
 	}
@@ -184,13 +176,6 @@ export class UIMarket {
 		return (
 			this.isSpot &&
 			ENUM_UTILS.match(this.market.oracleSource, OracleSource.PYTH_STABLE_COIN)
-		);
-	}
-
-	get isPredictionMarket() {
-		return (
-			this.isPerp &&
-			UIMarket.checkIsPredictionMarket(this.market as PerpMarketConfig)
 		);
 	}
 

@@ -31,8 +31,7 @@ export interface PriceBasedPositionInfo {
 
 	/**
 	 * Position PnL as a percentage.
-	 * For prediction markets: calculated based on price movement relative to entry.
-	 * For regular markets: calculated as (PnL / quote entry amount) * account leverage.
+	 * Calculated as (PnL / quote entry amount) * account leverage.
 	 */
 	positionPnlPercentage: number;
 }

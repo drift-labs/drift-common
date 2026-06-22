@@ -3,8 +3,6 @@ import {
 	BN,
 	BigNum,
 	VelocityClient,
-	MarketStatus,
-	PRICE_PRECISION,
 	PRICE_PRECISION_EXP,
 	PerpMarketConfig,
 	PerpPosition,
@@ -22,9 +20,8 @@ import {
 	isOracleValid,
 	AMM_RESERVE_PRECISION,
 } from '@velocity-exchange/sdk';
-import { OpenPosition, UIMarket } from '../../types';
+import { OpenPosition } from '../../types';
 import { calculatePotentialProfit } from '../trading/pnl';
-import { ENUM_UTILS } from '../enum';
 
 const getOpenPositionData = (
 	velocityClient: VelocityClient,
@@ -62,7 +59,7 @@ const getOpenPositionData = (
 				? markPriceCallback(position.marketIndex) ?? oraclePriceData.price
 				: oraclePriceData.price;
 
-			let estExitPrice = user.getPositionEstimatedExitPriceAndPnl(
+			const estExitPrice = user.getPositionEstimatedExitPriceAndPnl(
 				position,
 				position.baseAssetAmount
 			)[0];
@@ -70,24 +67,6 @@ const getOpenPositionData = (
 			const entryPrice = calculateEntryPrice(position);
 
 			const isShort = position.baseAssetAmount.isNeg();
-
-			if (UIMarket.checkIsPredictionMarket(perpMarketConfig)) {
-				const isResolved =
-					ENUM_UTILS.match(perpMarket?.status, MarketStatus.SETTLEMENT) ||
-					ENUM_UTILS.match(perpMarket?.status, MarketStatus.DELISTED);
-
-				if (isResolved) {
-					const resolvedToNo = perpMarket.expiryPrice.lte(
-						perpMarket.orderTickSize
-					);
-
-					const price = resolvedToNo ? ZERO : PRICE_PRECISION;
-
-					estExitPrice = price;
-					markPrice = price;
-					oraclePrice = price;
-				}
-			}
 
 			// if for any reason oracle or mark price blips to 0, fallback to the other one so we don't show a crazy pnl
 			if (markPrice.lte(ZERO) && oraclePrice.gt(ZERO)) {
