@@ -1,29 +1,12 @@
 import { OracleSource } from '@velocity-exchange/sdk';
 import { expect } from 'chai';
 import {
-	isPythPull,
 	isPythLazer,
 	isPythOracle,
 	isPullOracle,
 } from '../../src/drift/base/actions/markets/oracleCrank/oracleSourceHelpers';
 
 describe('Oracle Source Helpers', () => {
-	describe('isPythPull', () => {
-		it('should return true for PYTH_PULL variants', () => {
-			expect(isPythPull(OracleSource.PYTH_PULL)).to.be.true;
-			expect(isPythPull(OracleSource.PYTH_1K_PULL)).to.be.true;
-			expect(isPythPull(OracleSource.PYTH_1M_PULL)).to.be.true;
-			expect(isPythPull(OracleSource.PYTH_STABLE_COIN_PULL)).to.be.true;
-		});
-
-		it('should return false for non-PYTH_PULL sources', () => {
-			expect(isPythPull(OracleSource.PYTH_LAZER)).to.be.false;
-			expect(isPythPull(OracleSource.SWITCHBOARD_ON_DEMAND)).to.be.false;
-			expect(isPythPull(OracleSource.QUOTE_ASSET)).to.be.false;
-			expect(isPythPull(OracleSource.PYTH)).to.be.false;
-		});
-	});
-
 	describe('isPythLazer', () => {
 		it('should return true for PYTH_LAZER variants', () => {
 			expect(isPythLazer(OracleSource.PYTH_LAZER)).to.be.true;

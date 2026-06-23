@@ -63,11 +63,10 @@ export const POLLING_DEPTHS = {
  * pollingDlob.addInterval('idle', 30, 1);         // Every 30s with depth 1
  *
  * // Add markets to intervals
+ * // Note: only perp markets have an active DLOB order book; spot DLOB trading is disabled.
  * const perpMarket = MarketId.createPerpMarket(0);
- * const spotMarket = MarketId.createSpotMarket(0);
  *
  * pollingDlob.addMarketToInterval('live', perpMarket);
- * pollingDlob.addMarketToInterval('background', spotMarket);
  *
  * // Subscribe to data updates
  * pollingDlob.onData().subscribe(marketData => {

@@ -3,7 +3,7 @@ import {
 	MarketType,
 	PositionDirection,
 	PostOnlyParams,
-	ReferrerInfo,
+	RevenueShareEscrowAccount,
 } from '@velocity-exchange/sdk';
 import { Transaction, VersionedTransaction } from '@solana/web3.js';
 import { OptionalAuctionParamsRequestInputs } from './dlobServer';
@@ -40,7 +40,12 @@ export type PlaceAndTakeParams =
 	| {
 			enable: true;
 			auctionDurationPercentage?: number;
-			referrerInfo: ReferrerInfo | undefined;
+			/**
+			 * The taker's decoded RevenueShareEscrow account. Must be supplied when the
+			 * taker is referred (has a RevenueShareEscrow with a referrer) so the program's
+			 * fill-time enforcement can load it; otherwise the fill rejects.
+			 */
+			takerEscrow?: RevenueShareEscrowAccount;
 	  };
 
 export type NonMarketOrderType =
@@ -57,7 +62,7 @@ export interface LimitAuctionConfig {
 	optionalLimitAuctionParams?: OptionalAuctionParamsRequestInputs;
 	usePlaceAndTake?: {
 		enable: boolean;
-		referrerInfo?: ReferrerInfo; // needed for place and take fallback
+		takerEscrow?: RevenueShareEscrowAccount; // attached when the taker is referred
 		auctionDurationPercentage?: number;
 	};
 	onAuctionParamsFetched?: AuctionParamsFetchedCallback;

@@ -75,7 +75,6 @@ export interface OpenPerpNonMarketOrderBaseParams
 	mainSignerOverride?: PublicKey;
 	/**
 	 * Optional builder code parameters for revenue sharing.
-	 * Only applicable for Swift orders for now.
 	 */
 	builderParams?: {
 		builderIdx: number;
@@ -116,10 +115,28 @@ export const createMultipleOpenPerpNonMarketOrderIx = async (params: {
 	 * If provided, will override the main signer for the order. Otherwise, the main signer will be the user's authority.
 	 */
 	mainSignerOverride?: PublicKey;
+	/**
+	 * Optional builder code parameters for revenue sharing, applied to every order in the batch.
+	 */
+	builderParams?: {
+		builderIdx: number;
+		builderFeeTenthBps: number;
+	};
 }): Promise<TransactionInstruction> => {
-	const { velocityClient, orderParamsConfigs, mainSignerOverride } = params;
+	const {
+		velocityClient,
+		orderParamsConfigs,
+		mainSignerOverride,
+		builderParams,
+	} = params;
 
-	const orderParams = orderParamsConfigs.map(buildNonMarketOrderParams);
+	const orderParams = orderParamsConfigs.map((config) => ({
+		...buildNonMarketOrderParams(config),
+		...(builderParams && {
+			builderIdx: builderParams.builderIdx,
+			builderFeeTenthBps: builderParams.builderFeeTenthBps,
+		}),
+	}));
 
 	const placeOrderIx = await velocityClient.getPlaceOrdersIx(
 		orderParams,
@@ -154,6 +171,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 		marginMode,
 		mainSignerOverride,
 		isolatedPositionDepositsOverride,
+		builderParams,
 	} = params;
 	// Support both new (amount + assetType) and legacy (baseAssetAmount) approaches
 	const finalBaseAssetAmount = resolveBaseAssetAmount({
@@ -279,6 +297,8 @@ export const createOpenPerpNonMarketOrderIxs = async (
 						orderConfig.limitAuction.optionalLimitAuctionParams,
 					auctionDurationPercentage:
 						orderConfig.limitAuction.usePlaceAndTake.auctionDurationPercentage,
+					takerEscrow: orderConfig.limitAuction.usePlaceAndTake.takerEscrow,
+					builderParams,
 				});
 				allIxs.push(placeAndTakeIx);
 				createdPlaceAndTakeIx = true;
@@ -293,7 +313,13 @@ export const createOpenPerpNonMarketOrderIxs = async (
 
 		// fallback to normal limit order with auction params
 		if (!createdPlaceAndTakeIx) {
-			allOrders.push(limitAuctionOrderParams);
+			allOrders.push({
+				...limitAuctionOrderParams,
+				...(builderParams && {
+					builderIdx: builderParams.builderIdx,
+					builderFeeTenthBps: builderParams.builderFeeTenthBps,
+				}),
+			});
 		}
 	} else {
 		const orderParams = buildNonMarketOrderParams({
@@ -307,7 +333,13 @@ export const createOpenPerpNonMarketOrderIxs = async (
 			userOrderId,
 		});
 
-		allOrders.push(orderParams);
+		allOrders.push({
+			...orderParams,
+			...(builderParams && {
+				builderIdx: builderParams.builderIdx,
+				builderFeeTenthBps: builderParams.builderFeeTenthBps,
+			}),
+		});
 	}
 
 	const bracketOrdersDirection = ENUM_UTILS.match(

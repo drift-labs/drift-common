@@ -327,7 +327,7 @@ export class SwiftClient {
 				program.account.signedMsgUserOrders.coder.accounts
 			);
 		const decodedAccount = accountDecoder(
-			'SignedMsgUserOrders',
+			'signedMsgUserOrders',
 			ordersAccount.data
 		) as SignedMsgUserOrdersAccount;
 		allEnvDlog(

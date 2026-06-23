@@ -16,14 +16,14 @@ type BaseSubscriptionOutputProps<T extends DlobServerChannel> = {
 
 interface OrderbookSubscriptionOutputProps
 	extends BaseSubscriptionOutputProps<'orderbook' | 'orderbook_indicative'> {
-	marketType: 'perp' | 'spot';
+	marketType: 'perp';
 	market: string;
 	grouping?: OrderbookGrouping;
 }
 
 interface TradeSubscriptionOutputProps
 	extends BaseSubscriptionOutputProps<'trades'> {
-	marketType: 'perp' | 'spot';
+	marketType: 'perp';
 	market: string;
 }
 
@@ -38,14 +38,14 @@ type BaseUnsubscriptionOutputProps<T extends DlobServerChannel> = {
 
 interface OrderbookUnsubscriptionOutputProps
 	extends BaseUnsubscriptionOutputProps<'orderbook' | 'orderbook_indicative'> {
-	marketType: 'perp' | 'spot';
+	marketType: 'perp';
 	market: string;
 	grouping?: OrderbookGrouping;
 }
 
 interface TradeUnsubscriptionOutputProps
 	extends BaseUnsubscriptionOutputProps<'trades'> {
-	marketType: 'perp' | 'spot';
+	marketType: 'perp';
 	market: string;
 }
 
@@ -80,24 +80,24 @@ export type WebsocketServerResponse = {
 };
 
 const getMarketSymbolFromId = (marketId: MarketId) => {
-	const isPerp = marketId.isPerp;
+	const perpMarket = UIMarket.perpMarkets.find(
+		(m) => marketId.marketIndex === m.marketIndex
+	);
+	return perpMarket?.symbol ?? '';
+};
 
-	if (isPerp) {
-		const perpMarket = UIMarket.perpMarkets.find(
-			(m) => marketId.marketIndex === m.marketIndex
+const assertPerpMarket = (market: MarketId) => {
+	if (!market.isPerp) {
+		throw new Error(
+			`DlobServerWebsocketUtils only supports perp markets; got spot market index ${market.marketIndex}`
 		);
-		return perpMarket?.symbol ?? '';
-	} else {
-		const spotMarket = UIMarket.spotMarkets.find(
-			(m) => marketId.marketIndex === m.marketIndex
-		);
-		return spotMarket?.symbol ?? '';
 	}
 };
 
 const getSubscriptionProps = (
 	props: WebsocketSubscriptionProps
 ): WebsocketSubscriptionOutputProps => {
+	assertPerpMarket(props.market);
 	const type = props.type;
 
 	switch (type) {
@@ -106,7 +106,7 @@ const getSubscriptionProps = (
 				type: 'subscribe',
 				channel: 'orderbook',
 				market: getMarketSymbolFromId(props.market),
-				marketType: props.market.isPerp ? 'perp' : 'spot',
+				marketType: 'perp',
 				...(props.grouping && { grouping: props.grouping }),
 			};
 		}
@@ -115,7 +115,7 @@ const getSubscriptionProps = (
 				type: 'subscribe',
 				channel: 'orderbook_indicative',
 				market: getMarketSymbolFromId(props.market),
-				marketType: props.market.isPerp ? 'perp' : 'spot',
+				marketType: 'perp',
 				...(props.grouping && { grouping: props.grouping }),
 			};
 		}
@@ -124,7 +124,7 @@ const getSubscriptionProps = (
 				type: 'subscribe',
 				channel: 'trades',
 				market: getMarketSymbolFromId(props.market),
-				marketType: props.market.isPerp ? 'perp' : 'spot',
+				marketType: 'perp',
 			};
 		}
 		default: {
@@ -137,6 +137,7 @@ const getSubscriptionProps = (
 const getUnsubscriptionProps = (
 	props: WebsocketSubscriptionProps
 ): WebsocketUnsubscriptionOutputProps => {
+	assertPerpMarket(props.market);
 	const type = props.type;
 
 	switch (type) {
@@ -145,7 +146,7 @@ const getUnsubscriptionProps = (
 				type: 'unsubscribe',
 				channel: 'orderbook',
 				market: getMarketSymbolFromId(props.market),
-				marketType: props.market.isPerp ? 'perp' : 'spot',
+				marketType: 'perp',
 				...(props.grouping && { grouping: props.grouping }),
 			};
 		}
@@ -154,7 +155,7 @@ const getUnsubscriptionProps = (
 				type: 'unsubscribe',
 				channel: 'orderbook_indicative',
 				market: getMarketSymbolFromId(props.market),
-				marketType: props.market.isPerp ? 'perp' : 'spot',
+				marketType: 'perp',
 				...(props.grouping && { grouping: props.grouping }),
 			};
 		}
@@ -163,7 +164,7 @@ const getUnsubscriptionProps = (
 				type: 'unsubscribe',
 				channel: 'trades',
 				market: getMarketSymbolFromId(props.market),
-				marketType: props.market.isPerp ? 'perp' : 'spot',
+				marketType: 'perp',
 			};
 		}
 		default: {
@@ -183,19 +184,17 @@ const getChannelKey = (props: WebsocketSubscriptionProps) => {
 
 	switch (type) {
 		case 'orderbook': {
-			return `orderbook_${props.market.isPerp ? 'perp' : 'spot'}_${
-				props.market.marketIndex
-			}${props.grouping ? `_grouped_${props.grouping}` : ''}`;
+			return `orderbook_perp_${props.market.marketIndex}${
+				props.grouping ? `_grouped_${props.grouping}` : ''
+			}`;
 		}
 		case 'orderbook_indicative': {
-			return `orderbook_${props.market.isPerp ? 'perp' : 'spot'}_${
-				props.market.marketIndex
-			}${props.grouping ? `_grouped_${props.grouping}` : ''}_indicative`;
+			return `orderbook_perp_${props.market.marketIndex}${
+				props.grouping ? `_grouped_${props.grouping}` : ''
+			}_indicative`;
 		}
 		case 'trades': {
-			return `trades_${props.market.isPerp ? 'perp' : 'spot'}_${
-				props.market.marketIndex
-			}`;
+			return `trades_perp_${props.market.marketIndex}`;
 		}
 		default: {
 			const exhaustiveCheck: never = type;
@@ -217,7 +216,7 @@ const getMessageFilter = (
 					message.channel === getChannelKey(props) ||
 					// This is a special extra message which comes through once, immediately after subscribing, to let the subscriber know the initial state of the orderbook
 					message.channel ===
-						`last_update_orderbook_${props.market.marketTypeStr}_${props.market.marketIndex}`
+						`last_update_orderbook_perp_${props.market.marketIndex}`
 				);
 			};
 		}

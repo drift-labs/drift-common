@@ -20,7 +20,7 @@ export interface MappedAuctionParams {
 	immediateOrCancel?: boolean;
 	triggerPrice?: BN | null;
 	triggerCondition?: OrderTriggerCondition;
-	oraclePriceOffset?: number | null;
+	oraclePriceOffset?: BN | null;
 	auctionDuration: number | undefined;
 	maxTs?: BN | null;
 	auctionStartPrice: BN | undefined;
@@ -78,7 +78,6 @@ const FIELD_MAPPING: Record<keyof ServerAuctionParams, FieldConfig> = {
 	userOrderId: { type: 'number' },
 	marketIndex: { type: 'number' },
 	auctionDuration: { type: 'number' },
-	oraclePriceOffset: { type: 'number' },
 
 	// Booleans
 	reduceOnly: { type: 'boolean' },
@@ -92,6 +91,7 @@ const FIELD_MAPPING: Record<keyof ServerAuctionParams, FieldConfig> = {
 	// Nullable BNs
 	triggerPrice: { type: 'bn_nullable' },
 	maxTs: { type: 'bn_nullable' },
+	oraclePriceOffset: { type: 'bn_nullable' },
 };
 
 // Type conversion functions

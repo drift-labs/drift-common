@@ -177,7 +177,7 @@ export function buildNonMarketOrderParams({
 			direction,
 			baseAssetAmount,
 			price: ZERO,
-			oraclePriceOffset: orderConfig.oraclePriceOffset.toNumber(),
+			oraclePriceOffset: orderConfig.oraclePriceOffset,
 			userOrderId,
 			postOnly,
 			reduceOnly,

@@ -10,7 +10,7 @@ export type OracleCrankFetchResult = {
 };
 
 export type OracleCrankDataFetcher = (
-	source: 'pythPull' | 'pythLazer',
+	source: 'pythLazer',
 	feedIds: (number | string)[]
 ) => Promise<OracleCrankFetchResult>;
 
@@ -20,7 +20,6 @@ export type GetOracleCrankIxsOptions = {
 	marketConfigs: OracleMarketConfig[];
 	velocityClient: VelocityClient;
 	fetchCrankData: OracleCrankDataFetcher;
-	maxPythPullCranks?: number;
 	maxPythLazerCranks?: number;
 	precedingIxsCount?: number;
 };

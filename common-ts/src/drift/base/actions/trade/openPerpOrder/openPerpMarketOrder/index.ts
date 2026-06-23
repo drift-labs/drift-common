@@ -7,6 +7,7 @@ import {
 	MarketType,
 	getUserStatsAccountPublicKey,
 	OrderType,
+	RevenueShareEscrowAccount,
 } from '@velocity-exchange/sdk';
 import {
 	PublicKey,
@@ -82,7 +83,6 @@ export interface OpenPerpMarketOrderBaseParams {
 	mainSignerOverride?: PublicKey;
 	/**
 	 * Optional builder code parameters for revenue sharing.
-	 * Only applicable for Swift orders.
 	 *
 	 * Prerequisites:
 	 * - User must have initialized a RevenueShareEscrow account
@@ -320,6 +320,8 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	optionalAuctionParamsInputs,
 	mainSignerOverride,
 	callbacks,
+	takerEscrow,
+	builderParams,
 }: Omit<
 	OpenPerpMarketOrderBaseParams,
 	'marginMode' | 'isolatedPositionDepositsOverride'
@@ -332,6 +334,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	velocityClient: VelocityClient;
 	user: User;
 	auctionDurationPercentage?: number;
+	takerEscrow?: RevenueShareEscrowAccount;
 }) => {
 	const counterPartySide = ENUM_UTILS.match(direction, PositionDirection.LONG)
 		? 'ask'
@@ -371,6 +374,11 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		fetchedOrderParams.auctionEndPrice = price;
 	}
 
+	if (builderParams) {
+		fetchedOrderParams.builderIdx = builderParams.builderIdx;
+		fetchedOrderParams.builderFeeTenthBps = builderParams.builderFeeTenthBps;
+	}
+
 	if (!topMakersResult || topMakersResult.length === 0) {
 		throw new NoTopMakersError('No top makers found', fetchedOrderParams);
 	}
@@ -392,7 +400,8 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		user.getUserAccount().subAccountId,
 		{
 			authority: mainSignerOverride,
-		}
+		},
+		takerEscrow
 	);
 
 	return placeAndTakeIx;
@@ -433,6 +442,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 	marginMode,
 	isolatedPositionDepositsOverride,
 	callbacks,
+	builderParams,
 }: OpenPerpMarketOrderBaseParams): Promise<TransactionInstruction[]> => {
 	if (!amount || amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
@@ -516,9 +526,11 @@ export const createOpenPerpMarketOrderIxs = async ({
 				userOrderId,
 				reduceOnly,
 				auctionDurationPercentage: placeAndTake.auctionDurationPercentage,
+				takerEscrow: placeAndTake.takerEscrow,
 				optionalAuctionParamsInputs,
 				mainSignerOverride,
 				positionMaxLeverage,
+				builderParams,
 			});
 			allIxs.push(placeAndTakeIx);
 		} catch (e) {
@@ -547,6 +559,10 @@ export const createOpenPerpMarketOrderIxs = async ({
 		const orderParams = {
 			...fetchedOrderParams,
 			userOrderId,
+			...(builderParams && {
+				builderIdx: builderParams.builderIdx,
+				builderFeeTenthBps: builderParams.builderFeeTenthBps,
+			}),
 		};
 
 		allOrders.push(orderParams);
