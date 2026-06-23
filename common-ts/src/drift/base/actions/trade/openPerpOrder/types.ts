@@ -68,6 +68,11 @@ export interface LimitAuctionConfig {
 	onAuctionParamsFetched?: AuctionParamsFetchedCallback;
 }
 
+export type BuilderParams = {
+	builderIdx: number;
+	builderFeeTenthBps: number;
+};
+
 export interface OptionalTriggerOrderParams {
 	baseAssetAmount?: BN;
 	triggerPrice: BN;

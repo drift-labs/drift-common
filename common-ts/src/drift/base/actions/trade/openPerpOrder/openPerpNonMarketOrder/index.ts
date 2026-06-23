@@ -33,6 +33,7 @@ import {
 	SwiftLimitOrderParamsOrderConfig,
 	NonMarketOrderParamsConfig,
 	IsolatedPositionDepositsOverride,
+	BuilderParams,
 } from '../types';
 import { WithTxnParams } from '../../../../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
@@ -76,10 +77,7 @@ export interface OpenPerpNonMarketOrderBaseParams
 	/**
 	 * Optional builder code parameters for revenue sharing.
 	 */
-	builderParams?: {
-		builderIdx: number;
-		builderFeeTenthBps: number;
-	};
+	builderParams?: BuilderParams;
 }
 
 export interface OpenPerpNonMarketOrderParamsWithSwift
@@ -118,10 +116,7 @@ export const createMultipleOpenPerpNonMarketOrderIx = async (params: {
 	/**
 	 * Optional builder code parameters for revenue sharing, applied to every order in the batch.
 	 */
-	builderParams?: {
-		builderIdx: number;
-		builderFeeTenthBps: number;
-	};
+	builderParams?: BuilderParams;
 }): Promise<TransactionInstruction> => {
 	const {
 		velocityClient,
@@ -132,10 +127,7 @@ export const createMultipleOpenPerpNonMarketOrderIx = async (params: {
 
 	const orderParams = orderParamsConfigs.map((config) => ({
 		...buildNonMarketOrderParams(config),
-		...(builderParams && {
-			builderIdx: builderParams.builderIdx,
-			builderFeeTenthBps: builderParams.builderFeeTenthBps,
-		}),
+		...(builderParams ?? {}),
 	}));
 
 	const placeOrderIx = await velocityClient.getPlaceOrdersIx(
@@ -315,10 +307,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 		if (!createdPlaceAndTakeIx) {
 			allOrders.push({
 				...limitAuctionOrderParams,
-				...(builderParams && {
-					builderIdx: builderParams.builderIdx,
-					builderFeeTenthBps: builderParams.builderFeeTenthBps,
-				}),
+				...(builderParams ?? {}),
 			});
 		}
 	} else {
@@ -335,10 +324,7 @@ export const createOpenPerpNonMarketOrderIxs = async (
 
 		allOrders.push({
 			...orderParams,
-			...(builderParams && {
-				builderIdx: builderParams.builderIdx,
-				builderFeeTenthBps: builderParams.builderFeeTenthBps,
-			}),
+			...(builderParams ?? {}),
 		});
 	}
 

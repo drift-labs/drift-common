@@ -29,9 +29,14 @@ import {
 	OptionalAuctionParamsRequestInputs,
 } from '../dlobServer';
 import { WithTxnParams } from '../../../../types';
-import { TxnOrSwiftResult, IsolatedPositionDepositsOverride } from '../types';
+import {
+	TxnOrSwiftResult,
+	IsolatedPositionDepositsOverride,
+	PlaceAndTakeParams,
+	OptionalTriggerOrderParams,
+	BuilderParams,
+} from '../types';
 import { NoTopMakersError } from '../../../../../Velocity/constants/errors';
-import { PlaceAndTakeParams, OptionalTriggerOrderParams } from '../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
 import { AuctionParamsFetchedCallback } from '../../../../../utils/auctionParamsResponseMapper';
 import {
@@ -97,17 +102,7 @@ export interface OpenPerpMarketOrderBaseParams {
 	 * }
 	 * ```
 	 */
-	builderParams?: {
-		/**
-		 * Index of the builder in the user's approved_builders list.
-		 */
-		builderIdx: number;
-		/**
-		 * Fee to charge for this order, in tenths of basis points.
-		 * Must be <= the builder's max_fee_tenth_bps.
-		 */
-		builderFeeTenthBps: number;
-	};
+	builderParams?: BuilderParams;
 	callbacks?: {
 		onAuctionParamsFetched?: AuctionParamsFetchedCallback;
 	};
@@ -374,11 +369,6 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		fetchedOrderParams.auctionEndPrice = price;
 	}
 
-	if (builderParams) {
-		fetchedOrderParams.builderIdx = builderParams.builderIdx;
-		fetchedOrderParams.builderFeeTenthBps = builderParams.builderFeeTenthBps;
-	}
-
 	if (!topMakersResult || topMakersResult.length === 0) {
 		throw new NoTopMakersError('No top makers found', fetchedOrderParams);
 	}
@@ -393,7 +383,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	}));
 
 	const placeAndTakeIx = await velocityClient.getPlaceAndTakePerpOrderIx(
-		fetchedOrderParams,
+		{ ...fetchedOrderParams, ...(builderParams ?? {}) },
 		topMakersInfo,
 		undefined,
 		auctionDurationPercentage,
@@ -559,10 +549,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 		const orderParams = {
 			...fetchedOrderParams,
 			userOrderId,
-			...(builderParams && {
-				builderIdx: builderParams.builderIdx,
-				builderFeeTenthBps: builderParams.builderFeeTenthBps,
-			}),
+			...(builderParams ?? {}),
 		};
 
 		allOrders.push(orderParams);
