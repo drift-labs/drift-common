@@ -1,14 +1,14 @@
 {
-  "name": "@drift-labs/posthog-types",
+  "name": "@velocity-exchange/posthog-types",
   "version": "0.1.0",
-  "description": "Shared PostHog event type definitions for Drift",
+  "description": "Shared PostHog event type definitions for Velocity Exchange",
   "types": "./lib/index.d.ts",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/drift-labs/drift-common/tree/master/posthog-types"
+    "url": "https://github.com/velocity-exchange/drift-common/tree/master/posthog-types"
   },
-  "author": "Drift Labs",
+  "author": "Velocity Exchange",
   "scripts": {
     "build": "bun run clean && tsc",
     "clean": "rm -rf lib",

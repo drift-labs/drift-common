@@ -3,9 +3,9 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "@drift-labs/react",
+      "name": "@velocity-exchange/react",
       "dependencies": {
-        "@drift-labs/icons": "file:../icons",
+        "@velocity-exchange/icons": "file:../icons",
         "@drift/common": "file:../common-ts",
         "@floating-ui/react": "0.27.9",
         "@solana/wallet-adapter-base": "0.9.23",
@@ -152,11 +152,11 @@
 
     "@dependents/detective-less": ["@dependents/detective-less@5.0.1", "", { "dependencies": { "gonzales-pe": "^4.3.0", "node-source-walk": "^7.0.1" } }, "sha512-Y6+WUMsTFWE5jb20IFP4YGa5IrGY/+a/FbOSjDF/wz9gepU2hwCYSXRHP/vPwBvwcY3SVMASt4yXxbXNXigmZQ=="],
 
-    "@drift-labs/icons": ["@drift-labs/icons@file:../icons", { "dependencies": { "react": "19.0.0-rc-02c0e824-20241028" }, "devDependencies": { "@rollup/plugin-commonjs": "22.0.2", "@rollup/plugin-node-resolve": "14.1.0", "@rollup/plugin-typescript": "8.5.0", "@svgr/core": "5.5.0", "@svgr/plugin-prettier": "5.5.0", "@svgr/plugin-svgo": "5.5.0", "@types/fs-extra": "9.0.13", "@types/node": "17.0.8", "@types/react": "npm:types-react@19.0.0-rc.1", "axios": "0.24.0", "chalk": "4.1.2", "dotenv": "10.0.0", "figma-api-exporter": "0.0.2", "fs-extra": "10.0.0", "nodemon": "1.18.4", "rollup": "2.79.0", "rollup-plugin-dts": "4.2.2", "ts-node": "10.4.0", "tslib": "2.4.1", "typescript": "4.5.4" } }],
+    "@velocity-exchange/icons": ["@velocity-exchange/icons@file:../icons", { "dependencies": { "react": "19.0.0-rc-02c0e824-20241028" }, "devDependencies": { "@rollup/plugin-commonjs": "22.0.2", "@rollup/plugin-node-resolve": "14.1.0", "@rollup/plugin-typescript": "8.5.0", "@svgr/core": "5.5.0", "@svgr/plugin-prettier": "5.5.0", "@svgr/plugin-svgo": "5.5.0", "@types/fs-extra": "9.0.13", "@types/node": "17.0.8", "@types/react": "npm:types-react@19.0.0-rc.1", "axios": "0.24.0", "chalk": "4.1.2", "dotenv": "10.0.0", "figma-api-exporter": "0.0.2", "fs-extra": "10.0.0", "nodemon": "1.18.4", "rollup": "2.79.0", "rollup-plugin-dts": "4.2.2", "ts-node": "10.4.0", "tslib": "2.4.1", "typescript": "4.5.4" } }],
 
     "@drift-labs/sdk": ["@drift-labs/sdk@2.158.0-beta.0", "", { "dependencies": { "@coral-xyz/anchor": "0.29.0", "@coral-xyz/anchor-30": "npm:@coral-xyz/anchor@0.30.1", "@ellipsis-labs/phoenix-sdk": "1.4.5", "@grpc/grpc-js": "1.14.0", "@msgpack/msgpack": "^3.1.2", "@openbook-dex/openbook-v2": "0.2.10", "@project-serum/serum": "0.13.65", "@pythnetwork/client": "2.5.3", "@pythnetwork/price-service-sdk": "1.7.1", "@pythnetwork/pyth-lazer-sdk": "5.2.1", "@solana/spl-token": "0.4.13", "@solana/web3.js": "1.98.0", "@switchboard-xyz/common": "3.0.14", "@switchboard-xyz/on-demand": "2.4.1", "@triton-one/yellowstone-grpc": "5.0.2", "anchor-bankrun": "0.3.0", "gill": "^0.10.2", "nanoid": "3.3.4", "node-cache": "5.1.2", "solana-bankrun": "0.3.1", "strict-event-emitter-types": "2.0.0", "tweetnacl": "1.0.3", "tweetnacl-util": "0.15.1", "uuid": "8.3.2", "yargs": "17.7.2", "zod": "4.0.17", "zstddec": "0.1.0" }, "optionalDependencies": { "helius-laserstream": "0.1.8" } }, "sha512-yDYNrDbpc3edu1ccWGuWbxsbs+BWsObD6EHP96JqETYUWFPpjCADbPBORL/ODfuM5Cv1BBEMoCKKMQDVofld8Q=="],
 
-    "@drift/common": ["@drift-labs/common@file:../common-ts", { "dependencies": { "@drift-labs/sdk": "^2.158.0-beta.0", "@slack/web-api": "6.4.0", "@solana/spl-token": "^0.4.14", "@solana/web3.js": "1.98.0", "bcryptjs-react": "2.4.6", "cerializr": "3.1.4", "dotenv": "^17.2.2", "immer": "10.0.3", "ioredis": "5.4.1", "isomorphic-ws": "^5.0.0", "localstorage-memory": "1.0.3", "rxjs": "7.8.2", "tiny-invariant": "1.3.1", "tweetnacl": "1.0.3", "winston": "3.13.0", "winston-slack-webhook-transport": "2.3.5" }, "devDependencies": { "@coral-xyz/anchor": "0.29.0", "@jest/globals": "29.3.1", "@types/mocha": "10.0.4", "@types/sinon": "^17.0.4", "buffer": "^6.0.3", "chai": "4.3.10", "crypto-browserify": "^3.12.1", "encoding": "0.1.13", "esbuild": "0.27.3", "jest": "29.7.0", "madge": "^8.0.0", "mocha": "10.2.0", "os-browserify": "^0.3.0", "path-browserify": "^1.0.1", "process": "^0.11.10", "sinon": "^21.0.0", "stream-browserify": "^3.0.0", "ts-node": "10.9.1", "typescript": "5.4.5", "vm-browserify": "^1.1.2" }, "peerDependencies": { "@drift-labs/sdk": "^2.158.0-beta.0", "@solana/web3.js": "1.98.0" } }],
+    "@drift/common": ["@velocity-exchange/common@file:../common-ts", { "dependencies": { "@drift-labs/sdk": "^2.158.0-beta.0", "@slack/web-api": "6.4.0", "@solana/spl-token": "^0.4.14", "@solana/web3.js": "1.98.0", "bcryptjs-react": "2.4.6", "cerializr": "3.1.4", "dotenv": "^17.2.2", "immer": "10.0.3", "ioredis": "5.4.1", "isomorphic-ws": "^5.0.0", "localstorage-memory": "1.0.3", "rxjs": "7.8.2", "tiny-invariant": "1.3.1", "tweetnacl": "1.0.3", "winston": "3.13.0", "winston-slack-webhook-transport": "2.3.5" }, "devDependencies": { "@coral-xyz/anchor": "0.29.0", "@jest/globals": "29.3.1", "@types/mocha": "10.0.4", "@types/sinon": "^17.0.4", "buffer": "^6.0.3", "chai": "4.3.10", "crypto-browserify": "^3.12.1", "encoding": "0.1.13", "esbuild": "0.27.3", "jest": "29.7.0", "madge": "^8.0.0", "mocha": "10.2.0", "os-browserify": "^0.3.0", "path-browserify": "^1.0.1", "process": "^0.11.10", "sinon": "^21.0.0", "stream-browserify": "^3.0.0", "ts-node": "10.9.1", "typescript": "5.4.5", "vm-browserify": "^1.1.2" }, "peerDependencies": { "@drift-labs/sdk": "^2.158.0-beta.0", "@solana/web3.js": "1.98.0" } }],
 
     "@ellipsis-labs/phoenix-sdk": ["@ellipsis-labs/phoenix-sdk@1.4.5", "", { "dependencies": { "@metaplex-foundation/beet": "^0.7.1", "@metaplex-foundation/rustbin": "^0.3.1", "@metaplex-foundation/solita": "^0.12.2", "@solana/spl-token": "^0.3.7", "@types/node": "^18.11.13", "bn.js": "^5.2.1", "borsh": "^0.7.0", "bs58": "^5.0.0" } }, "sha512-vEYgMXuV5/mpnpEi+VK4HO8f6SheHtVLdHHlULBiDN1eECYmL67gq+/cRV7Ar6jAQ7rJZL7xBxhbUW5kugMl6A=="],
 
@@ -2998,9 +2998,9 @@
 
     "@coral-xyz/anchor-30/superstruct": ["superstruct@0.15.5", "", {}, "sha512-4AOeU+P5UuE/4nOUkmcQdW5y7i9ndt1cQd/3iUe+LTz3RxESf/W/5lg4B74HbDMMv8PHnPnGCQFH45kBcrQYoQ=="],
 
-    "@drift-labs/icons/react": ["react@19.0.0-rc-02c0e824-20241028", "", {}, "sha512-GbZ7hpPHQMiEu53BqEaPQVM/4GG4hARo+mqEEnx4rYporDvNvUjutiAFxYFSbu6sgHwcr7LeFv8htEOwALVA2A=="],
+    "@velocity-exchange/icons/react": ["react@19.0.0-rc-02c0e824-20241028", "", {}, "sha512-GbZ7hpPHQMiEu53BqEaPQVM/4GG4hARo+mqEEnx4rYporDvNvUjutiAFxYFSbu6sgHwcr7LeFv8htEOwALVA2A=="],
 
-    "@drift-labs/icons/typescript": ["typescript@4.5.4", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-VgYs2A2QIRuGphtzFV7aQJduJ2gyfTljngLzjpfW9FoYZF6xuw1W0vW9ghCKLfcWrCFxK81CSGRAvS1pn4fIUg=="],
+    "@velocity-exchange/icons/typescript": ["typescript@4.5.4", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-VgYs2A2QIRuGphtzFV7aQJduJ2gyfTljngLzjpfW9FoYZF6xuw1W0vW9ghCKLfcWrCFxK81CSGRAvS1pn4fIUg=="],
 
     "@drift-labs/sdk/@coral-xyz/anchor": ["@coral-xyz/anchor@0.29.0", "", { "dependencies": { "@coral-xyz/borsh": "^0.29.0", "@noble/hashes": "^1.3.1", "@solana/web3.js": "^1.68.0", "bn.js": "^5.1.2", "bs58": "^4.0.1", "buffer-layout": "^1.2.2", "camelcase": "^6.3.0", "cross-fetch": "^3.1.5", "crypto-hash": "^1.3.0", "eventemitter3": "^4.0.7", "pako": "^2.0.3", "snake-case": "^3.0.4", "superstruct": "^0.15.4", "toml": "^3.0.0" } }, "sha512-eny6QNG0WOwqV0zQ7cs/b1tIuzZGmP7U7EcH+ogt4Gdbl8HDmIYVMh/9aTmYZPaFWjtUaI8qSn73uYEXWfATdA=="],
 
