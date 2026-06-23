@@ -369,11 +369,6 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		fetchedOrderParams.auctionEndPrice = price;
 	}
 
-	if (builderParams) {
-		fetchedOrderParams.builderIdx = builderParams.builderIdx;
-		fetchedOrderParams.builderFeeTenthBps = builderParams.builderFeeTenthBps;
-	}
-
 	if (!topMakersResult || topMakersResult.length === 0) {
 		throw new NoTopMakersError('No top makers found', fetchedOrderParams);
 	}
