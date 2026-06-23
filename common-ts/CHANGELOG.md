@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.0](https://github.com/drift-labs/drift-common/compare/common-ts-v0.0.5...common-ts-v0.1.0) (2026-06-23)
+
+
+### Features
+
+* **common-ts:** add createTransferCollateralIx and createReferralLinkIx ([592c59f](https://github.com/drift-labs/drift-common/commit/592c59fafc5d6ca394a5c8271f9366774f9023d2))
+
+
+### Code Refactoring
+
+* **common-ts:** clean up HLM ([40ac493](https://github.com/drift-labs/drift-common/commit/40ac4936d51367f35e305261931ab41f7959e128))
+* **common-ts:** clean up prediction markets ([c0f83db](https://github.com/drift-labs/drift-common/commit/c0f83db6ddf50b96702e8d95e6d689b24777f565))
+* **common-ts:** cleanup lpshares, quoteAssetamount ([4f060d8](https://github.com/drift-labs/drift-common/commit/4f060d8e75c0d9ef9eb2826e6d8698f0b81691a4))
+* **common-ts:** update @velocity-exchange/sdk to 0.2.4 and reconcile ([#367](https://github.com/drift-labs/drift-common/issues/367)) ([536b583](https://github.com/drift-labs/drift-common/commit/536b583390a698fad86e373795dd5182708f71f8))
+
 ## [0.0.5](https://github.com/drift-labs/drift-common/compare/common-ts-v0.0.4...common-ts-v0.0.5) (2026-06-19)
 
 
