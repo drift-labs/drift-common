@@ -10,7 +10,6 @@ import {
 	decodeUser,
 	DefaultOrderParams,
 	BASE_PRECISION,
-	TEN,
 } from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '../../../../../../utils';
 import {
@@ -74,9 +73,6 @@ export interface BulkL2FetchingQueryParams {
 	marketType: string;
 	depth: number;
 	includeVamm: boolean;
-	includePhoenix: boolean;
-	includeOpenbook: boolean;
-	includeSerum: boolean;
 	includeOracle: boolean;
 	includeIndicative: boolean;
 }
@@ -106,9 +102,6 @@ export function fetchBulkMarketsDlobL2Data(
 			marketType: m.marketId.marketTypeStr,
 			depth: m.depth,
 			includeVamm: m.marketId.isPerp,
-			includePhoenix: m.marketId.isSpot,
-			includeSerum: m.marketId.isSpot,
-			includeOpenbook: m.marketId.isSpot,
 			includeOracle: true,
 			includeIndicative: !excludeIndicativeLiquidity,
 		})),
@@ -124,13 +117,6 @@ export function fetchBulkMarketsDlobL2Data(
 		marketIndex: params.markets.map((market) => market.marketIndex).join(','),
 		depth: params.markets.map((market) => market.depth).join(','),
 		includeVamm: params.markets.map((market) => market.includeVamm).join(','),
-		includePhoenix: params.markets
-			.map((market) => market.includePhoenix)
-			.join(','),
-		includeOpenbook: params.markets
-			.map((market) => market.includeOpenbook)
-			.join(','),
-		includeSerum: params.markets.map((market) => market.includeSerum).join(','),
 		grouping: params.grouping
 			? params.markets.map(() => params.grouping).join(',')
 			: undefined,
@@ -181,24 +167,12 @@ export async function fetchAuctionOrderParams(params: RegularOrderParams) {
 
 const calcBaseFromQuote = (
 	velocityClient: VelocityClient,
-	marketType: MarketType,
 	marketIndex: number,
 	amount: BN
 ) => {
-	const isPerp = ENUM_UTILS.match(marketType, MarketType.PERP);
-
-	const oraclePrice = isPerp
-		? velocityClient.getOracleDataForPerpMarket(marketIndex).price
-		: velocityClient.getOracleDataForSpotMarket(marketIndex).price;
-
-	if (isPerp) {
-		return amount.mul(BASE_PRECISION).div(oraclePrice);
-	} else {
-		const spotMarketAccount = velocityClient.getSpotMarketAccount(marketIndex);
-		invariant(spotMarketAccount, 'Spot market account not found');
-		const precision = TEN.pow(new BN(spotMarketAccount.decimals));
-		return amount.mul(precision).div(oraclePrice);
-	}
+	const oraclePrice =
+		velocityClient.getOracleDataForPerpMarket(marketIndex).price;
+	return amount.mul(BASE_PRECISION).div(oraclePrice);
 };
 
 /**
@@ -218,7 +192,7 @@ export async function fetchAuctionOrderParamsFromDlob({
 	const baseAmount =
 		assetType === 'base'
 			? amount
-			: calcBaseFromQuote(velocityClient, marketType, marketIndex, amount);
+			: calcBaseFromQuote(velocityClient, marketIndex, amount);
 
 	// Build URL parameters for server request
 	const urlParamsObject: Record<string, string> = {
@@ -299,7 +273,7 @@ export async function fetchAuctionOrderParamsFromL2({
 	const baseAmount =
 		assetType === 'base'
 			? amount
-			: calcBaseFromQuote(velocityClient, marketType, marketIndex, amount);
+			: calcBaseFromQuote(velocityClient, marketIndex, amount);
 
 	const l2DataResponse = await fetchBulkMarketsDlobL2Data(dlobServerHttpUrl, [
 		{

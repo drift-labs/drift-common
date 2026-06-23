@@ -7,6 +7,7 @@ import {
 	MarketType,
 	getUserStatsAccountPublicKey,
 	OrderType,
+	RevenueShareEscrowAccount,
 } from '@velocity-exchange/sdk';
 import {
 	PublicKey,
@@ -28,9 +29,14 @@ import {
 	OptionalAuctionParamsRequestInputs,
 } from '../dlobServer';
 import { WithTxnParams } from '../../../../types';
-import { TxnOrSwiftResult, IsolatedPositionDepositsOverride } from '../types';
+import {
+	TxnOrSwiftResult,
+	IsolatedPositionDepositsOverride,
+	PlaceAndTakeParams,
+	OptionalTriggerOrderParams,
+	BuilderParams,
+} from '../types';
 import { NoTopMakersError } from '../../../../../Velocity/constants/errors';
-import { PlaceAndTakeParams, OptionalTriggerOrderParams } from '../types';
 import { getPositionMaxLeverageIxIfNeeded } from '../positionMaxLeverage';
 import { AuctionParamsFetchedCallback } from '../../../../../utils/auctionParamsResponseMapper';
 import {
@@ -82,7 +88,6 @@ export interface OpenPerpMarketOrderBaseParams {
 	mainSignerOverride?: PublicKey;
 	/**
 	 * Optional builder code parameters for revenue sharing.
-	 * Only applicable for Swift orders.
 	 *
 	 * Prerequisites:
 	 * - User must have initialized a RevenueShareEscrow account
@@ -97,17 +102,7 @@ export interface OpenPerpMarketOrderBaseParams {
 	 * }
 	 * ```
 	 */
-	builderParams?: {
-		/**
-		 * Index of the builder in the user's approved_builders list.
-		 */
-		builderIdx: number;
-		/**
-		 * Fee to charge for this order, in tenths of basis points.
-		 * Must be <= the builder's max_fee_tenth_bps.
-		 */
-		builderFeeTenthBps: number;
-	};
+	builderParams?: BuilderParams;
 	callbacks?: {
 		onAuctionParamsFetched?: AuctionParamsFetchedCallback;
 	};
@@ -320,6 +315,8 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	optionalAuctionParamsInputs,
 	mainSignerOverride,
 	callbacks,
+	takerEscrow,
+	builderParams,
 }: Omit<
 	OpenPerpMarketOrderBaseParams,
 	'marginMode' | 'isolatedPositionDepositsOverride'
@@ -332,6 +329,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	velocityClient: VelocityClient;
 	user: User;
 	auctionDurationPercentage?: number;
+	takerEscrow?: RevenueShareEscrowAccount;
 }) => {
 	const counterPartySide = ENUM_UTILS.match(direction, PositionDirection.LONG)
 		? 'ask'
@@ -385,14 +383,15 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 	}));
 
 	const placeAndTakeIx = await velocityClient.getPlaceAndTakePerpOrderIx(
-		fetchedOrderParams,
+		{ ...fetchedOrderParams, ...(builderParams ?? {}) },
 		topMakersInfo,
 		undefined,
 		auctionDurationPercentage,
 		user.getUserAccount().subAccountId,
 		{
 			authority: mainSignerOverride,
-		}
+		},
+		takerEscrow
 	);
 
 	return placeAndTakeIx;
@@ -433,6 +432,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 	marginMode,
 	isolatedPositionDepositsOverride,
 	callbacks,
+	builderParams,
 }: OpenPerpMarketOrderBaseParams): Promise<TransactionInstruction[]> => {
 	if (!amount || amount.isZero()) {
 		throw new Error('Amount must be greater than zero');
@@ -516,9 +516,11 @@ export const createOpenPerpMarketOrderIxs = async ({
 				userOrderId,
 				reduceOnly,
 				auctionDurationPercentage: placeAndTake.auctionDurationPercentage,
+				takerEscrow: placeAndTake.takerEscrow,
 				optionalAuctionParamsInputs,
 				mainSignerOverride,
 				positionMaxLeverage,
+				builderParams,
 			});
 			allIxs.push(placeAndTakeIx);
 		} catch (e) {
@@ -547,6 +549,7 @@ export const createOpenPerpMarketOrderIxs = async ({
 		const orderParams = {
 			...fetchedOrderParams,
 			userOrderId,
+			...(builderParams ?? {}),
 		};
 
 		allOrders.push(orderParams);

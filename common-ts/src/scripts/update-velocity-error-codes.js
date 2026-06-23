@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const clearingHouseData = require('../../../protocol/sdk/src/idl/drift.json');
+const velocityIdl = require(require.resolve(
+	'@velocity-exchange/sdk/src/idl/velocity.json'
+));
 
 let uiErrors = {
 	errorsList: {},
@@ -21,7 +23,7 @@ try {
 // UI will use this to map the error code (number) to the name, so we can keep our manually added messages identified by the name but independent of the number
 uiErrors.errorCodesMap = {};
 
-clearingHouseData.errors.forEach((err) => {
+velocityIdl.errors.forEach((err) => {
 	uiErrors.errorCodesMap[err.code] = err.name;
 	if (!uiErrors.errorsList[err.name]) {
 		uiErrors.errorsList[err.name] = err;

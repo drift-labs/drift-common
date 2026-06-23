@@ -27,7 +27,6 @@ export enum PollingCategory {
  * These accounts can be used to estimate priority fees.
  */
 export const HIGH_ACTIVITY_MARKET_ACCOUNTS = [
-	new PublicKey('8BnEgHoWFysVcuFFX7QztDmzuH8r5ZFvyP3sYwn1XTh6'), // sol openbook market
 	new PublicKey('8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W'), // sol perp
 	new PublicKey('6gMq3mRCKf8aP3ttTyYhuijVZ2LGi14oDsBbkgubfLB3'), // usdc
 ];

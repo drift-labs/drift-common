@@ -834,7 +834,7 @@ export class CentralServerVelocity {
 	 * Single transaction: close isolated position + optionally withdraw collateral.
 	 * Without placeAndTake that atomically fills the close, the entire transaction may FAIL:
 	 * the withdraw ix runs after the close, and if the close did not fill in this tx,
-	 * the whole tx will fail. Strongly consider placeAndTake: { enable: true, referrerInfo: undefined }
+	 * the whole tx will fail. Strongly consider placeAndTake: { enable: true }
 	 * when closing and withdrawing in the same tx.
 	 */
 	public async getCloseAndWithdrawIsolatedPerpPositionTxn(
@@ -968,7 +968,7 @@ export class CentralServerVelocity {
 	 * Flow: close order, then withdraw from isolated directly to wallet (bundle handles settle if needed).
 	 * Without placeAndTake that atomically fills the close, the entire transaction may FAIL:
 	 * the withdraw runs after the close, and if the close did not fill in this tx, the withdraw may fail depending on withdraw amount.
-	 * Strongly consider placeAndTake: { enable: true, referrerInfo: undefined } when closing and withdrawing.
+	 * Strongly consider placeAndTake: { enable: true } when closing and withdrawing.
 	 */
 	public async getCloseAndWithdrawIsolatedPerpPositionToWalletTxn(
 		params: CentralServerGetCloseAndWithdrawIsolatedPerpPositionToWalletTxnParams

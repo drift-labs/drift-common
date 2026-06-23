@@ -1,12 +1,6 @@
 import { OracleSource } from '@velocity-exchange/sdk';
 import { ENUM_UTILS } from '../../../../../utils';
 
-export const isPythPull = (oracleSource: OracleSource): boolean =>
-	ENUM_UTILS.match(OracleSource.PYTH_PULL, oracleSource) ||
-	ENUM_UTILS.match(OracleSource.PYTH_1K_PULL, oracleSource) ||
-	ENUM_UTILS.match(OracleSource.PYTH_1M_PULL, oracleSource) ||
-	ENUM_UTILS.match(OracleSource.PYTH_STABLE_COIN_PULL, oracleSource);
-
 export const isPythLazer = (oracleSource: OracleSource): boolean =>
 	ENUM_UTILS.match(OracleSource.PYTH_LAZER, oracleSource) ||
 	ENUM_UTILS.match(OracleSource.PYTH_LAZER_1K, oracleSource) ||
