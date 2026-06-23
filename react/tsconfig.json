@@ -15,7 +15,7 @@
 		"declaration": true,
 		"paths": {
 			"@drift/common": ["../common-ts"],
-			"@drift-labs/icons": ["../icons/dist"]
+			"@velocity-exchange/icons": ["../icons/dist"]
 		}
 	},
 	"include": ["src"],

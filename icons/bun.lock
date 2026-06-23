@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "@drift-labs/icons",
+      "name": "@velocity-exchange/icons",
       "dependencies": {
         "react": "19.0.0-rc-02c0e824-20241028",
       },

@@ -7,9 +7,9 @@ Shared TypeScript code used across Drift/Velocity Exchange frontends, bots, and 
 | Path | Package | Purpose |
 | --- | --- | --- |
 | [`common-ts/`](./common-ts) | `@velocity-exchange/common` | Core, framework-agnostic library: market/account/order/position math, trading + validation utils, serializable types, clients, and constants. Built on top of the Drift / Velocity SDK and `@solana/web3.js`. |
-| [`react/`](./react) | `@drift-labs/react` | React 19 building blocks for connecting UIs to the Drift program — providers, hooks, zustand stores, wallet-adapter glue. Depends on `common-ts` and `icons` via file paths. |
-| [`icons/`](./icons) | `@drift-labs/icons` (private) | Figma → React icon pipeline. SVGs are pulled from Figma and converted to typed React components via `@svgr/core`; output is bundled with `rollup` / `tsc`. |
-| [`posthog-types/`](./posthog-types) | `@drift-labs/posthog-types` | Shared PostHog event type definitions so producers (apps) and consumers (analytics) stay in sync. |
+| [`react/`](./react) | `@velocity-exchange/react` | React 19 building blocks for connecting UIs to the Drift program — providers, hooks, zustand stores, wallet-adapter glue. Depends on `common-ts` and `icons` via file paths. |
+| [`icons/`](./icons) | `@velocity-exchange/icons` (private) | Figma → React icon pipeline. SVGs are pulled from Figma and converted to typed React components via `@svgr/core`; output is bundled with `rollup` / `tsc`. |
+| [`posthog-types/`](./posthog-types) | `@velocity-exchange/posthog-types` | Shared PostHog event type definitions so producers (apps) and consumers (analytics) stay in sync. |
 
 `common-ts` and `posthog-types` are released to npm via [release-please](https://github.com/googleapis/release-please) (see [`release-please-config.json`](./release-please-config.json)). `react` and `icons` are consumed locally by sibling apps via `file:` references.
 
@@ -18,9 +18,9 @@ Shared TypeScript code used across Drift/Velocity Exchange frontends, bots, and 
 ```
 drift-common/
 ├── common-ts/          # @velocity-exchange/common — core TS library
-├── react/              # @drift-labs/react — React hooks/providers/stores
-├── icons/              # @drift-labs/icons — Figma-generated React icons
-├── posthog-types/      # @drift-labs/posthog-types — shared analytics types
+├── react/              # @velocity-exchange/react — React hooks/providers/stores
+├── icons/              # @velocity-exchange/icons — Figma-generated React icons
+├── posthog-types/      # @velocity-exchange/posthog-types — shared analytics types
 ├── .github/            # CI workflows, release-please config
 ├── .husky/             # git hooks (commitlint, prettier, lint)
 ├── release-please-config.json

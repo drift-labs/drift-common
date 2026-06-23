@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "@drift-labs/posthog-types",
+      "name": "@velocity-exchange/posthog-types",
       "devDependencies": {
         "typescript": "5.4.5",
       },

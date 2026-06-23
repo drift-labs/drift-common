@@ -6,7 +6,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { ChevronDown, ChevronUp } from '@drift-labs/icons';
+import { ChevronDown, ChevronUp } from '@velocity-exchange/icons';
 import { Placement } from '@floating-ui/react';
 import { twMerge } from 'tailwind-merge';
 import { GradientText, Typo } from '../Text';

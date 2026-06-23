@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"description": "Common building blocks for connecting to the Velocity Exchange program from React",
 	"main": "lib/index.js",
-	"repository": "https://github.com/drift-labs/drift-common",
+	"repository": "https://github.com/velocity-exchange/drift-common",
 	"author": "Velocity Exchange",
 	"license": "MIT",
 	"scripts": {
@@ -38,7 +38,7 @@
 		"react-dom": "19.0.3"
 	},
 	"dependencies": {
-		"@drift-labs/icons": "file:../icons",
+		"@velocity-exchange/icons": "file:../icons",
 		"@drift/common": "file:../common-ts",
 		"@floating-ui/react": "0.27.9",
 		"@solana/wallet-adapter-base": "0.9.23",

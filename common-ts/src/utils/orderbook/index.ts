@@ -29,7 +29,7 @@ export * from './types';
 export * from './constants';
 
 /**
- * Helper function to deserialize the response from the dlob server. (See https://drift-labs.github.io/v2-teacher/#get-l2-l3)
+ * Helper function to deserialize the response from the dlob server. (See https://velocity-exchange.github.io/v2-teacher/#get-l2-l3)
  * @param serializedOrderbook
  * @returns
  */
