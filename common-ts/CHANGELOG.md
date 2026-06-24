@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/velocity-exchange/drift-common/compare/common-ts-v0.1.0...common-ts-v0.1.1) (2026-06-24)
+
+
+### Code Refactoring
+
+* **common-ts:** update referral model ([ae78748](https://github.com/velocity-exchange/drift-common/commit/ae78748a8dddea1a49be20c8cac32f09f7edecef))
+
 ## [0.1.0](https://github.com/velocity-exchange/drift-common/compare/common-ts-v0.0.5...common-ts-v0.1.0) (2026-06-23)
 
 
