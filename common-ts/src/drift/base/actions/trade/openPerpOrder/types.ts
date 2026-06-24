@@ -41,9 +41,10 @@ export type PlaceAndTakeParams =
 			enable: true;
 			auctionDurationPercentage?: number;
 			/**
-			 * The taker's decoded RevenueShareEscrow account. Must be supplied when the
-			 * taker is referred (has a RevenueShareEscrow with a referrer) so the program's
-			 * fill-time enforcement can load it; otherwise the fill rejects.
+			 * Optional override for the taker's decoded RevenueShareEscrow account.
+			 * When omitted, it is fetched automatically for referred takers (whose escrow
+			 * carries a referrer) so the program's fill-time enforcement can load it.
+			 * Supply it to skip the fetch when the escrow is already cached.
 			 */
 			takerEscrow?: RevenueShareEscrowAccount;
 	  };
@@ -62,7 +63,7 @@ export interface LimitAuctionConfig {
 	optionalLimitAuctionParams?: OptionalAuctionParamsRequestInputs;
 	usePlaceAndTake?: {
 		enable: boolean;
-		takerEscrow?: RevenueShareEscrowAccount; // attached when the taker is referred
+		takerEscrow?: RevenueShareEscrowAccount; // optional override; auto-fetched for referred takers
 		auctionDurationPercentage?: number;
 	};
 	onAuctionParamsFetched?: AuctionParamsFetchedCallback;
