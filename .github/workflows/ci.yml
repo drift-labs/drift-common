@@ -54,6 +54,9 @@ jobs:
         with:
           working-directory: ./common-ts
 
+      - name: Typecheck
+        run: bun run typecheck
+
       - name: Build
         run: bun run build
 
