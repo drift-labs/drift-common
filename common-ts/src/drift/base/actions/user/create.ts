@@ -179,7 +179,8 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 	if (referrerInfo && nextSubaccountId === 0) {
 		const initEscrowIx = await velocityClient.getInitializeRevenueShareEscrowIx(
 			authority,
-			referral?.escrowNumOrders ?? DEFAULT_REFERRAL_ESCROW_NUM_ORDERS
+			referral?.escrowNumOrders ?? DEFAULT_REFERRAL_ESCROW_NUM_ORDERS,
+			{ payer: externalWallet ?? authority }
 		);
 		ixs.push(initEscrowIx);
 	}
