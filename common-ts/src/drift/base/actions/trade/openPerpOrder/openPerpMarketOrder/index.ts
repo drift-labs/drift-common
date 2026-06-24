@@ -359,10 +359,11 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 				side: counterPartySide,
 				limit: 4,
 			}),
-			// place_and_take fills the placing user's own order in-instruction, so a
-			// referred user's RevenueShareEscrow must be attached or the program rejects
-			// the fill with UnableToLoadRevenueShareAccount. Honor a caller-supplied
-			// escrow, otherwise fetch it and only attach it when it carries a referrer.
+			// place_and_take fills the placing user's own order in-instruction, so the
+			// taker's RevenueShareEscrow must be attached or the program rejects the fill
+			// with UnableToLoadRevenueShareAccount. Enforcement triggers when the order
+			// carries a builder code or the escrow has a referrer. Honor a caller-supplied
+			// escrow, otherwise fetch it and only attach it when one of those holds.
 			(async (): Promise<RevenueShareEscrowAccount | undefined> => {
 				if (takerEscrow) {
 					return takerEscrow;
@@ -372,7 +373,9 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 					velocityClient.program,
 					user.getUserAccountOrThrow().authority
 				);
-				return escrow && escrowHasReferrer(escrow) ? escrow : undefined;
+				return escrow && (escrowHasReferrer(escrow) || !!builderParams)
+					? escrow
+					: undefined;
 			})(),
 		]);
 
