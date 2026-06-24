@@ -47,6 +47,7 @@
 		"update-jup-errors": "node src/scripts/update-jup-error-codes.js",
 		"update-velocity-errors": "node src/scripts/update-velocity-error-codes.js",
 		"circular-deps": "bunx madge --circular --circular --extensions ts,tsx src",
+		"typecheck": "tsc --pretty --noEmit",
 		"build-and-pack": "bun run build && npm pack"
 	},
 	"directories": {
@@ -152,6 +153,7 @@
 	"devDependencies": {
 		"@coral-xyz/anchor": "0.29.0",
 		"@jest/globals": "29.3.1",
+		"@types/chai": "^4.3.11",
 		"@types/mocha": "10.0.4",
 		"@types/sinon": "21.0.1",
 		"chai": "4.3.10",

@@ -294,7 +294,7 @@ async function runCliExample(exampleName: string) {
 	}
 
 	const exampleToRun = exampleName
-		? availableExamples[exampleName]
+		? availableExamples[exampleName as keyof typeof availableExamples]
 		: availableExamples['all'];
 
 	if (!exampleToRun) {

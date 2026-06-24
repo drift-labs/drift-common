@@ -33,7 +33,7 @@ const getPausedOperations = (
 ): string[] => {
 	if (!marketAccount) return [];
 
-	const pausedOperations = [];
+	const pausedOperations: string[] = [];
 	//@ts-ignore
 	const isPerp = !!marketAccount.amm;
 
@@ -43,11 +43,13 @@ const getPausedOperations = (
 			.filter((operation) =>
 				isOperationPaused(
 					marketAccount.pausedOperations,
-					PerpOperation[operation]
+					PerpOperation[operation as keyof typeof PerpOperation]
 				)
 			)
 			.forEach((pausedOperation) => {
-				pausedOperations.push(PerpOperationsMap[pausedOperation]);
+				pausedOperations.push(
+					PerpOperationsMap[pausedOperation as keyof typeof PerpOperationsMap]
+				);
 			});
 	} else {
 		// check spot operations
@@ -55,11 +57,13 @@ const getPausedOperations = (
 			.filter((operation) =>
 				isOperationPaused(
 					marketAccount.pausedOperations,
-					SpotOperation[operation]
+					SpotOperation[operation as keyof typeof SpotOperation]
 				)
 			)
 			.forEach((pausedOperation) => {
-				pausedOperations.push(SpotOperationsMap[pausedOperation]);
+				pausedOperations.push(
+					SpotOperationsMap[pausedOperation as keyof typeof SpotOperationsMap]
+				);
 			});
 
 		// check IF operations
@@ -68,11 +72,17 @@ const getPausedOperations = (
 				isOperationPaused(
 					//@ts-ignore
 					marketAccount.ifPausedOperations,
-					InsuranceFundOperation[operation]
+					InsuranceFundOperation[
+						operation as keyof typeof InsuranceFundOperation
+					]
 				)
 			)
 			.forEach((pausedOperation) => {
-				pausedOperations.push(InsuranceFundOperationsMap[pausedOperation]);
+				pausedOperations.push(
+					InsuranceFundOperationsMap[
+						pausedOperation as keyof typeof InsuranceFundOperationsMap
+					]
+				);
 			});
 	}
 
