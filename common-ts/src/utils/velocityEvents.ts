@@ -157,7 +157,7 @@ export const getVelocityEventKey = (event: UniqableVelocityEvent) => {
 
 					return `${
 						_typedEvent.eventType
-					}_${pubkey.toString()}_${_typedEvent.marketIndex.toString()}_${orderId.toString()}_${
+					}_${pubkey!.toString()}_${_typedEvent.marketIndex.toString()}_${orderId!.toString()}_${
 						_typedEvent.fillRecordId
 					}_${ENUM_UTILS.toStr(
 						_typedEvent.action

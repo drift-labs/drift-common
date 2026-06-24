@@ -11,7 +11,9 @@ export const getTotalBorrowsForMarket = (
 	market: SpotMarketConfig,
 	velocityClient: VelocityClient
 ) => {
-	const marketAccount = velocityClient.getSpotMarketAccount(market.marketIndex);
+	const marketAccount = velocityClient.getSpotMarketAccount(
+		market.marketIndex
+	)!;
 
 	const totalBorrowsTokenAmount = getTokenAmount(
 		marketAccount.borrowBalance,
@@ -27,7 +29,7 @@ export const getTotalBorrowsForMarket = (
 	const priceData = velocityClient.getOraclePriceDataAndSlot(
 		marketAccount.oracle,
 		marketAccount.oracleSource
-	);
+	)!;
 
 	const price = BigNum.from(priceData.data.price, PRICE_PRECISION_EXP);
 
@@ -40,7 +42,9 @@ export const getTotalDepositsForMarket = (
 	market: SpotMarketConfig,
 	velocityClient: VelocityClient
 ) => {
-	const marketAccount = velocityClient.getSpotMarketAccount(market.marketIndex);
+	const marketAccount = velocityClient.getSpotMarketAccount(
+		market.marketIndex
+	)!;
 
 	const totalDepositsTokenAmount = getTokenAmount(
 		marketAccount.depositBalance,
@@ -56,7 +60,7 @@ export const getTotalDepositsForMarket = (
 	const priceData = velocityClient.getOraclePriceDataAndSlot(
 		marketAccount.oracle,
 		marketAccount.oracleSource
-	);
+	)!;
 
 	const price = BigNum.from(priceData.data.price, PRICE_PRECISION_EXP);
 

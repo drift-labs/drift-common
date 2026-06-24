@@ -153,7 +153,7 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 	>();
 
 	wsUrl: WebSocketUrl;
-	#webSocket: WebSocket;
+	#webSocket!: WebSocket;
 	customConnectionState: WebSocketConnectionState;
 	subject: Subject<WebSocketMessage<T>>;
 	subscriptions: Map<
@@ -366,7 +366,7 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 			messageFilter,
 			errorMessageFilter,
 			onClose,
-		} = subscriptionState;
+		} = subscriptionState!;
 
 		this.webSocket.send(subscribeMessage);
 		if (subscriptionState) {
@@ -409,7 +409,7 @@ export class MultiplexWebSocket<T = Record<string, unknown>>
 				},
 			});
 
-		subscriptionState.subjectSubscription = subjectSubscription;
+		subscriptionState!.subjectSubscription = subjectSubscription;
 	}
 
 	private subscribe(props: WebSocketSubscriptionProps<T>) {

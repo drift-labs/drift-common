@@ -14,7 +14,7 @@ export const Config: {
 	initialized: false,
 	spotMarketsLookup: [],
 	perpMarketsLookup: [],
-	sdkConfig: undefined,
+	sdkConfig: undefined as unknown as ReturnType<typeof initialize>,
 };
 
 export const Initialize = (env: VelocityEnv) => {

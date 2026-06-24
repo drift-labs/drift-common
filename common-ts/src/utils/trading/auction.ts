@@ -219,8 +219,10 @@ const deriveMarketOrderParams = ({
 	// max slippage price
 	let limitPrice = getMarketOrderLimitPrice({
 		direction,
-		baselinePrice: priceObject[auctionStartPriceOffsetFrom],
-		slippageTolerance: allowInfSlippage ? undefined : slippageTolerance,
+		baselinePrice: priceObject[auctionStartPriceOffsetFrom]!,
+		slippageTolerance: (allowInfSlippage
+			? undefined
+			: slippageTolerance) as number,
 	});
 
 	if (additionalEndPriceBuffer) {

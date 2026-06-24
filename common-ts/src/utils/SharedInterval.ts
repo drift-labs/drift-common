@@ -9,7 +9,7 @@ import { Observable, Subject } from 'rxjs';
  */
 export class SharedInterval<SubscriberProps> {
 	private tickRate: number;
-	private interval: ReturnType<typeof setInterval>;
+	private interval!: ReturnType<typeof setInterval>;
 	private tickCount = 0;
 	private subscription: Subject<SubscriberProps[]> = new Subject<
 		SubscriberProps[]
@@ -42,13 +42,9 @@ export class SharedInterval<SubscriberProps> {
 		this.interval = setInterval(() => {
 			this.tickCount++;
 
-			const propsForTick = Array.from(this.subscribers.values()).map(
-				(subscriber) => {
-					if (this.tickCount % subscriber.tickMultiple === 0) {
-						return subscriber.props;
-					}
-				}
-			);
+			const propsForTick = Array.from(this.subscribers.values())
+				.filter((subscriber) => this.tickCount % subscriber.tickMultiple === 0)
+				.map((subscriber) => subscriber.props);
 
 			this.subscription.next(propsForTick);
 		}, this.tickRate);

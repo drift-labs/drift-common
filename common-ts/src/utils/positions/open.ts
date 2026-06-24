@@ -42,11 +42,11 @@ const getOpenPositionData = (
 			const perpMarketConfig = perpMarketLookup[position.marketIndex];
 			const perpMarket = velocityClient.getPerpMarketAccount(
 				position.marketIndex
-			);
+			)!;
 
 			const usdcSpotMarket = velocityClient.getSpotMarketAccount(
 				QUOTE_SPOT_MARKET_INDEX
-			);
+			)!;
 
 			const oraclePriceData = velocityClient.getOracleDataForPerpMarket(
 				position.marketIndex

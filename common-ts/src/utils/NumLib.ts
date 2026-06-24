@@ -132,7 +132,10 @@ export class NumLib {
 			}
 			if (_skipLocaleFormatting) {
 				return baseAmount.toFixed(
-					Math.min(Math.max(0, Math.floor(Math.log10(_assetPrice + 1))) + 2, 6)
+					Math.min(
+						Math.max(0, Math.floor(Math.log10((_assetPrice ?? 0) + 1))) + 2,
+						6
+					)
 				);
 			}
 

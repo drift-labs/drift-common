@@ -87,7 +87,7 @@ export const getIfVaultBalance = async (
 ) => {
 	const spotMarket = velocityClient.getSpotMarketAccount(
 		spotMarketConfig.marketIndex
-	);
+	)!;
 
 	const vaultBalanceBN = new BN(
 		(
@@ -121,7 +121,7 @@ export const getIfStakingVaultApr = async (
 	);
 
 	return calculateVaultNextApr(
-		velocityClient.getSpotMarketAccount(spotMarketConfig.marketIndex),
+		velocityClient.getSpotMarketAccount(spotMarketConfig.marketIndex)!,
 		vaultBalance
 	);
 };

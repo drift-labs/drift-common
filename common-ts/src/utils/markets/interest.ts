@@ -23,7 +23,7 @@ export const getCurrentOpenInterestForMarket = (
 	velocityClient: VelocityClient
 ) => {
 	if (ENUM_UTILS.match(marketType, MarketType.PERP)) {
-		const market = velocityClient.getPerpMarketAccount(marketIndex);
+		const market = velocityClient.getPerpMarketAccount(marketIndex)!;
 		const OI = BigNum.from(
 			market.baseAssetAmountLong.add(market.baseAssetAmountShort.abs()),
 			BASE_PRECISION_EXP
@@ -32,7 +32,7 @@ export const getCurrentOpenInterestForMarket = (
 		const priceData = velocityClient.getOraclePriceDataAndSlot(
 			market.oracle,
 			market.oracleSource
-		);
+		)!;
 
 		const price = BigNum.from(priceData.data.price, PRICE_PRECISION_EXP);
 
@@ -57,7 +57,7 @@ export const getDepositAprForMarket = (
 	velocityClient: VelocityClient
 ) => {
 	if (ENUM_UTILS.match(marketType, MarketType.SPOT)) {
-		const marketAccount = velocityClient.getSpotMarketAccount(marketIndex);
+		const marketAccount = velocityClient.getSpotMarketAccount(marketIndex)!;
 
 		const depositApr = BigNum.from(
 			calculateDepositRate(marketAccount),
@@ -85,7 +85,7 @@ export const getBorrowAprForMarket = (
 	velocityClient: VelocityClient
 ) => {
 	if (ENUM_UTILS.match(marketType, MarketType.SPOT)) {
-		const marketAccount = velocityClient.getSpotMarketAccount(marketIndex);
+		const marketAccount = velocityClient.getSpotMarketAccount(marketIndex)!;
 
 		const depositApr = BigNum.from(
 			calculateBorrowRate(marketAccount),

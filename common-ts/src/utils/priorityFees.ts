@@ -69,7 +69,7 @@ export const getHeliusPriorityFeeEstimate = async (
 		});
 
 		if (!response.ok) {
-			return undefined;
+			return [];
 		}
 
 		const result = (await response.json()) as {
@@ -85,6 +85,6 @@ export const getHeliusPriorityFeeEstimate = async (
 
 		return feeLevelValues;
 	} catch (e) {
-		return undefined;
+		return [];
 	}
 };

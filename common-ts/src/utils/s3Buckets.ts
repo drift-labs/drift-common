@@ -85,7 +85,7 @@ export const getDateRangeFromSelection = (
 	downloadPeriod: DownloadPeriod,
 	customOpts?: { day?: number; month?: number; year: number }
 ): { from: string; to: string } => {
-	let from, to;
+	let from: string | undefined, to: string | undefined;
 	const now = new Date();
 
 	switch (downloadPeriod) {
@@ -146,16 +146,16 @@ export const getDateRangeFromSelection = (
 			} else {
 				// request a day
 				from = dateToS3DateString(
-					new Date(customOpts.year, customOpts.month, customOpts.day)
+					new Date(customOpts.year, customOpts.month!, customOpts.day)
 				);
 				to = dateToS3DateString(
-					new Date(customOpts.year, customOpts.month, customOpts.day)
+					new Date(customOpts.year, customOpts.month!, customOpts.day)
 				);
 			}
 			break;
 	}
 
-	return { from, to };
+	return { from: from ?? '', to: to ?? '' };
 };
 
 const getLeaderboardFilename = (

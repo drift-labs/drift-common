@@ -87,9 +87,11 @@ const calculateLiquidationPriceAfterPerpTrade = ({
 	const perpMarketOracle =
 		userClient.velocityClient.getPerpMarketAccount(perpMarketIndex)?.oracle;
 
-	const spotMarketWithSameOracle = userClient.velocityClient
-		.getSpotMarketAccounts()
-		.find((market) => market.oracle.equals(perpMarketOracle));
+	const spotMarketWithSameOracle = perpMarketOracle
+		? userClient.velocityClient
+				.getSpotMarketAccounts()
+				.find((market) => market.oracle.equals(perpMarketOracle))
+		: undefined;
 
 	let hasSpotPositionWithSameOracle = false;
 	if (spotMarketWithSameOracle) {
