@@ -122,8 +122,8 @@ export class TradeSubscriberSubscription extends SubscriberSubscription<
 abstract class _Subscriber<T> {
 	public readonly id: SubscriberId;
 	public readonly config: SubscriptionConfig;
-	protected _apiSubscription: ApiSubscription;
-	protected subject: Subject<T>;
+	protected _apiSubscription!: ApiSubscription;
+	protected subject!: Subject<T>;
 	private static idIncrementer: number = 0;
 
 	public get subscription(): ApiSubscription {
@@ -578,7 +578,7 @@ class SubscriptionManager {
 			const existingSubscription = this.compatibleCandleSubscriptionLookup.get(
 				candleSubscriptionLookupKey
 			);
-			existingSubscription.attachNewCandleSubscriberToExistingSubscription(
+			existingSubscription!.attachNewCandleSubscriberToExistingSubscription(
 				subscriber
 			);
 		} else {
@@ -613,7 +613,7 @@ class SubscriptionManager {
 			const existingSubscription = this.compatibleTradeSubscriptionLookup.get(
 				tradeSubscriptionLookupKey
 			);
-			existingSubscription.attachNewTradeSubscriberToExistingSubscription(
+			existingSubscription!.attachNewTradeSubscriberToExistingSubscription(
 				subscriber
 			);
 		} else {
@@ -640,17 +640,17 @@ class SubscriptionManager {
 		const apiSubscription = this.apiSubscriptions.get(apiSubscriptionId);
 
 		invariant(
-			apiSubscription.candleSubscribers.size === 0,
+			apiSubscription!.candleSubscribers.size === 0,
 			'Expected api subscription to have no candle subscribers when cleaning up'
 		);
 		invariant(
-			apiSubscription.tradeSubscribers.size === 0,
+			apiSubscription!.tradeSubscribers.size === 0,
 			'Expected api subscription to have no trade subscribers when cleaning up'
 		);
 
 		// Remove the subscription from the lookup tables
-		this.compatibleTradeSubscriptionLookup.remove(apiSubscription);
-		this.compatibleCandleSubscriptionLookup.remove(apiSubscription);
+		this.compatibleTradeSubscriptionLookup.remove(apiSubscription!);
+		this.compatibleCandleSubscriptionLookup.remove(apiSubscription!);
 
 		// We can delete the subscription from the lookup table when we're cleaning up an ApiSubscription
 		this.apiSubscriptions.delete(apiSubscriptionId);

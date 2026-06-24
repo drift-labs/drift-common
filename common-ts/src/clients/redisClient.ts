@@ -216,7 +216,7 @@ export class RedisClient {
 	private client: Redis | Cluster;
 	private prefix: RedisClientPrefix;
 
-	connectionPromise: Promise<void>;
+	connectionPromise!: Promise<void>;
 
 	constructor({
 		host = process.env.ELASTICACHE_HOST ?? 'localhost',
@@ -388,7 +388,7 @@ export class RedisClient {
 			return JSON.parse(value);
 		}
 
-		return undefined;
+		return undefined as unknown as T;
 	}
 
 	@isRead

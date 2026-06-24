@@ -79,14 +79,14 @@ const getMarketSymbolForMarketId = (marketId: MarketId, uiEnv: UIEnv) => {
 		const targetMarketConfig = marketConfigs.find(
 			(config) => config.marketIndex === marketId.marketIndex
 		);
-		return targetMarketConfig.symbol as MarketSymbol;
+		return targetMarketConfig!.symbol as MarketSymbol;
 	} else {
 		const marketConfigs =
 			sdkEnv === 'mainnet-beta' ? MainnetSpotMarkets : DevnetSpotMarkets;
 		const targetMarketConfig = marketConfigs.find(
 			(config) => config.marketIndex === marketId.marketIndex
 		);
-		return targetMarketConfig.symbol as MarketSymbol;
+		return targetMarketConfig!.symbol as MarketSymbol;
 	}
 };
 
@@ -469,7 +469,7 @@ class CandleFetcher {
 }
 
 class CandleSubscriber {
-	private subscription: CandleSubscriberSubscription;
+	private subscription!: CandleSubscriberSubscription;
 
 	constructor(
 		readonly config: CandleSubscriptionConfig,
