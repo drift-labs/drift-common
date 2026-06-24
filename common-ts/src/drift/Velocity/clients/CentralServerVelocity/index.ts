@@ -69,7 +69,10 @@ import { SwiftLimitOrderParamsOrderConfig } from '../../../base/actions/trade/op
 import { createEditOrderTxn } from '../../../base/actions/trade/editOrder';
 import { createCancelOrdersTxn } from '../../../base/actions/trade/cancelOrder';
 import { createSwapTxn } from '../../../base/actions/trade/swap';
-import { createUserAndDepositCollateralBaseTxn } from '../../../base/actions/user/create';
+import {
+	createUserAndDepositCollateralBaseTxn,
+	ReferralParams,
+} from '../../../base/actions/user/create';
 import { deleteUserTxn } from '../../../base/actions/user/delete';
 import { createRevenueShareEscrowTxn } from '../../../base/actions/builder/createRevenueShareEscrow';
 import { createRevenueShareAccountTxn } from '../../../base/actions/builder/createRevenueShareAccount';
@@ -451,7 +454,7 @@ export class CentralServerVelocity {
 		amount: BN,
 		spotMarketIndex: number,
 		options?: {
-			referrerName?: string;
+			referral?: ReferralParams;
 			accountName?: string;
 			poolId?: number;
 			fromSubAccountId?: number;
@@ -498,7 +501,7 @@ export class CentralServerVelocity {
 					spotMarketConfig,
 					authority,
 					userStatsAccount,
-					referrerName: options?.referrerName,
+					referral: options?.referral,
 					accountName: options?.accountName,
 					poolId: options?.poolId,
 					fromSubAccountId: options?.fromSubAccountId,

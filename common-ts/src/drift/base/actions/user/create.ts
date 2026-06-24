@@ -20,13 +20,31 @@ import {
 } from '@solana/web3.js';
 import { checkIfUserAccountExists } from '../../../../utils/positions/user';
 
+// Concurrent order slots allocated for a referred user's RevenueShareEscrow at
+// signup. Matches the default used by createRevenueShareEscrowIx.
+const DEFAULT_REFERRAL_ESCROW_NUM_ORDERS = 16;
+
+/**
+ * Referral options for account creation. When provided, the new user is created
+ * with the referrer and a RevenueShareEscrow that referral rewards accrue into.
+ */
+export interface ReferralParams {
+	/** The referrer's registered referral name. */
+	name: string;
+	/**
+	 * Concurrent order slots to allocate in the referred user's RevenueShareEscrow
+	 * at signup. Defaults to 16.
+	 */
+	escrowNumOrders?: number;
+}
+
 interface CreateUserAndDepositCollateralBaseIxsParams {
 	velocityClient: VelocityClient;
 	amount: BN;
 	spotMarketConfig: SpotMarketConfig;
 	authority: PublicKey;
 	userStatsAccount: UserStatsAccount | undefined;
-	referrerName?: string;
+	referral?: ReferralParams;
 	accountName?: string;
 	poolId?: number;
 	fromSubAccountId?: number;
@@ -51,7 +69,7 @@ interface CreateUserAndDepositCollateralBaseIxsParams {
  * @param spotMarketConfig - The spot market config of the deposit collateral
  * @param authority - The public key of the account authority (wallet owner)
  * @param userStatsAccount - Existing user stats account, used to determine next sub-account ID
- * @param referrerName - Optional name of the referrer for referral tracking
+ * @param referral - Optional referral options (referrer name and escrow size)
  * @param accountName - Optional custom name for the account (defaults to pool-specific name)
  * @param poolId - The pool ID to associate the account with (defaults to MAIN_POOL_ID)
  * @param fromSubAccountId - Optional sub-account ID to transfer funds from
@@ -70,7 +88,7 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 	spotMarketConfig,
 	authority,
 	userStatsAccount,
-	referrerName,
+	referral,
 	accountName,
 	poolId = MAIN_POOL_ID,
 	fromSubAccountId,
@@ -103,8 +121,8 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 			depositSourceWallet
 		);
 	const referrerNameAccountPromise: Promise<ReferrerNameAccount | undefined> =
-		referrerName
-			? velocityClient.fetchReferrerNameAccount(referrerName)
+		referral
+			? velocityClient.fetchReferrerNameAccount(referral.name)
 			: Promise.resolve(undefined);
 	const subaccountExistsPromise = checkIfUserAccountExists(velocityClient, {
 		type: 'subAccountId',
@@ -152,6 +170,20 @@ export const createUserAndDepositCollateralBaseIxs = async ({
 		);
 	const ixs: TransactionInstruction[] = [...createAndDepositIxs];
 
+	// A referral is recorded by initializeUser setting userStats.referrer above.
+	// Referral rewards now accrue through the user's RevenueShareEscrow, and
+	// initializeRevenueShareEscrow reads userStats.referrer into the escrow (setting
+	// the BuilderReferral status), so a referred user needs the escrow created at
+	// signup. Only relevant on the first subaccount, where userStats — and its
+	// referrer — is created.
+	if (referrerInfo && nextSubaccountId === 0) {
+		const initEscrowIx = await velocityClient.getInitializeRevenueShareEscrowIx(
+			authority,
+			referral?.escrowNumOrders ?? DEFAULT_REFERRAL_ESCROW_NUM_ORDERS
+		);
+		ixs.push(initEscrowIx);
+	}
+
 	const nextSubAccountPublicKey = getUserAccountPublicKeySync(
 		velocityClient.program.programId,
 		authority,
@@ -193,7 +225,7 @@ interface CreateUserAndDepositCollateralBaseTxnParams
  * @param spotMarketConfig - The spot market config of the deposit collateral
  * @param authority - The public key of the account authority (wallet owner)
  * @param userStatsAccount - Existing user stats account, used to determine next sub-account ID
- * @param referrerName - Optional name of the referrer for referral tracking
+ * @param referral - Optional referral options (referrer name and escrow size)
  * @param accountName - Optional custom name for the account (defaults to pool-specific name)
  * @param poolId - The pool ID to associate the account with (defaults to MAIN_POOL_ID)
  * @param fromSubAccountId - Optional sub-account ID to transfer funds from
@@ -212,7 +244,7 @@ export const createUserAndDepositCollateralBaseTxn = async ({
 	spotMarketConfig,
 	authority,
 	userStatsAccount,
-	referrerName,
+	referral,
 	accountName,
 	poolId = MAIN_POOL_ID,
 	fromSubAccountId,
@@ -231,7 +263,7 @@ export const createUserAndDepositCollateralBaseTxn = async ({
 			spotMarketConfig,
 			authority,
 			userStatsAccount,
-			referrerName,
+			referral,
 			accountName,
 			poolId,
 			fromSubAccountId,

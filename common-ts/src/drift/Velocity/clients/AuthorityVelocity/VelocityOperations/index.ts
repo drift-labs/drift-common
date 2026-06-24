@@ -131,7 +131,7 @@ export class VelocityOperations {
 			newAccountName,
 			maxLeverage,
 			poolId = MAIN_POOL_ID,
-			referrerName,
+			referral,
 		} = params;
 
 		const spotMarketConfig = getMarketConfig(
@@ -158,7 +158,7 @@ export class VelocityOperations {
 				authority: this.velocityClient.wallet.publicKey,
 				userStatsAccount: userStatsAccount,
 				accountName: newAccountName,
-				referrerName,
+				referral,
 				customMaxMarginRatio,
 				poolId,
 				txParams: this.getTxParams(),

@@ -8,6 +8,8 @@ import {
 	getUserStatsAccountPublicKey,
 	OrderType,
 	RevenueShareEscrowAccount,
+	fetchRevenueShareEscrowAccount,
+	escrowHasReferrer,
 } from '@velocity-exchange/sdk';
 import {
 	PublicKey,
@@ -335,28 +337,44 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		? 'ask'
 		: 'bid';
 
-	const [fetchedOrderParams, topMakersResult] = await Promise.all([
-		fetchAuctionOrderParams({
-			velocityClient,
-			user,
-			assetType,
-			marketIndex,
-			marketType: MarketType.PERP,
-			direction,
-			amount,
-			reduceOnly,
-			dlobServerHttpUrl,
-			optionalAuctionParamsInputs,
-			onAuctionParamsFetched: callbacks?.onAuctionParamsFetched,
-		}),
-		fetchTopMakers({
-			dlobServerHttpUrl,
-			marketIndex,
-			marketType: MarketType.PERP,
-			side: counterPartySide,
-			limit: 4,
-		}),
-	]);
+	const [fetchedOrderParams, topMakersResult, resolvedTakerEscrow] =
+		await Promise.all([
+			fetchAuctionOrderParams({
+				velocityClient,
+				user,
+				assetType,
+				marketIndex,
+				marketType: MarketType.PERP,
+				direction,
+				amount,
+				reduceOnly,
+				dlobServerHttpUrl,
+				optionalAuctionParamsInputs,
+				onAuctionParamsFetched: callbacks?.onAuctionParamsFetched,
+			}),
+			fetchTopMakers({
+				dlobServerHttpUrl,
+				marketIndex,
+				marketType: MarketType.PERP,
+				side: counterPartySide,
+				limit: 4,
+			}),
+			// place_and_take fills the placing user's own order in-instruction, so a
+			// referred user's RevenueShareEscrow must be attached or the program rejects
+			// the fill with UnableToLoadRevenueShareAccount. Honor a caller-supplied
+			// escrow, otherwise fetch it and only attach it when it carries a referrer.
+			(async (): Promise<RevenueShareEscrowAccount | undefined> => {
+				if (takerEscrow) {
+					return takerEscrow;
+				}
+				const escrow = await fetchRevenueShareEscrowAccount(
+					velocityClient.connection,
+					velocityClient.program,
+					user.getUserAccountOrThrow().authority
+				);
+				return escrow && escrowHasReferrer(escrow) ? escrow : undefined;
+			})(),
+		]);
 
 	fetchedOrderParams.userOrderId = userOrderId;
 
@@ -391,7 +409,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		{
 			authority: mainSignerOverride,
 		},
-		takerEscrow
+		resolvedTakerEscrow
 	);
 
 	return placeAndTakeIx;

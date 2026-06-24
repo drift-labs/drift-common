@@ -28,6 +28,7 @@ import {
 	sendSwiftOrder,
 	SwiftOrderMessage,
 } from './base/actions/trade/openPerpOrder/openSwiftOrder';
+import { ReferralParams } from './base/actions/user/create';
 import { SwiftClient } from '../clients/swiftClient';
 import { MarketId } from '../types';
 
@@ -392,6 +393,9 @@ async function createUserAndDepositCommand(args: CliArgs): Promise<void> {
 	const marketIndexArg = args.marketIndex as string;
 	const amountArg = args.amount as string;
 	const referrerName = args.referrerName as string | undefined;
+	const referralEscrowNumOrdersArg = args.referralEscrowNumOrders as
+		| string
+		| undefined;
 	const accountName = args.accountName as string | undefined;
 	const poolIdArg = args.poolId as string | undefined;
 	const fromSubAccountIdArg = args.fromSubAccountId as string | undefined;
@@ -421,7 +425,7 @@ async function createUserAndDepositCommand(args: CliArgs): Promise<void> {
 	const amountBN = parseAmount(amountArg, precision);
 
 	const options: {
-		referrerName?: string;
+		referral?: ReferralParams;
 		accountName?: string;
 		poolId?: number;
 		fromSubAccountId?: number;
@@ -430,7 +434,16 @@ async function createUserAndDepositCommand(args: CliArgs): Promise<void> {
 	} = {};
 
 	if (referrerName) {
-		options.referrerName = referrerName;
+		let escrowNumOrders: number | undefined;
+		if (referralEscrowNumOrdersArg !== undefined) {
+			escrowNumOrders = parseInt(referralEscrowNumOrdersArg, 10);
+			if (isNaN(escrowNumOrders)) {
+				throw new Error(
+					`Invalid referralEscrowNumOrders: ${referralEscrowNumOrdersArg}`
+				);
+			}
+		}
+		options.referral = { name: referrerName, escrowNumOrders };
 	}
 
 	if (accountName) {
@@ -481,8 +494,13 @@ async function createUserAndDepositCommand(args: CliArgs): Promise<void> {
 	if (options.accountName) {
 		console.log(`📝 Account Name: ${options.accountName}`);
 	}
-	if (options.referrerName) {
-		console.log(`🙌 Referrer Name: ${options.referrerName}`);
+	if (options.referral) {
+		console.log(`🙌 Referrer Name: ${options.referral.name}`);
+		if (options.referral.escrowNumOrders !== undefined) {
+			console.log(
+				`🎟️ Referral Escrow Orders: ${options.referral.escrowNumOrders}`
+			);
+		}
 	}
 	if (options.poolId !== undefined) {
 		console.log(`🏊 Pool ID: ${options.poolId}`);
@@ -969,7 +987,7 @@ function showUsage(): void {
 
 	console.log('🆕 createUserAndDeposit');
 	console.log(
-		'  ts-node cli.ts createUserAndDeposit --marketIndex=<num> --amount=<num> [--accountName=<string>] [--referrerName=<string>] [--poolId=<num>] [--fromSubAccountId=<num>] [--customMaxMarginRatio=<num>] [--fromWallet=<pubkey> --forAuthority=<pubkey>]'
+		'  ts-node cli.ts createUserAndDeposit --marketIndex=<num> --amount=<num> [--accountName=<string>] [--referrerName=<string>] [--referralEscrowNumOrders=<num>] [--poolId=<num>] [--fromSubAccountId=<num>] [--customMaxMarginRatio=<num>] [--fromWallet=<pubkey> --forAuthority=<pubkey>]'
 	);
 	console.log(
 		'  Example: ts-node cli.ts createUserAndDeposit --marketIndex=0 --amount=100 --accountName="Primary"'
