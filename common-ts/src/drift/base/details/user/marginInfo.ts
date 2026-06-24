@@ -62,13 +62,13 @@ export const getAccountMarginInfo = (
 
 	const usdcSpotMarketAccount = velocityClient.getSpotMarketAccount(
 		USDC_SPOT_MARKET_INDEX
-	);
+	)!;
 	const totalClaimablePnl = user
 		.getActivePerpPositions()
 		.reduce((acc, position) => {
 			const perpMarket = velocityClient.getPerpMarketAccount(
 				position.marketIndex
-			);
+			)!;
 			const oraclePrice = getOraclePrice(
 				MarketId.createPerpMarket(position.marketIndex).key
 			);

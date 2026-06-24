@@ -96,7 +96,7 @@ export class UserAccountCache {
 	}
 
 	private processAccountData(user: User): EnhancedAccountData {
-		const userAccount = user.getUserAccount();
+		const userAccount = user.getUserAccount()!;
 		const positionsInfo = userAccount.perpPositions
 			.filter(
 				(position) =>
@@ -142,7 +142,7 @@ export class UserAccountCache {
 			.map((order) => getOrderDetails(order));
 
 		return {
-			authority: user.getUserAccount().authority,
+			authority: user.getUserAccount()!.authority,
 			pubKey: user.getUserAccountPublicKey(),
 			subAccountId: userAccount.subAccountId,
 			name: decodeName(userAccount.name),

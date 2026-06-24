@@ -491,10 +491,10 @@ export const createSwiftLimitOrder = async (
 
 	await prepSignAndSendSwiftOrder({
 		velocityClient,
-		subAccountId: userAccount.subAccountId,
+		subAccountId: userAccount!.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
-		userSigningSlotBuffer: swiftOptions.userSigningSlotBuffer,
+		userSigningSlotBuffer: swiftOptions.userSigningSlotBuffer ?? 0,
 		swiftOptions,
 		orderParams: {
 			main: orderParams,
@@ -551,10 +551,10 @@ export const createSwiftLimitOrderMessage = async (
 
 	return prepSwiftOrderMessage({
 		velocityClient,
-		subAccountId: userAccount.subAccountId,
+		subAccountId: userAccount!.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
-		userSigningSlotBuffer,
+		userSigningSlotBuffer: userSigningSlotBuffer ?? 0,
 		isDelegate,
 		orderParams: {
 			main: orderParams,

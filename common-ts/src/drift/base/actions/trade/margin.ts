@@ -36,13 +36,13 @@ export const createUpdateMarketMaxLeverageIxs = async (
 		user,
 	} = params;
 
-	const userAccount = user.getUserAccount();
+	const userAccount = user.getUserAccount()!;
 	const subAccountIdToUse = userAccount.subAccountId;
 
 	const ixs: TransactionInstruction[] = [];
 
 	// Update max leverage of perp market for user
-	const marginRatio = convertLeverageToMarginRatio(leverage);
+	const marginRatio = convertLeverageToMarginRatio(leverage)!;
 	const perpMarketIndex = perpMarketAccount.marketIndex;
 	const updateMaxLeverageIx =
 		await velocityClient.getUpdateUserPerpPositionCustomMarginRatioIx(

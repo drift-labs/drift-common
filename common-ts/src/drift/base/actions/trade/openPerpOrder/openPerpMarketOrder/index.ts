@@ -216,10 +216,10 @@ export async function createSwiftMarketOrder(
 
 	await prepSignAndSendSwiftOrder({
 		velocityClient,
-		subAccountId: userAccount.subAccountId,
+		subAccountId: userAccount!.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
-		userSigningSlotBuffer: swiftOptions.userSigningSlotBuffer,
+		userSigningSlotBuffer: swiftOptions.userSigningSlotBuffer ?? 0,
 		swiftOptions,
 		orderParams: {
 			main: orderParams,
@@ -281,10 +281,10 @@ export async function createSwiftMarketOrderMessage(
 
 	return prepSwiftOrderMessage({
 		velocityClient,
-		subAccountId: userAccount.subAccountId,
+		subAccountId: userAccount!.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
-		userSigningSlotBuffer,
+		userSigningSlotBuffer: userSigningSlotBuffer ?? 0,
 		isDelegate,
 		orderParams: {
 			main: orderParams,
@@ -408,7 +408,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		topMakersInfo,
 		undefined,
 		auctionDurationPercentage,
-		user.getUserAccount().subAccountId,
+		user.getUserAccount()!.subAccountId,
 		{
 			authority: mainSignerOverride,
 		},

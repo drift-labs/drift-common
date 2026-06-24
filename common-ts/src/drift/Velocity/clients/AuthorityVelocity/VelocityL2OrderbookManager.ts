@@ -134,7 +134,7 @@ export class VelocityL2OrderbookManager {
 		this._subscriptionConfig = {
 			...this._subscriptionConfig,
 			...orderbookSubscription,
-		};
+		} as VelocityL2OrderbookSubscription;
 
 		this.unsubscribe();
 		this.subscribe();

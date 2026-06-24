@@ -62,7 +62,7 @@ export const createSwapIxDetails = async ({
 	const userPublicKey = user.userAccountPublicKey;
 
 	const swapIxsDetails = await velocityClient.getSwapIxV2({
-		swapClient,
+		swapClient: swapClient!,
 		outMarketIndex: swapToMarketIndex,
 		inMarketIndex: swapFromMarketIndex,
 		amount,

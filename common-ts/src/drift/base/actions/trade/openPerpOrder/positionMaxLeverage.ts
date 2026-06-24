@@ -18,7 +18,7 @@ export async function getPositionMaxLeverageIxIfNeeded(
 	}
 
 	// Get current position if it exists
-	const userAccount = user.getUserAccount();
+	const userAccount = user.getUserAccount()!;
 	const currentPosition = userAccount.perpPositions.find(
 		(pos) => pos.marketIndex === marketIndex
 	);
