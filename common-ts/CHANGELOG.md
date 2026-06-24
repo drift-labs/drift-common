@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.2](https://github.com/velocity-exchange/drift-common/compare/common-ts-v0.1.1...common-ts-v0.1.2) (2026-06-24)
+
+
+### Bug Fixes
+
+* **common-ts:** attach taker escrow for builder-code place-and-take orders ([4837057](https://github.com/velocity-exchange/drift-common/commit/4837057c180533a57896befc9b419209e4d6fd68))
+
+
+### Code Refactoring
+
+* **common-ts:** update server endpoints ([8b287e5](https://github.com/velocity-exchange/drift-common/commit/8b287e5992847a4cd610ca8e662efddfc76b2f7c))
+
 ## [0.1.1](https://github.com/velocity-exchange/drift-common/compare/common-ts-v0.1.0...common-ts-v0.1.1) (2026-06-24)
 
 
