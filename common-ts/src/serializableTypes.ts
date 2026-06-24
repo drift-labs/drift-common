@@ -77,7 +77,8 @@ import {
 
 const BNSerializationFn = (target: BN) =>
 	target ? target.toString() : undefined;
-const BNDeserializationFn = (val: string) => (val ? new BN(val) : undefined);
+const BNDeserializationFn = (val: JsonType) =>
+	val ? new BN(val as string) : undefined;
 const BNSerializeAndDeserializeFns = {
 	Serialize: BNSerializationFn,
 	Deserialize: BNDeserializationFn,
@@ -90,7 +91,7 @@ const QuoteBigNumSerializationFn = (target: BigNum | BN) =>
 			: target.toString()
 		: undefined;
 
-const QuoteBigNumDeserializationFn = (val: string | number) =>
+const QuoteBigNumDeserializationFn = (val: JsonType) =>
 	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), QUOTE_PRECISION_EXP)
@@ -105,7 +106,7 @@ const QuoteBigNumSerializeAndDeserializeFns = {
 const NullableQuoteBigNumSerializeAndDeserializeFns = {
 	Serialize: (target: BigNum | BN | null) =>
 		target === null ? null : QuoteBigNumSerializationFn(target),
-	Deserialize: (val: string | number | null) =>
+	Deserialize: (val: JsonType) =>
 		val === null ? null : QuoteBigNumDeserializationFn(val),
 };
 
@@ -129,7 +130,7 @@ const targetPrecisionBigNumDeserializationFn = (
 };
 
 // Main purpose of defer deserialization is to defer the precision setting until onDeserialized
-const DeferBigNumDeserializationFn = (val: string | number) => {
+const DeferBigNumDeserializationFn = (val: JsonType) => {
 	return val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(0, ZERO)
@@ -145,7 +146,7 @@ const MarketBasedBigNumSerializeAndDeserializeFns = {
 const NullableMarketBasedBigNumSerializeAndDeserializeFns = {
 	Serialize: (target: BigNum | BN | null) =>
 		target === null ? null : MarketBasedBigNumSerializationFn(target),
-	Deserialize: (val: string | number | null) =>
+	Deserialize: (val: JsonType) =>
 		val === null ? null : DeferBigNumDeserializationFn(val),
 };
 
@@ -156,7 +157,7 @@ const PctBigNumSerializationFn = (target: BigNum | BN) =>
 			: target.toString()
 		: undefined;
 
-const PctBigNumDeserializationFn = (val: string | number) =>
+const PctBigNumDeserializationFn = (val: JsonType) =>
 	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), PERCENTAGE_PRECISION_EXP)
@@ -174,7 +175,7 @@ const BaseBigNumSerializationFn = (target: BigNum | BN) =>
 			? target.print()
 			: target.toString()
 		: undefined;
-const BaseBigNumDeserializationFn = (val: string | number) =>
+const BaseBigNumDeserializationFn = (val: JsonType) =>
 	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), BASE_PRECISION_EXP)
@@ -191,7 +192,7 @@ const PriceBigNumSerializationFn = (target: BigNum | BN) =>
 			? target.print()
 			: target.toString()
 		: undefined;
-const PriceBigNumDeserializationFn = (val: string | number) =>
+const PriceBigNumDeserializationFn = (val: JsonType) =>
 	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), PRICE_PRECISION_EXP)
@@ -205,7 +206,7 @@ const PriceBigNumSerializeAndDeserializeFns = {
 const NullablePriceBigNumSerializeAndDeserializeFns = {
 	Serialize: (target: BigNum | BN | null) =>
 		target === null ? null : PriceBigNumSerializationFn(target),
-	Deserialize: (val: string | number | null) =>
+	Deserialize: (val: JsonType) =>
 		val === null ? null : PriceBigNumDeserializationFn(val),
 };
 
@@ -223,7 +224,7 @@ const ReferralVolumeBigNumSerializationFn = (target: BigNum | BN) =>
 			? target.print()
 			: target.toString()
 		: undefined;
-const ReferralVolumeBigNumDeserializationFn = (val: string | number) =>
+const ReferralVolumeBigNumDeserializationFn = (val: JsonType) =>
 	val !== undefined
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), TEN)
@@ -236,8 +237,8 @@ const ReferralVolumeBigNumSerializeAndDeserializeFns = {
 
 const PublicKeySerializationFn = (target: PublicKey) =>
 	target ? target.toString() : undefined;
-const PublicKeyDeserializationFn = (val: string) =>
-	val ? new PublicKey(val) : undefined;
+const PublicKeyDeserializationFn = (val: JsonType) =>
+	val ? new PublicKey(val as string) : undefined;
 const PublicKeySerializeAndDeserializeFns = {
 	Serialize: PublicKeySerializationFn,
 	Deserialize: PublicKeyDeserializationFn,

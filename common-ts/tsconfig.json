@@ -19,9 +19,10 @@
 		"noImplicitThis": true,
 		"alwaysStrict": true,
 		"strictBindCallApply": true,
-		"useUnknownInCatchVariables": true
-		// TODO(FE-4388): remaining strict flags rolled out in follow-up PRs:
-		// strictFunctionTypes, strictNullChecks, strictPropertyInitialization -> strict: true
+		"useUnknownInCatchVariables": true,
+		"strictFunctionTypes": true
+		// TODO(FE-4388): remaining strict flags rolled out in a follow-up PR:
+		// strictNullChecks, strictPropertyInitialization -> strict: true
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules"]
