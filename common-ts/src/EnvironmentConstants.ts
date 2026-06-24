@@ -44,18 +44,18 @@ export const EnvironmentConstants = {
 		staging: 'https://staging.api.drift.trade',
 	},
 	dataServerUrl: {
-		dev: 'https://data-master.api.velocity.exchange',
-		staging: 'https://data-staging.api.velocity.exchange',
+		dev: 'https://api.master.velocity.exchange',
+		staging: 'https://api.staging.velocity.exchange',
 		mainnet: 'https://data.api.velocity.exchange',
 	},
 	dlobServerHttpUrl: {
-		dev: 'https://master.dlob.velocity.exchange',
-		staging: 'https://staging.dlob.velocity.exchange',
+		dev: 'https://dlob.master.velocity.exchange',
+		staging: 'https://dlob.staging.velocity.exchange',
 		mainnet: 'https://dlob.velocity.exchange',
 	},
 	dlobServerWsUrl: {
-		dev: 'wss://master.dlob.velocity.exchange/ws',
-		staging: 'wss://staging.dlob.velocity.exchange/ws',
+		dev: 'wss://dlob.master.velocity.exchange/ws',
+		staging: 'wss://dlob.staging.velocity.exchange/ws',
 		mainnet: 'wss://dlob.velocity.exchange/ws',
 	},
 	eventsServerUrl: {
@@ -63,7 +63,7 @@ export const EnvironmentConstants = {
 		mainnet: 'wss://events.velocity.exchange/ws',
 	},
 	swiftServerUrl: {
-		staging: 'https://master.swift.velocity.exchange',
+		staging: 'https://swift.master.velocity.exchange',
 		mainnet: 'https://swift.velocity.exchange',
 	},
 };
