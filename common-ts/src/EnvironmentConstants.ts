@@ -44,9 +44,9 @@ export const EnvironmentConstants = {
 		staging: 'https://staging.api.drift.trade',
 	},
 	dataServerUrl: {
-		dev: 'https://api.master.velocity.exchange',
-		staging: 'https://api.staging.velocity.exchange',
-		mainnet: 'https://data.api.velocity.exchange',
+		dev: 'https://data.master.velocity.exchange',
+		staging: 'https://data.staging.velocity.exchange',
+		mainnet: 'https://data.velocity.exchange',
 	},
 	dlobServerHttpUrl: {
 		dev: 'https://dlob.master.velocity.exchange',
