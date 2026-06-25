@@ -11,9 +11,9 @@ export const getTotalBorrowsForMarket = (
 	market: SpotMarketConfig,
 	velocityClient: VelocityClient
 ) => {
-	const marketAccount = velocityClient.getSpotMarketAccount(
+	const marketAccount = velocityClient.getSpotMarketAccountOrThrow(
 		market.marketIndex
-	)!;
+	);
 
 	const totalBorrowsTokenAmount = getTokenAmount(
 		marketAccount.borrowBalance,
@@ -42,9 +42,9 @@ export const getTotalDepositsForMarket = (
 	market: SpotMarketConfig,
 	velocityClient: VelocityClient
 ) => {
-	const marketAccount = velocityClient.getSpotMarketAccount(
+	const marketAccount = velocityClient.getSpotMarketAccountOrThrow(
 		market.marketIndex
-	)!;
+	);
 
 	const totalDepositsTokenAmount = getTokenAmount(
 		marketAccount.depositBalance,

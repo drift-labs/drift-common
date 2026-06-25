@@ -936,12 +936,13 @@ export class CentralServerVelocity {
 				const signingAuthority = rest.mainSignerOverride;
 				const subAccountId = user.getUserAccount()!.subAccountId;
 
-				const perpMarketAccount = this._velocityClient.getPerpMarketAccount(
-					params.marketIndex
-				)!;
+				const perpMarketAccount =
+					this._velocityClient.getPerpMarketAccountOrThrow(params.marketIndex);
 				const quoteSpotMarketIndex = perpMarketAccount.quoteSpotMarketIndex;
 				const spotMarketAccount =
-					this._velocityClient.getSpotMarketAccount(quoteSpotMarketIndex)!;
+					this._velocityClient.getSpotMarketAccountOrThrow(
+						quoteSpotMarketIndex
+					);
 				const depositor = signingAuthority ?? user.getUserAccount()!.authority;
 				const userTokenAccount = await getTokenAddressForDepositAndWithdraw(
 					spotMarketAccount,
@@ -1012,12 +1013,13 @@ export class CentralServerVelocity {
 					placeAndTake: params.placeAndTake,
 				});
 
-				const perpMarketAccount = this._velocityClient.getPerpMarketAccount(
-					params.marketIndex
-				)!;
+				const perpMarketAccount =
+					this._velocityClient.getPerpMarketAccountOrThrow(params.marketIndex);
 				const quoteSpotMarketIndex = perpMarketAccount.quoteSpotMarketIndex;
 				const spotMarketAccount =
-					this._velocityClient.getSpotMarketAccount(quoteSpotMarketIndex)!;
+					this._velocityClient.getSpotMarketAccountOrThrow(
+						quoteSpotMarketIndex
+					);
 				const withdrawToAuthority =
 					params.mainSignerOverride ?? user.getUserAccount()!.authority;
 				const userTokenAccount = await getTokenAddressForDepositAndWithdraw(

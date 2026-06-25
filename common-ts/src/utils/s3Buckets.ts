@@ -143,14 +143,18 @@ export const getDateRangeFromSelection = (
 						new Date(customOpts.year, customOpts.month + 1, 0)
 					);
 				}
-			} else {
+			} else if (
+				customOpts.month !== undefined &&
+				customOpts.day !== undefined
+			) {
 				// request a day
 				from = dateToS3DateString(
-					new Date(customOpts.year, customOpts.month!, customOpts.day)
+					new Date(customOpts.year, customOpts.month, customOpts.day)
 				);
-				to = dateToS3DateString(
-					new Date(customOpts.year, customOpts.month!, customOpts.day)
-				);
+				to = from;
+			} else {
+				console.error('Requested a custom day range without providing a month');
+				break;
 			}
 			break;
 	}

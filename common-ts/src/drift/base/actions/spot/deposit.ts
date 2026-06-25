@@ -47,9 +47,9 @@ export const createDepositIxs = async ({
 	externalWallet,
 }: CreateDepositIxParams): Promise<TransactionInstruction[]> => {
 	const authority = externalWallet ?? user.getUserAccount()!.authority;
-	const spotMarketAccount = velocityClient.getSpotMarketAccount(
+	const spotMarketAccount = velocityClient.getSpotMarketAccountOrThrow(
 		spotMarketConfig.marketIndex
-	)!;
+	);
 	const associatedDepositTokenAddress =
 		await getTokenAddressForDepositAndWithdraw(spotMarketAccount, authority);
 

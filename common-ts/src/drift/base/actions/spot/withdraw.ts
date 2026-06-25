@@ -54,7 +54,7 @@ export const createWithdrawIx = async ({
 	const authority = user.getUserAccount()!.authority;
 	const associatedDepositTokenAddress =
 		await getTokenAddressForDepositAndWithdraw(
-			velocityClient.getSpotMarketAccount(spotMarketConfig.marketIndex)!,
+			velocityClient.getSpotMarketAccountOrThrow(spotMarketConfig.marketIndex),
 			authority
 		);
 

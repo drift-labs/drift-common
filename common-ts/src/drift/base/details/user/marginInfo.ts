@@ -60,15 +60,15 @@ export const getAccountMarginInfo = (
 	if (userMarginRatio.eq(new BN(Number.MAX_SAFE_INTEGER)))
 		userMarginRatio = ZERO;
 
-	const usdcSpotMarketAccount = velocityClient.getSpotMarketAccount(
+	const usdcSpotMarketAccount = velocityClient.getSpotMarketAccountOrThrow(
 		USDC_SPOT_MARKET_INDEX
-	)!;
+	);
 	const totalClaimablePnl = user
 		.getActivePerpPositions()
 		.reduce((acc, position) => {
-			const perpMarket = velocityClient.getPerpMarketAccount(
+			const perpMarket = velocityClient.getPerpMarketAccountOrThrow(
 				position.marketIndex
-			)!;
+			);
 			const oraclePrice = getOraclePrice(
 				MarketId.createPerpMarket(position.marketIndex).key
 			);

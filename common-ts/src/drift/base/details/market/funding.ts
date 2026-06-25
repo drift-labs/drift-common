@@ -15,7 +15,8 @@ export const getMarketPredictedFunding = (
 	longFundingRate: number;
 	shortFundingRate: number;
 } => {
-	const perpMarketAccount = velocityClient.getPerpMarketAccount(marketIndex)!;
+	const perpMarketAccount =
+		velocityClient.getPerpMarketAccountOrThrow(marketIndex);
 	const rawMmOraclePriceData =
 		velocityClient.getMMOracleDataForPerpMarket(marketIndex);
 	const rawOraclePriceData =

@@ -3,6 +3,7 @@ import {
 	VelocityEnv,
 	initialize,
 	PerpMarketConfig,
+	configs,
 } from '@velocity-exchange/sdk';
 
 export const Config: {
@@ -14,7 +15,7 @@ export const Config: {
 	initialized: false,
 	spotMarketsLookup: [],
 	perpMarketsLookup: [],
-	sdkConfig: undefined as unknown as ReturnType<typeof initialize>,
+	sdkConfig: configs.devnet,
 };
 
 export const Initialize = (env: VelocityEnv) => {
