@@ -8,7 +8,10 @@ import {
 const fetchCurrentSubaccounts = (
 	velocityClient: VelocityClient
 ): UserAccount[] => {
-	return velocityClient.getUsers().map((user) => user.getUserAccount());
+	return velocityClient
+		.getUsers()
+		.map((user) => user.getUserAccount())
+		.filter((acct): acct is UserAccount => acct !== undefined);
 };
 
 const fetchUserClientsAndAccounts = (

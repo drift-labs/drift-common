@@ -216,7 +216,7 @@ export class RedisClient {
 	private client: Redis | Cluster;
 	private prefix: RedisClientPrefix;
 
-	connectionPromise: Promise<void>;
+	connectionPromise!: Promise<void>;
 
 	constructor({
 		host = process.env.ELASTICACHE_HOST ?? 'localhost',
@@ -379,7 +379,7 @@ export class RedisClient {
 	@isRead
 	async get<T = string | number | Record<string, unknown> | undefined>(
 		key: string
-	): Promise<T> {
+	): Promise<T | undefined> {
 		this.assertConnected();
 
 		const value = await this.client.get(key);

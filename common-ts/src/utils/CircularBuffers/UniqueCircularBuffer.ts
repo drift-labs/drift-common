@@ -41,7 +41,7 @@ export class UniqueCircularBuffer<T> extends CircularBuffer<T> {
 			newNode.next = newNode;
 		} else {
 			newNode.next = this.head;
-			this.tail.next = newNode;
+			this.tail!.next = newNode;
 			this.tail = newNode;
 		}
 
@@ -50,11 +50,11 @@ export class UniqueCircularBuffer<T> extends CircularBuffer<T> {
 
 		if (this.size > this.capacity) {
 			const nodeToRemove = this.head;
-			this.head = this.head.next;
-			this.tail.next = this.head;
+			this.head = this.head!.next;
+			this.tail!.next = this.head;
 			this.size--;
 
-			const removedKey = this.uniquenessKeyGenerator(nodeToRemove.value);
+			const removedKey = this.uniquenessKeyGenerator(nodeToRemove!.value);
 			this.uniqueKeys.delete(removedKey);
 		}
 

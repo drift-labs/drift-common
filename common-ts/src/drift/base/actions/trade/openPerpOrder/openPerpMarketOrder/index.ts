@@ -174,7 +174,7 @@ async function prepSwiftMarketOrderData(params: OpenPerpMarketOrderBaseParams) {
 		userOrderId,
 	};
 
-	const userAccount = user.getUserAccount();
+	const userAccount = user.getUserAccountOrThrow();
 
 	return { userAccount, orderParams };
 }
@@ -219,7 +219,7 @@ export async function createSwiftMarketOrder(
 		subAccountId: userAccount.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
-		userSigningSlotBuffer: swiftOptions.userSigningSlotBuffer,
+		userSigningSlotBuffer: swiftOptions.userSigningSlotBuffer ?? 0,
 		swiftOptions,
 		orderParams: {
 			main: orderParams,
@@ -284,7 +284,7 @@ export async function createSwiftMarketOrderMessage(
 		subAccountId: userAccount.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
-		userSigningSlotBuffer,
+		userSigningSlotBuffer: userSigningSlotBuffer ?? 0,
 		isDelegate,
 		orderParams: {
 			main: orderParams,
@@ -408,7 +408,7 @@ export const createPlaceAndTakePerpMarketOrderIx = async ({
 		topMakersInfo,
 		undefined,
 		auctionDurationPercentage,
-		user.getUserAccount().subAccountId,
+		user.getUserAccountOrThrow().subAccountId,
 		{
 			authority: mainSignerOverride,
 		},

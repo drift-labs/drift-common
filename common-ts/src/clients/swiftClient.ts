@@ -427,28 +427,30 @@ export class SwiftClient {
 		} else {
 			subscriber.next({
 				type: 'sent',
-				hash: sendResponse.body.hash,
+				hash: sendResponse.body!.hash,
 			});
 		}
 
-		const hash = sendResponse.body.hash;
+		const hash = sendResponse.body!.hash;
 
 		// Then confirm it
 		const confirmResponse = await this.confirmSwiftOrder(hash, confirmDuration);
 
 		if (!confirmResponse.success) {
 			subscriber.next({
-				type: confirmResponse.body.status as 'expired',
+				type: confirmResponse.body!.status as 'expired',
 				hash,
 				message: confirmResponse.message,
 				status: confirmResponse.status,
 			});
 			subscriber.error();
 		}
-		if (confirmResponse.body.status === 'confirmed') {
+		if (confirmResponse.body!.status === 'confirmed') {
 			subscriber.next({
 				type: 'confirmed',
-				orderId: confirmResponse.body.orderId,
+				orderId: (
+					confirmResponse.body as { orderId: string; status: 'confirmed' }
+				).orderId,
 				hash,
 			});
 			subscriber.complete();
@@ -491,11 +493,11 @@ export class SwiftClient {
 		} else {
 			subscriber.next({
 				type: 'sent',
-				hash: sendResponse.body.hash,
+				hash: sendResponse.body!.hash,
 			});
 		}
 
-		const hash = sendResponse.body.hash;
+		const hash = sendResponse.body!.hash;
 
 		// Then confirm it
 		const orderID = await this.confirmSwiftOrderWS(

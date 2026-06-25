@@ -46,8 +46,8 @@ export const createDepositIxs = async ({
 	isMaxBorrowRepayment,
 	externalWallet,
 }: CreateDepositIxParams): Promise<TransactionInstruction[]> => {
-	const authority = externalWallet ?? user.getUserAccount().authority;
-	const spotMarketAccount = velocityClient.getSpotMarketAccount(
+	const authority = externalWallet ?? user.getUserAccountOrThrow().authority;
+	const spotMarketAccount = velocityClient.getSpotMarketAccountOrThrow(
 		spotMarketConfig.marketIndex
 	);
 	const associatedDepositTokenAddress =
@@ -65,7 +65,7 @@ export const createDepositIxs = async ({
 		finalDepositAmount.val,
 		spotMarketConfig.marketIndex,
 		associatedDepositTokenAddress,
-		user.getUserAccount().subAccountId,
+		user.getUserAccountOrThrow().subAccountId,
 		isMaxBorrowRepayment,
 		externalWallet ? { authority: externalWallet } : undefined
 	);

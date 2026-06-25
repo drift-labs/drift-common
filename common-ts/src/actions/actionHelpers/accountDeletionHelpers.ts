@@ -41,7 +41,7 @@ const getStatsAccountIsPastDeletionCutoff = (
 };
 
 const accountHasOpenPerpPositions = (user: User) => {
-	const userAccount = user.getUserAccount();
+	const userAccount = user.getUserAccountOrThrow();
 	for (const perpPosition of userAccount.perpPositions) {
 		if (!positionIsAvailable(perpPosition)) {
 			return true;
@@ -52,7 +52,7 @@ const accountHasOpenPerpPositions = (user: User) => {
 };
 
 const accountHasOpenSpotPositions = (user: User) => {
-	const userAccount = user.getUserAccount();
+	const userAccount = user.getUserAccountOrThrow();
 	for (const spotPosition of userAccount.spotPositions) {
 		if (spotPosition.scaledBalance.gt(ZERO)) {
 			return true;
@@ -63,7 +63,7 @@ const accountHasOpenSpotPositions = (user: User) => {
 };
 
 const accountHasOpenOrders = (user: User) => {
-	const userAccount = user.getUserAccount();
+	const userAccount = user.getUserAccountOrThrow();
 	return userAccount.orders.some((order) => isVariant(order.status, 'open'));
 };
 
@@ -97,7 +97,7 @@ const getAccountCanBeDeletedInstantly = (
 	const statsAccountIsPastDeletionCutoff =
 		getStatsAccountIsPastDeletionCutoff(userStatsAccount);
 
-	const userIsIdle = user.getUserAccount().idle;
+	const userIsIdle = user.getUserAccountOrThrow().idle;
 
 	const userCanBeMarkedIdle = user.canMakeIdle(new BN(currentSlot));
 
@@ -134,7 +134,7 @@ const getAccountDeletionStepsToTake = (
 	userStatsAccount: UserStatsAccount,
 	currentSlot: number
 ): AccountDeletionStep[] => {
-	const userAccount = user.getUserAccount();
+	const userAccount = user.getUserAccountOrThrow();
 	const statsAccountIsPastDeletionCutoff =
 		getStatsAccountIsPastDeletionCutoff(userStatsAccount);
 
@@ -199,7 +199,7 @@ const tryDeleteUserAccount = async (
 		Ixs.push(
 			await velocityClient.getUpdateUserIdleIx(
 				user.userAccountPublicKey,
-				user.getUserAccount()
+				user.getUserAccountOrThrow()
 			)
 		);
 	}
@@ -213,7 +213,7 @@ const tryDeleteUserAccount = async (
 	const { txSig } = await velocityClient.sendTransaction(tx);
 
 	const userMapKey = velocityClient.getUserMapKey(
-		user.getUserAccount().subAccountId,
+		user.getUserAccountOrThrow().subAccountId,
 		velocityClient.wallet.publicKey
 	);
 	await velocityClient.users.get(userMapKey)?.unsubscribe();
@@ -223,7 +223,7 @@ const tryDeleteUserAccount = async (
 };
 
 export const getIdleWaitTimeMinutes = (user: User, currentSlot: number) => {
-	const lastActiveSlot = user.getUserAccount().lastActiveSlot;
+	const lastActiveSlot = user.getUserAccountOrThrow().lastActiveSlot;
 
 	const inactiveAccountTime = Math.max(
 		currentSlot - lastActiveSlot.toNumber(),

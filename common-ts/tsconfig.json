@@ -15,13 +15,7 @@
 		"baseUrl": ".",
 		"moduleResolution": "node",
 		"outDir": "./lib",
-		"noImplicitAny": true,
-		"noImplicitThis": true,
-		"alwaysStrict": true,
-		"strictBindCallApply": true,
-		"useUnknownInCatchVariables": true
-		// TODO(FE-4388): remaining strict flags rolled out in follow-up PRs:
-		// strictFunctionTypes, strictNullChecks, strictPropertyInitialization -> strict: true
+		"strict": true
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules"]

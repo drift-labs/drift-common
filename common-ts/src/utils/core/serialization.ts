@@ -76,7 +76,7 @@ export const decodeStringifiableObject = (value: any): any => {
 
 	Object.entries(value).forEach(([key, val]) => {
 		if (key.match(/^_pbky_/)) {
-			buildJsonObject[key.replace('_pbky_', '')] = new PublicKey(val);
+			buildJsonObject[key.replace('_pbky_', '')] = new PublicKey(val as string);
 			return;
 		}
 

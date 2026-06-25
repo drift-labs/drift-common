@@ -49,10 +49,10 @@ export const getPriceForUIOrderRecord = (
 		'quoteAssetAmountFilled' | 'baseAssetAmountFilled'
 	>
 ) => {
-	return orderRecord.quoteAssetAmountFilled
-		.shiftTo(AMM_RESERVE_PRECISION_EXP)
+	return orderRecord
+		.quoteAssetAmountFilled!.shiftTo(AMM_RESERVE_PRECISION_EXP)
 		.shift(PRICE_PRECISION_EXP)
-		.div(orderRecord.baseAssetAmountFilled.shiftTo(BASE_PRECISION_EXP))
+		.div(orderRecord.baseAssetAmountFilled!.shiftTo(BASE_PRECISION_EXP))
 		.shiftTo(PRICE_PRECISION_EXP);
 };
 

@@ -21,7 +21,7 @@ export const orderActionRecordIsTrade = (orderRecord: OrderActionRecord) =>
 export const uiOrderActionRecordIsTrade = (
 	orderRecord: UISerializableOrderActionRecord
 ) =>
-	orderRecord.baseAssetAmountFilled.gtZero() &&
+	!!orderRecord.baseAssetAmountFilled?.gtZero() &&
 	matchEnum(orderRecord.action, OrderAction.FILL);
 
 export const filterTradeRecordsFromOrderActionRecords = (

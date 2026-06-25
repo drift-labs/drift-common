@@ -49,16 +49,16 @@ export class CircularBuffer<T> {
 			newNode.next = newNode;
 		} else {
 			newNode.next = this._head;
-			this._tail.next = newNode;
+			this._tail!.next = newNode;
 			this._tail = newNode;
 		}
 
 		this._size++;
 
 		if (this._size > this._capacity) {
-			removedValue = this._head.value;
-			this._head = this._head.next;
-			this._tail.next = this._head;
+			removedValue = this._head!.value;
+			this._head = this._head!.next;
+			this._tail!.next = this._head;
 			this._size--;
 		}
 

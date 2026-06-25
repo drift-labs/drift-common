@@ -122,8 +122,8 @@ export class TradeSubscriberSubscription extends SubscriberSubscription<
 abstract class _Subscriber<T> {
 	public readonly id: SubscriberId;
 	public readonly config: SubscriptionConfig;
-	protected _apiSubscription: ApiSubscription;
-	protected subject: Subject<T>;
+	protected _apiSubscription!: ApiSubscription;
+	protected subject!: Subject<T>;
 	private static idIncrementer: number = 0;
 
 	public get subscription(): ApiSubscription {
@@ -578,6 +578,11 @@ class SubscriptionManager {
 			const existingSubscription = this.compatibleCandleSubscriptionLookup.get(
 				candleSubscriptionLookupKey
 			);
+			if (!existingSubscription) {
+				throw new Error(
+					`No existing subscription found for candle subscription lookup key ${candleSubscriptionLookupKey}`
+				);
+			}
 			existingSubscription.attachNewCandleSubscriberToExistingSubscription(
 				subscriber
 			);
@@ -613,6 +618,11 @@ class SubscriptionManager {
 			const existingSubscription = this.compatibleTradeSubscriptionLookup.get(
 				tradeSubscriptionLookupKey
 			);
+			if (!existingSubscription) {
+				throw new Error(
+					`No existing subscription found for trade subscription lookup key ${tradeSubscriptionLookupKey}`
+				);
+			}
 			existingSubscription.attachNewTradeSubscriberToExistingSubscription(
 				subscriber
 			);
@@ -639,6 +649,10 @@ class SubscriptionManager {
 	private cleanupApiSubscription(apiSubscriptionId: ApiSubscriptionId) {
 		const apiSubscription = this.apiSubscriptions.get(apiSubscriptionId);
 
+		invariant(
+			apiSubscription,
+			`Api subscription not found for id ${apiSubscriptionId}`
+		);
 		invariant(
 			apiSubscription.candleSubscribers.size === 0,
 			'Expected api subscription to have no candle subscribers when cleaning up'
