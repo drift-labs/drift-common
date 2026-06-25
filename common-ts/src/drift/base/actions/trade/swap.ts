@@ -22,7 +22,7 @@ interface CreateSwapIxDetailsParams {
 	/** Quote response from swap provider containing swap route information */
 	quote: UnifiedQuoteResponse;
 	/** Swap client instance for performing the swap */
-	swapClient?: UnifiedSwapClient;
+	swapClient: UnifiedSwapClient;
 	/** Market index of the token being swapped from */
 	swapFromMarketIndex: number;
 	/** Market index of the token being swapped to */
@@ -62,7 +62,7 @@ export const createSwapIxDetails = async ({
 	const userPublicKey = user.userAccountPublicKey;
 
 	const swapIxsDetails = await velocityClient.getSwapIxV2({
-		swapClient: swapClient!,
+		swapClient,
 		outMarketIndex: swapToMarketIndex,
 		inMarketIndex: swapFromMarketIndex,
 		amount,
