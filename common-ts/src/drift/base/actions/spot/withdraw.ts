@@ -38,7 +38,7 @@ export const createWithdrawIx = async ({
 		// since reduceOnly is true, it is safe to over-estimate
 		finalWithdrawAmount = finalWithdrawAmount.scale(2, 1);
 		const scaledBalance = user
-			.getUserAccount()!
+			.getUserAccountOrThrow()
 			.spotPositions.find(
 				(position) => position.marketIndex === spotMarketConfig.marketIndex
 			)?.scaledBalance;
@@ -51,7 +51,7 @@ export const createWithdrawIx = async ({
 		}
 	}
 
-	const authority = user.getUserAccount()!.authority;
+	const authority = user.getUserAccountOrThrow().authority;
 	const associatedDepositTokenAddress =
 		await getTokenAddressForDepositAndWithdraw(
 			velocityClient.getSpotMarketAccountOrThrow(spotMarketConfig.marketIndex),
@@ -63,7 +63,7 @@ export const createWithdrawIx = async ({
 		spotMarketConfig.marketIndex,
 		associatedDepositTokenAddress,
 		reduceOnly,
-		user.getUserAccount()!.subAccountId
+		user.getUserAccountOrThrow().subAccountId
 	);
 
 	return withdrawIxs;

@@ -379,7 +379,7 @@ export class RedisClient {
 	@isRead
 	async get<T = string | number | Record<string, unknown> | undefined>(
 		key: string
-	): Promise<T> {
+	): Promise<T | undefined> {
 		this.assertConnected();
 
 		const value = await this.client.get(key);
@@ -388,7 +388,7 @@ export class RedisClient {
 			return JSON.parse(value);
 		}
 
-		return undefined as unknown as T;
+		return undefined;
 	}
 
 	@isRead

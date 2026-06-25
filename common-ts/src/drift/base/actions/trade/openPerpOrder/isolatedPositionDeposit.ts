@@ -176,7 +176,7 @@ export function computeIsolatedPositionDepositForTrade({
 			direction,
 			baseAssetAmount,
 		};
-		const subAccountId = user.getUserAccount()!.subAccountId;
+		const subAccountId = user.getUserAccountOrThrow().subAccountId;
 		const isIncreasing = velocityClient.isOrderIncreasingPosition(
 			maybeOrderParams,
 			subAccountId
@@ -369,7 +369,7 @@ export async function getIsolatedPositionDepositIxIfNeeded(
 	return velocityClient.getTransferIsolatedPerpPositionDepositIx(
 		isolatedPositionDeposit,
 		marketIndex,
-		user.getUserAccount()!.subAccountId,
+		user.getUserAccountOrThrow().subAccountId,
 		undefined, // noAmountBuffer
 		signingAuthority
 	);

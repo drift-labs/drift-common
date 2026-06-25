@@ -36,7 +36,7 @@ export const createUpdateMarketMaxLeverageIxs = async (
 		user,
 	} = params;
 
-	const userAccount = user.getUserAccount()!;
+	const userAccount = user.getUserAccountOrThrow();
 	const subAccountIdToUse = userAccount.subAccountId;
 
 	const ixs: TransactionInstruction[] = [];

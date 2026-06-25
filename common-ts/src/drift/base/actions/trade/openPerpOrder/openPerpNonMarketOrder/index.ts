@@ -458,7 +458,7 @@ async function prepSwiftLimitOrderData(
 		throw new Error(`Unsupported orderType for Swift limit order`);
 	}
 
-	const userAccount = user.getUserAccount();
+	const userAccount = user.getUserAccountOrThrow();
 	const bracketOrders =
 		orderConfig.orderType === 'limit' ? orderConfig.bracketOrders : undefined;
 
@@ -491,7 +491,7 @@ export const createSwiftLimitOrder = async (
 
 	await prepSignAndSendSwiftOrder({
 		velocityClient,
-		subAccountId: userAccount!.subAccountId,
+		subAccountId: userAccount.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
 		userSigningSlotBuffer: swiftOptions.userSigningSlotBuffer ?? 0,
@@ -551,7 +551,7 @@ export const createSwiftLimitOrderMessage = async (
 
 	return prepSwiftOrderMessage({
 		velocityClient,
-		subAccountId: userAccount!.subAccountId,
+		subAccountId: userAccount.subAccountId,
 		userAccountPubKey: user.userAccountPublicKey,
 		marketIndex,
 		userSigningSlotBuffer: userSigningSlotBuffer ?? 0,

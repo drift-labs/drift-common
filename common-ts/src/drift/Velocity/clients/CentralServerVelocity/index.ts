@@ -348,8 +348,8 @@ export class CentralServerVelocity {
 			// Setup: Subscribe to user and configure VelocityClient
 			await user.subscribe();
 
-			const authority = user.getUserAccount()!.authority;
-			const subAccountId = user.getUserAccount()!.subAccountId;
+			const authority = user.getUserAccountOrThrow().authority;
+			const subAccountId = user.getUserAccountOrThrow().subAccountId;
 			this._velocityClient.authority = authority;
 
 			const success = await this._velocityClient.addUser(
@@ -574,7 +574,7 @@ export class CentralServerVelocity {
 				const userStatsAccount = await fetchUserStatsAccount(
 					this._velocityClient.connection,
 					this._velocityClient.program,
-					user.getUserAccount()!.authority
+					user.getUserAccountOrThrow().authority
 				);
 
 				if (!userStatsAccount) {
@@ -818,7 +818,7 @@ export class CentralServerVelocity {
 					ixs.push(settleIx);
 				}
 				const position =
-					user.getUserAccount()!.perpPositions[params.marketIndex];
+					user.getUserAccountOrThrow().perpPositions[params.marketIndex];
 				const transferAmount =
 					params.isFullWithdrawal && position.baseAssetAmount.eq(ZERO)
 						? MIN_I64
@@ -827,7 +827,7 @@ export class CentralServerVelocity {
 					await this._velocityClient.getTransferIsolatedPerpPositionDepositIx(
 						transferAmount,
 						params.marketIndex,
-						user.getUserAccount()!.subAccountId,
+						user.getUserAccountOrThrow().subAccountId,
 						true,
 						signingAuthority
 					);
@@ -896,7 +896,7 @@ export class CentralServerVelocity {
 						await this._velocityClient.getTransferIsolatedPerpPositionDepositIx(
 							MIN_I64,
 							params.marketIndex,
-							user.getUserAccount()!.subAccountId,
+							user.getUserAccountOrThrow().subAccountId,
 							true,
 							signingAuthority
 						);
@@ -934,7 +934,7 @@ export class CentralServerVelocity {
 			userAccountPublicKey,
 			async (user) => {
 				const signingAuthority = rest.mainSignerOverride;
-				const subAccountId = user.getUserAccount()!.subAccountId;
+				const subAccountId = user.getUserAccountOrThrow().subAccountId;
 
 				const perpMarketAccount =
 					this._velocityClient.getPerpMarketAccountOrThrow(params.marketIndex);
@@ -943,7 +943,8 @@ export class CentralServerVelocity {
 					this._velocityClient.getSpotMarketAccountOrThrow(
 						quoteSpotMarketIndex
 					);
-				const depositor = signingAuthority ?? user.getUserAccount()!.authority;
+				const depositor =
+					signingAuthority ?? user.getUserAccountOrThrow().authority;
 				const userTokenAccount = await getTokenAddressForDepositAndWithdraw(
 					spotMarketAccount,
 					depositor
@@ -997,7 +998,7 @@ export class CentralServerVelocity {
 			params.userAccountPublicKey,
 			async (user) => {
 				const signingAuthority = params.mainSignerOverride;
-				const subAccountId = user.getUserAccount()!.subAccountId;
+				const subAccountId = user.getUserAccountOrThrow().subAccountId;
 
 				const closeIxs = await createOpenPerpMarketOrderIxs({
 					velocityClient: this._velocityClient,
@@ -1021,7 +1022,7 @@ export class CentralServerVelocity {
 						quoteSpotMarketIndex
 					);
 				const withdrawToAuthority =
-					params.mainSignerOverride ?? user.getUserAccount()!.authority;
+					params.mainSignerOverride ?? user.getUserAccountOrThrow().authority;
 				const userTokenAccount = await getTokenAddressForDepositAndWithdraw(
 					spotMarketAccount,
 					withdrawToAuthority
@@ -1127,7 +1128,7 @@ export class CentralServerVelocity {
 					marketType ?? null,
 					marketIndex ?? null,
 					direction ?? null,
-					user.getUserAccount()!.subAccountId
+					user.getUserAccountOrThrow().subAccountId
 				);
 
 				const cancelAllOrdersTxn = await this._velocityClient.buildTransaction(
