@@ -37,7 +37,7 @@ export const createSettlePnlIx = async ({
 	mainSignerOverride,
 }: SettlePnlParams): Promise<TransactionInstruction> => {
 	const userAccountPublicKey = user.getUserAccountPublicKey();
-	const userAccount = user.getUserAccount();
+	const userAccount = user.getUserAccountOrThrow();
 
 	const settlePnlIx = await velocityClient.settleMultiplePNLsIx(
 		userAccountPublicKey,

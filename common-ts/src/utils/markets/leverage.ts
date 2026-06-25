@@ -59,8 +59,8 @@ const getMaxLeverageForMarket = (
 	maxLeverage: number;
 } => {
 	const marketAccount = ENUM_UTILS.match(marketType, MarketType.PERP)
-		? velocityClient.getPerpMarketAccount(marketIndex)
-		: velocityClient.getSpotMarketAccount(marketIndex);
+		? velocityClient.getPerpMarketAccountOrThrow(marketIndex)
+		: velocityClient.getSpotMarketAccountOrThrow(marketIndex);
 
 	return getMaxLeverageForMarketAccount(marketType, marketAccount);
 };

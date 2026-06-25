@@ -34,7 +34,10 @@ export const deleteUserIxs = async ({
 
 	if (reason === 'is-not-idle-fresh-account') {
 		const [idleIx, deleteIx] = await Promise.all([
-			velocityClient.getUpdateUserIdleIx(userPublicKey, user.getUserAccount()),
+			velocityClient.getUpdateUserIdleIx(
+				userPublicKey,
+				user.getUserAccountOrThrow()
+			),
 			velocityClient.getUserDeletionIx(userPublicKey),
 		]);
 		return [idleIx, deleteIx];

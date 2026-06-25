@@ -44,7 +44,7 @@ export class MarketId {
 		const [marketType, marketIndex] = key.split('_');
 		const marketId = new MarketId(
 			parseInt(marketIndex),
-			ENUM_UTILS.toObj(marketType)
+			ENUM_UTILS.toObj(marketType)!
 		);
 		MarketId.cache.set(key, marketId);
 		return marketId;

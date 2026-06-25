@@ -177,7 +177,7 @@ export const getPositionInfo = (
 	const liqPrice = user.liquidationPrice(marketIndex);
 	const liqPriceBigNum = BigNum.from(liqPrice, PRICE_PRECISION_EXP);
 
-	const perpMarket = velocityClient.getPerpMarketAccount(marketIndex);
+	const perpMarket = velocityClient.getPerpMarketAccountOrThrow(marketIndex);
 	const feesAndFundingPnlBigNum = BigNum.from(
 		calculateFeesAndFundingPnl(perpMarket, perpPosition),
 		QUOTE_PRECISION_EXP
@@ -212,7 +212,7 @@ export const getPositionInfo = (
 		}),
 		QUOTE_PRECISION_EXP
 	);
-	const usdcSpotMarketAccount = velocityClient.getSpotMarketAccount(
+	const usdcSpotMarketAccount = velocityClient.getSpotMarketAccountOrThrow(
 		USDC_SPOT_MARKET_INDEX
 	);
 	const totalClaimablePnlBigNum = BigNum.from(

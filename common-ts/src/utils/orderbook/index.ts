@@ -90,7 +90,8 @@ export const deserializeL2Response = (
 				? new BN(serializedOrderbook.mmOracleData.confidence)
 				: undefined,
 			hasSufficientNumberOfDataPoints:
-				serializedOrderbook.mmOracleData?.hasSufficientNumberOfDataPoints,
+				serializedOrderbook.mmOracleData?.hasSufficientNumberOfDataPoints ??
+				false,
 			isMMOracleActive:
 				serializedOrderbook.mmOracleData?.isMMOracleActive ?? false,
 		},
@@ -192,7 +193,7 @@ export const calculateDynamicSlippageFromL2 = ({
 	const baseSlippage = isMajor
 		? dynamicSlippageConfigToUse.dynamicBaseSlippageMajor
 		: dynamicSlippageConfigToUse.dynamicBaseSlippageNonMajor;
-	let dynamicSlippage = baseSlippage + spreadBaseSlippage;
+	let dynamicSlippage = (baseSlippage ?? 0) + spreadBaseSlippage;
 
 	// Use halfway to worst price as size adjusted slippage
 	if (startPrice && worstPrice) {
@@ -210,12 +211,15 @@ export const calculateDynamicSlippageFromL2 = ({
 		? dynamicSlippageConfigToUse.dynamicSlippageMultiplierMajor
 		: dynamicSlippageConfigToUse.dynamicSlippageMultiplierNonMajor;
 
-	dynamicSlippage = dynamicSlippage * multiplier;
+	dynamicSlippage = dynamicSlippage * (multiplier ?? 1);
 
 	// Enforce .05% minimum, 5% maximum, can change these in env vars
 	const finalSlippage = Math.min(
-		Math.max(dynamicSlippage, dynamicSlippageConfigToUse.dynamicSlippageMin),
-		dynamicSlippageConfigToUse.dynamicSlippageMax
+		Math.max(
+			dynamicSlippage,
+			dynamicSlippageConfigToUse.dynamicSlippageMin ?? 0
+		),
+		dynamicSlippageConfigToUse.dynamicSlippageMax ?? Infinity
 	);
 
 	// Round to avoid floating point precision issues, preserving 6 decimal places

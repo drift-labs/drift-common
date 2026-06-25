@@ -397,7 +397,7 @@ export class Candle {
 		start: number,
 		smallCandles: Candle[],
 		outputResolution: CandleResolution
-	): Candle {
+	): Candle | null {
 		if (smallCandles.length === 0) return null;
 
 		const clonedCandles = smallCandles.map((candle) => Candle.clone(candle));
@@ -646,8 +646,8 @@ export class Candle {
 			oracleHigh: trade.oraclePrice.val,
 			oracleClose: trade.oraclePrice.val,
 			oracleLow: trade.oraclePrice.val,
-			quoteVolume: trade.quoteAssetAmountFilled.val,
-			baseVolume: trade.baseAssetAmountFilled.val,
+			quoteVolume: trade.quoteAssetAmountFilled!.val,
+			baseVolume: trade.baseAssetAmountFilled!.val,
 			resolution,
 		});
 	}
@@ -696,7 +696,7 @@ export class Candle {
 				resolution
 			);
 			if (candleTradeBuckets.get(candleTs)) {
-				candleTradeBuckets.get(candleTs).push(trade);
+				candleTradeBuckets.get(candleTs)!.push(trade);
 			} else {
 				candleTradeBuckets.set(candleTs, [trade]);
 			}
@@ -746,7 +746,7 @@ export class Candle {
 		fromMs: number,
 		resolution: CandleResolution,
 		previousCandle?: UISerializableCandle
-	): Candle {
+	): Candle | undefined {
 		const resolutionMs = Candle.resolutionStringToCandleLengthMs(resolution);
 		const toMs = fromMs + resolutionMs;
 

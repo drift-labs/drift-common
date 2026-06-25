@@ -22,7 +22,7 @@ interface CreateSwapIxDetailsParams {
 	/** Quote response from swap provider containing swap route information */
 	quote: UnifiedQuoteResponse;
 	/** Swap client instance for performing the swap */
-	swapClient?: UnifiedSwapClient;
+	swapClient: UnifiedSwapClient;
 	/** Market index of the token being swapped from */
 	swapFromMarketIndex: number;
 	/** Market index of the token being swapped to */

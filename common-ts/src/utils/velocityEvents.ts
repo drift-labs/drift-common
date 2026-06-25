@@ -155,6 +155,10 @@ export const getVelocityEventKey = (event: UniqableVelocityEvent) => {
 						? _typedEvent.taker
 						: _typedEvent.maker;
 
+					if (pubkey === null || orderId === null) {
+						throw new Error('Invalid order or pubkey');
+					}
+
 					return `${
 						_typedEvent.eventType
 					}_${pubkey.toString()}_${_typedEvent.marketIndex.toString()}_${orderId.toString()}_${

@@ -92,7 +92,7 @@ const QuoteBigNumSerializationFn = (target: BigNum | BN) =>
 		: undefined;
 
 const QuoteBigNumDeserializationFn = (val: JsonType) =>
-	val !== undefined
+	val != null
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), QUOTE_PRECISION_EXP)
 			: BigNum.fromPrint(val.toString(), QUOTE_PRECISION_EXP)
@@ -158,7 +158,7 @@ const PctBigNumSerializationFn = (target: BigNum | BN) =>
 		: undefined;
 
 const PctBigNumDeserializationFn = (val: JsonType) =>
-	val !== undefined
+	val != null
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), PERCENTAGE_PRECISION_EXP)
 			: BigNum.fromPrint(val.toString(), PERCENTAGE_PRECISION_EXP)
@@ -176,7 +176,7 @@ const BaseBigNumSerializationFn = (target: BigNum | BN) =>
 			: target.toString()
 		: undefined;
 const BaseBigNumDeserializationFn = (val: JsonType) =>
-	val !== undefined
+	val != null
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), BASE_PRECISION_EXP)
 			: BigNum.fromPrint(val.toString(), BASE_PRECISION_EXP)
@@ -193,7 +193,7 @@ const PriceBigNumSerializationFn = (target: BigNum | BN) =>
 			: target.toString()
 		: undefined;
 const PriceBigNumDeserializationFn = (val: JsonType) =>
-	val !== undefined
+	val != null
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), PRICE_PRECISION_EXP)
 			: BigNum.fromPrint(val.toString(), PRICE_PRECISION_EXP)
@@ -225,7 +225,7 @@ const ReferralVolumeBigNumSerializationFn = (target: BigNum | BN) =>
 			: target.toString()
 		: undefined;
 const ReferralVolumeBigNumDeserializationFn = (val: JsonType) =>
-	val !== undefined
+	val != null
 		? typeof val === 'string'
 			? BigNum.from(val.replace('.', ''), TEN)
 			: BigNum.fromPrint(val.toString(), TEN)
@@ -236,13 +236,13 @@ const ReferralVolumeBigNumSerializeAndDeserializeFns = {
 };
 
 const PublicKeySerializationFn = (target: PublicKey) =>
-	target ? target.toString() : undefined;
+	target ? target.toString() : null;
 const PublicKeyDeserializationFn = (val: JsonType) =>
-	val ? new PublicKey(val as string) : undefined;
+	val ? new PublicKey(val as string) : null;
 const PublicKeySerializeAndDeserializeFns = {
 	Serialize: PublicKeySerializationFn,
 	Deserialize: PublicKeyDeserializationFn,
-};
+} as const;
 
 const EnumSerializationFn = (target: Record<string, unknown>) => {
 	if (!target) return null;
@@ -346,35 +346,35 @@ function validateEventTypeOnSerialize<
 export type OrderRecordEvent = WrappedEvent<'OrderRecord'>;
 
 export class SerializableOrder implements Order {
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) status: OrderStatus;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) orderType: OrderType;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) status!: OrderStatus;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) orderType!: OrderType;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeAs(Number) orderId: number;
-	@autoserializeAs(Number) userOrderId: number;
-	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeAs(Number) orderId!: number;
+	@autoserializeAs(Number) userOrderId!: number;
+	@autoserializeAs(Number) marketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) price: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmount: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmountFilled: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetAmountFilled: BN;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	direction: PositionDirection;
-	@autoserializeAs(Boolean) reduceOnly: boolean;
+	direction!: PositionDirection;
+	@autoserializeAs(Boolean) reduceOnly!: boolean;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) triggerPrice: BN;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	triggerCondition: OrderTriggerCondition;
-	@autoserializeAs(Boolean) postOnly: boolean;
-	@autoserializeAs(Boolean) immediateOrCancel: boolean;
+	triggerCondition!: OrderTriggerCondition;
+	@autoserializeAs(Boolean) postOnly!: boolean;
+	@autoserializeAs(Boolean) immediateOrCancel!: boolean;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) oraclePriceOffset: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) auctionStartPrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) auctionEndPrice: BN;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	existingPositionDirection: OrderStatus;
+	existingPositionDirection!: OrderStatus;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) slot: BN;
-	@autoserializeAs(Number) auctionDuration: number;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
+	@autoserializeAs(Number) auctionDuration!: number;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType!: MarketType;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) maxTs: BN;
-	@autoserializeAs(Number) bitFlags: number;
-	@autoserializeAs(Number) postedSlotTail: number;
+	@autoserializeAs(Number) bitFlags!: number;
+	@autoserializeAs(Number) postedSlotTail!: number;
 }
 
 @inheritSerialization(SerializableOrder)
@@ -419,13 +419,13 @@ export class UISerializableOrder extends SerializableOrder {
 
 // @ts-ignore
 export class SerializableOrderRecord implements OrderRecordEvent {
-	@autoserializeAs(String) eventType: 'OrderRecord';
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(String) eventType!: 'OrderRecord';
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) txSigIndex!: number;
+	@autoserializeAs(Number) slot!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
-	@autoserializeAs(SerializableOrder) order: Order;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user!: PublicKey;
+	@autoserializeAs(SerializableOrder) order!: Order;
 
 	static onDeserialized(data: JsonObject, instance: SerializableOrderRecord) {
 		validateEventTypeOnDeserialize(
@@ -469,19 +469,19 @@ export class UISerializableOrderRecord extends SerializableOrderRecord {
 export class SerializableOrderActionRecord
 	implements WrappedEvent<'OrderActionRecord'>
 {
-	@autoserializeAs(String) eventType: 'OrderActionRecord';
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) slot: number;
-	@autoserializeAs(Number) txSigIndex: number;
+	@autoserializeAs(String) eventType!: 'OrderActionRecord';
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) slot!: number;
+	@autoserializeAs(Number) txSigIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) action: OrderAction;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) action!: OrderAction;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	actionExplanation: OrderActionExplanation;
-	@autoserializeAs(Number) marketIndex: number;
+	actionExplanation!: OrderActionExplanation;
+	@autoserializeAs(Number) marketIndex!: number;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	marketType: MarketType;
+	marketType!: MarketType;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	filler: PublicKey | null;
+	filler!: PublicKey | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fillerReward: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fillRecordId: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
@@ -490,14 +490,14 @@ export class SerializableOrderActionRecord
 	quoteAssetAmountFilled: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) takerFee: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) makerRebate: BN | null;
-	@autoserializeAs(Number) referrerReward: number | null;
+	@autoserializeAs(Number) referrerReward!: number | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	quoteAssetAmountSurplus: BN | null;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	taker: PublicKey | null;
-	@autoserializeAs(Number) takerOrderId: number | null;
+	taker!: PublicKey | null;
+	@autoserializeAs(Number) takerOrderId!: number | null;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	takerOrderDirection: PositionDirection | null;
+	takerOrderDirection!: PositionDirection | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	takerOrderBaseAssetAmount: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
@@ -505,10 +505,10 @@ export class SerializableOrderActionRecord
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	takerOrderCumulativeQuoteAssetAmountFilled: BN | null;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	maker: PublicKey | null;
-	@autoserializeAs(Number) makerOrderId: number | null;
+	maker!: PublicKey | null;
+	@autoserializeAs(Number) makerOrderId!: number | null;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	makerOrderDirection: PositionDirection | null;
+	makerOrderDirection!: PositionDirection | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	makerOrderBaseAssetAmount: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
@@ -519,7 +519,7 @@ export class SerializableOrderActionRecord
 	@autoserializeUsing(BNSerializeAndDeserializeFns) makerFee: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	spotFulfillmentMethodFee: BN | null;
-	@autoserializeAs(Number) bitFlags: number;
+	@autoserializeAs(Number) bitFlags!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	takerExistingQuoteEntryAmount: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
@@ -529,7 +529,7 @@ export class SerializableOrderActionRecord
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	makerExistingBaseAssetAmount: BN | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) triggerPrice: BN | null;
-	@autoserializeAs(Number) builderIdx: number | null;
+	@autoserializeAs(Number) builderIdx!: number | null;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) builderFee: BN | null;
 
 	static onDeserialized(
@@ -672,51 +672,51 @@ export class UISerializableOrderActionRecord extends SerializableOrderActionReco
 
 export class UISerializableOrderRecordV2 {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) orderType: OrderType;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
-	@autoserializeAs(Number) orderId: number;
-	@autoserializeAs(Number) userOrderId: number;
-	@autoserializeAs(Number) marketIndex: number;
-	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns) price: BigNum;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) txSigIndex!: number;
+	@autoserializeAs(Number) slot!: number;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user!: PublicKey;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) orderType!: OrderType;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType!: MarketType;
+	@autoserializeAs(Number) orderId!: number;
+	@autoserializeAs(Number) userOrderId!: number;
+	@autoserializeAs(Number) marketIndex!: number;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns) price!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	baseAssetAmount: BigNum;
+	baseAssetAmount!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	quoteAssetAmount: BigNum;
+	quoteAssetAmount!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	baseAssetAmountFilled: BigNum;
+	baseAssetAmountFilled!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	quoteAssetAmountFilled: BigNum;
+	quoteAssetAmountFilled!: BigNum;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	direction: PositionDirection;
-	@autoserializeAs(Boolean) reduceOnly: boolean;
+	direction!: PositionDirection;
+	@autoserializeAs(Boolean) reduceOnly!: boolean;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
-	triggerPrice: BigNum;
+	triggerPrice!: BigNum;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	triggerCondition: OrderTriggerCondition;
+	triggerCondition!: OrderTriggerCondition;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	existingPositionDirection: PositionDirection;
-	@autoserializeAs(Boolean) postOnly: boolean;
-	@autoserializeAs(Boolean) immediateOrCancel: boolean;
+	existingPositionDirection!: PositionDirection;
+	@autoserializeAs(Boolean) postOnly!: boolean;
+	@autoserializeAs(Boolean) immediateOrCancel!: boolean;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
-	oraclePriceOffset: BigNum;
-	@autoserializeAs(Number) auctionDuration: number;
+	oraclePriceOffset!: BigNum;
+	@autoserializeAs(Number) auctionDuration!: number;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
-	auctionStartPrice: BigNum;
+	auctionStartPrice!: BigNum;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
-	auctionEndPrice: BigNum;
+	auctionEndPrice!: BigNum;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) maxTs: BN;
-	@autoserializeAs(String) symbol: string;
+	@autoserializeAs(String) symbol!: string;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) lastUpdatedTs: BN;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	lastActionExplanation: OrderActionExplanation;
-	@autoserializeAs(String) lastActionStatus: string;
-	@autoserializeAs(String) status: string;
+	lastActionExplanation!: OrderActionExplanation;
+	@autoserializeAs(String) lastActionStatus!: string;
+	@autoserializeAs(String) status!: string;
 	@autoserializeUsing(NullableQuoteBigNumSerializeAndDeserializeFns)
-	cumulativeFee: BigNum | null;
+	cumulativeFee!: BigNum | null;
 
 	static onDeserialized(
 		data: JsonObject,
@@ -735,76 +735,76 @@ export class UISerializableOrderRecordV2 {
 
 export class UISerializableOrderActionRecordBase {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
-	@autoserializeAs(Number) marketIndex: number;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType: MarketType;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) txSigIndex!: number;
+	@autoserializeAs(Number) slot!: number;
+	@autoserializeAs(Number) marketIndex!: number;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) marketType!: MarketType;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	fillerReward: BigNum;
+	fillerReward!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	baseAssetAmountFilled: BigNum;
+	baseAssetAmountFilled!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	quoteAssetAmountFilled: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) takerFee: BigNum;
+	quoteAssetAmountFilled!: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) takerFee!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	makerRebate: BigNum;
-	@autoserializeAs(Number) referrerReward: number;
+	makerRebate!: BigNum;
+	@autoserializeAs(Number) referrerReward!: number;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	quoteAssetAmountSurplus: BigNum;
+	quoteAssetAmountSurplus!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	takerOrderBaseAssetAmount: BigNum;
+	takerOrderBaseAssetAmount!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	takerOrderCumulativeBaseAssetAmountFilled: BigNum;
+	takerOrderCumulativeBaseAssetAmountFilled!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	takerOrderCumulativeQuoteAssetAmountFilled: BigNum;
+	takerOrderCumulativeQuoteAssetAmountFilled!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	makerOrderBaseAssetAmount: BigNum;
+	makerOrderBaseAssetAmount!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	makerOrderCumulativeBaseAssetAmountFilled: BigNum;
+	makerOrderCumulativeBaseAssetAmountFilled!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	makerOrderCumulativeQuoteAssetAmountFilled: BigNum;
+	makerOrderCumulativeQuoteAssetAmountFilled!: BigNum;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
-	oraclePrice: BigNum;
-	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) makerFee: BigNum;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) action: OrderAction;
+	oraclePrice!: BigNum;
+	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) makerFee!: BigNum;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) action!: OrderAction;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	actionExplanation: OrderActionExplanation;
+	actionExplanation!: OrderActionExplanation;
 
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) filler: PublicKey;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) filler!: PublicKey;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fillRecordId: BN; //
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) taker: PublicKey;
-	@autoserializeAs(Number) takerOrderId: number;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) taker!: PublicKey;
+	@autoserializeAs(Number) takerOrderId!: number;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	takerOrderDirection: PositionDirection;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) maker: PublicKey;
-	@autoserializeAs(Number) makerOrderId: number;
+	takerOrderDirection!: PositionDirection;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) maker!: PublicKey;
+	@autoserializeAs(Number) makerOrderId!: number;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	makerOrderDirection: PositionDirection;
+	makerOrderDirection!: PositionDirection;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	spotFulfillmentMethodFee: BigNum;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
-	@autoserializeAs(String) symbol: string;
-	@autoserializeAs(Number) bitFlags: number;
+	spotFulfillmentMethodFee!: BigNum;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user!: PublicKey;
+	@autoserializeAs(String) symbol!: string;
+	@autoserializeAs(Number) bitFlags!: number;
 
 	@autoserializeUsing(NullableQuoteBigNumSerializeAndDeserializeFns)
-	takerExistingQuoteEntryAmount: BigNum | null;
+	takerExistingQuoteEntryAmount!: BigNum | null;
 	@autoserializeUsing(NullableMarketBasedBigNumSerializeAndDeserializeFns)
-	takerExistingBaseAssetAmount: BigNum | null;
+	takerExistingBaseAssetAmount!: BigNum | null;
 	@autoserializeUsing(NullableQuoteBigNumSerializeAndDeserializeFns)
-	makerExistingQuoteEntryAmount: BigNum | null;
+	makerExistingQuoteEntryAmount!: BigNum | null;
 	@autoserializeUsing(NullableMarketBasedBigNumSerializeAndDeserializeFns)
-	makerExistingBaseAssetAmount: BigNum | null;
+	makerExistingBaseAssetAmount!: BigNum | null;
 	@autoserializeUsing(NullablePriceBigNumSerializeAndDeserializeFns)
-	triggerPrice: BigNum | null;
-	@autoserializeAs(Number) builderIdx: number | null;
+	triggerPrice!: BigNum | null;
+	@autoserializeAs(Number) builderIdx!: number | null;
 	@autoserializeUsing(NullableQuoteBigNumSerializeAndDeserializeFns)
-	builderFee: BigNum | null;
+	builderFee!: BigNum | null;
 }
 
 @inheritSerialization(UISerializableOrderActionRecordBase)
 export class UISerializableOrderActionRecordV2 extends UISerializableOrderActionRecordBase {
-	@autoserializeAs(String) eventType: 'OrderActionRecord';
+	@autoserializeAs(String) eventType!: 'OrderActionRecord';
 
 	static onDeserialized(
 		data: JsonObject,
@@ -847,15 +847,15 @@ export class UISerializableOrderActionRecordV2 extends UISerializableOrderAction
 
 @inheritSerialization(UISerializableOrderActionRecordBase)
 export class UISerializablePositionHistoryRecord extends UISerializableOrderActionRecordBase {
-	@autoserializeAs(String) eventType: 'PositionHistoryRecord';
+	@autoserializeAs(String) eventType!: 'PositionHistoryRecord';
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	baseClosedForPnl: BigNum;
+	baseClosedForPnl!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	userFee: BigNum;
+	userFee!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	userExistingQuoteEntryAmount: BigNum;
+	userExistingQuoteEntryAmount!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	userExistingBaseAssetAmount: BigNum;
+	userExistingBaseAssetAmount!: BigNum;
 
 	static onDeserialized(
 		data: JsonObject,
@@ -901,20 +901,20 @@ export class UISerializablePositionHistoryRecord extends UISerializableOrderActi
 export type DepositRecordEvent = Event<DepositRecord>;
 
 export class SerializableDepositRecord implements DepositRecordEvent {
-	@autoserializeAs(Number) id: number;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(Number) id!: number;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) txSigIndex!: number;
+	@autoserializeAs(Number) slot!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) depositRecordId: BN;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	userAuthority: PublicKey;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) direction: {
+	userAuthority!: PublicKey;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user!: PublicKey;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) direction!: {
 		deposit?: any;
 		withdraw?: any;
 	};
-	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeAs(Number) marketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) amount: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) oraclePrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) marketDepositBalance: BN;
@@ -928,7 +928,7 @@ export class SerializableDepositRecord implements DepositRecordEvent {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) totalDepositsAfter: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) totalWithdrawsAfter: BN;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	explanation: DepositExplanation;
+	explanation!: DepositExplanation;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) signer?: PublicKey;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) userTokenAmountAfter: BN;
 }
@@ -994,32 +994,32 @@ export class UISerializableDepositRecord extends SerializableDepositRecord {
 // Spot interest record event
 export type SpotInterestRecordEvent = Event<SpotInterestRecord>;
 export class SerializableSpotInterestRecord implements SpotInterestRecordEvent {
-	@autoserializeAs(Number) id: number;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(Number) id!: number;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) txSigIndex!: number;
+	@autoserializeAs(Number) slot!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeAs(Number) marketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) depositBalance: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	cumulativeDepositInterest: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) borrowBalance: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	cumulativeBorrowInterest: BN;
-	@autoserializeAs(Number) optimalUtilization: number;
-	@autoserializeAs(Number) optimalBorrowRate: number;
-	@autoserializeAs(Number) maxBorrowRate: number;
+	@autoserializeAs(Number) optimalUtilization!: number;
+	@autoserializeAs(Number) optimalBorrowRate!: number;
+	@autoserializeAs(Number) maxBorrowRate!: number;
 }
 
 // Curve record event
 export type AmmCurveChangedEvent = Event<AmmCurveChanged>;
 export class SerializableAmmCurveChanged implements AmmCurveChangedEvent {
-	@autoserializeAs(Number) id: number;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(Number) id!: number;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) txSigIndex!: number;
+	@autoserializeAs(Number) slot!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeAs(Number) marketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) pegMultiplierBefore: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetReserveBefore: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetReserveBefore: BN;
@@ -1039,14 +1039,14 @@ export class SerializableAmmCurveChanged implements AmmCurveChangedEvent {
 export type SettlePnlRecordEvent = Event<SettlePnlRecord>;
 
 export class SerializableSettlePnlRecord implements SettlePnlRecordEvent {
-	@autoserializeAs(Number) id: number;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(Number) id!: number;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) txSigIndex!: number;
+	@autoserializeAs(Number) slot!: number;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	user: PublicKey;
+	user!: PublicKey;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeAs(Number) marketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) pnl: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmount: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetAmountAfter: BN;
@@ -1054,7 +1054,7 @@ export class SerializableSettlePnlRecord implements SettlePnlRecordEvent {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) settlePrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) oraclePrice: BN;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	explanation: SettlePnlExplanation;
+	explanation!: SettlePnlExplanation;
 }
 
 @inheritSerialization(SerializableSettlePnlRecord)
@@ -1083,12 +1083,12 @@ export class UISerializableSettlePnlRecord extends SerializableSettlePnlRecord {
 export type FundingRateRecordEvent = Event<FundingRateRecord>;
 // @ts-ignore
 export class SerializableFundingRateRecord implements FundingRateRecordEvent {
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) slot: number;
-	@autoserializeAs(Number) txSigIndex: number;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) slot!: number;
+	@autoserializeAs(Number) txSigIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) recordId: BN;
-	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeAs(Number) marketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fundingRate: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	cumulativeFundingRateLong: BN;
@@ -1146,15 +1146,15 @@ export type FundingPaymentRecordEvent = Event<FundingPaymentRecord>;
 export class SerializableFundingPaymentRecord
 	implements FundingPaymentRecordEvent
 {
-	@autoserializeAs(Number) id: number;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(Number) id!: number;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) txSigIndex!: number;
+	@autoserializeAs(Number) slot!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	userAuthority: PublicKey;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
-	@autoserializeAs(Number) marketIndex: number;
+	userAuthority!: PublicKey;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user!: PublicKey;
+	@autoserializeAs(Number) marketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fundingPayment: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmount: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
@@ -1186,12 +1186,12 @@ export class UISerializableFundingPaymentRecord extends SerializableFundingPayme
 
 //// Liquidation Records
 export class SerializableLiquidatePerpRecord implements LiquidatePerpRecord {
-	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeAs(Number) marketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) oraclePrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmount: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetAmount: BN;
-	@autoserializeAs(Number) userOrderId: number;
-	@autoserializeAs(Number) liquidatorOrderId: number;
+	@autoserializeAs(Number) userOrderId!: number;
+	@autoserializeAs(Number) liquidatorOrderId!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fillRecordId: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) liquidatorFee: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ifFee: BN;
@@ -1221,10 +1221,10 @@ export class UISerializableLiquidatePerpRecord extends SerializableLiquidatePerp
 }
 
 export class SerializableLiquidateSpotRecord implements LiquidateSpotRecord {
-	@autoserializeAs(Number) assetMarketIndex: number;
+	@autoserializeAs(Number) assetMarketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) assetPrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) assetTransfer: BN;
-	@autoserializeAs(Number) liabilityMarketIndex: number;
+	@autoserializeAs(Number) liabilityMarketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) liabilityPrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) liabilityTransfer: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ifFee: BN;
@@ -1263,10 +1263,10 @@ export class SerializableLiquidateBorrowForPerpPnlRecord
 {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) marketOraclePrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) pnlTransfer: BN;
-	@autoserializeAs(Number) liabilityMarketIndex: number;
+	@autoserializeAs(Number) liabilityMarketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) liabilityPrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) liabilityTransfer: BN;
-	@autoserializeAs(Number) perpMarketIndex: number;
+	@autoserializeAs(Number) perpMarketIndex!: number;
 }
 
 @inheritSerialization(SerializableLiquidateBorrowForPerpPnlRecord)
@@ -1299,10 +1299,10 @@ export class SerializableLiquidatePerpPnlForDepositRecord
 {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) marketOraclePrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) pnlTransfer: BN;
-	@autoserializeAs(Number) assetMarketIndex: number;
+	@autoserializeAs(Number) assetMarketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) assetPrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) assetTransfer: BN;
-	@autoserializeAs(Number) perpMarketIndex: number;
+	@autoserializeAs(Number) perpMarketIndex!: number;
 }
 
 @inheritSerialization(SerializableLiquidatePerpPnlForDepositRecord)
@@ -1333,13 +1333,13 @@ export class UISerializableLiquidatePerpPnlForDepositRecord extends Serializable
 export type LiquidationRecordEvent = Event<LiquidationRecord>;
 
 export class SerializablePerpBankrupcyRecord implements PerpBankruptcyRecord {
-	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeAs(Number) marketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) pnl: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	cumulativeFundingRateDelta: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ifPayment: BN;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	clawbackUser: PublicKey;
+	clawbackUser!: PublicKey;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) clawbackUserPayment: BN;
 }
 
@@ -1356,7 +1356,7 @@ export class UISerializablePerpBankrupcyRecord extends SerializablePerpBankrupcy
 }
 
 export class SerializableSpotBankruptcyRecord implements SpotBankruptcyRecord {
-	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeAs(Number) marketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) borrowAmount: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	cumulativeDepositInterestDelta: BN;
@@ -1385,34 +1385,34 @@ export class UISerializableSpotBankruptcyRecord extends SerializableSpotBankrupt
 }
 
 export class SerializableLiquidationRecord implements LiquidationRecordEvent {
-	@autoserializeAs(Number) liquidationId: number;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(Number) liquidationId!: number;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) txSigIndex!: number;
+	@autoserializeAs(Number) slot!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user!: PublicKey;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	liquidator: PublicKey;
+	liquidator!: PublicKey;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) totalCollateral: BN;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	liquidationType: LiquidationType;
+	liquidationType!: LiquidationType;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) marginRequirement: BN;
 	@autoserializeAs(SerializableLiquidatePerpRecord)
-	liquidatePerp: LiquidatePerpRecord;
+	liquidatePerp!: LiquidatePerpRecord;
 	@autoserializeAs(SerializableLiquidateSpotRecord)
-	liquidateSpot: LiquidateSpotRecord;
+	liquidateSpot!: LiquidateSpotRecord;
 	@autoserializeAs(SerializableLiquidateBorrowForPerpPnlRecord)
-	liquidateBorrowForPerpPnl: LiquidateBorrowForPerpPnlRecord;
+	liquidateBorrowForPerpPnl!: LiquidateBorrowForPerpPnlRecord;
 	@autoserializeAs(SerializableLiquidatePerpPnlForDepositRecord)
-	liquidatePerpPnlForDeposit: LiquidatePerpPnlForDepositRecord;
+	liquidatePerpPnlForDeposit!: LiquidatePerpPnlForDepositRecord;
 	@autoserializeAs(SerializablePerpBankrupcyRecord)
-	perpBankruptcy: PerpBankruptcyRecord;
+	perpBankruptcy!: PerpBankruptcyRecord;
 	@autoserializeAs(SerializableSpotBankruptcyRecord)
-	spotBankruptcy: SpotBankruptcyRecord;
-	@autoserializeAsArray(Number) canceledOrderIds: number[];
+	spotBankruptcy!: SpotBankruptcyRecord;
+	@autoserializeAsArray(Number) canceledOrderIds!: number[];
 	@autoserializeUsing(BNSerializeAndDeserializeFns) marginFreed: BN;
-	@autoserializeAs(Boolean) bankrupt: boolean;
-	@autoserializeAs(Number) bitFlags: number;
+	@autoserializeAs(Boolean) bankrupt!: boolean;
+	@autoserializeAs(Number) bitFlags!: number;
 }
 
 @inheritSerialization(SerializableLiquidationRecord)
@@ -1439,110 +1439,110 @@ export class UISerializableLiquidationRecord extends SerializableLiquidationReco
 
 export class UISerializableLiquidationRecordV2 {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) txSigIndex!: number;
+	@autoserializeAs(Number) slot!: number;
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	liquidationType: LiquidationType;
+	liquidationType!: LiquidationType;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	user: PublicKey;
+	user!: PublicKey;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	liquidator: PublicKey;
+	liquidator!: PublicKey;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	marginRequirement: BigNum;
+	marginRequirement!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	totalCollateral: BigNum;
+	totalCollateral!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns) marginFreed: BN;
-	@autoserializeAs(Number) liquidationId: number;
-	@autoserializeAs(Boolean) bankrupt: boolean;
-	@autoserializeAs(Number) bitFlags: number;
+	@autoserializeAs(Number) liquidationId!: number;
+	@autoserializeAs(Boolean) bankrupt!: boolean;
+	@autoserializeAs(Number) bitFlags!: number;
 	@autoserializeAsArray(Number)
-	canceledOrderIds: number[];
+	canceledOrderIds!: number[];
 
 	// Liquidate Perp
-	@autoserializeAs(Number) liquidatePerp_marketIndex: number;
+	@autoserializeAs(Number) liquidatePerp_marketIndex!: number;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
-	liquidatePerp_oraclePrice: BigNum;
+	liquidatePerp_oraclePrice!: BigNum;
 	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
-	liquidatePerp_baseAssetAmount: BigNum;
+	liquidatePerp_baseAssetAmount!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	liquidatePerp_quoteAssetAmount: BigNum;
+	liquidatePerp_quoteAssetAmount!: BigNum;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	liquidatePerp_fillRecordId: BN;
 	@autoserializeAs(Number)
-	liquidatePerp_userOrderId: number;
+	liquidatePerp_userOrderId!: number;
 	@autoserializeAs(Number)
-	liquidatePerp_liquidatorOrderId: number;
+	liquidatePerp_liquidatorOrderId!: number;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	liquidatePerp_liquidatorFee: BigNum;
+	liquidatePerp_liquidatorFee!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	liquidatePerp_ifFee: BigNum;
+	liquidatePerp_ifFee!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	liquidatePerp_protocolFee: BigNum;
+	liquidatePerp_protocolFee!: BigNum;
 
 	// Liquidate Spot
-	@autoserializeAs(Number) liquidateSpot_assetMarketIndex: number;
+	@autoserializeAs(Number) liquidateSpot_assetMarketIndex!: number;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
-	liquidateSpot_assetPrice: BigNum;
+	liquidateSpot_assetPrice!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	liquidateSpot_assetTransfer: BigNum;
-	@autoserializeAs(Number) liquidateSpot_liabilityMarketIndex: number;
+	liquidateSpot_assetTransfer!: BigNum;
+	@autoserializeAs(Number) liquidateSpot_liabilityMarketIndex!: number;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
-	liquidateSpot_liabilityPrice: BigNum;
+	liquidateSpot_liabilityPrice!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	liquidateSpot_liabilityTransfer: BigNum;
+	liquidateSpot_liabilityTransfer!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	liquidateSpot_ifFee: BigNum;
+	liquidateSpot_ifFee!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	liquidateSpot_protocolFee: BigNum;
+	liquidateSpot_protocolFee!: BigNum;
 
 	// Liquidate Borrow For Perp PnL
-	@autoserializeAs(Number) liquidateBorrowForPerpPnl_perpMarketIndex: number;
+	@autoserializeAs(Number) liquidateBorrowForPerpPnl_perpMarketIndex!: number;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
-	liquidateBorrowForPerpPnl_marketOraclePrice: BigNum;
+	liquidateBorrowForPerpPnl_marketOraclePrice!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	liquidateBorrowForPerpPnl_pnlTransfer: BigNum;
+	liquidateBorrowForPerpPnl_pnlTransfer!: BigNum;
 	@autoserializeAs(Number)
-	liquidateBorrowForPerpPnl_liabilityMarketIndex: number;
+	liquidateBorrowForPerpPnl_liabilityMarketIndex!: number;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
-	liquidateBorrowForPerpPnl_liabilityPrice: BigNum;
+	liquidateBorrowForPerpPnl_liabilityPrice!: BigNum;
 	@autoserializeUsing(BaseBigNumSerializeAndDeserializeFns)
-	liquidateBorrowForPerpPnl_liabilityTransfer: BigNum;
+	liquidateBorrowForPerpPnl_liabilityTransfer!: BigNum;
 
 	// Liquidate Perp PnL For Deposit
-	@autoserializeAs(Number) liquidatePerpPnlForDeposit_perpMarketIndex: number;
+	@autoserializeAs(Number) liquidatePerpPnlForDeposit_perpMarketIndex!: number;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
-	liquidatePerpPnlForDeposit_marketOraclePrice: BigNum;
+	liquidatePerpPnlForDeposit_marketOraclePrice!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	liquidatePerpPnlForDeposit_pnlTransfer: BigNum;
+	liquidatePerpPnlForDeposit_pnlTransfer!: BigNum;
 	@autoserializeAs(Number)
-	liquidatePerpPnlForDeposit_assetMarketIndex: number;
+	liquidatePerpPnlForDeposit_assetMarketIndex!: number;
 	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns)
-	liquidatePerpPnlForDeposit_assetPrice: BigNum;
+	liquidatePerpPnlForDeposit_assetPrice!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	liquidatePerpPnlForDeposit_assetTransfer: BigNum;
+	liquidatePerpPnlForDeposit_assetTransfer!: BigNum;
 
 	// Perp Bankruptcy
-	@autoserializeAs(Number) perpBankruptcy_marketIndex: number;
+	@autoserializeAs(Number) perpBankruptcy_marketIndex!: number;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	perpBankruptcy_pnl: BigNum;
+	perpBankruptcy_pnl!: BigNum;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	perpBankruptcy_ifPayment: BigNum;
+	perpBankruptcy_ifPayment!: BigNum;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	perpBankruptcy_clawbackUser: PublicKey;
+	perpBankruptcy_clawbackUser!: PublicKey;
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
-	perpBankruptcy_clawbackUserPayment: BigNum;
+	perpBankruptcy_clawbackUserPayment!: BigNum;
 	@autoserializeUsing(FundingRateBigNumSerializeAndDeserializeFns)
-	perpBankruptcy_cumulativeFundingRateDelta: BigNum;
+	perpBankruptcy_cumulativeFundingRateDelta!: BigNum;
 
 	// Spot Bankruptcy
-	@autoserializeAs(Number) spotBankruptcy_marketIndex: number;
+	@autoserializeAs(Number) spotBankruptcy_marketIndex!: number;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	spotBankruptcy_borrowAmount: BigNum;
+	spotBankruptcy_borrowAmount!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	spotBankruptcy_ifPayment: BigNum;
+	spotBankruptcy_ifPayment!: BigNum;
 	@autoserializeUsing(MarketBasedBigNumSerializeAndDeserializeFns)
-	spotBankruptcy_cumulativeDepositInterestDelta: BigNum;
+	spotBankruptcy_cumulativeDepositInterestDelta!: BigNum;
 
 	static onDeserialized(
 		data: JsonObject,
@@ -1620,7 +1620,7 @@ export class UISerializableLiquidationRecordV2 {
 class SerializableUserPerpPositionSnapshot implements UserPerpPositionSnapshot {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteAssetAmount: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseAssetAmount: BN;
-	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeAs(Number) marketIndex!: number;
 }
 
 class SerializableUserSpotPositionSnapshot implements UserSpotPositionSnapshot {
@@ -1628,16 +1628,18 @@ class SerializableUserSpotPositionSnapshot implements UserSpotPositionSnapshot {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) tokenAmount: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) cumulativeDeposits: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) balanceInterestDelta: BN;
-	@autoserializeAs(Number) marketIndex: number;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) type: SpotBalanceType;
+	@autoserializeAs(Number) marketIndex!: number;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) type!: SpotBalanceType;
 }
 
 export class SerializableUserSnapshotRecord implements UserSnapshotRecord {
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) programId: PublicKey;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) authority: PublicKey;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
-	@autoserializeAs(Number) epochTs: number;
-	@autoserializeAs(Number) ts: number;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
+	programId!: PublicKey;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
+	authority!: PublicKey;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user!: PublicKey;
+	@autoserializeAs(Number) epochTs!: number;
+	@autoserializeAs(Number) ts!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) perpPositionUpnl: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) totalAccountValue: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
@@ -1650,7 +1652,7 @@ export class SerializableUserSnapshotRecord implements UserSnapshotRecord {
 	cumulativeReferralReward: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	cumulativeReferralVolume: BN;
-	@autoserializeAs(Number) cumulativeReferralCount: number;
+	@autoserializeAs(Number) cumulativeReferralCount!: number;
 }
 
 @inheritSerialization(SerializableUserSnapshotRecord)
@@ -1689,7 +1691,7 @@ export class SerializableCandle {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) quoteVolume: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) baseVolume: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) start: BN;
-	@autoserializeAs(String) resolution: CandleResolution;
+	@autoserializeAs(String) resolution!: CandleResolution;
 }
 
 @inheritSerialization(SerializableCandle)
@@ -1731,7 +1733,7 @@ export class SerializableRollingPnlData implements RollingPnlData {
 }
 
 export class SerializableAllTimePnlData extends SerializableRollingPnlData {
-	@autoserializeAs(Number) epochTs: number;
+	@autoserializeAs(Number) epochTs!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) spotPnlQuote: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) spotPnlPct: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) perpPnlQuote: BN;
@@ -1792,46 +1794,46 @@ export class UISerializableAllTimePnlData extends UISerializableRollingPnlData {
 	totalPnlPct: BigNum;
 
 	@autoserializeAs(Number)
-	epochTs: number;
+	epochTs!: number;
 }
 
 export class UIMatchedOrderRecordAndAction {
 	@autoserializeAs(UISerializableOrderRecord)
-	orderRecord: UISerializableOrderRecord;
+	orderRecord!: UISerializableOrderRecord;
 	@autoserializeAs(UISerializableOrderActionRecord)
-	actionRecord: UISerializableOrderActionRecord;
+	actionRecord!: UISerializableOrderActionRecord;
 }
 
 class SerializablePnlDataPoint implements PnlHistoryDataPoint {
-	@autoserializeAs(Number) ts: number;
-	@autoserializeAs(Number) val: number;
+	@autoserializeAs(Number) ts!: number;
+	@autoserializeAs(Number) val!: number;
 }
 
 class SerializableLeaderBoardResultRow implements LeaderBoardResultRow {
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	user: PublicKey;
+	user!: PublicKey;
 
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	authority: PublicKey;
+	authority!: PublicKey;
 
 	@autoserializeUsing(EnumSerializeAndDeserializeFns)
-	resolution: SnapshotEpochResolution;
+	resolution!: SnapshotEpochResolution;
 
 	@autoserializeAs(Number)
-	rollingValue: number;
+	rollingValue!: number;
 
 	@autoserializeAs(Number)
-	subaccountId: number;
+	subaccountId!: number;
 
 	@autoserializeAsArray(SerializablePnlDataPoint)
-	pnlHistoryPoints: SerializablePnlDataPoint[];
+	pnlHistoryPoints!: SerializablePnlDataPoint[];
 }
 
 export class SerializableLeaderboardResult implements LeaderboardResult {
-	@autoserializeAs(Number) lastUpdateTs: number;
-	@autoserializeAs(String) ordering: PnlSnapshotOrderOption;
+	@autoserializeAs(Number) lastUpdateTs!: number;
+	@autoserializeAs(String) ordering!: PnlSnapshotOrderOption;
 	@autoserializeAsArray(SerializableLeaderBoardResultRow)
-	results: SerializableLeaderBoardResultRow[];
+	results!: SerializableLeaderBoardResultRow[];
 }
 
 @inheritSerialization(SerializableLeaderBoardResultRow)
@@ -1845,22 +1847,22 @@ export class UISerializableLeaderboardResult extends SerializableLeaderboardResu
 }
 
 export class SerializableNewUserRecord implements NewUserRecord {
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) slot!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	userAuthority: PublicKey;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
-	@autoserializeAs(Number) userId: number;
-	@autoserializeAsArray(Number) name: number[];
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) referrer: PublicKey;
-	@autoserializeAs(Number) subAccountId: number;
+	userAuthority!: PublicKey;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user!: PublicKey;
+	@autoserializeAs(Number) userId!: number;
+	@autoserializeAsArray(Number) name!: number[];
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) referrer!: PublicKey;
+	@autoserializeAs(Number) subAccountId!: number;
 }
 
 export class SerializableAccountSnapshot implements AccountSnapshot {
-	@autoserializeUsing(BNSerializeAndDeserializeFns) authority: PublicKey;
-	@autoserializeUsing(BNSerializeAndDeserializeFns) user: PublicKey;
-	@autoserializeAs(Number) epochTs: number;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) authority!: PublicKey;
+	@autoserializeUsing(BNSerializeAndDeserializeFns) user!: PublicKey;
+	@autoserializeAs(Number) epochTs!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	totalAccountValue: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
@@ -1877,16 +1879,17 @@ export class SerializableAccountSnapshot implements AccountSnapshot {
 	cumulativeReferralReward: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	cumulativeReferralVolume: BN;
-	@autoserializeAs(Number) cumulativeReferralCount: number;
+	@autoserializeAs(Number) cumulativeReferralCount!: number;
 
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	cumulativeSettledPerpPnl: BN;
 }
 
 export class UISerializableAccountSnapshot implements UIAccountSnapshot {
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) authority: PublicKey;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
-	@autoserializeAs(Number) epochTs: number;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
+	authority!: PublicKey;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user!: PublicKey;
+	@autoserializeAs(Number) epochTs!: number;
 
 	@autoserializeUsing(QuoteBigNumSerializeAndDeserializeFns)
 	//@ts-ignore
@@ -1914,47 +1917,47 @@ export class UISerializableAccountSnapshot implements UIAccountSnapshot {
 	//@ts-ignore
 	cumulativeSettledPerpPnl: BigNum;
 
-	@autoserializeAs(Number) cumulativeReferralCount: number;
+	@autoserializeAs(Number) cumulativeReferralCount!: number;
 }
 
 export class SerializableDlobOrder {
-	@autoserializeAs(String) user: string;
-	@autoserializeAs(UISerializableOrder) order: UISerializableOrder;
+	@autoserializeAs(String) user!: string;
+	@autoserializeAs(UISerializableOrder) order!: UISerializableOrder;
 }
 
 export class SerializableDlobOracleInfo {
-	@autoserializeAs(Number) marketIndex: number;
-	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns) price: BigNum;
+	@autoserializeAs(Number) marketIndex!: number;
+	@autoserializeUsing(PriceBigNumSerializeAndDeserializeFns) price!: BigNum;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) slot: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) confidence: BN;
-	@autoserializeAs(Boolean) hasSufficientNumberOfDataPoints: boolean;
+	@autoserializeAs(Boolean) hasSufficientNumberOfDataPoints!: boolean;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) twap: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) twapConfidence: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) maxPrice?: BN;
 }
 
 export class SerializableDLOBState {
-	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(Number) slot!: number;
 	@autoserializeAsArray(SerializableDlobOracleInfo)
-	oracles: SerializableDlobOracleInfo[];
-	@autoserializeAsArray(SerializableDlobOrder) orders: SerializableDlobOrder[];
+	oracles!: SerializableDlobOracleInfo[];
+	@autoserializeAsArray(SerializableDlobOrder) orders!: SerializableDlobOrder[];
 }
 
 export class CompetitionResultEntry {
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) wallet: PublicKey;
-	@autoserializeAs(Number) value: number;
-	@autoserializeAs(Number) rank: number;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) wallet!: PublicKey;
+	@autoserializeAs(Number) value!: number;
+	@autoserializeAs(Number) rank!: number;
 	@autoserializeAsJson() metadata?: any;
 }
 
 export class CompetitionResult {
-	@autoserializeAs(String) competitionName: string;
-	@autoserializeAs(String) lastUpdate: string;
-	@autoserializeAs(Number) lastUpdateTs: number;
-	@autoserializeAs(Number) startTs: number;
-	@autoserializeAs(Number) endTs: number;
+	@autoserializeAs(String) competitionName!: string;
+	@autoserializeAs(String) lastUpdate!: string;
+	@autoserializeAs(Number) lastUpdateTs!: number;
+	@autoserializeAs(Number) startTs!: number;
+	@autoserializeAs(Number) endTs!: number;
 	@autoserializeAsArray(CompetitionResultEntry)
-	results: CompetitionResultEntry[];
+	results!: CompetitionResultEntry[];
 	@autoserializeAs(CompetitionResultEntry)
 	requestedAuthorityResult?: CompetitionResultEntry;
 }
@@ -1965,13 +1968,13 @@ export class SerializableInsuranceFundRecord
 	implements InsuranceFundRecordEvent
 {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
-	@autoserializeAs(Number) spotMarketIndex: number;
-	@autoserializeAs(Number) perpMarketIndex: number;
-	@autoserializeAs(Number) userIfFactor: number;
-	@autoserializeAs(Number) totalIfFactor: number;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) txSigIndex!: number;
+	@autoserializeAs(Number) slot!: number;
+	@autoserializeAs(Number) spotMarketIndex!: number;
+	@autoserializeAs(Number) perpMarketIndex!: number;
+	@autoserializeAs(Number) userIfFactor!: number;
+	@autoserializeAs(Number) totalIfFactor!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) vaultAmountBefore: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	insuranceVaultAmountBefore: BN;
@@ -2026,14 +2029,14 @@ export class SerializableInsuranceFundStakeRecord
 	implements InsuranceFundStakeRecordEvent
 {
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) txSigIndex!: number;
+	@autoserializeAs(Number) slot!: number;
 	@autoserializeUsing(PublicKeySerializeAndDeserializeFns)
-	userAuthority: PublicKey;
-	@autoserializeUsing(EnumSerializeAndDeserializeFns) action: StakeAction;
+	userAuthority!: PublicKey;
+	@autoserializeUsing(EnumSerializeAndDeserializeFns) action!: StakeAction;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) amount: BN;
-	@autoserializeAs(Number) marketIndex: number;
+	@autoserializeAs(Number) marketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns)
 	insuranceVaultAmountBefore: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ifSharesBefore: BN;
@@ -2097,16 +2100,16 @@ export class UISerializableInsuranceFundStakeRecord extends SerializableInsuranc
 export type SwapRecordEvent = Event<SwapRecord>;
 
 export class SerializableSwapRecord implements SwapRecordEvent {
-	@autoserializeAs(Number) id: number;
-	@autoserializeAs(String) txSig: string;
-	@autoserializeAs(Number) txSigIndex: number;
-	@autoserializeAs(Number) slot: number;
+	@autoserializeAs(Number) id!: number;
+	@autoserializeAs(String) txSig!: string;
+	@autoserializeAs(Number) txSigIndex!: number;
+	@autoserializeAs(Number) slot!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) ts: BN;
-	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user: PublicKey;
+	@autoserializeUsing(PublicKeySerializeAndDeserializeFns) user!: PublicKey;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) amountOut: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) amountIn: BN;
-	@autoserializeAs(Number) outMarketIndex: number;
-	@autoserializeAs(Number) inMarketIndex: number;
+	@autoserializeAs(Number) outMarketIndex!: number;
+	@autoserializeAs(Number) inMarketIndex!: number;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) outOraclePrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) inOraclePrice: BN;
 	@autoserializeUsing(BNSerializeAndDeserializeFns) fee: BN;
@@ -2153,7 +2156,7 @@ export function transformDataApiOrderRecordToUISerializableOrderRecord(
 	const deserializedV2Record = Deserialize(
 		v2Record,
 		UISerializableOrderRecordV2
-	);
+	)!;
 
 	const transformedRecord: UISerializableOrderRecord = {
 		eventType: 'OrderRecord',
@@ -2203,7 +2206,7 @@ export function transformDataApiOrderRecordToSerializableOrderRecord(
 	const deserializedV2Record = Deserialize(
 		v2Record,
 		UISerializableOrderRecordV2
-	);
+	)!;
 
 	const transformedRecord: SerializableOrderRecord = {
 		eventType: 'OrderRecord',
@@ -2252,7 +2255,7 @@ export function transformDataApiOrderActionRecordToUISerializableOrderActionReco
 	const deserializedV2Record = Deserialize(
 		{ ...v2Record, eventType: 'OrderActionRecord' },
 		UISerializableOrderActionRecordV2
-	);
+	)!;
 
 	const transformedRecord: UISerializableOrderActionRecord = {
 		...deserializedV2Record,
@@ -2268,7 +2271,7 @@ export function transformDataApiPositionHistoryRecordToUISerializablePositionHis
 		const deserializedV2Record = Deserialize(
 			{ ...v2Record, eventType: 'PositionHistoryRecord' },
 			UISerializablePositionHistoryRecord
-		);
+		)!;
 		const transformedRecord: UISerializablePositionHistoryRecord = {
 			...deserializedV2Record,
 		};
@@ -2292,7 +2295,7 @@ export function transformDataApiOrderActionRecordToSerializableOrderActionRecord
 			eventType: 'OrderActionRecord',
 		},
 		UISerializableOrderActionRecordV2
-	);
+	)!;
 
 	const transformedRecord: SerializableOrderActionRecord = {
 		...deserializedV2Record,
@@ -2345,7 +2348,7 @@ export function transformDataApiLiquidationRecordToUISerializableLiquidationReco
 	const deserializedV2Record = Deserialize(
 		v2Record,
 		UISerializableLiquidationRecordV2
-	);
+	)!;
 
 	const transformedRecord: UISerializableLiquidationRecord = {
 		liquidationId: deserializedV2Record.liquidationId,

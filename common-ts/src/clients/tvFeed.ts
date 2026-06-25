@@ -55,6 +55,8 @@ const tvResolutionStringToStandardResolutionString = (
 		case 'M':
 		case '1M':
 			return 'M';
+		default:
+			return tvResolutionString as CandleResolution;
 	}
 };
 
@@ -170,8 +172,8 @@ const PerpMarketConfigToTVMarketInfo = (
 ): TVMarketInfo => {
 	return {
 		symbol: marketConfig.symbol,
-		full_name: marketConfig.fullName,
-		description: marketConfig.fullName,
+		full_name: marketConfig.fullName ?? marketConfig.symbol,
+		description: marketConfig.fullName ?? marketConfig.symbol,
 		exchange: 'Velocity',
 		ticker: marketConfig.symbol,
 		type: 'crypto',
@@ -201,7 +203,7 @@ export class VelocityTvFeed {
 	private candleType: CandleType;
 	private candleClient: CandleClient;
 	private velocityClient: VelocityClient;
-	private onResetCache: () => void;
+	private onResetCache!: () => void;
 	private perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
 	private positiveColor: string;
@@ -324,11 +326,11 @@ export class VelocityTvFeed {
 
 				if (targetMarket.type === 'perp') {
 					tickSize = this.velocityClient
-						.getPerpMarketAccount(targetMarket.config.marketIndex)
+						.getPerpMarketAccountOrThrow(targetMarket.config.marketIndex)
 						.orderTickSize.toNumber();
 				} else {
 					tickSize = this.velocityClient
-						.getSpotMarketAccount(targetMarket.config.marketIndex)
+						.getSpotMarketAccountOrThrow(targetMarket.config.marketIndex)
 						.orderTickSize.toNumber();
 				}
 
@@ -451,7 +453,7 @@ export class VelocityTvFeed {
 			const currentUserIsMaker = trade.maker === currentUserAccount;
 			const currentUserIsTaker = trade.taker === currentUserAccount;
 
-			let isLong: boolean;
+			let isLong: boolean = false;
 			if (currentUserIsMaker) {
 				isLong = trade.makerOrderDirection === 'long';
 			} else if (currentUserIsTaker) {
