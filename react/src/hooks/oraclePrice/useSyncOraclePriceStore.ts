@@ -84,7 +84,7 @@ export const useSyncOraclePriceStore = (
 		if (!driftClient) return;
 
 		ORACLE_CLIENT_KEYS.forEach((oracleSourceKey) => {
-			const oracleSource = ENUM_UTILS.toObj(oracleSourceKey);
+			const oracleSource = ENUM_UTILS.toObj(oracleSourceKey) as OracleSource;
 			const oracleClient = getOracleClient(
 				oracleSource,
 				connection,

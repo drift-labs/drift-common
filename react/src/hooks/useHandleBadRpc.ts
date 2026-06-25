@@ -19,7 +19,7 @@ export const useHandleBadRpc = (changeRpcCallback?: () => void) => {
 			if (!currentRpc) return;
 
 			getResponseTime(currentRpc.value).then((responseTime) => {
-				if (responseTime < 1) {
+				if (responseTime !== null && responseTime < 1) {
 					invalidRpcsRef.current.push(currentRpc.value);
 
 					const otherRpcs = rpcEndpoints.filter(
