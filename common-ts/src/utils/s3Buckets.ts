@@ -51,7 +51,10 @@ export const getFileRedisKeyFromParams = (
 ): string => {
 	return Object.keys(downloadRequestParams)
 		.sort((a, b) => a.localeCompare(b))
-		.map((sortedKey) => downloadRequestParams[sortedKey])
+		.map(
+			(sortedKey) =>
+				downloadRequestParams[sortedKey as keyof DownloadRequestParams]
+		)
 		.filter((val) => val !== undefined)
 		.join(':');
 };
@@ -82,7 +85,7 @@ export const getDateRangeFromSelection = (
 	downloadPeriod: DownloadPeriod,
 	customOpts?: { day?: number; month?: number; year: number }
 ): { from: string; to: string } => {
-	let from, to;
+	let from: string | undefined, to: string | undefined;
 	const now = new Date();
 
 	switch (downloadPeriod) {
@@ -140,19 +143,23 @@ export const getDateRangeFromSelection = (
 						new Date(customOpts.year, customOpts.month + 1, 0)
 					);
 				}
-			} else {
+			} else if (
+				customOpts.month !== undefined &&
+				customOpts.day !== undefined
+			) {
 				// request a day
 				from = dateToS3DateString(
 					new Date(customOpts.year, customOpts.month, customOpts.day)
 				);
-				to = dateToS3DateString(
-					new Date(customOpts.year, customOpts.month, customOpts.day)
-				);
+				to = from;
+			} else {
+				console.error('Requested a custom day range without providing a month');
+				break;
 			}
 			break;
 	}
 
-	return { from, to };
+	return { from: from ?? '', to: to ?? '' };
 };
 
 const getLeaderboardFilename = (

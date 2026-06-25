@@ -265,7 +265,7 @@ export async function fetchAuctionOrderParamsFromL2({
 	assetType,
 	amount,
 	reduceOnly,
-	optionalAuctionParamsInputs,
+	optionalAuctionParamsInputs = {},
 	velocityClient,
 	dynamicSlippageConfig,
 }: RegularOrderParams): Promise<OptionalOrderParams> {
@@ -324,24 +324,27 @@ export async function fetchAuctionOrderParamsFromL2({
 		marketType: marketType,
 		marketIndex: marketIndex,
 		direction: direction,
-		maxLeverageSelected: optionalAuctionParamsInputs.maxLeverageSelected,
-		maxLeverageOrderSize: optionalAuctionParamsInputs.maxLeverageOrderSize,
+		maxLeverageSelected:
+			optionalAuctionParamsInputs.maxLeverageSelected ?? false,
+		maxLeverageOrderSize:
+			optionalAuctionParamsInputs.maxLeverageOrderSize ?? new BN(0),
 		baseAmount: baseAmount,
-		reduceOnly: reduceOnly,
+		reduceOnly: reduceOnly ?? false,
 		allowInfSlippage: false,
 		oraclePrice: oraclePriceBn,
 		bestPrice: priceImpactData.bestPrice,
 		entryPrice: priceImpactData.entryPrice,
 		worstPrice: priceImpactData.worstPrice,
 		markPrice: markPriceBn,
-		auctionDuration: optionalAuctionParamsInputs.auctionDuration,
+		auctionDuration: optionalAuctionParamsInputs.auctionDuration ?? 0,
 		auctionStartPriceOffset:
-			optionalAuctionParamsInputs.auctionStartPriceOffset,
-		auctionEndPriceOffset: optionalAuctionParamsInputs.auctionEndPriceOffset,
+			optionalAuctionParamsInputs.auctionStartPriceOffset ?? 0,
+		auctionEndPriceOffset:
+			optionalAuctionParamsInputs.auctionEndPriceOffset ?? 0,
 		auctionStartPriceOffsetFrom:
-			optionalAuctionParamsInputs.auctionStartPriceOffsetFrom,
+			optionalAuctionParamsInputs.auctionStartPriceOffsetFrom ?? 'oracle',
 		auctionEndPriceOffsetFrom:
-			optionalAuctionParamsInputs.auctionEndPriceOffsetFrom,
+			optionalAuctionParamsInputs.auctionEndPriceOffsetFrom ?? 'worst',
 		slippageTolerance: derivedSlippage,
 		isOracleOrder: optionalAuctionParamsInputs.isOracleOrder,
 		additionalEndPriceBuffer:

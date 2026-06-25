@@ -14,8 +14,8 @@
 		"emitDecoratorMetadata": true,
 		"baseUrl": ".",
 		"moduleResolution": "node",
-		"outDir": "./lib"
-		// "strictNullChecks": true // TODO: we should enable this
+		"outDir": "./lib",
+		"strict": true
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules"]

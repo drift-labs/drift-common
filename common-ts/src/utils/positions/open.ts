@@ -40,11 +40,11 @@ const getOpenPositionData = (
 		)
 		.map((position) => {
 			const perpMarketConfig = perpMarketLookup[position.marketIndex];
-			const perpMarket = velocityClient.getPerpMarketAccount(
+			const perpMarket = velocityClient.getPerpMarketAccountOrThrow(
 				position.marketIndex
 			);
 
-			const usdcSpotMarket = velocityClient.getSpotMarketAccount(
+			const usdcSpotMarket = velocityClient.getSpotMarketAccountOrThrow(
 				QUOTE_SPOT_MARKET_INDEX
 			);
 

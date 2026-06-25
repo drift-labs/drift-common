@@ -79,6 +79,11 @@ const getMarketSymbolForMarketId = (marketId: MarketId, uiEnv: UIEnv) => {
 		const targetMarketConfig = marketConfigs.find(
 			(config) => config.marketIndex === marketId.marketIndex
 		);
+		if (!targetMarketConfig) {
+			throw new Error(
+				`No market config found for market index ${marketId.marketIndex}`
+			);
+		}
 		return targetMarketConfig.symbol as MarketSymbol;
 	} else {
 		const marketConfigs =
@@ -86,6 +91,11 @@ const getMarketSymbolForMarketId = (marketId: MarketId, uiEnv: UIEnv) => {
 		const targetMarketConfig = marketConfigs.find(
 			(config) => config.marketIndex === marketId.marketIndex
 		);
+		if (!targetMarketConfig) {
+			throw new Error(
+				`No market config found for market index ${marketId.marketIndex}`
+			);
+		}
 		return targetMarketConfig.symbol as MarketSymbol;
 	}
 };
@@ -469,7 +479,7 @@ class CandleFetcher {
 }
 
 class CandleSubscriber {
-	private subscription: CandleSubscriberSubscription;
+	private subscription!: CandleSubscriberSubscription;
 
 	constructor(
 		readonly config: CandleSubscriptionConfig,

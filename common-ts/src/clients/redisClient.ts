@@ -23,7 +23,7 @@ function isWrite() {
 
 		const methodName = propertyKey;
 
-		descriptor.value = function (...args) {
+		descriptor.value = function (...args: unknown[]) {
 			if (process.env.DISABLE_CACHE_WRITE) {
 				console.log(`DISABLE_CACHE_WRITE=true :: Skipping ${methodName}`);
 				return;
@@ -56,7 +56,7 @@ const getTlsConfiguration = () => {
 	if (process.env.RUNNING_LOCAL === 'true') {
 		console.log('Redis: Running LOCAL with REMOTE cache');
 		return {
-			checkServerIdentity: () => {
+			checkServerIdentity: (): undefined => {
 				return undefined;
 			},
 		};
@@ -216,7 +216,7 @@ export class RedisClient {
 	private client: Redis | Cluster;
 	private prefix: RedisClientPrefix;
 
-	connectionPromise: Promise<void>;
+	connectionPromise!: Promise<void>;
 
 	constructor({
 		host = process.env.ELASTICACHE_HOST ?? 'localhost',
@@ -302,13 +302,13 @@ export class RedisClient {
 	 * @param value
 	 */
 	@isWrite()
-	async set(key: string, value) {
+	async set(key: string, value: unknown) {
 		this.assertConnected();
 		this.client.set(key, JSON.stringify(value));
 	}
 
 	@isWrite()
-	async setRaw(key: string, value) {
+	async setRaw(key: string, value: string | Buffer | number) {
 		this.assertConnected();
 		this.client.set(key, value);
 	}
@@ -338,7 +338,7 @@ export class RedisClient {
 	}
 
 	@isWrite()
-	async setExpiring(key: string, value, expirySeconds: number) {
+	async setExpiring(key: string, value: unknown, expirySeconds: number) {
 		this.assertConnected();
 		const resp = await this.client.setex(
 			key,
@@ -379,7 +379,7 @@ export class RedisClient {
 	@isRead
 	async get<T = string | number | Record<string, unknown> | undefined>(
 		key: string
-	): Promise<T> {
+	): Promise<T | undefined> {
 		this.assertConnected();
 
 		const value = await this.client.get(key);
@@ -557,7 +557,7 @@ export class RedisClient {
 		return resp;
 	}
 	@isWrite()
-	async publish(key: string, value) {
+	async publish(key: string, value: unknown) {
 		const resp = await this.client.publish(key, JSON.stringify(value));
 		return resp;
 	}

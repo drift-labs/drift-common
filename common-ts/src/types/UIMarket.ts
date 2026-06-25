@@ -88,7 +88,7 @@ export class UIMarket {
 	readonly market: SpotMarketConfig | PerpMarketConfig;
 	readonly marketId: MarketId;
 
-	private _uiSymbols: UISymbols;
+	private _uiSymbols!: UISymbols;
 
 	get uiSymbols() {
 		return this._uiSymbols;

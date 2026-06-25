@@ -33,7 +33,7 @@ const resolutions = [
 ];
 
 const tvResolutionStringToStandardResolutionString = (
-	tvResolutionString
+	tvResolutionString: string
 ): CandleResolution => {
 	switch (tvResolutionString) {
 		case '1':
@@ -55,6 +55,8 @@ const tvResolutionStringToStandardResolutionString = (
 		case 'M':
 		case '1M':
 			return 'M';
+		default:
+			return tvResolutionString as CandleResolution;
 	}
 };
 
@@ -67,7 +69,15 @@ type TVMarketInfo = {
 	type: string;
 };
 
-const DATAFEED_CONFIG = {
+const DATAFEED_CONFIG: {
+	exchanges: string[];
+	supported_resolutions: string[];
+	currency_codes: string[];
+	supports_marks: boolean;
+	supports_time: boolean;
+	supports_timescale_marks: boolean;
+	symbols_types: string[];
+} = {
 	exchanges: [],
 	supported_resolutions: [...resolutions],
 	currency_codes: [],
@@ -162,8 +172,8 @@ const PerpMarketConfigToTVMarketInfo = (
 ): TVMarketInfo => {
 	return {
 		symbol: marketConfig.symbol,
-		full_name: marketConfig.fullName,
-		description: marketConfig.fullName,
+		full_name: marketConfig.fullName ?? marketConfig.symbol,
+		description: marketConfig.fullName ?? marketConfig.symbol,
 		exchange: 'Velocity',
 		ticker: marketConfig.symbol,
 		type: 'crypto',
@@ -193,7 +203,7 @@ export class VelocityTvFeed {
 	private candleType: CandleType;
 	private candleClient: CandleClient;
 	private velocityClient: VelocityClient;
-	private onResetCache: () => void;
+	private onResetCache!: () => void;
 	private perpMarketConfigs: PerpMarketConfig[];
 	private spotMarketConfigs: SpotMarketConfig[];
 	private positiveColor: string;
@@ -268,7 +278,7 @@ export class VelocityTvFeed {
 	};
 
 	// IExternalDatafeed implementation
-	onReady(callback) {
+	onReady(callback: (config: typeof DATAFEED_CONFIG) => void) {
 		// using setTimeout because tradingview wants this to resolve asynchronously
 		setTimeout(() => callback(DATAFEED_CONFIG), 0);
 	}
@@ -278,7 +288,7 @@ export class VelocityTvFeed {
 		userInput: string,
 		_exchange: string,
 		_symbolType: string,
-		onResult
+		onResult: (results: TVMarketInfo[]) => void
 	): void {
 		if (!userInput) return onResult([]);
 
@@ -287,7 +297,11 @@ export class VelocityTvFeed {
 		onResult(res);
 	}
 
-	resolveSymbol(symbolName: string, onResolve, onError): void {
+	resolveSymbol(
+		symbolName: string,
+		onResolve: (symbolInfo: Record<string, unknown>) => void,
+		onError: (reason: string) => void
+	): void {
 		const targetMarket = findMarketBySymbol(
 			symbolName,
 			this.perpMarketConfigs,
@@ -312,11 +326,11 @@ export class VelocityTvFeed {
 
 				if (targetMarket.type === 'perp') {
 					tickSize = this.velocityClient
-						.getPerpMarketAccount(targetMarket.config.marketIndex)
+						.getPerpMarketAccountOrThrow(targetMarket.config.marketIndex)
 						.orderTickSize.toNumber();
 				} else {
 					tickSize = this.velocityClient
-						.getSpotMarketAccount(targetMarket.config.marketIndex)
+						.getSpotMarketAccountOrThrow(targetMarket.config.marketIndex)
 						.orderTickSize.toNumber();
 				}
 
@@ -414,7 +428,13 @@ export class VelocityTvFeed {
 	}
 
 	// https://www.tradingview.com/charting-library-docs/latest/api/interfaces/Charting_Library.Mark/ reference for marks type
-	async getMarks(_symbolInfo, startDate, endDate, onDataCallback, _resolution) {
+	async getMarks(
+		_symbolInfo: unknown,
+		startDate: number,
+		endDate: number,
+		onDataCallback: (marks: unknown[]) => void,
+		_resolution: string
+	) {
 		if (!this.tvAppTradeDataManager) {
 			return;
 		}
@@ -433,7 +453,7 @@ export class VelocityTvFeed {
 			const currentUserIsMaker = trade.maker === currentUserAccount;
 			const currentUserIsTaker = trade.taker === currentUserAccount;
 
-			let isLong: boolean;
+			let isLong: boolean = false;
 			if (currentUserIsMaker) {
 				isLong = trade.makerOrderDirection === 'long';
 			} else if (currentUserIsTaker) {
@@ -499,7 +519,7 @@ export class VelocityTvFeed {
 				noData: boolean;
 			}
 		) => void,
-		_onError
+		_onError: (reason: string) => void
 	) {
 		// Can automatically return no data if the requested range is before the Velocity V2 launch
 		if (periodParams.to < VELOCITY_V2_START_TS) {
@@ -564,11 +584,11 @@ export class VelocityTvFeed {
 	}
 
 	async subscribeBars(
-		symbolInfo,
-		resolution,
-		onTick,
+		symbolInfo: { ticker: string },
+		resolution: string,
+		onTick: (bar: TVBar) => void,
 		subscriberGuid: string,
-		onResetCache
+		onResetCache: () => void
 	) {
 		this.onResetCache = onResetCache;
 

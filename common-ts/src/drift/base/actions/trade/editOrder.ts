@@ -117,12 +117,12 @@ export const createEditOrderIx = async (
 			reduceOnly: currentOrder.reduceOnly,
 			postOnly: currentOrder.postOnly,
 			orderConfig: limitAuctionOrderConfig,
-			positionMaxLeverage: editOrderParams.positionMaxLeverage,
+			positionMaxLeverage: editOrderParams.positionMaxLeverage ?? 0,
 		});
 
 		finalEditOrderParams = {
 			...editOrderParams,
-			auctionDuration: limitAuctionOrderParams.auctionDuration,
+			auctionDuration: limitAuctionOrderParams.auctionDuration ?? undefined,
 			auctionStartPrice: limitAuctionOrderParams.auctionStartPrice,
 			auctionEndPrice: limitAuctionOrderParams.auctionEndPrice,
 		};

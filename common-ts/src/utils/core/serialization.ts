@@ -32,14 +32,14 @@ const getStringifiableObjectEntry = (value: any): [any, string] => {
  * @param value
  * @returns
  */
-export const encodeStringifiableObject = (value: any) => {
+export const encodeStringifiableObject = (value: any): any => {
 	if (typeof value !== 'object') return value;
 
 	if (Array.isArray(value)) {
 		return value.map((entry) => encodeStringifiableObject(entry));
 	}
 
-	const buildJsonObject = {};
+	const buildJsonObject: Record<string, unknown> = {};
 
 	if (!value) return value;
 
@@ -65,18 +65,18 @@ export const encodeStringifiableObject = (value: any) => {
  * @param value
  * @returns
  */
-export const decodeStringifiableObject = (value: any) => {
+export const decodeStringifiableObject = (value: any): any => {
 	if (typeof value !== 'object') return value;
 
 	if (Array.isArray(value)) {
 		return value.map((entry) => decodeStringifiableObject(entry));
 	}
 
-	const buildJsonObject = {};
+	const buildJsonObject: Record<string, unknown> = {};
 
 	Object.entries(value).forEach(([key, val]) => {
 		if (key.match(/^_pbky_/)) {
-			buildJsonObject[key.replace('_pbky_', '')] = new PublicKey(val);
+			buildJsonObject[key.replace('_pbky_', '')] = new PublicKey(val as string);
 			return;
 		}
 

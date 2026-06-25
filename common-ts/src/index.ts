@@ -6,7 +6,6 @@ export * from './utils/logger';
 export * from './utils/featureFlags';
 export * from './utils/candles/Candle';
 export * from './utils/rpcLatency';
-export * from './utils/SharedInterval';
 export * from './utils/Stopwatch';
 export * from './utils/priority-fees';
 export * from './utils/priceImpact';

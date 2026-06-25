@@ -1,4 +1,4 @@
-export const matchEnum = (enum1: any, enum2) => {
+export const matchEnum = (enum1: any, enum2: any) => {
 	return JSON.stringify(enum1) === JSON.stringify(enum2);
 };
 

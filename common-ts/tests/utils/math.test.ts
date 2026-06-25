@@ -11,7 +11,7 @@ import {
 import { expect } from 'chai';
 
 // Mock data setup
-const createBN = (value) => new BN(value);
+const createBN = (value: number) => new BN(value);
 const BASIC_L2_ORDERBOOK: Pick<L2OrderBook, 'asks' | 'bids'> = {
 	bids: [
 		{ price: createBN(100), size: createBN(10), sources: {} },
