@@ -9,7 +9,7 @@ import { CandleType, JsonCandle, JsonTrade, MarketId } from '../types';
 import { UIEnv } from '../types/UIEnv';
 import { Candle } from '../utils/candles/Candle';
 import { PollingSequenceGuard } from '../utils/pollingSequenceGuard';
-import { CandleClient } from './candleClient';
+import { CandleClient, CandleClientConfig } from './candleClient';
 import { getBaseAssetSymbol } from '../utils/markets/config';
 
 const VELOCITY_V2_START_TS = 1668470400; // 15th November 2022 ... 2022-11-15T00:00:00.000Z
@@ -222,11 +222,12 @@ export class VelocityTvFeed {
 		negativeColor: string,
 		buySellMarkStrokeColor: string,
 		tvAppTradeDataManager?: TvAppTradeDataManager,
-		marketDecimalConfig?: MarketDecimalConfig
+		marketDecimalConfig?: MarketDecimalConfig,
+		candleClientConfig?: CandleClientConfig
 	) {
 		this.env = env;
 		this.candleType = candleType;
-		this.candleClient = new CandleClient();
+		this.candleClient = new CandleClient(candleClientConfig);
 		this.velocityClient = velocityClient;
 		this.perpMarketConfigs = perpMarketConfigs;
 		this.spotMarketConfigs = spotMarketConfigs;
