@@ -16,7 +16,7 @@ import {
 import { sign } from 'tweetnacl';
 import { CentralServerVelocity } from './Velocity/clients/CentralServerVelocity';
 import { ENUM_UTILS } from '../utils';
-import { API_URLS } from './constants/apiUrls';
+import { MAINNET_API_URLS } from './constants/apiUrls';
 import * as path from 'path';
 import {
 	NonMarketOrderType,
@@ -633,7 +633,7 @@ async function openPerpMarketOrderCommand(args: CliArgs): Promise<void> {
 	const direction = args.direction as string;
 	const amount = args.amount as string;
 	const assetType = (args.assetType as string) || 'base';
-	const dlobServerHttpUrl = API_URLS.DLOB;
+	const dlobServerHttpUrl = MAINNET_API_URLS.DLOB;
 
 	if (!userAccount || isNaN(marketIndex) || !direction || !amount) {
 		throw new Error(
@@ -678,8 +678,9 @@ async function openPerpMarketOrderSwiftCommand(args: CliArgs): Promise<void> {
 	const direction = args.direction as string;
 	const amount = args.amount as string;
 	const assetType = (args.assetType as string) || 'base';
-	const dlobServerHttpUrl = API_URLS.DLOB;
-	const swiftServerUrl = (args.swiftServerUrl as string) || API_URLS.SWIFT;
+	const dlobServerHttpUrl = MAINNET_API_URLS.DLOB;
+	const swiftServerUrl =
+		(args.swiftServerUrl as string) || MAINNET_API_URLS.SWIFT;
 
 	if (!userAccount || isNaN(marketIndex) || !direction || !amount) {
 		throw new Error(
@@ -871,7 +872,7 @@ async function openPerpNonMarketOrderSwiftCommand(
 	const limitPrice = args.limitPrice as string;
 	const reduceOnly = (args.reduceOnly as string) === 'true';
 	const postOnly = (args.postOnly as string) || 'none';
-	const swiftServerUrl = API_URLS.SWIFT;
+	const swiftServerUrl = MAINNET_API_URLS.SWIFT;
 
 	if (!userAccount || isNaN(marketIndex) || !direction || !orderType) {
 		throw new Error(

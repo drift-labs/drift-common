@@ -4,21 +4,23 @@
  * These constants define the URLs used within the velocity directory for various Velocity services.
  */
 
-export const API_URLS = {
+import { EnvironmentConstants } from '../../EnvironmentConstants';
+
+export const MAINNET_API_URLS = {
 	/**
 	 * Data API - Used for historical data, funding rates, candles, etc.
 	 */
-	DATA_API: 'https://data.api.drift.trade',
+	DATA_API: EnvironmentConstants.dataServerUrl.mainnet,
 
 	/**
 	 * DLOB (Decentralized Limit Order Book) Server - Used for auction parameters, priority fees, etc.
 	 */
-	DLOB: 'https://dlob.drift.trade',
+	DLOB: EnvironmentConstants.dlobServerHttpUrl.mainnet,
 
 	/**
 	 * Swift Server - Used for signed message (gasless) orders
 	 */
-	SWIFT: 'https://swift.drift.trade',
+	SWIFT: EnvironmentConstants.swiftServerUrl.mainnet,
 } as const;
 
 /**

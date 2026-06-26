@@ -1,6 +1,7 @@
+import { MAINNET_API_URLS } from '../drift/constants/apiUrls';
 import { MarketId } from 'src/types';
 
-const FEE_ENDPOINT = 'https://dlob.drift.trade/batchPriorityFees';
+const FEE_ENDPOINT = `${MAINNET_API_URLS.DLOB}/batchPriorityFees`;
 
 export const getPriorityFeeLevelFromPercentile = (percentile: number) => {
 	if (percentile < 0 || percentile > 100) {
@@ -46,7 +47,8 @@ export const getHeliusPriorityFeeEstimate = async (
 		| 'medium'
 		| 'high'
 		| 'veryHigh'
-		| 'unsafeMax' = 'high'
+		| 'unsafeMax' = 'high',
+	endpoint = FEE_ENDPOINT
 ): Promise<number[]> => {
 	try {
 		if (!marketIds?.length) {
@@ -64,7 +66,7 @@ export const getHeliusPriorityFeeEstimate = async (
 			});
 		const queryParamsString = `${queryParams.join('&')}`;
 
-		const response = await fetch(`${FEE_ENDPOINT}?${queryParamsString}`, {
+		const response = await fetch(`${endpoint}?${queryParamsString}`, {
 			headers: { 'Content-Type': 'application/json' },
 		});
 

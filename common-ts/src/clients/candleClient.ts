@@ -38,6 +38,24 @@ import { CandleSubscriberSubscription, MarketDataFeed } from './marketDataFeed';
  * - Create a more advanced cache which can store more than the most recent 1000 candles, dynamically growing as more candles are added (for now seems unnecessary, rare for someone to go back further than 1000 candles)
  */
 
+/**
+ * Optional configuration for the CandleClient.
+ */
+export type CandleClientConfig = {
+	/**
+	 * Optional override for the base data API URL used when fetching candles over HTTP
+	 * (e.g. `https://data.velocity.exchange` or a same-origin path like `/api/data-proxy/dev`).
+	 *
+	 * When omitted, the URL is derived from EnvironmentConstants using the `env` passed to
+	 * each fetch. Useful in local dev to route candle requests through a same-origin proxy
+	 * to avoid CORS restrictions.
+	 *
+	 * Note: this only affects the HTTP candle fetch endpoint. Websocket candle
+	 * subscriptions are handled separately via the MarketDataFeed.
+	 */
+	dataApiUrl?: string;
+};
+
 // Used by the subscriber client to fetch candles from the data API
 type CandleFetchConfig = {
 	env: UIEnv;
@@ -45,6 +63,7 @@ type CandleFetchConfig = {
 	resolution: CandleResolution;
 	fromTs: number; // Seconds
 	toTs: number; // Seconds
+	dataApiUrl?: string; // Optional base data API URL override
 };
 
 // Used by the subscriber client to subscribe to the candles websocket endpoint
@@ -61,6 +80,7 @@ type CandleFetchUrlConfig = {
 	resolution: CandleResolution;
 	startTs?: number; // Seconds - now optional
 	countToFetch: number;
+	dataApiUrl?: string; // Optional base data API URL override
 };
 
 type CandleFetchResponseJson = {
@@ -103,11 +123,15 @@ const getMarketSymbolForMarketId = (marketId: MarketId, uiEnv: UIEnv) => {
 // This is the maximum number of candles that can be fetched in a single GET request
 const CANDLE_FETCH_LIMIT = 1000;
 
-const getBaseDataApiUrl = (env: UIEnv) => {
+const getBaseDataApiUrl = (env: UIEnv, dataApiUrlOverride?: string) => {
+	if (dataApiUrlOverride) {
+		// Strip any trailing slash so the path can be appended safely.
+		return dataApiUrlOverride.replace(/\/$/, '');
+	}
+
 	const constantEnv: keyof typeof EnvironmentConstants.dataServerUrl =
 		env.isStaging ? 'staging' : env.isDevnet ? 'dev' : 'mainnet';
-	const dataApiUrl = EnvironmentConstants.dataServerUrl[constantEnv];
-	return dataApiUrl.replace('https://', '');
+	return EnvironmentConstants.dataServerUrl[constantEnv];
 };
 
 const getCandleFetchUrl = ({
@@ -116,10 +140,11 @@ const getCandleFetchUrl = ({
 	resolution,
 	startTs,
 	countToFetch,
+	dataApiUrl,
 }: CandleFetchUrlConfig) => {
-	const baseDataApiUrl = getBaseDataApiUrl(env);
+	const baseDataApiUrl = getBaseDataApiUrl(env, dataApiUrl);
 
-	let fetchUrl = `https://${baseDataApiUrl}/market/${getMarketSymbolForMarketId(
+	let fetchUrl = `${baseDataApiUrl}/market/${getMarketSymbolForMarketId(
 		marketId,
 		env
 	)}/candles/${resolution}?limit=${Math.min(countToFetch, CANDLE_FETCH_LIMIT)}`;
@@ -264,6 +289,7 @@ class CandleFetcher {
 			marketId: this.config.marketId,
 			resolution: this.config.resolution,
 			countToFetch: CANDLE_FETCH_LIMIT, // Ask for max candles to ensure we get enough
+			dataApiUrl: this.config.dataApiUrl,
 		});
 
 		// Get the candles and reverse them (into ascending order)
@@ -397,6 +423,7 @@ class CandleFetcher {
 			resolution: this.config.resolution,
 			startTs: currentStartTs, // Include startTs for historical candles
 			countToFetch: candlesToFetch,
+			dataApiUrl: this.config.dataApiUrl,
 		});
 
 		const fetchedCandles = await this.fetchCandlesFromApi(fetchUrl);
@@ -521,6 +548,12 @@ export class CandleClient {
 		}
 	> = new Map();
 
+	private readonly dataApiUrl?: string;
+
+	constructor(config?: CandleClientConfig) {
+		this.dataApiUrl = config?.dataApiUrl;
+	}
+
 	public subscribe = async (
 		config: CandleSubscriptionConfig,
 		subscriptionKey: string
@@ -572,7 +605,10 @@ export class CandleClient {
 				nowSeconds * 1000
 			).toISOString()})`
 		);
-		const candleFetcher = new CandleFetcher(config);
+		const candleFetcher = new CandleFetcher({
+			...config,
+			dataApiUrl: config.dataApiUrl ?? this.dataApiUrl,
+		});
 		const candles = await candleFetcher.fetchCandles();
 		return candles;
 	};
