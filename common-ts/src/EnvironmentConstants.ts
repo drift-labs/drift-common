@@ -40,8 +40,8 @@ export const EnvironmentConstants = {
 	},
 	historyServerUrl: {
 		dev: 'https://master.api.drift.trade',
-		mainnet: 'https://mainnet-beta.api.drift.trade',
 		staging: 'https://staging.api.drift.trade',
+		mainnet: 'https://mainnet-beta.api.drift.trade',
 	},
 	dataServerUrl: {
 		dev: 'https://data.master.velocity.exchange',
@@ -59,11 +59,11 @@ export const EnvironmentConstants = {
 		mainnet: 'wss://dlob.velocity.exchange/ws',
 	},
 	eventsServerUrl: {
-		staging: 'wss://events.velocity.exchange/ws',
+		dev: 'wss://events.master.velocity.exchange/ws',
 		mainnet: 'wss://events.velocity.exchange/ws',
 	},
 	swiftServerUrl: {
-		staging: 'https://swift.master.velocity.exchange',
+		dev: 'https://swift.master.velocity.exchange',
 		mainnet: 'https://swift.velocity.exchange',
 	},
 };
