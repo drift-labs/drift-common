@@ -263,7 +263,7 @@ export class AuthorityVelocity {
 			];
 		const swiftServerUrlToUse =
 			EnvironmentConstants.swiftServerUrl[
-				config.velocityEnv === 'devnet' ? 'staging' : 'mainnet'
+				config.velocityEnv === 'devnet' ? 'dev' : 'mainnet'
 			];
 		const orderbookWebsocketUrlToUse =
 			config.orderbookConfig?.dlobWebSocketUrl ??

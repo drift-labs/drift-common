@@ -226,7 +226,7 @@ export class CentralServerVelocity {
 			];
 		const swiftServerUrlToUse =
 			EnvironmentConstants.swiftServerUrl[
-				config.velocityEnv === 'devnet' ? 'staging' : 'mainnet'
+				config.velocityEnv === 'devnet' ? 'dev' : 'mainnet'
 			];
 		this._velocityEndpoints = {
 			dlobServerHttpUrl: velocityDlobServerHttpUrlToUse,
