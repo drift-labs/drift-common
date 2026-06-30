@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/velocity-exchange/drift-common/compare/icons-v1.0.1...icons-v1.0.2) (2026-06-30)
+
+
+### Code Refactoring
+
+* **icons:** update icons list ([8ae7cbb](https://github.com/velocity-exchange/drift-common/commit/8ae7cbb74afe92b98ea6fe5142538d8fff8648d4))
+
 ## [1.0.1](https://github.com/velocity-exchange/drift-common/compare/icons-v1.0.0...icons-v1.0.1) (2026-06-19)
 
 
