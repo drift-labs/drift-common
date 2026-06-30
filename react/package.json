@@ -39,7 +39,7 @@
 	},
 	"dependencies": {
 		"@velocity-exchange/icons": "file:../icons",
-		"@drift/common": "file:../common-ts",
+		"@drift/common": "npm:@velocity-exchange/common@0.1.5",
 		"@floating-ui/react": "0.27.9",
 		"@solana/wallet-adapter-base": "0.9.23",
 		"@solana/wallet-adapter-react": "0.15.35",
