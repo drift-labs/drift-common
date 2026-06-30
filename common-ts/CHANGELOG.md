@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/velocity-exchange/drift-common/compare/common-ts-v0.1.5...common-ts-v0.1.6) (2026-06-30)
+
+
+### Code Refactoring
+
+* **common-ts:** update bun.lock ([fd7d199](https://github.com/velocity-exchange/drift-common/commit/fd7d19915e944266018e7104b819cf04e5215578))
+
 ## [0.1.5](https://github.com/velocity-exchange/drift-common/compare/common-ts-v0.1.4...common-ts-v0.1.5) (2026-06-30)
 
 
