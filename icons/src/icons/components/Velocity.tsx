@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const Phone = (allProps: IconProps) => {
+const Velocity = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
@@ -14,7 +14,7 @@ const Phone = (allProps: IconProps) => {
 					{...props}
 				>
 					<path
-						d="M16.517 2C17.888 2 19 3.146 19 4.559V19.44C19 20.854 17.888 22 16.517 22H7.483C6.112 22 5 20.854 5 19.441V4.56C5 3.146 6.112 2 7.483 2h9.034zM7.483 3.396c-.623 0-1.129.52-1.129 1.163V19.44c0 .642.506 1.163 1.13 1.164h9.033c.623 0 1.128-.522 1.128-1.164V4.56c0-.642-.505-1.163-1.128-1.163H7.483zM12 17a1 1 0 110 2 1 1 0 010-2z"
+						d="M9.684 6.108a.167.167 0 00.156.225h2.281c.108 0 .188.101.162.206l-1.447 5.933c-.042.172.176.282.29.147l5.217-6.226a.167.167 0 01.128-.06h3.346c.142 0 .22.168.126.276L6.707 22H5.465l2.82-11.794A.167.167 0 008.121 10H4.185a.167.167 0 01-.13-.272L10.368 2h.874L9.684 6.108z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
@@ -23,4 +23,4 @@ const Phone = (allProps: IconProps) => {
 		/>
 	);
 };
-export default Phone;
+export default Velocity;

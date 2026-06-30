@@ -15,7 +15,13 @@ const MouseClick = (allProps: IconProps) => {
 				>
 					<path
 						d="M9 9l5 12 1.8-5.2L21 14 9 9zM7.2 2.2L8 5.1l-.8-2.9zM5.1 8l-2.9-.8 2.9.8zM14 4.1L12 6l2-1.9zM6 12l-1.9 2L6 12z"
-						fill="#000"
+						fill={allProps.color ? allProps.color : 'currentColor'}
+					/>
+					<path
+						d="M7.2 2.2L8 5.1M5.1 8l-2.9-.8M14 4.1L12 6m-6 6l-1.9 2M9 9l5 12 1.8-5.2L21 14 9 9z"
+						stroke={allProps.color ? allProps.color : 'currentColor'}
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 					<path
 						fillRule="evenodd"

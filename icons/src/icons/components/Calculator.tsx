@@ -14,15 +14,7 @@ const Calculator = (allProps: IconProps) => {
 					{...props}
 				>
 					<path
-						fillRule="evenodd"
-						clipRule="evenodd"
-						d="M3.25 7A.75.75 0 014 6.25h6a.75.75 0 010 1.5H4A.75.75 0 013.25 7z"
-						fill={allProps.color ? allProps.color : 'currentColor'}
-					/>
-					<path
-						fillRule="evenodd"
-						clipRule="evenodd"
-						d="M7 3.25a.75.75 0 01.75.75v6a.75.75 0 01-1.5 0V4A.75.75 0 017 3.25zM13.25 18a.75.75 0 01.75-.75h6a.75.75 0 010 1.5h-6a.75.75 0 01-.75-.75zM4.47 19.53a.75.75 0 010-1.06l14-14a.75.75 0 111.06 1.06l-14 14a.75.75 0 01-1.06 0z"
+						d="M18.47 4.47a.75.75 0 111.06 1.06l-14 14a.75.75 0 11-1.06-1.06l14-14zM20 17.25a.75.75 0 010 1.5h-6a.75.75 0 010-1.5h6zm-13-14a.75.75 0 01.75.75v2.25H10a.75.75 0 010 1.5H7.75V10a.75.75 0 01-1.5 0V7.75H4a.75.75 0 010-1.5h2.25V4A.75.75 0 017 3.25z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>

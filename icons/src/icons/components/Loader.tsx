@@ -39,12 +39,14 @@ const Loader = (allProps: IconProps) => {
 							transform="matrix(.00241 .00408 -.00407 .0024 2.527 9.03)"
 						>
 							<div
+								xmlns="http://www.w3.org/1999/xhtml"
 								style={{
 									background:
 										'conic-gradient(from 90deg,rgba(255,255,255,0) 0deg,rgba(255,255,255,.2) 333.31deg,rgba(255,255,255,0) 360deg)',
 									height: '100%',
 									width: '100%',
 								}}
+								opacity={1}
 							/>
 						</foreignObject>
 					</g>
@@ -66,12 +68,14 @@ const Loader = (allProps: IconProps) => {
 							transform="matrix(.0019 .00244 -.00366 .00286 5.432 7.176)"
 						>
 							<div
+								xmlns="http://www.w3.org/1999/xhtml"
 								style={{
 									background:
 										'conic-gradient(from 90deg,rgba(255,255,255,.0405) 0deg,rgba(255,255,255,.1) 31.113deg,rgba(255,255,255,0) 338.814deg,rgba(255,255,255,.0405) 360deg)',
 									height: '100%',
 									width: '100%',
 								}}
+								opacity={1}
 							/>
 						</foreignObject>
 					</g>
@@ -121,16 +125,10 @@ const Loader = (allProps: IconProps) => {
 							<stop offset={1} stopOpacity={0} />
 						</linearGradient>
 						<clipPath id="prefix__paint2_angular_53_6593_clip_path">
-							<path
-								d="M19 12a7 7 0 01-7 7v6c7.18 0 13-5.82 13-13h-6zm-7 7a7 7 0 01-7-7h-6c0 7.18 5.82 13 13 13v-6zm-7-7a7 7 0 017-7v-6C4.82-1-1 4.82-1 12h6zm7-7a7 7 0 017 7h6c0-7.18-5.82-13-13-13v6z"
-								mask="url(#prefix__path-1-inside-1_53_6593)"
-							/>
+							<path d="M19 12a7 7 0 01-7 7v6c7.18 0 13-5.82 13-13h-6zm-7 7a7 7 0 01-7-7h-6c0 7.18 5.82 13 13 13v-6zm-7-7a7 7 0 017-7v-6C4.82-1-1 4.82-1 12h6zm7-7a7 7 0 017 7h6c0-7.18-5.82-13-13-13v6z" />
 						</clipPath>
 						<clipPath id="prefix__paint3_angular_53_6593_clip_path">
-							<path
-								d="M19 12a7 7 0 01-7 7v6c7.18 0 13-5.82 13-13h-6zm-7 7a7 7 0 01-7-7h-6c0 7.18 5.82 13 13 13v-6zm-7-7a7 7 0 017-7v-6C4.82-1-1 4.82-1 12h6zm7-7a7 7 0 017 7h6c0-7.18-5.82-13-13-13v6z"
-								mask="url(#prefix__path-1-inside-1_53_6593)"
-							/>
+							<path d="M19 12a7 7 0 01-7 7v6c7.18 0 13-5.82 13-13h-6zm-7 7a7 7 0 01-7-7h-6c0 7.18 5.82 13 13 13v-6zm-7-7a7 7 0 017-7v-6C4.82-1-1 4.82-1 12h6zm7-7a7 7 0 017 7h6c0-7.18-5.82-13-13-13v6z" />
 						</clipPath>
 					</defs>
 				</svg>

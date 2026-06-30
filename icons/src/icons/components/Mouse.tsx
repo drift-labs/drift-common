@@ -13,7 +13,13 @@ const Mouse = (allProps: IconProps) => {
 					xmlns="http://www.w3.org/2000/svg"
 					{...props}
 				>
-					<path d="M9 9l5 12 1.8-5.2L21 14 9 9z" fill="#000" />
+					<path
+						d="M9 9l5 12 1.8-5.2L21 14 9 9z"
+						fill={allProps.color ? allProps.color : 'currentColor'}
+						stroke={allProps.color ? allProps.color : 'currentColor'}
+						strokeLinecap="round"
+						strokeLinejoin="round"
+					/>
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"

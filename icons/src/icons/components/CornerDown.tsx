@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const Phone = (allProps: IconProps) => {
+const CornerDown = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
@@ -14,7 +14,7 @@ const Phone = (allProps: IconProps) => {
 					{...props}
 				>
 					<path
-						d="M16.517 2C17.888 2 19 3.146 19 4.559V19.44C19 20.854 17.888 22 16.517 22H7.483C6.112 22 5 20.854 5 19.441V4.56C5 3.146 6.112 2 7.483 2h9.034zM7.483 3.396c-.623 0-1.129.52-1.129 1.163V19.44c0 .642.506 1.163 1.13 1.164h9.033c.623 0 1.128-.522 1.128-1.164V4.56c0-.642-.505-1.163-1.128-1.163H7.483zM12 17a1 1 0 110 2 1 1 0 010-2z"
+						d="M14.47 9.47a.75.75 0 011.06 0l5 5a.75.75 0 010 1.06l-5 5a.75.75 0 11-1.06-1.06l3.72-3.72H8A4.75 4.75 0 013.25 11V4a.75.75 0 011.5 0v7A3.25 3.25 0 008 14.25h10.19l-3.72-3.72a.75.75 0 010-1.06z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
@@ -23,4 +23,4 @@ const Phone = (allProps: IconProps) => {
 		/>
 	);
 };
-export default Phone;
+export default CornerDown;

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IconProps } from '../../types';
 import { IconWrapper } from '../IconWrapper';
 
-const Withdraw = (allProps: IconProps) => {
+const AddCircle = (allProps: IconProps) => {
 	const { svgProps: props, ...restProps } = allProps;
 	return (
 		<IconWrapper
@@ -16,13 +16,12 @@ const Withdraw = (allProps: IconProps) => {
 					<path
 						fillRule="evenodd"
 						clipRule="evenodd"
-						d="M11.47 2.47a.75.75 0 011.06 0l6 6a.75.75 0 01-1.06 1.06l-4.72-4.72V16.5a.75.75 0 01-1.5 0V4.81L6.53 9.53a.75.75 0 01-1.06-1.06l6-6z"
+						d="M12 3.75a8.25 8.25 0 100 16.5 8.25 8.25 0 000-16.5zM2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
 					/>
 					<path
-						d="M12 19.5a.5.5 0 110 1 .5.5 0 010-1z"
+						d="M17 11.25a.75.75 0 010 1.5h-4.25V17a.75.75 0 01-1.5 0v-4.25H7a.75.75 0 010-1.5h4.25V7a.75.75 0 111.5 0v4.25H17z"
 						fill={allProps.color ? allProps.color : 'currentColor'}
-						stroke={allProps.color ? allProps.color : 'currentColor'}
 					/>
 				</svg>
 			}
@@ -30,4 +29,4 @@ const Withdraw = (allProps: IconProps) => {
 		/>
 	);
 };
-export default Withdraw;
+export default AddCircle;

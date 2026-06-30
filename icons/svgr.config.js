@@ -9,6 +9,7 @@ module.exports = {
 	},
 	replaceAttrValues: {
 		'#6683A7': '{allProps.color ? allProps.color : "currentColor"}',
+		'#838EA4': '{allProps.color ? allProps.color : "currentColor"}',
 	},
 	plugins: [
 		// Clean SVG files using SVGO

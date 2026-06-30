@@ -20,8 +20,12 @@ const DrawLock = (allProps: IconProps) => {
 						fill="#D4D4D8"
 					/>
 					<path
+						d="M20.667 15.3h-9.334c-.736 0-1.333.627-1.333 1.4v4.9c0 .773.597 1.4 1.333 1.4h9.334c.736 0 1.333-.627 1.333-1.4v-4.9c0-.773-.597-1.4-1.333-1.4zM12.667 15.3v-2.8c0-.928.35-1.819.976-2.475A3.255 3.255 0 0116 9c.884 0 1.732.369 2.357 1.025a3.59 3.59 0 01.976 2.475v2.8"
+						fill={allProps.color ? allProps.color : 'currentColor'}
+					/>
+					<path
 						d="M12.667 15.3v-2.8c0-.928.35-1.819.976-2.475A3.255 3.255 0 0116 9c.884 0 1.732.369 2.357 1.025a3.59 3.59 0 01.976 2.475v2.8m-8 0h9.334c.736 0 1.333.627 1.333 1.4v4.9c0 .773-.597 1.4-1.333 1.4h-9.334C10.597 23 10 22.373 10 21.6v-4.9c0-.773.597-1.4 1.333-1.4z"
-						stroke="#D4D4D8"
+						stroke={allProps.color ? allProps.color : 'currentColor'}
 						strokeWidth={1.5}
 						strokeLinecap="round"
 						strokeLinejoin="round"
